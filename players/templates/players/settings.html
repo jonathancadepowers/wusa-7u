@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - WUSA 7U</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-dark bg-primary">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">WUSA 7U - Settings</span>
+            <a href="/admin/" class="btn btn-outline-light btn-sm">Admin Panel</a>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0"><i class="bi bi-gear-fill me-2"></i>Application Settings</h4>
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">Player Data Import</h5>
+                        <p class="text-muted">Upload an Excel file (.xlsx) to import player data into the database.</p>
+
+                        <form id="importForm" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="excelFile" class="form-label">Select Excel File</label>
+                                <input class="form-control" type="file" id="excelFile" name="excel_file" accept=".xlsx" required>
+                                <div class="form-text">Only .xlsx files are supported</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <div id="fileInfo" class="alert alert-info d-none">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    <span id="fileName"></span>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary" id="importBtn">
+                                <i class="bi bi-upload me-2"></i>Upload and Import Players
+                            </button>
+                            <button type="button" class="btn btn-secondary d-none" id="loadingBtn" disabled>
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                Processing...
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Result Modal -->
+    <div class="modal fade" id="resultModal" tabindex="-1" aria-labelledby="resultModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header" id="modalHeader">
+                    <h5 class="modal-title" id="resultModalLabel">Import Results</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="modalBody">
+                    <!-- Results will be inserted here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Show file name when selected
+        document.getElementById('excelFile').addEventListener('change', function(e) {
+            const fileInfo = document.getElementById('fileInfo');
+            const fileName = document.getElementById('fileName');
+
+            if (this.files.length > 0) {
+                fileName.textContent = 'Selected file: ' + this.files[0].name;
+                fileInfo.classList.remove('d-none');
+            } else {
+                fileInfo.classList.add('d-none');
+            }
+        });
+
+        // Handle form submission
+        document.getElementById('importForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const fileInput = document.getElementById('excelFile');
+            const importBtn = document.getElementById('importBtn');
+            const loadingBtn = document.getElementById('loadingBtn');
+
+            if (!fileInput.files.length) {
+                alert('Please select a file');
+                return;
+            }
+
+            // Show loading state
+            importBtn.classList.add('d-none');
+            loadingBtn.classList.remove('d-none');
+
+            const formData = new FormData();
+            formData.append('excel_file', fileInput.files[0]);
+            formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+            try {
+                const response = await fetch('/api/import-players/', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                // Show results in modal
+                showResults(data, response.ok);
+
+            } catch (error) {
+                showResults({
+                    success: false,
+                    error: 'Network error: ' + error.message
+                }, false);
+            } finally {
+                // Reset buttons
+                importBtn.classList.remove('d-none');
+                loadingBtn.classList.add('d-none');
+
+                // Clear file input
+                fileInput.value = '';
+                document.getElementById('fileInfo').classList.add('d-none');
+            }
+        });
+
+        function showResults(data, success) {
+            const modal = new bootstrap.Modal(document.getElementById('resultModal'));
+            const modalHeader = document.getElementById('modalHeader');
+            const modalBody = document.getElementById('modalBody');
+
+            if (success && data.success) {
+                // Success
+                modalHeader.className = 'modal-header bg-success text-white';
+                modalBody.innerHTML = `
+                    <div class="alert alert-success">
+                        <h5><i class="bi bi-check-circle-fill me-2"></i>Import Successful!</h5>
+                    </div>
+                    <table class="table">
+                        <tbody>
+                            <tr>
+                                <th>Total Rows in Excel:</th>
+                                <td>${data.total_rows}</td>
+                            </tr>
+                            <tr>
+                                <th>Successfully Imported:</th>
+                                <td class="text-success fw-bold">${data.imported}</td>
+                            </tr>
+                            <tr>
+                                <th>Errors/Skipped:</th>
+                                <td class="${data.errors.length > 0 ? 'text-warning' : 'text-muted'} fw-bold">${data.errors.length}</td>
+                            </tr>
+                            <tr>
+                                <th>Total Players in Database:</th>
+                                <td class="text-primary fw-bold">${data.total_players}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    ${data.errors.length > 0 ? `
+                        <div class="mt-3">
+                            <h6>Errors:</h6>
+                            <div class="alert alert-warning">
+                                <ul class="mb-0">
+                                    ${data.errors.map(err => `<li>Row ${err.row}: ${err.name} - ${err.error}</li>`).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                    ` : ''}
+                `;
+            } else {
+                // Error
+                modalHeader.className = 'modal-header bg-danger text-white';
+                modalBody.innerHTML = `
+                    <div class="alert alert-danger">
+                        <h5><i class="bi bi-exclamation-triangle-fill me-2"></i>Import Failed</h5>
+                        <p class="mb-0">${data.error || 'An unknown error occurred'}</p>
+                    </div>
+                `;
+            }
+
+            modal.show();
+        }
+    </script>
+</body>
+</html>
