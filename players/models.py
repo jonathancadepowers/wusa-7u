@@ -13,7 +13,7 @@ class Player(models.Model):
     parent_email_1 = models.EmailField()
     parent_phone_2 = models.CharField(max_length=20, blank=True, null=True)
     parent_email_2 = models.EmailField(blank=True, null=True)
-    jersey_size = models.CharField(max_length=10, blank=True, null=True)
+    jersey_size = models.CharField(max_length=50, blank=True, null=True)
     manager_volunteer_name = models.CharField(max_length=100, blank=True, null=True)
     assistant_manager_volunteer_name = models.CharField(max_length=100, blank=True, null=True)
 
