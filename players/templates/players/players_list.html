@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Players - WUSA 7U</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-dark bg-primary">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">WUSA 7U - Players</span>
+            <div>
+                <a href="{% url 'players:settings' %}" class="btn btn-outline-light btn-sm me-2">Settings</a>
+                <a href="/admin/" class="btn btn-outline-light btn-sm">Admin</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h4 class="mb-0"><i class="bi bi-people-fill me-2"></i>Player Management</h4>
+                <a href="{% url 'players:create' %}" class="btn btn-light btn-sm">
+                    <i class="bi bi-plus-circle me-1"></i>Add New Player
+                </a>
+            </div>
+            <div class="card-body">
+                <!-- Search Bar -->
+                <form method="get" class="mb-4">
+                    <div class="input-group">
+                        <input type="text" name="search" class="form-control" placeholder="Search by name or school..." value="{{ search_query }}">
+                        <button class="btn btn-primary" type="submit">
+                            <i class="bi bi-search"></i> Search
+                        </button>
+                        {% if search_query %}
+                            <a href="{% url 'players:list' %}" class="btn btn-secondary">Clear</a>
+                        {% endif %}
+                    </div>
+                </form>
+
+                <!-- Stats -->
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Total Players: <strong>{{ total_players }}</strong>
+                    {% if search_query %}
+                        | Showing: <strong>{{ page_obj.paginator.count }}</strong> matches
+                    {% endif %}
+                </div>
+
+                <!-- Players Table -->
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Name</th>
+                                <th>Birthday</th>
+                                <th>School</th>
+                                <th>Parent Email</th>
+                                <th>Parent Phone</th>
+                                <th>Jersey Size</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for player in page_obj %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ player.first_name }} {{ player.last_name }}</strong>
+                                    </td>
+                                    <td>{{ player.birthday }}</td>
+                                    <td>{{ player.school|default:"-" }}</td>
+                                    <td>{{ player.parent_email_1 }}</td>
+                                    <td>{{ player.parent_phone_1 }}</td>
+                                    <td>{{ player.jersey_size|default:"-" }}</td>
+                                    <td>
+                                        <a href="{% url 'players:detail' player.pk %}" class="btn btn-sm btn-primary" title="View/Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a href="{% url 'players:delete' player.pk %}" class="btn btn-sm btn-danger" title="Delete">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted">
+                                        {% if search_query %}
+                                            No players found matching "{{ search_query }}"
+                                        {% else %}
+                                            No players in database
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if page_obj.has_other_pages %}
+                    <nav>
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}">First</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Previous</a>
+                                </li>
+                            {% endif %}
+
+                            <li class="page-item active">
+                                <span class="page-link">
+                                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                                </span>
+                            </li>
+
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Next</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}">Last</a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,8 +1,10 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
+from django.contrib import messages
+from django.core.paginator import Paginator
 from .models import Player
 import pandas as pd
 import os
@@ -12,6 +14,102 @@ from datetime import datetime
 def settings_view(request):
     """Main settings page"""
     return render(request, 'players/settings.html')
+
+
+def players_list_view(request):
+    """List all players with search and pagination"""
+    search_query = request.GET.get('search', '')
+    players = Player.objects.all()
+
+    if search_query:
+        players = players.filter(
+            first_name__icontains=search_query
+        ) | players.filter(
+            last_name__icontains=search_query
+        ) | players.filter(
+            school__icontains=search_query
+        )
+
+    # Pagination
+    paginator = Paginator(players, 25)  # 25 players per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'page_obj': page_obj,
+        'search_query': search_query,
+        'total_players': Player.objects.count()
+    }
+    return render(request, 'players/players_list.html', context)
+
+
+def player_detail_view(request, pk):
+    """View and edit a single player"""
+    player = get_object_or_404(Player, pk=pk)
+
+    if request.method == 'POST':
+        # Update player
+        player.first_name = request.POST.get('first_name')
+        player.last_name = request.POST.get('last_name')
+        player.birthday = request.POST.get('birthday')
+        player.history = request.POST.get('history') or None
+        player.school = request.POST.get('school') or None
+        player.conflict = request.POST.get('conflict') or None
+        player.additional_registration_info = request.POST.get('additional_registration_info') or None
+        player.parent_phone_1 = request.POST.get('parent_phone_1')
+        player.parent_email_1 = request.POST.get('parent_email_1')
+        player.parent_phone_2 = request.POST.get('parent_phone_2') or None
+        player.parent_email_2 = request.POST.get('parent_email_2') or None
+        player.jersey_size = request.POST.get('jersey_size') or None
+        player.manager_volunteer_name = request.POST.get('manager_volunteer_name') or None
+        player.assistant_manager_volunteer_name = request.POST.get('assistant_manager_volunteer_name') or None
+
+        player.save()
+        messages.success(request, f'Player {player.first_name} {player.last_name} updated successfully!')
+        return redirect('players:detail', pk=player.pk)
+
+    context = {'player': player}
+    return render(request, 'players/player_detail.html', context)
+
+
+def player_create_view(request):
+    """Create a new player"""
+    if request.method == 'POST':
+        player = Player(
+            first_name=request.POST.get('first_name'),
+            last_name=request.POST.get('last_name'),
+            birthday=request.POST.get('birthday'),
+            history=request.POST.get('history') or None,
+            school=request.POST.get('school') or None,
+            conflict=request.POST.get('conflict') or None,
+            additional_registration_info=request.POST.get('additional_registration_info') or None,
+            parent_phone_1=request.POST.get('parent_phone_1'),
+            parent_email_1=request.POST.get('parent_email_1'),
+            parent_phone_2=request.POST.get('parent_phone_2') or None,
+            parent_email_2=request.POST.get('parent_email_2') or None,
+            jersey_size=request.POST.get('jersey_size') or None,
+            manager_volunteer_name=request.POST.get('manager_volunteer_name') or None,
+            assistant_manager_volunteer_name=request.POST.get('assistant_manager_volunteer_name') or None,
+        )
+        player.save()
+        messages.success(request, f'Player {player.first_name} {player.last_name} created successfully!')
+        return redirect('players:list')
+
+    return render(request, 'players/player_create.html')
+
+
+def player_delete_view(request, pk):
+    """Delete a player"""
+    player = get_object_or_404(Player, pk=pk)
+
+    if request.method == 'POST':
+        player_name = f"{player.first_name} {player.last_name}"
+        player.delete()
+        messages.success(request, f'Player {player_name} deleted successfully!')
+        return redirect('players:list')
+
+    context = {'player': player}
+    return render(request, 'players/player_confirm_delete.html', context)
 
 
 @require_http_methods(["POST"])

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Player - {{ player.first_name }} {{ player.last_name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-dark bg-primary">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">WUSA 7U - Edit Player</span>
+            <a href="{% url 'players:list' %}" class="btn btn-outline-light btn-sm">
+                <i class="bi bi-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="row">
+            <div class="col-lg-8 offset-lg-2">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0"><i class="bi bi-person-fill me-2"></i>{{ player.first_name }} {{ player.last_name }}</h4>
+                    </div>
+                    <div class="card-body">
+                        <form method="post">
+                            {% csrf_token %}
+
+                            <!-- Player Information -->
+                            <h5 class="border-bottom pb-2 mb-3">Player Information</h5>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="first_name" class="form-label">First Name *</label>
+                                    <input type="text" class="form-control" id="first_name" name="first_name" value="{{ player.first_name }}" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="last_name" class="form-label">Last Name *</label>
+                                    <input type="text" class="form-control" id="last_name" name="last_name" value="{{ player.last_name }}" required>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="birthday" class="form-label">Birthday *</label>
+                                    <input type="date" class="form-control" id="birthday" name="birthday" value="{{ player.birthday|date:'Y-m-d' }}" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="jersey_size" class="form-label">Jersey Size</label>
+                                    <input type="text" class="form-control" id="jersey_size" name="jersey_size" value="{{ player.jersey_size|default:'' }}">
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="school" class="form-label">School</label>
+                                    <input type="text" class="form-control" id="school" name="school" value="{{ player.school|default:'' }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="history" class="form-label">History (New/Returning)</label>
+                                    <input type="text" class="form-control" id="history" name="history" value="{{ player.history|default:'' }}">
+                                </div>
+                            </div>
+
+                            <!-- Parent Contact Information -->
+                            <h5 class="border-bottom pb-2 mb-3 mt-4">Parent Contact - Primary *</h5>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="parent_phone_1" class="form-label">Phone *</label>
+                                    <input type="tel" class="form-control" id="parent_phone_1" name="parent_phone_1" value="{{ player.parent_phone_1 }}" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="parent_email_1" class="form-label">Email *</label>
+                                    <input type="email" class="form-control" id="parent_email_1" name="parent_email_1" value="{{ player.parent_email_1 }}" required>
+                                </div>
+                            </div>
+
+                            <h5 class="border-bottom pb-2 mb-3 mt-4">Parent Contact - Secondary</h5>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="parent_phone_2" class="form-label">Phone</label>
+                                    <input type="tel" class="form-control" id="parent_phone_2" name="parent_phone_2" value="{{ player.parent_phone_2|default:'' }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="parent_email_2" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="parent_email_2" name="parent_email_2" value="{{ player.parent_email_2|default:'' }}">
+                                </div>
+                            </div>
+
+                            <!-- Additional Information -->
+                            <h5 class="border-bottom pb-2 mb-3 mt-4">Additional Information</h5>
+                            <div class="mb-3">
+                                <label for="conflict" class="form-label">Schedule Conflicts</label>
+                                <textarea class="form-control" id="conflict" name="conflict" rows="2">{{ player.conflict|default:'' }}</textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="additional_registration_info" class="form-label">Registration Notes</label>
+                                <textarea class="form-control" id="additional_registration_info" name="additional_registration_info" rows="4">{{ player.additional_registration_info|default:'' }}</textarea>
+                            </div>
+
+                            <!-- Volunteers -->
+                            <h5 class="border-bottom pb-2 mb-3 mt-4">Volunteers</h5>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="manager_volunteer_name" class="form-label">Manager Name</label>
+                                    <input type="text" class="form-control" id="manager_volunteer_name" name="manager_volunteer_name" value="{{ player.manager_volunteer_name|default:'' }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="assistant_manager_volunteer_name" class="form-label">Assistant Manager Name</label>
+                                    <input type="text" class="form-control" id="assistant_manager_volunteer_name" name="assistant_manager_volunteer_name" value="{{ player.assistant_manager_volunteer_name|default:'' }}">
+                                </div>
+                            </div>
+
+                            <div class="mt-4 d-flex justify-content-between">
+                                <div>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-save me-1"></i>Save Changes
+                                    </button>
+                                    <a href="{% url 'players:list' %}" class="btn btn-secondary">Cancel</a>
+                                </div>
+                                <a href="{% url 'players:delete' player.pk %}" class="btn btn-danger">
+                                    <i class="bi bi-trash me-1"></i>Delete Player
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Metadata -->
+                <div class="card mt-3 shadow-sm">
+                    <div class="card-body">
+                        <small class="text-muted">
+                            <strong>Created:</strong> {{ player.created_at|date:"M d, Y g:i A" }} |
+                            <strong>Last Updated:</strong> {{ player.updated_at|date:"M d, Y g:i A" }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
