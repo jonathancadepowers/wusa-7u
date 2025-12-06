@@ -1,5 +1,12 @@
 from django.contrib import admin
-from .models import Player, Team, Manager
+from .models import Player, Team, Manager, Draft
+
+
+@admin.register(Draft)
+class DraftAdmin(admin.ModelAdmin):
+    list_display = ['draft_date', 'status', 'rounds', 'picks_per_round', 'public_url_secret', 'created_at']
+    list_filter = ['status', 'draft_date']
+    search_fields = ['public_url_secret', 'status']
 
 
 @admin.register(Manager)
