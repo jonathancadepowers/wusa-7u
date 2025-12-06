@@ -33,7 +33,6 @@
                 <div class="mb-4">
                     {% if team.manager %}
                         <p class="mb-0"><strong>Manager:</strong> {{ team.manager.first_name }} {{ team.manager.last_name }}</p>
-                        <small class="text-muted">{{ team.manager.email }} | {{ team.manager.phone }}</small>
                     {% else %}
                         <p class="mb-0"><strong>Manager:</strong> Not assigned</p>
                     {% endif %}
