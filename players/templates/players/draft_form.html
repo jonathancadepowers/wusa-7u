@@ -29,6 +29,9 @@
         .team-item.dragging {
             opacity: 0.5;
         }
+        .team-item.drag-over-item {
+            margin-top: 50px;
+        }
         .team-drop-zone.drag-over {
             background-color: #e3f2fd;
             border-color: #2196f3;
@@ -209,6 +212,9 @@
             document.querySelectorAll('.drag-over').forEach(el => {
                 el.classList.remove('drag-over');
             });
+            document.querySelectorAll('.drag-over-item').forEach(el => {
+                el.classList.remove('drag-over-item');
+            });
         }
 
         function handleDragOver(e) {
@@ -228,6 +234,14 @@
             if (this === draggedElement) {
                 return false;
             }
+
+            // Remove drag-over-item class from all items
+            document.querySelectorAll('.team-item').forEach(item => {
+                item.classList.remove('drag-over-item');
+            });
+
+            // Add class to this item to show visual feedback
+            this.classList.add('drag-over-item');
 
             e.dataTransfer.dropEffect = 'move';
             return false;
