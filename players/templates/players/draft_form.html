@@ -37,6 +37,11 @@
                         </h4>
                     </div>
                     <div class="card-body">
+                        <!-- Status Display (Read-only) -->
+                        <div class="alert alert-info mb-4">
+                            <strong>Current Status:</strong> Pending Set Up
+                        </div>
+
                         <form method="post">
                             {% csrf_token %}
 
@@ -63,17 +68,6 @@
                             <div class="mb-3">
                                 <label for="draft_date" class="form-label">Draft Date *</label>
                                 <input type="date" class="form-control" id="draft_date" name="draft_date" value="{% if draft %}{{ draft.draft_date|date:'Y-m-d' }}{% endif %}" required>
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="status" class="form-label">Status *</label>
-                                <select class="form-select" id="status" name="status" required>
-                                    <option value="Pending Set Up" {% if draft and draft.status == 'Pending Set Up' %}selected{% endif %}>Pending Set Up</option>
-                                    <option value="Ready to Start Draft" {% if draft and draft.status == 'Ready to Start Draft' %}selected{% endif %}>Ready to Start Draft</option>
-                                    <option value="Draft In Progress" {% if draft and draft.status == 'Draft In Progress' %}selected{% endif %}>Draft In Progress</option>
-                                    <option value="Draft Complete - Uncomitted" {% if draft and draft.status == 'Draft Complete - Uncomitted' %}selected{% endif %}>Draft Complete - Uncomitted</option>
-                                    <option value="Draft Complete - Committed" {% if draft and draft.status == 'Draft Complete - Committed' %}selected{% endif %}>Draft Complete - Committed</option>
-                                </select>
                             </div>
 
                             <div class="mb-3">

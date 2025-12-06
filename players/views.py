@@ -55,9 +55,8 @@ def edit_draft_view(request):
 
     if request.method == 'POST':
         if draft:
-            # Update existing draft
+            # Update existing draft (status is not editable from form)
             draft.rounds = request.POST.get('rounds')
-            draft.status = request.POST.get('status')
             draft.draft_date = request.POST.get('draft_date')
             draft.picks_per_round = request.POST.get('picks_per_round')
             draft.public_url_secret = request.POST.get('public_url_secret')
@@ -65,10 +64,10 @@ def edit_draft_view(request):
             draft.save()
             messages.success(request, 'Draft updated successfully!')
         else:
-            # Create new draft
+            # Create new draft with default status
             draft = Draft(
                 rounds=request.POST.get('rounds'),
-                status=request.POST.get('status'),
+                status='Pending Set Up',
                 draft_date=request.POST.get('draft_date'),
                 picks_per_round=request.POST.get('picks_per_round'),
                 public_url_secret=request.POST.get('public_url_secret'),
