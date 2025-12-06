@@ -98,12 +98,22 @@ def edit_draft_view(request):
         characters = string.ascii_letters + string.digits
         suggested_secret = ''.join(random.choice(characters) for _ in range(8))
 
+    # Get all teams for draft order
+    all_teams = Team.objects.all().order_by('name')
+
+    # Parse existing draft order if it exists
+    ordered_team_ids = []
+    if draft and draft.order:
+        ordered_team_ids = [int(tid) for tid in draft.order.split(',') if tid]
+
     context = {
         'draft': draft,
         'is_create': is_create,
         'suggested_rounds': suggested_rounds,
         'suggested_picks_per_round': suggested_picks_per_round,
-        'suggested_secret': suggested_secret
+        'suggested_secret': suggested_secret,
+        'all_teams': all_teams,
+        'ordered_team_ids': ordered_team_ids
     }
     return render(request, 'players/draft_form.html', context)
 

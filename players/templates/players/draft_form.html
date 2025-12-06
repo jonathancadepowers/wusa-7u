@@ -6,6 +6,37 @@
     <title>{% if is_create %}Create Draft{% else %}Edit Draft{% endif %} - WUSA 7U</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        .team-drop-zone {
+            min-height: 300px;
+            padding: 10px;
+            border: 2px dashed #dee2e6;
+            border-radius: 4px;
+        }
+        .team-item {
+            background-color: #fff;
+            border: 1px solid #dee2e6;
+            padding: 10px 15px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            cursor: move;
+            transition: all 0.2s;
+        }
+        .team-item:hover {
+            background-color: #f8f9fa;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .team-item.dragging {
+            opacity: 0.5;
+        }
+        .team-drop-zone.drag-over {
+            background-color: #e3f2fd;
+            border-color: #2196f3;
+        }
+        .min-vh-20 {
+            min-height: 300px;
+        }
+    </style>
 </head>
 <body class="bg-light">
     <nav class="navbar navbar-dark bg-primary">
@@ -81,6 +112,46 @@
                                 <input type="text" class="form-control" id="public_url_secret" name="public_url_secret" value="{% if draft %}{{ draft.public_url_secret }}{% else %}{{ suggested_secret }}{% endif %}" required>
                             </div>
 
+                            <hr class="my-4">
+
+                            <!-- Draft Order Section -->
+                            <h5 class="mb-3">Draft Order</h5>
+                            <p class="text-muted">Drag and drop teams to set the draft order. The order you set will determine the picking sequence.</p>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header bg-secondary text-white">
+                                            <strong>Available Teams</strong>
+                                        </div>
+                                        <div class="card-body">
+                                            <div id="availableTeams" class="team-drop-zone min-vh-20">
+                                                {% for team in all_teams %}
+                                                    <div class="team-item" draggable="true" data-team-id="{{ team.id }}">
+                                                        <i class="bi bi-grip-vertical me-2"></i>{{ team.name }}
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header bg-primary text-white">
+                                            <strong>Draft Order ({{ all_teams.count }} picks)</strong>
+                                        </div>
+                                        <div class="card-body">
+                                            <div id="draftOrder" class="team-drop-zone min-vh-20">
+                                                <!-- Teams will be dropped here -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Hidden field to store draft order as comma-separated IDs -->
+                            <input type="hidden" id="orderField" name="order" value="">
+
                             <div class="mt-4 d-flex justify-content-between">
                                 <a href="{% url 'players:settings' %}" class="btn btn-secondary">
                                     <i class="bi bi-arrow-left me-1"></i>Cancel
@@ -103,6 +174,115 @@
         var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl)
         })
+
+        // Drag and Drop functionality
+        let draggedElement = null;
+
+        function initializeDragAndDrop() {
+            const teamItems = document.querySelectorAll('.team-item');
+            const dropZones = document.querySelectorAll('.team-drop-zone');
+
+            teamItems.forEach(item => {
+                item.addEventListener('dragstart', handleDragStart);
+                item.addEventListener('dragend', handleDragEnd);
+            });
+
+            dropZones.forEach(zone => {
+                zone.addEventListener('dragover', handleDragOver);
+                zone.addEventListener('drop', handleDrop);
+                zone.addEventListener('dragleave', handleDragLeave);
+                zone.addEventListener('dragenter', handleDragEnter);
+            });
+        }
+
+        function handleDragStart(e) {
+            draggedElement = this;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', this.innerHTML);
+        }
+
+        function handleDragEnd(e) {
+            this.classList.remove('dragging');
+        }
+
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+
+        function handleDragEnter(e) {
+            this.classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            this.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+            e.preventDefault();
+
+            this.classList.remove('drag-over');
+
+            if (draggedElement && draggedElement !== this) {
+                // Clone the dragged element
+                const clone = draggedElement.cloneNode(true);
+
+                // Re-add event listeners to the clone
+                clone.addEventListener('dragstart', handleDragStart);
+                clone.addEventListener('dragend', handleDragEnd);
+
+                // Remove from old location
+                draggedElement.remove();
+
+                // Add to new location
+                this.appendChild(clone);
+
+                // Update the hidden field
+                updateOrderField();
+            }
+
+            return false;
+        }
+
+        function updateOrderField() {
+            const draftOrder = document.getElementById('draftOrder');
+            const teamItems = draftOrder.querySelectorAll('.team-item');
+            const teamIds = Array.from(teamItems).map(item => item.getAttribute('data-team-id'));
+            document.getElementById('orderField').value = teamIds.join(',');
+        }
+
+        // Initialize existing draft order if editing
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDragAndDrop();
+
+            // If there's an existing order, populate the draft order zone
+            const existingOrder = {{ ordered_team_ids|safe }};
+            if (existingOrder && existingOrder.length > 0) {
+                const availableTeams = document.getElementById('availableTeams');
+                const draftOrder = document.getElementById('draftOrder');
+
+                existingOrder.forEach(teamId => {
+                    const teamItem = availableTeams.querySelector(`[data-team-id="${teamId}"]`);
+                    if (teamItem) {
+                        draftOrder.appendChild(teamItem);
+                    }
+                });
+
+                updateOrderField();
+            }
+
+            // Update order field before form submission
+            document.querySelector('form').addEventListener('submit', function(e) {
+                updateOrderField();
+            });
+        });
     </script>
 </body>
 </html>
