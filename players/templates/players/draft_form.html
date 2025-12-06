@@ -248,10 +248,11 @@
         }
 
         function handleItemDrop(e) {
-            if (e.stopPropagation) {
-                e.stopPropagation();
-            }
+            e.stopPropagation();
             e.preventDefault();
+
+            // Remove drag-over-item class
+            this.classList.remove('drag-over-item');
 
             if (draggedElement && draggedElement !== this) {
                 // Clone the dragged element
