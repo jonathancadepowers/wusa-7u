@@ -116,7 +116,6 @@
 
                             <!-- Draft Order Section -->
                             <h5 class="mb-3">Draft Order</h5>
-                            <p class="text-muted">Drag and drop teams to set the draft order. The order you set will determine the picking sequence.</p>
 
                             <div class="row">
                                 <div class="col-md-6">
@@ -138,7 +137,7 @@
                                 <div class="col-md-6">
                                     <div class="card">
                                         <div class="card-header bg-primary text-white">
-                                            <strong>Draft Order ({{ all_teams.count }} picks)</strong>
+                                            <strong>Draft Order</strong>
                                         </div>
                                         <div class="card-body">
                                             <div id="draftOrder" class="team-drop-zone min-vh-20">
@@ -185,6 +184,8 @@
             teamItems.forEach(item => {
                 item.addEventListener('dragstart', handleDragStart);
                 item.addEventListener('dragend', handleDragEnd);
+                item.addEventListener('dragover', handleItemDragOver);
+                item.addEventListener('drop', handleItemDrop);
             });
 
             dropZones.forEach(zone => {
@@ -204,6 +205,10 @@
 
         function handleDragEnd(e) {
             this.classList.remove('dragging');
+            // Remove any lingering drag-over classes
+            document.querySelectorAll('.drag-over').forEach(el => {
+                el.classList.remove('drag-over');
+            });
         }
 
         function handleDragOver(e) {
@@ -214,12 +219,59 @@
             return false;
         }
 
+        function handleItemDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.stopPropagation();
+
+            if (this === draggedElement) {
+                return false;
+            }
+
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+
+        function handleItemDrop(e) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+            e.preventDefault();
+
+            if (draggedElement && draggedElement !== this) {
+                // Clone the dragged element
+                const clone = draggedElement.cloneNode(true);
+
+                // Re-add event listeners to the clone
+                clone.addEventListener('dragstart', handleDragStart);
+                clone.addEventListener('dragend', handleDragEnd);
+                clone.addEventListener('dragover', handleItemDragOver);
+                clone.addEventListener('drop', handleItemDrop);
+
+                // Remove from old location
+                draggedElement.remove();
+
+                // Insert before the target item
+                this.parentNode.insertBefore(clone, this);
+
+                // Update the hidden field
+                updateOrderField();
+            }
+
+            return false;
+        }
+
         function handleDragEnter(e) {
-            this.classList.add('drag-over');
+            if (e.target.classList.contains('team-drop-zone')) {
+                e.target.classList.add('drag-over');
+            }
         }
 
         function handleDragLeave(e) {
-            this.classList.remove('drag-over');
+            if (e.target.classList.contains('team-drop-zone')) {
+                e.target.classList.remove('drag-over');
+            }
         }
 
         function handleDrop(e) {
@@ -230,18 +282,21 @@
 
             this.classList.remove('drag-over');
 
-            if (draggedElement && draggedElement !== this) {
+            // Only handle drops directly on the zone (not on items within it)
+            if (e.target.classList.contains('team-drop-zone') && draggedElement) {
                 // Clone the dragged element
                 const clone = draggedElement.cloneNode(true);
 
                 // Re-add event listeners to the clone
                 clone.addEventListener('dragstart', handleDragStart);
                 clone.addEventListener('dragend', handleDragEnd);
+                clone.addEventListener('dragover', handleItemDragOver);
+                clone.addEventListener('drop', handleItemDrop);
 
                 // Remove from old location
                 draggedElement.remove();
 
-                // Add to new location
+                // Add to new location (at the end)
                 this.appendChild(clone);
 
                 // Update the hidden field
