@@ -10,7 +10,7 @@
 <body class="bg-light">
     <nav class="navbar navbar-dark bg-primary">
         <div class="container-fluid">
-            <span class="navbar-brand mb-0 h1">WUSA 7U - {{ team.name }}</span>
+            <span class="navbar-brand mb-0 h1">WUSA 7U - Team Page</span>
         </div>
     </nav>
 
@@ -43,18 +43,37 @@
                 </div>
 
                 <!-- Players Table -->
-                <h5 class="text-muted mb-3">Team Roster</h5>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="text-muted mb-0">Team Roster</h5>
+                    {% if players %}
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#emailModal">
+                            <i class="bi bi-envelope me-1"></i>Email Entire Team
+                        </button>
+                    {% endif %}
+                </div>
                 {% if players %}
                     <div class="table-responsive">
-                        <table class="table table-hover">
+                        <table class="table table-hover" id="playerTable">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Name</th>
-                                    <th>Birthday</th>
-                                    <th>School</th>
-                                    <th>Jersey Size</th>
-                                    <th>Parent Email</th>
-                                    <th>Parent Phone</th>
+                                    <th style="cursor: pointer;" onclick="sortTable(0)">
+                                        Name <i class="bi bi-arrow-down-up"></i>
+                                    </th>
+                                    <th style="cursor: pointer;" onclick="sortTable(1)">
+                                        Birthday <i class="bi bi-arrow-down-up"></i>
+                                    </th>
+                                    <th style="cursor: pointer;" onclick="sortTable(2)">
+                                        School <i class="bi bi-arrow-down-up"></i>
+                                    </th>
+                                    <th style="cursor: pointer;" onclick="sortTable(3)">
+                                        History <i class="bi bi-arrow-down-up"></i>
+                                    </th>
+                                    <th style="cursor: pointer;" onclick="sortTable(4)">
+                                        Parent Email <i class="bi bi-arrow-down-up"></i>
+                                    </th>
+                                    <th style="cursor: pointer;" onclick="sortTable(5)">
+                                        Parent Phone <i class="bi bi-arrow-down-up"></i>
+                                    </th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -64,7 +83,7 @@
                                         <td><strong>{{ player.first_name }} {{ player.last_name }}</strong></td>
                                         <td>{{ player.birthday|default:"-" }}</td>
                                         <td>{{ player.school|default:"-" }}</td>
-                                        <td>{{ player.jersey_size|default:"-" }}</td>
+                                        <td>{{ player.history|default:"-" }}</td>
                                         <td>{{ player.parent_email_1 }}</td>
                                         <td>{{ player.parent_phone_1 }}</td>
                                         <td>
@@ -86,6 +105,32 @@
                         No players assigned to this team yet.
                     </div>
                 {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Email Entire Team Modal -->
+    <div class="modal fade" id="emailModal" tabindex="-1" aria-labelledby="emailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="emailModalLabel">
+                        <i class="bi bi-envelope me-2"></i>Email Entire Team
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted">All parent email addresses for {{ team.name }}:</p>
+                    <div class="mb-3">
+                        <textarea class="form-control" id="emailList" rows="8" readonly>{% for player in players %}{% if player.parent_email_1 %}{{ player.parent_email_1 }}{% if player.parent_email_2 %}, {{ player.parent_email_2 }}{% endif %}{% if not forloop.last %}, {% endif %}{% elif player.parent_email_2 %}{{ player.parent_email_2 }}{% if not forloop.last %}, {% endif %}{% endif %}{% endfor %}</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="copyToClipboard()">
+                        <i class="bi bi-clipboard me-1"></i>Copy to Clipboard
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -152,5 +197,88 @@
     {% endfor %}
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Copy email list to clipboard
+        function copyToClipboard() {
+            const emailList = document.getElementById('emailList');
+            emailList.select();
+            emailList.setSelectionRange(0, 99999); // For mobile devices
+
+            navigator.clipboard.writeText(emailList.value).then(function() {
+                // Change button text temporarily to show success
+                const btn = event.target.closest('button');
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = '<i class="bi bi-check me-1"></i>Copied!';
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-success');
+
+                setTimeout(function() {
+                    btn.innerHTML = originalHTML;
+                    btn.classList.remove('btn-success');
+                    btn.classList.add('btn-primary');
+                }, 2000);
+            }, function(err) {
+                alert('Failed to copy: ' + err);
+            });
+        }
+
+        // Table sorting function
+        let sortDirection = {};
+
+        function sortTable(columnIndex) {
+            const table = document.getElementById('playerTable');
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+
+            // Initialize sort direction for this column if not set
+            if (sortDirection[columnIndex] === undefined) {
+                sortDirection[columnIndex] = true; // true = ascending
+            } else {
+                sortDirection[columnIndex] = !sortDirection[columnIndex];
+            }
+
+            const isAscending = sortDirection[columnIndex];
+
+            rows.sort((a, b) => {
+                const aValue = a.cells[columnIndex].textContent.trim();
+                const bValue = b.cells[columnIndex].textContent.trim();
+
+                // Handle empty values (represented as "-")
+                if (aValue === '-' && bValue === '-') return 0;
+                if (aValue === '-') return 1;
+                if (bValue === '-') return -1;
+
+                // Try to parse as date for birthday column
+                if (columnIndex === 1) {
+                    const aDate = new Date(aValue);
+                    const bDate = new Date(bValue);
+                    if (!isNaN(aDate) && !isNaN(bDate)) {
+                        return isAscending ? aDate - bDate : bDate - aDate;
+                    }
+                }
+
+                // Default string comparison
+                const comparison = aValue.localeCompare(bValue);
+                return isAscending ? comparison : -comparison;
+            });
+
+            // Clear tbody and re-append sorted rows
+            tbody.innerHTML = '';
+            rows.forEach(row => tbody.appendChild(row));
+
+            // Update sort indicators
+            const headers = table.querySelectorAll('th');
+            headers.forEach((header, index) => {
+                const icon = header.querySelector('i');
+                if (icon) {
+                    if (index === columnIndex) {
+                        icon.className = isAscending ? 'bi bi-arrow-up' : 'bi bi-arrow-down';
+                    } else {
+                        icon.className = 'bi bi-arrow-down-up';
+                    }
+                }
+            });
+        }
+    </script>
 </body>
 </html>
