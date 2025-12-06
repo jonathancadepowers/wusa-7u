@@ -21,6 +21,8 @@
             border-radius: 4px;
             cursor: move;
             transition: all 0.2s;
+            display: flex;
+            align-items: center;
         }
         .team-item:hover {
             background-color: #f8f9fa;
@@ -38,6 +40,19 @@
         }
         .min-vh-20 {
             min-height: 300px;
+        }
+        .rank-badge {
+            background-color: #0d6efd;
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 10px;
+            flex-shrink: 0;
         }
     </style>
 </head>
@@ -292,8 +307,9 @@
                 this.appendChild(clone);
             }
 
-            // Update the hidden field
+            // Update the hidden field and badges
             updateOrderField();
+            updateOrderBadges();
 
             return false;
         }
@@ -303,6 +319,25 @@
             const teamItems = draftOrder.querySelectorAll('.team-item');
             const teamIds = Array.from(teamItems).map(item => item.getAttribute('data-team-id'));
             document.getElementById('orderField').value = teamIds.join(',');
+        }
+
+        function updateOrderBadges() {
+            const draftOrder = document.getElementById('draftOrder');
+            const teamItems = draftOrder.querySelectorAll('.team-item');
+
+            teamItems.forEach((item, index) => {
+                // Remove existing rank badge if any
+                const existingBadge = item.querySelector('.rank-badge');
+                if (existingBadge) {
+                    existingBadge.remove();
+                }
+
+                // Add new rank badge
+                const badge = document.createElement('span');
+                badge.className = 'rank-badge';
+                badge.textContent = index + 1;
+                item.insertBefore(badge, item.firstChild);
+            });
         }
 
         // Initialize existing draft order if editing
@@ -323,6 +358,7 @@
                 });
 
                 updateOrderField();
+                updateOrderBadges();
             }
 
             // Update order field before form submission
