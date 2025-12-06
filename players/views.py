@@ -21,6 +21,15 @@ def admin_dashboard_view(request):
     return render(request, 'players/admin_dashboard.html')
 
 
+def public_portal_view(request):
+    """Public portal listing all teams"""
+    teams = Team.objects.all().order_by('name')
+    context = {
+        'teams': teams
+    }
+    return render(request, 'players/public_portal.html', context)
+
+
 def players_list_view(request):
     """List all players with search, sorting, and pagination"""
     search_query = request.GET.get('search', '')
