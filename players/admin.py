@@ -1,5 +1,11 @@
 from django.contrib import admin
-from .models import Player, Team
+from .models import Player, Team, Manager
+
+
+@admin.register(Manager)
+class ManagerAdmin(admin.ModelAdmin):
+    list_display = ['first_name', 'last_name', 'email', 'phone', 'created_at', 'updated_at']
+    search_fields = ['first_name', 'last_name', 'email', 'phone']
 
 
 @admin.register(Team)
