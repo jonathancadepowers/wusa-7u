@@ -83,6 +83,7 @@ class Player(models.Model):
 
 
 class PlayerRanking(models.Model):
+    manager = models.ForeignKey(Manager, on_delete=models.SET_NULL, null=True, blank=True, related_name='rankings')
     ranking = models.TextField()
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -92,4 +93,4 @@ class PlayerRanking(models.Model):
         db_table = 'player_rankings'
 
     def __str__(self):
-        return f"Ranking {self.id}"
+        return f"Ranking {self.id} by {self.manager}" if self.manager else f"Ranking {self.id}"

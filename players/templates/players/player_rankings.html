@@ -95,6 +95,9 @@
                         <form method="post" id="rankingsForm">
                             {% csrf_token %}
                             <input type="hidden" id="rankingsField" name="rankings" value="">
+                            {% if team_secret %}
+                                <input type="hidden" name="team_secret" value="{{ team_secret }}">
+                            {% endif %}
 
                             <div class="row">
                                 <div class="col-md-6">

@@ -772,6 +772,18 @@ def team_delete_view(request, pk):
 
 def player_rankings_view(request):
     """Create new player rankings (top 20 players)"""
+    # Get team_secret from URL parameter
+    team_secret = request.GET.get('team_secret', request.POST.get('team_secret', ''))
+
+    # Find the manager associated with this team_secret
+    manager = None
+    if team_secret:
+        try:
+            team = Team.objects.get(manager_secret=team_secret)
+            manager = team.manager
+        except Team.DoesNotExist:
+            messages.error(request, 'Invalid team secret.')
+
     if request.method == 'POST':
         # Get the rankings data from the form (comma-separated player IDs in ranked order)
         rankings_data = request.POST.get('rankings', '')
@@ -786,12 +798,17 @@ def player_rankings_view(request):
                 for idx, player_id in enumerate(player_ids)
             ])
 
-            # Save to database
-            ranking = PlayerRanking(ranking=rankings_json)
+            # Save to database with manager association
+            ranking = PlayerRanking(ranking=rankings_json, manager=manager)
             ranking.save()
 
             messages.success(request, f'Player rankings saved successfully! ({len(player_ids)} players ranked)')
-            return redirect('players:player_rankings')
+
+            # Redirect back to team page if team_secret was provided
+            if team_secret:
+                return redirect('players:team_detail', team_secret=team_secret)
+            else:
+                return redirect('players:player_rankings')
         else:
             messages.error(request, 'No rankings data provided.')
 
@@ -799,6 +816,8 @@ def player_rankings_view(request):
     all_players = Player.objects.all().order_by('last_name', 'first_name')
 
     context = {
-        'all_players': all_players
+        'all_players': all_players,
+        'team_secret': team_secret,
+        'manager': manager
     }
     return render(request, 'players/player_rankings.html', context)
