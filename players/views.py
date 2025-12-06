@@ -45,28 +45,39 @@ def create_draft_view(request):
 
 
 def edit_draft_view(request):
-    """Edit existing draft"""
+    """Edit existing draft or create new one"""
     from .models import Draft
 
     # Get the first (and should be only) draft
     draft = Draft.objects.first()
 
-    if not draft:
-        messages.error(request, 'No draft exists. Please create one first.')
-        return redirect('players:settings')
-
     if request.method == 'POST':
-        draft.rounds = request.POST.get('rounds')
-        draft.status = request.POST.get('status')
-        draft.draft_date = request.POST.get('draft_date')
-        draft.picks_per_round = request.POST.get('picks_per_round')
-        draft.public_url_secret = request.POST.get('public_url_secret')
-        draft.order = request.POST.get('order', '')
-        draft.save()
-        messages.success(request, 'Draft updated successfully!')
+        if draft:
+            # Update existing draft
+            draft.rounds = request.POST.get('rounds')
+            draft.status = request.POST.get('status')
+            draft.draft_date = request.POST.get('draft_date')
+            draft.picks_per_round = request.POST.get('picks_per_round')
+            draft.public_url_secret = request.POST.get('public_url_secret')
+            draft.order = request.POST.get('order', '')
+            draft.save()
+            messages.success(request, 'Draft updated successfully!')
+        else:
+            # Create new draft
+            draft = Draft(
+                rounds=request.POST.get('rounds'),
+                status=request.POST.get('status'),
+                draft_date=request.POST.get('draft_date'),
+                picks_per_round=request.POST.get('picks_per_round'),
+                public_url_secret=request.POST.get('public_url_secret'),
+                order=request.POST.get('order', '')
+            )
+            draft.save()
+            messages.success(request, 'Draft created successfully!')
         return redirect('players:edit_draft')
 
-    return render(request, 'players/draft_form.html', {'draft': draft, 'is_create': False})
+    is_create = draft is None
+    return render(request, 'players/draft_form.html', {'draft': draft, 'is_create': is_create})
 
 
 def admin_dashboard_view(request):
