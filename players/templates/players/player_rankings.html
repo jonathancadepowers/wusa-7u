@@ -77,12 +77,6 @@
         <div class="row">
             <div class="col-lg-10 offset-lg-1">
                 <div class="card shadow">
-                    <div class="card-header bg-primary text-white">
-                        <h4 class="mb-0">
-                            <i class="bi bi-star-fill me-2"></i>
-                            Rank Top 20 Players
-                        </h4>
-                    </div>
                     <div class="card-body">
                         <div class="alert alert-info">
                             <i class="bi bi-info-circle me-2"></i>
@@ -102,8 +96,12 @@
                                         <div class="card-header bg-secondary text-white">
                                             <strong><i class="bi bi-people me-2"></i>Available Players</strong>
                                         </div>
-                                        <div class="card-body available-players-zone">
-                                            <div id="availablePlayers" class="player-drop-zone">
+                                        <div class="card-body">
+                                            <div class="mb-3">
+                                                <input type="text" id="playerSearch" class="form-control" placeholder="Search players by name...">
+                                            </div>
+                                            <div class="available-players-zone">
+                                                <div id="availablePlayers" class="player-drop-zone">
                                                 {% for player in all_players %}
                                                     <div class="player-item" draggable="true" data-player-id="{{ player.id }}">
                                                         <i class="bi bi-grip-vertical me-2"></i>
@@ -111,6 +109,7 @@
                                                     </div>
                                                 {% endfor %}
                                             </div>
+                                        </div>
                                         </div>
                                     </div>
                                 </div>
@@ -319,6 +318,24 @@
 
             // Disable submit button initially
             document.getElementById('submitBtn').disabled = true;
+
+            // Player search/filter functionality
+            const searchInput = document.getElementById('playerSearch');
+            const availablePlayers = document.getElementById('availablePlayers');
+
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const playerItems = availablePlayers.querySelectorAll('.player-item');
+
+                playerItems.forEach(item => {
+                    const playerName = item.querySelector('span').textContent.toLowerCase();
+                    if (playerName.includes(searchTerm)) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
 
             // Update rankings field before form submission
             document.getElementById('rankingsForm').addEventListener('submit', function(e) {
