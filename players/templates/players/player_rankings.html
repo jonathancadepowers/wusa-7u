@@ -114,8 +114,7 @@
                                             <div class="mb-3">
                                                 <input type="text" id="playerSearch" class="form-control" placeholder="Search players by name...">
                                             </div>
-                                            <div class="available-players-zone">
-                                                <div id="availablePlayers" class="player-drop-zone">
+                                            <div id="availablePlayers" class="player-drop-zone">
                                                 {% for player in all_players %}
                                                     <div class="player-item" draggable="true" data-player-id="{{ player.id }}">
                                                         <i class="bi bi-grip-vertical me-2"></i>
@@ -123,7 +122,6 @@
                                                     </div>
                                                 {% endfor %}
                                             </div>
-                                        </div>
                                         </div>
                                     </div>
                                 </div>
