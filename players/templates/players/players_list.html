@@ -36,17 +36,53 @@
                 </a>
             </div>
             <div class="card-body">
-                <!-- Search Bar -->
-                <form method="get" class="mb-4">
-                    <div class="input-group">
-                        <input type="text" name="search" class="form-control" placeholder="Search by name or school..." value="{{ search_query }}">
+                <!-- Search and Filters -->
+                <form method="get" class="mb-4" id="filterForm">
+                    <!-- Search Bar -->
+                    <div class="input-group mb-3">
+                        <input type="text" name="search" class="form-control" placeholder="Search by name, school, email, or phone..." value="{{ search_query }}">
                         <button class="btn btn-primary" type="submit">
                             <i class="bi bi-search"></i> Search
                         </button>
-                        {% if search_query %}
-                            <a href="{% url 'players:list' %}" class="btn btn-secondary">Clear</a>
+                        {% if search_query or school_filter or jersey_filter or history_filter %}
+                            <a href="{% url 'players:list' %}" class="btn btn-secondary">Clear All</a>
                         {% endif %}
                     </div>
+
+                    <!-- Column Filters -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label small">Filter by School</label>
+                            <select name="school" class="form-select form-select-sm" onchange="this.form.submit()">
+                                <option value="">All Schools</option>
+                                {% for school in all_schools %}
+                                    <option value="{{ school }}" {% if school_filter == school %}selected{% endif %}>{{ school }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small">Filter by Jersey Size</label>
+                            <select name="jersey" class="form-select form-select-sm" onchange="this.form.submit()">
+                                <option value="">All Sizes</option>
+                                {% for jersey in all_jerseys %}
+                                    <option value="{{ jersey }}" {% if jersey_filter == jersey %}selected{% endif %}>{{ jersey }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small">Filter by History</label>
+                            <select name="history" class="form-select form-select-sm" onchange="this.form.submit()">
+                                <option value="">All</option>
+                                {% for hist in all_history %}
+                                    <option value="{{ hist }}" {% if history_filter == hist %}selected{% endif %}>{{ hist }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Hidden inputs to preserve sort state -->
+                    <input type="hidden" name="sort" value="{{ sort_by }}">
+                    <input type="hidden" name="order" value="{{ order }}">
                 </form>
 
                 <!-- Stats -->
@@ -63,12 +99,47 @@
                     <table class="table table-hover">
                         <thead class="table-light">
                             <tr>
-                                <th>Name</th>
-                                <th>Birthday</th>
-                                <th>School</th>
-                                <th>Parent Email</th>
+                                <th>
+                                    <a href="?sort=last_name&order={% if sort_by == 'last_name' and order == 'asc' %}desc{% else %}asc{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}{% if school_filter %}&school={{ school_filter }}{% endif %}{% if jersey_filter %}&jersey={{ jersey_filter }}{% endif %}{% if history_filter %}&history={{ history_filter }}{% endif %}" class="text-decoration-none text-dark">
+                                        Name
+                                        {% if sort_by == 'last_name' %}
+                                            <i class="bi bi-arrow-{% if order == 'asc' %}up{% else %}down{% endif %}"></i>
+                                        {% endif %}
+                                    </a>
+                                </th>
+                                <th>
+                                    <a href="?sort=birthday&order={% if sort_by == 'birthday' and order == 'asc' %}desc{% else %}asc{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}{% if school_filter %}&school={{ school_filter }}{% endif %}{% if jersey_filter %}&jersey={{ jersey_filter }}{% endif %}{% if history_filter %}&history={{ history_filter }}{% endif %}" class="text-decoration-none text-dark">
+                                        Birthday
+                                        {% if sort_by == 'birthday' %}
+                                            <i class="bi bi-arrow-{% if order == 'asc' %}up{% else %}down{% endif %}"></i>
+                                        {% endif %}
+                                    </a>
+                                </th>
+                                <th>
+                                    <a href="?sort=school&order={% if sort_by == 'school' and order == 'asc' %}desc{% else %}asc{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}{% if school_filter %}&school={{ school_filter }}{% endif %}{% if jersey_filter %}&jersey={{ jersey_filter }}{% endif %}{% if history_filter %}&history={{ history_filter }}{% endif %}" class="text-decoration-none text-dark">
+                                        School
+                                        {% if sort_by == 'school' %}
+                                            <i class="bi bi-arrow-{% if order == 'asc' %}up{% else %}down{% endif %}"></i>
+                                        {% endif %}
+                                    </a>
+                                </th>
+                                <th>
+                                    <a href="?sort=parent_email_1&order={% if sort_by == 'parent_email_1' and order == 'asc' %}desc{% else %}asc{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}{% if school_filter %}&school={{ school_filter }}{% endif %}{% if jersey_filter %}&jersey={{ jersey_filter }}{% endif %}{% if history_filter %}&history={{ history_filter }}{% endif %}" class="text-decoration-none text-dark">
+                                        Parent Email
+                                        {% if sort_by == 'parent_email_1' %}
+                                            <i class="bi bi-arrow-{% if order == 'asc' %}up{% else %}down{% endif %}"></i>
+                                        {% endif %}
+                                    </a>
+                                </th>
                                 <th>Parent Phone</th>
-                                <th>Jersey Size</th>
+                                <th>
+                                    <a href="?sort=jersey_size&order={% if sort_by == 'jersey_size' and order == 'asc' %}desc{% else %}asc{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}{% if school_filter %}&school={{ school_filter }}{% endif %}{% if jersey_filter %}&jersey={{ jersey_filter }}{% endif %}{% if history_filter %}&history={{ history_filter }}{% endif %}" class="text-decoration-none text-dark">
+                                        Jersey Size
+                                        {% if sort_by == 'jersey_size' %}
+                                            <i class="bi bi-arrow-{% if order == 'asc' %}up{% else %}down{% endif %}"></i>
+                                        {% endif %}
+                                    </a>
+                                </th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -113,10 +184,10 @@
                         <ul class="pagination justify-content-center">
                             {% if page_obj.has_previous %}
                                 <li class="page-item">
-                                    <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}">First</a>
+                                    <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if order %}&order={{ order }}{% endif %}{% if school_filter %}&school={{ school_filter }}{% endif %}{% if jersey_filter %}&jersey={{ jersey_filter }}{% endif %}{% if history_filter %}&history={{ history_filter }}{% endif %}">First</a>
                                 </li>
                                 <li class="page-item">
-                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Previous</a>
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if order %}&order={{ order }}{% endif %}{% if school_filter %}&school={{ school_filter }}{% endif %}{% if jersey_filter %}&jersey={{ jersey_filter }}{% endif %}{% if history_filter %}&history={{ history_filter }}{% endif %}">Previous</a>
                                 </li>
                             {% endif %}
 
@@ -128,10 +199,10 @@
 
                             {% if page_obj.has_next %}
                                 <li class="page-item">
-                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Next</a>
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if order %}&order={{ order }}{% endif %}{% if school_filter %}&school={{ school_filter }}{% endif %}{% if jersey_filter %}&jersey={{ jersey_filter }}{% endif %}{% if history_filter %}&history={{ history_filter }}{% endif %}">Next</a>
                                 </li>
                                 <li class="page-item">
-                                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}">Last</a>
+                                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if order %}&order={{ order }}{% endif %}{% if school_filter %}&school={{ school_filter }}{% endif %}{% if jersey_filter %}&jersey={{ jersey_filter }}{% endif %}{% if history_filter %}&history={{ history_filter }}{% endif %}">Last</a>
                                 </li>
                             {% endif %}
                         </ul>
