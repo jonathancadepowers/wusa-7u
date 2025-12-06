@@ -68,7 +68,14 @@
                                         {% endif %}
                                     </a>
                                 </th>
-                                <th>Team</th>
+                                <th>
+                                    <a href="?sort=team__name&order={% if sort_by == 'team__name' and order == 'asc' %}desc{% else %}asc{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" class="text-decoration-none text-dark">
+                                        Team
+                                        {% if sort_by == 'team__name' %}
+                                            <i class="bi bi-arrow-{% if order == 'asc' %}up{% else %}down{% endif %}"></i>
+                                        {% endif %}
+                                    </a>
+                                </th>
                                 <th>
                                     <a href="?sort=school&order={% if sort_by == 'school' and order == 'asc' %}desc{% else %}asc{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" class="text-decoration-none text-dark">
                                         School
@@ -77,7 +84,14 @@
                                         {% endif %}
                                     </a>
                                 </th>
-                                <th>History</th>
+                                <th>
+                                    <a href="?sort=history&order={% if sort_by == 'history' and order == 'asc' %}desc{% else %}asc{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" class="text-decoration-none text-dark">
+                                        History
+                                        {% if sort_by == 'history' %}
+                                            <i class="bi bi-arrow-{% if order == 'asc' %}up{% else %}down{% endif %}"></i>
+                                        {% endif %}
+                                    </a>
+                                </th>
                                 <th>Actions</th>
                             </tr>
                         </thead>

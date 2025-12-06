@@ -36,17 +36,24 @@ def players_list_view(request):
         )
 
     # Apply sorting
-    valid_sort_fields = ['last_name', 'first_name', 'birthday', 'school', 'jersey_size', 'parent_email_1']
+    valid_sort_fields = ['last_name', 'first_name', 'team__name', 'school', 'history']
     if sort_by in valid_sort_fields:
         if order == 'desc':
-            players = players.order_by(f'-{sort_by}')
+            # For team sorting, handle null values
+            if sort_by == 'team__name':
+                players = players.order_by(f'-{sort_by}', 'last_name', 'first_name')
+            else:
+                players = players.order_by(f'-{sort_by}', 'last_name', 'first_name')
         else:
-            players = players.order_by(sort_by)
+            if sort_by == 'team__name':
+                players = players.order_by(f'{sort_by}', 'last_name', 'first_name')
+            else:
+                players = players.order_by(sort_by, 'last_name', 'first_name')
     else:
         players = players.order_by('last_name', 'first_name')
 
     # Pagination
-    paginator = Paginator(players, 25)  # 25 players per page
+    paginator = Paginator(players, 50)  # 50 players per page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
