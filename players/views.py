@@ -16,6 +16,11 @@ def settings_view(request):
     return render(request, 'players/settings.html')
 
 
+def admin_dashboard_view(request):
+    """Admin dashboard with links to main pages"""
+    return render(request, 'players/admin_dashboard.html')
+
+
 def players_list_view(request):
     """List all players with search, sorting, and pagination"""
     search_query = request.GET.get('search', '')

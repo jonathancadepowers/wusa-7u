@@ -4,6 +4,7 @@ from . import views
 app_name = 'players'
 
 urlpatterns = [
+    path('admin_dashboard/', views.admin_dashboard_view, name='admin_dashboard'),
     path('settings/', views.settings_view, name='settings'),
     path('api/import-players/', views.import_players_view, name='import_players'),
     path('players/', views.players_list_view, name='list'),
