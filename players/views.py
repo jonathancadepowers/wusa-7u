@@ -47,6 +47,8 @@ def create_draft_view(request):
 def edit_draft_view(request):
     """Edit existing draft or create new one"""
     from .models import Draft
+    import string
+    import random
 
     # Get the first (and should be only) draft
     draft = Draft.objects.first()
@@ -77,7 +79,34 @@ def edit_draft_view(request):
         return redirect('players:edit_draft')
 
     is_create = draft is None
-    return render(request, 'players/draft_form.html', {'draft': draft, 'is_create': is_create})
+
+    # Calculate default values for new draft
+    suggested_rounds = 0
+    suggested_picks_per_round = 0
+    suggested_secret = ''
+
+    if is_create:
+        # Count players and teams
+        player_count = Player.objects.count()
+        team_count = Team.objects.count()
+
+        # Calculate suggested rounds (players / teams)
+        if team_count > 0:
+            suggested_rounds = int(player_count / team_count)
+            suggested_picks_per_round = team_count
+
+        # Generate random 8-character alphanumeric secret
+        characters = string.ascii_letters + string.digits
+        suggested_secret = ''.join(random.choice(characters) for _ in range(8))
+
+    context = {
+        'draft': draft,
+        'is_create': is_create,
+        'suggested_rounds': suggested_rounds,
+        'suggested_picks_per_round': suggested_picks_per_round,
+        'suggested_secret': suggested_secret
+    }
+    return render(request, 'players/draft_form.html', context)
 
 
 def admin_dashboard_view(request):
