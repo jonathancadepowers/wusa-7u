@@ -5,7 +5,7 @@ from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from django.contrib import messages
 from django.core.paginator import Paginator
-from .models import Player, Team
+from .models import Player, Team, Manager
 import pandas as pd
 import os
 from datetime import datetime
@@ -280,3 +280,84 @@ def team_detail_view(request, team_secret):
         'players': players
     }
     return render(request, 'players/team_detail.html', context)
+
+
+def managers_list_view(request):
+    """List all managers with search and pagination"""
+    search_query = request.GET.get('search', '')
+
+    managers = Manager.objects.all()
+
+    # Apply search
+    if search_query:
+        from django.db.models import Q
+        managers = managers.filter(
+            Q(first_name__icontains=search_query) |
+            Q(last_name__icontains=search_query) |
+            Q(email__icontains=search_query) |
+            Q(phone__icontains=search_query)
+        )
+
+    # Order by last name
+    managers = managers.order_by('last_name', 'first_name')
+
+    # Pagination
+    paginator = Paginator(managers, 25)  # 25 managers per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'page_obj': page_obj,
+        'search_query': search_query,
+        'total_managers': Manager.objects.count()
+    }
+    return render(request, 'players/managers_list.html', context)
+
+
+def manager_detail_view(request, pk):
+    """View and edit a single manager"""
+    manager = get_object_or_404(Manager, pk=pk)
+
+    if request.method == 'POST':
+        # Update manager
+        manager.first_name = request.POST.get('first_name')
+        manager.last_name = request.POST.get('last_name')
+        manager.email = request.POST.get('email')
+        manager.phone = request.POST.get('phone')
+
+        manager.save()
+        messages.success(request, f'Manager {manager.first_name} {manager.last_name} updated successfully!')
+        return redirect('players:manager_detail', pk=manager.pk)
+
+    context = {'manager': manager}
+    return render(request, 'players/manager_detail.html', context)
+
+
+def manager_create_view(request):
+    """Create a new manager"""
+    if request.method == 'POST':
+        manager = Manager(
+            first_name=request.POST.get('first_name'),
+            last_name=request.POST.get('last_name'),
+            email=request.POST.get('email'),
+            phone=request.POST.get('phone'),
+        )
+        manager.save()
+        messages.success(request, f'Manager {manager.first_name} {manager.last_name} created successfully!')
+        return redirect('players:managers_list')
+
+    return render(request, 'players/manager_create.html')
+
+
+def manager_delete_view(request, pk):
+    """Delete a manager"""
+    manager = get_object_or_404(Manager, pk=pk)
+
+    if request.method == 'POST':
+        manager_name = f"{manager.first_name} {manager.last_name}"
+        manager.delete()
+        messages.success(request, f'Manager {manager_name} deleted successfully!')
+        return redirect('players:managers_list')
+
+    context = {'manager': manager}
+    return render(request, 'players/manager_confirm_delete.html', context)
