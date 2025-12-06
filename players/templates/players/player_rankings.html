@@ -337,8 +337,32 @@
         document.addEventListener('DOMContentLoaded', function() {
             initializeDragAndDrop();
 
-            // Disable submit button initially
-            document.getElementById('submitBtn').disabled = true;
+            // Load existing rankings if they exist
+            const existingRankings = {{ ranked_player_ids|safe }};
+            if (existingRankings && existingRankings.length > 0) {
+                const availablePlayers = document.getElementById('availablePlayers');
+                const rankedPlayers = document.getElementById('rankedPlayers');
+
+                // Remove placeholder text
+                const placeholder = rankedPlayers.querySelector('p.text-muted');
+                if (placeholder) {
+                    placeholder.remove();
+                }
+
+                // Move players from available to ranked in the correct order
+                existingRankings.forEach(playerId => {
+                    const playerItem = availablePlayers.querySelector(`[data-player-id="${playerId}"]`);
+                    if (playerItem) {
+                        rankedPlayers.appendChild(playerItem);
+                    }
+                });
+
+                updateRankBadges();
+                updateRankingsField();
+            } else {
+                // Disable submit button initially if no existing rankings
+                document.getElementById('submitBtn').disabled = true;
+            }
 
             // Player search/filter functionality
             const searchInput = document.getElementById('playerSearch');

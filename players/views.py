@@ -771,7 +771,7 @@ def team_delete_view(request, pk):
 
 
 def player_rankings_view(request):
-    """Create new player rankings (top 20 players)"""
+    """Create or update player rankings (top 20 players)"""
     # Get team_secret from URL parameter
     team_secret = request.GET.get('team_secret', request.POST.get('team_secret', ''))
 
@@ -798,9 +798,15 @@ def player_rankings_view(request):
                 for idx, player_id in enumerate(player_ids)
             ])
 
-            # Save to database with manager association
-            ranking = PlayerRanking(ranking=rankings_json, manager=manager)
-            ranking.save()
+            # Update or create ranking for this manager (ensures only one ranking per manager)
+            if manager:
+                PlayerRanking.objects.update_or_create(
+                    manager=manager,
+                    defaults={'ranking': rankings_json}
+                )
+            else:
+                # If no manager, just create a new ranking
+                PlayerRanking.objects.create(ranking=rankings_json)
 
             messages.success(request, f'Player rankings saved successfully! ({len(player_ids)} players ranked)')
 
@@ -812,12 +818,25 @@ def player_rankings_view(request):
         else:
             messages.error(request, 'No rankings data provided.')
 
+    # Load existing rankings for this manager
+    existing_ranking = None
+    ranked_player_ids = []
+    if manager:
+        try:
+            existing_ranking = PlayerRanking.objects.get(manager=manager)
+            # Parse the JSON to get player IDs in order
+            rankings_data = json.loads(existing_ranking.ranking)
+            ranked_player_ids = [item['player_id'] for item in rankings_data]
+        except PlayerRanking.DoesNotExist:
+            pass
+
     # Get all players for the dropdown, ordered by name
     all_players = Player.objects.all().order_by('last_name', 'first_name')
 
     context = {
         'all_players': all_players,
         'team_secret': team_secret,
-        'manager': manager
+        'manager': manager,
+        'ranked_player_ids': json.dumps(ranked_player_ids)  # Pass as JSON for JavaScript
     }
     return render(request, 'players/player_rankings.html', context)
