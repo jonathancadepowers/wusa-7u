@@ -24,8 +24,8 @@
                 <div class="mb-4">
                     <h5 class="text-muted">Manager</h5>
                     <p class="fs-5">
-                        {% if players %}
-                            {{ players.0.manager_volunteer_name|default:"Not assigned" }}
+                        {% if team.manager %}
+                            {{ team.manager.first_name }} {{ team.manager.last_name }}
                         {% else %}
                             Not assigned
                         {% endif %}
