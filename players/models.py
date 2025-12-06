@@ -25,6 +25,7 @@ class Manager(models.Model):
     last_name = models.CharField(max_length=100)
     email = models.EmailField()
     phone = models.CharField(max_length=20)
+    daughter = models.ForeignKey('Player', on_delete=models.SET_NULL, null=True, blank=True, related_name='manager_parent')
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

@@ -587,11 +587,29 @@ def manager_detail_view(request, pk):
         manager.email = request.POST.get('email')
         manager.phone = request.POST.get('phone')
 
+        # Update daughter assignment
+        daughter_id = request.POST.get('daughter')
+        if daughter_id:
+            manager.daughter = Player.objects.get(pk=daughter_id)
+        else:
+            manager.daughter = None
+
         manager.save()
         messages.success(request, f'Manager {manager.first_name} {manager.last_name} updated successfully!')
         return redirect('players:manager_detail', pk=manager.pk)
 
-    context = {'manager': manager}
+    # Get available players (not already assigned to another manager as daughter)
+    available_players = Player.objects.filter(manager_parent__isnull=True).order_by('last_name', 'first_name')
+
+    # If this manager already has a daughter, include her in the list
+    if manager.daughter:
+        available_players = available_players | Player.objects.filter(pk=manager.daughter.pk)
+        available_players = available_players.distinct().order_by('last_name', 'first_name')
+
+    context = {
+        'manager': manager,
+        'available_players': available_players
+    }
     return render(request, 'players/manager_detail.html', context)
 
 
