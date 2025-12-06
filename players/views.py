@@ -5,7 +5,7 @@ from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from django.contrib import messages
 from django.core.paginator import Paginator
-from .models import Player, Team, Manager, PlayerRanking
+from .models import Player, Team, Manager, PlayerRanking, ManagerDaughterRanking
 import pandas as pd
 import json
 import os
@@ -844,3 +844,77 @@ def player_rankings_view(request):
         'manager_daughter_ids': json.dumps(manager_daughter_ids)  # Pass as JSON for JavaScript
     }
     return render(request, 'players/player_rankings.html', context)
+
+
+def manager_daughter_rankings_view(request):
+    """Create or update manager daughter rankings"""
+    # Get team_secret from URL parameter
+    team_secret = request.GET.get('team_secret', request.POST.get('team_secret', ''))
+
+    # Find the manager associated with this team_secret
+    manager = None
+    if team_secret:
+        try:
+            team = Team.objects.get(manager_secret=team_secret)
+            manager = team.manager
+        except Team.DoesNotExist:
+            messages.error(request, 'Invalid team secret.')
+
+    if request.method == 'POST':
+        # Get the rankings data from the form (comma-separated player IDs in ranked order)
+        rankings_data = request.POST.get('rankings', '')
+
+        if rankings_data:
+            # Parse the comma-separated IDs
+            player_ids = [int(pid) for pid in rankings_data.split(',') if pid]
+
+            # Create a JSON structure with rank and player ID
+            rankings_json = json.dumps([
+                {"rank": idx + 1, "player_id": player_id}
+                for idx, player_id in enumerate(player_ids)
+            ])
+
+            # Update or create ranking for this manager (ensures only one ranking per manager)
+            if manager:
+                ManagerDaughterRanking.objects.update_or_create(
+                    manager=manager,
+                    defaults={'ranking': rankings_json}
+                )
+            else:
+                # If no manager, just create a new ranking
+                ManagerDaughterRanking.objects.create(ranking=rankings_json)
+
+            messages.success(request, f'Manager daughter rankings saved successfully! ({len(player_ids)} players ranked)')
+
+            # Redirect back to team page if team_secret was provided
+            if team_secret:
+                return redirect('players:team_detail', team_secret=team_secret)
+            else:
+                return redirect('players:manager_daughter_rankings')
+        else:
+            messages.error(request, 'No rankings data provided.')
+
+    # Load existing rankings for this manager
+    existing_ranking = None
+    ranked_player_ids = []
+    if manager:
+        try:
+            existing_ranking = ManagerDaughterRanking.objects.get(manager=manager)
+            # Parse the JSON to get player IDs in order
+            rankings_data = json.loads(existing_ranking.ranking)
+            ranked_player_ids = [item['player_id'] for item in rankings_data]
+        except ManagerDaughterRanking.DoesNotExist:
+            pass
+
+    # Get only players who are managers' daughters, ordered by name
+    manager_daughter_ids = Manager.objects.filter(daughter__isnull=False).values_list('daughter_id', flat=True)
+    all_players = Player.objects.filter(id__in=manager_daughter_ids).order_by('last_name', 'first_name')
+
+    context = {
+        'all_players': all_players,
+        'team_secret': team_secret,
+        'manager': manager,
+        'ranked_player_ids': json.dumps(ranked_player_ids),  # Pass as JSON for JavaScript
+        'manager_daughter_ids': json.dumps(list(manager_daughter_ids))  # Pass as JSON for JavaScript
+    }
+    return render(request, 'players/manager_daughter_rankings.html', context)

@@ -27,4 +27,5 @@ urlpatterns = [
     path('managers/<int:pk>/delete/', views.manager_delete_view, name='manager_delete'),
     path('managers/<int:pk>/assign-team/', views.assign_manager_team_view, name='assign_manager_team'),
     path('player_rankings/', views.player_rankings_view, name='player_rankings'),
+    path('manager_daughter_rankings/', views.manager_daughter_rankings_view, name='manager_daughter_rankings'),
 ]

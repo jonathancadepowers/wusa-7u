@@ -94,3 +94,17 @@ class PlayerRanking(models.Model):
 
     def __str__(self):
         return f"Ranking {self.id} by {self.manager}" if self.manager else f"Ranking {self.id}"
+
+
+class ManagerDaughterRanking(models.Model):
+    manager = models.ForeignKey(Manager, on_delete=models.SET_NULL, null=True, blank=True, related_name='daughter_rankings')
+    ranking = models.TextField()
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'manager_daughter_rankings'
+
+    def __str__(self):
+        return f"Manager Daughter Ranking {self.id} by {self.manager}" if self.manager else f"Manager Daughter Ranking {self.id}"
