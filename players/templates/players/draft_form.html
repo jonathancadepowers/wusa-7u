@@ -274,6 +274,9 @@
             // Clone the dragged element
             const clone = draggedElement.cloneNode(true);
 
+            // Remove the dragging class from the clone to ensure visibility
+            clone.classList.remove('dragging');
+
             // Re-add event listeners to the clone
             clone.addEventListener('dragstart', handleDragStart);
             clone.addEventListener('dragend', handleDragEnd);
