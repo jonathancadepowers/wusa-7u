@@ -19,6 +19,7 @@ class Manager(models.Model):
 
 
 class Team(models.Model):
+    manager = models.ForeignKey(Manager, on_delete=models.SET_NULL, null=True, blank=True, related_name='teams')
     name = models.CharField(max_length=100)
     manager_secret = models.CharField(max_length=100)
 

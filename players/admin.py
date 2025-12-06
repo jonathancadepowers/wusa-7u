@@ -10,7 +10,8 @@ class ManagerAdmin(admin.ModelAdmin):
 
 @admin.register(Team)
 class TeamAdmin(admin.ModelAdmin):
-    list_display = ['name', 'manager_secret', 'created_at', 'updated_at']
+    list_display = ['name', 'manager', 'manager_secret', 'created_at', 'updated_at']
+    list_filter = ['manager']
     search_fields = ['name', 'manager_secret']
 
 
