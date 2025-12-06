@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Player, Team, Manager, Draft
+from .models import Player, Team, Manager, Draft, PlayerRanking
 
 
 @admin.register(Draft)
@@ -51,3 +51,9 @@ class PlayerAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+
+
+@admin.register(PlayerRanking)
+class PlayerRankingAdmin(admin.ModelAdmin):
+    list_display = ['id', 'ranking', 'created_at', 'updated_at']
+    search_fields = ['ranking']

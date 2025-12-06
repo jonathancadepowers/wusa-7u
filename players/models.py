@@ -80,3 +80,16 @@ class Player(models.Model):
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
+
+
+class PlayerRanking(models.Model):
+    ranking = models.TextField()
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'player_rankings'
+
+    def __str__(self):
+        return f"Ranking {self.id}"
