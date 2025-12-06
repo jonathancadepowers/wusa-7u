@@ -92,6 +92,11 @@
             <div class="col-lg-10 offset-lg-1">
                 <div class="card shadow">
                     <div class="card-body">
+                        <div class="alert alert-warning" id="incompleteWarning" style="display: none;">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Your rankings are not complete/final until you rank exactly 20 players.
+                        </div>
+
                         <div class="alert alert-info">
                             <i class="bi bi-info-circle me-2"></i>
                             Drag players from the available list to the rankings area on the right. Arrange them in order from #1 (best) to #20.
@@ -318,6 +323,14 @@
             // Update rank count
             document.getElementById('rankCount').textContent = rankedItems.length;
 
+            // Show/hide incomplete warning
+            const incompleteWarning = document.getElementById('incompleteWarning');
+            if (rankedItems.length !== 20) {
+                incompleteWarning.style.display = 'block';
+            } else {
+                incompleteWarning.style.display = 'none';
+            }
+
             // Enable/disable submit button
             const submitBtn = document.getElementById('submitBtn');
             if (rankedItems.length > 0) {
@@ -362,6 +375,8 @@
             } else {
                 // Disable submit button initially if no existing rankings
                 document.getElementById('submitBtn').disabled = true;
+                // Show warning since no players are ranked
+                updateRankBadges();
             }
 
             // Player search/filter functionality
