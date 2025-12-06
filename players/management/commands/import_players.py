@@ -78,6 +78,11 @@ class Command(BaseCommand):
 
         for idx, row in df.iterrows():
             try:
+                # Skip rows where Enrollment Type is not "Player"
+                enrollment_type = row.get('Enrollment Type')
+                if pd.isna(enrollment_type) or str(enrollment_type).strip().lower() != 'player':
+                    continue
+
                 # Handle school field (combine School + Other School)
                 school = row.get('School')
                 if pd.notna(row.get('Other School')) and str(school).lower() == 'other':
@@ -102,11 +107,9 @@ class Command(BaseCommand):
 
                 additional_info = "\n".join(additional_info_parts) if additional_info_parts else None
 
-                # Convert birthday to date
+                # Convert birthday to date (allow blank/null birthdays)
                 birthday_value = pd.to_datetime(row['Enrollee Birthday'], errors='coerce')
-                if pd.isna(birthday_value):
-                    raise ValueError(f"Invalid birthday for {row['Enrollee First Name']} {row['Enrollee Last Name']}")
-                birthday = birthday_value.date()
+                birthday = birthday_value.date() if pd.notna(birthday_value) else None
 
                 # Create player object
                 player = Player(

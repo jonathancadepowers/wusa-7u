@@ -4,7 +4,7 @@ from django.db import models
 class Player(models.Model):
     last_name = models.CharField(max_length=100)
     first_name = models.CharField(max_length=100)
-    birthday = models.DateField()
+    birthday = models.DateField(blank=True, null=True)
     history = models.TextField(blank=True, null=True)
     school = models.CharField(max_length=200, blank=True, null=True)
     conflict = models.TextField(blank=True, null=True)
