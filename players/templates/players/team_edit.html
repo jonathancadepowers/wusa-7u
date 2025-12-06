@@ -77,6 +77,43 @@
                     </div>
                 </div>
 
+                <!-- Players Table -->
+                <div class="card mt-3 shadow">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0"><i class="bi bi-people-fill me-2"></i>Team Players ({{ team_players.count }})</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if team_players %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>School</th>
+                                            <th>History</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for player in team_players %}
+                                            <tr>
+                                                <td>
+                                                    <a href="{% url 'players:detail' player.pk %}" class="text-decoration-none">
+                                                        {{ player.first_name }} {{ player.last_name }}
+                                                    </a>
+                                                </td>
+                                                <td>{{ player.school|default:"-" }}</td>
+                                                <td>{{ player.history|default:"-" }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="text-muted text-center mb-0">No players assigned to this team yet.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
                 <!-- Metadata -->
                 <div class="card mt-3 shadow-sm">
                     <div class="card-body">

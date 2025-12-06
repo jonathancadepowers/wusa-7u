@@ -511,11 +511,12 @@ def manager_delete_view(request, pk):
 
 def teams_list_view(request):
     """List all teams with search, sorting, and pagination"""
+    from django.db.models import Count
     search_query = request.GET.get('search', '')
     sort_by = request.GET.get('sort', 'name')
     order = request.GET.get('order', 'asc')
 
-    teams = Team.objects.select_related('manager').all()
+    teams = Team.objects.select_related('manager').annotate(player_count=Count('players')).all()
 
     # Apply search
     if search_query:
@@ -527,7 +528,7 @@ def teams_list_view(request):
         )
 
     # Apply sorting
-    valid_sort_fields = ['name', 'manager__last_name']
+    valid_sort_fields = ['name', 'manager__last_name', 'player_count']
     if sort_by in valid_sort_fields:
         if order == 'desc':
             teams = teams.order_by(f'-{sort_by}', 'name')
@@ -581,9 +582,13 @@ def team_edit_view(request, pk):
     # Get all managers for dropdown
     all_managers = Manager.objects.all().order_by('last_name', 'first_name')
 
+    # Get all players assigned to this team
+    team_players = Player.objects.filter(team=team).order_by('first_name', 'last_name')
+
     context = {
         'team': team,
-        'all_managers': all_managers
+        'all_managers': all_managers,
+        'team_players': team_players
     }
     return render(request, 'players/team_edit.html', context)
 
