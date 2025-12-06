@@ -5,8 +5,9 @@ from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from django.contrib import messages
 from django.core.paginator import Paginator
-from .models import Player, Team, Manager
+from .models import Player, Team, Manager, PlayerRanking
 import pandas as pd
+import json
 import os
 from datetime import datetime
 
@@ -767,3 +768,37 @@ def team_delete_view(request, pk):
 
     context = {'team': team}
     return render(request, 'players/team_confirm_delete.html', context)
+
+
+def player_rankings_view(request):
+    """Create new player rankings (top 20 players)"""
+    if request.method == 'POST':
+        # Get the rankings data from the form (comma-separated player IDs in ranked order)
+        rankings_data = request.POST.get('rankings', '')
+
+        if rankings_data:
+            # Parse the comma-separated IDs
+            player_ids = [int(pid) for pid in rankings_data.split(',') if pid]
+
+            # Create a JSON structure with rank and player ID
+            rankings_json = json.dumps([
+                {"rank": idx + 1, "player_id": player_id}
+                for idx, player_id in enumerate(player_ids)
+            ])
+
+            # Save to database
+            ranking = PlayerRanking(ranking=rankings_json)
+            ranking.save()
+
+            messages.success(request, f'Player rankings saved successfully! ({len(player_ids)} players ranked)')
+            return redirect('players:player_rankings')
+        else:
+            messages.error(request, 'No rankings data provided.')
+
+    # Get all players for the dropdown, ordered by name
+    all_players = Player.objects.all().order_by('last_name', 'first_name')
+
+    context = {
+        'all_players': all_players
+    }
+    return render(request, 'players/player_rankings.html', context)
