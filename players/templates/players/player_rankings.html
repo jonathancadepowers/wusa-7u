@@ -18,8 +18,14 @@
             overflow-y: auto;
         }
         #availablePlayers {
-            height: 870px;
+            height: 920px;
             overflow-y: auto;
+        }
+        .available-players-card-body {
+            height: 1000px;
+        }
+        .rankings-card-body {
+            height: 1000px;
         }
         .player-item {
             background-color: #fff;
@@ -104,7 +110,7 @@
                                         <div class="card-header bg-secondary text-white">
                                             <strong><i class="bi bi-people me-2"></i>Available Players</strong>
                                         </div>
-                                        <div class="card-body">
+                                        <div class="card-body available-players-card-body">
                                             <div class="mb-3">
                                                 <input type="text" id="playerSearch" class="form-control" placeholder="Search players by name...">
                                             </div>
@@ -126,7 +132,7 @@
                                         <div class="card-header bg-success text-white">
                                             <strong><i class="bi bi-trophy-fill me-2"></i>Your Rankings (<span id="rankCount">0</span>/20)</strong>
                                         </div>
-                                        <div class="card-body">
+                                        <div class="card-body rankings-card-body">
                                             <div id="rankedPlayers" class="player-drop-zone">
                                                 <p class="text-muted text-center mt-5">Drag players here to rank them</p>
                                             </div>
