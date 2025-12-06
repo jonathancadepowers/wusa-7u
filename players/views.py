@@ -527,7 +527,7 @@ def teams_list_view(request):
         )
 
     # Apply sorting
-    valid_sort_fields = ['name', 'manager__last_name', 'manager_secret']
+    valid_sort_fields = ['name', 'manager__last_name']
     if sort_by in valid_sort_fields:
         if order == 'desc':
             teams = teams.order_by(f'-{sort_by}', 'name')

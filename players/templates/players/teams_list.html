@@ -76,14 +76,6 @@
                                         {% endif %}
                                     </a>
                                 </th>
-                                <th>
-                                    <a href="?sort=manager_secret&order={% if sort_by == 'manager_secret' and order == 'asc' %}desc{% else %}asc{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" class="text-decoration-none text-dark">
-                                        Manager Secret
-                                        {% if sort_by == 'manager_secret' %}
-                                            <i class="bi bi-arrow-{% if order == 'asc' %}up{% else %}down{% endif %}"></i>
-                                        {% endif %}
-                                    </a>
-                                </th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -98,7 +90,6 @@
                                             <span class="text-muted">No Manager</span>
                                         {% endif %}
                                     </td>
-                                    <td><code>{{ team.manager_secret }}</code></td>
                                     <td>
                                         <a href="{% url 'players:team_edit' team.pk %}" class="btn btn-sm btn-primary" title="Edit">
                                             <i class="bi bi-pencil"></i>
@@ -110,7 +101,7 @@
                                 </tr>
                             {% empty %}
                                 <tr>
-                                    <td colspan="4" class="text-center text-muted">
+                                    <td colspan="3" class="text-center text-muted">
                                         {% if search_query %}
                                             No teams found matching "{{ search_query }}"
                                         {% else %}
