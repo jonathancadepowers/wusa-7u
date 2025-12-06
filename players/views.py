@@ -17,15 +17,10 @@ def settings_view(request):
 
 
 def players_list_view(request):
-    """List all players with search, filtering, sorting, and pagination"""
+    """List all players with search, sorting, and pagination"""
     search_query = request.GET.get('search', '')
     sort_by = request.GET.get('sort', 'last_name')
     order = request.GET.get('order', 'asc')
-
-    # Column filters
-    school_filter = request.GET.get('school', '')
-    jersey_filter = request.GET.get('jersey', '')
-    history_filter = request.GET.get('history', '')
 
     players = Player.objects.all()
 
@@ -40,14 +35,6 @@ def players_list_view(request):
             Q(parent_phone_1__icontains=search_query)
         )
 
-    # Apply column filters
-    if school_filter:
-        players = players.filter(school__icontains=school_filter)
-    if jersey_filter:
-        players = players.filter(jersey_size__icontains=jersey_filter)
-    if history_filter:
-        players = players.filter(history__icontains=history_filter)
-
     # Apply sorting
     valid_sort_fields = ['last_name', 'first_name', 'birthday', 'school', 'jersey_size', 'parent_email_1']
     if sort_by in valid_sort_fields:
@@ -57,11 +44,6 @@ def players_list_view(request):
             players = players.order_by(sort_by)
     else:
         players = players.order_by('last_name', 'first_name')
-
-    # Get unique values for filters
-    all_schools = Player.objects.exclude(school__isnull=True).exclude(school='').values_list('school', flat=True).distinct().order_by('school')
-    all_jerseys = Player.objects.exclude(jersey_size__isnull=True).exclude(jersey_size='').values_list('jersey_size', flat=True).distinct().order_by('jersey_size')
-    all_history = Player.objects.exclude(history__isnull=True).exclude(history='').values_list('history', flat=True).distinct().order_by('history')
 
     # Pagination
     paginator = Paginator(players, 25)  # 25 players per page
@@ -73,12 +55,6 @@ def players_list_view(request):
         'search_query': search_query,
         'sort_by': sort_by,
         'order': order,
-        'school_filter': school_filter,
-        'jersey_filter': jersey_filter,
-        'history_filter': history_filter,
-        'all_schools': all_schools,
-        'all_jerseys': all_jerseys,
-        'all_history': all_history,
         'total_players': Player.objects.count()
     }
     return render(request, 'players/players_list.html', context)
