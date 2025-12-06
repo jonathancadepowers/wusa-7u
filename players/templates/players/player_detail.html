@@ -72,6 +72,18 @@
                                 </div>
                             </div>
 
+                            <div class="mb-3">
+                                <label for="team_id" class="form-label">Team</label>
+                                <select class="form-select" id="team_id" name="team_id">
+                                    <option value="">-- No Team --</option>
+                                    {% for team in all_teams %}
+                                        <option value="{{ team.pk }}" {% if player.team and player.team.pk == team.pk %}selected{% endif %}>
+                                            {{ team.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
                             <!-- Parent Contact Information -->
                             <h5 class="border-bottom pb-2 mb-3 mt-4">Parent Contact - Primary *</h5>
                             <div class="row mb-3">

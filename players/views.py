@@ -85,11 +85,28 @@ def player_detail_view(request, pk):
         player.manager_volunteer_name = request.POST.get('manager_volunteer_name') or None
         player.assistant_manager_volunteer_name = request.POST.get('assistant_manager_volunteer_name') or None
 
+        # Handle team assignment
+        team_id = request.POST.get('team_id')
+        if team_id == '':
+            player.team = None
+        else:
+            try:
+                team = Team.objects.get(pk=team_id)
+                player.team = team
+            except Team.DoesNotExist:
+                pass
+
         player.save()
         messages.success(request, f'Player {player.first_name} {player.last_name} updated successfully!')
         return redirect('players:detail', pk=player.pk)
 
-    context = {'player': player}
+    # Get all teams for dropdown
+    all_teams = Team.objects.all().order_by('name')
+
+    context = {
+        'player': player,
+        'all_teams': all_teams
+    }
     return render(request, 'players/player_detail.html', context)
 
 
