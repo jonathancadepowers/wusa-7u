@@ -22,7 +22,7 @@ def players_list_view(request):
     sort_by = request.GET.get('sort', 'last_name')
     order = request.GET.get('order', 'asc')
 
-    players = Player.objects.all()
+    players = Player.objects.select_related('team').all()
 
     # Apply search
     if search_query:
@@ -50,12 +50,16 @@ def players_list_view(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
+    # Get all teams for the team assignment dropdown
+    all_teams = Team.objects.all().order_by('name')
+
     context = {
         'page_obj': page_obj,
         'search_query': search_query,
         'sort_by': sort_by,
         'order': order,
-        'total_players': Player.objects.count()
+        'total_players': Player.objects.count(),
+        'all_teams': all_teams
     }
     return render(request, 'players/players_list.html', context)
 
@@ -127,6 +131,38 @@ def player_delete_view(request, pk):
 
     context = {'player': player}
     return render(request, 'players/player_confirm_delete.html', context)
+
+
+@require_http_methods(["POST"])
+def assign_player_team_view(request, pk):
+    """Assign or remove a player from a team"""
+    player = get_object_or_404(Player, pk=pk)
+    team_id = request.POST.get('team_id')
+
+    if team_id == '':  # Remove from team
+        player.team = None
+        player.save()
+        return JsonResponse({
+            'success': True,
+            'message': f'{player.first_name} {player.last_name} removed from team',
+            'team_name': None
+        })
+    else:
+        # Assign to team
+        try:
+            team = Team.objects.get(pk=team_id)
+            player.team = team
+            player.save()
+            return JsonResponse({
+                'success': True,
+                'message': f'{player.first_name} {player.last_name} assigned to {team.name}',
+                'team_name': team.name
+            })
+        except Team.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': 'Invalid team selected'
+            }, status=400)
 
 
 @require_http_methods(["POST"])
