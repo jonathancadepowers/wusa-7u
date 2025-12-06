@@ -507,3 +507,124 @@ def manager_delete_view(request, pk):
 
     context = {'manager': manager}
     return render(request, 'players/manager_confirm_delete.html', context)
+
+
+def teams_list_view(request):
+    """List all teams with search, sorting, and pagination"""
+    search_query = request.GET.get('search', '')
+    sort_by = request.GET.get('sort', 'name')
+    order = request.GET.get('order', 'asc')
+
+    teams = Team.objects.select_related('manager').all()
+
+    # Apply search
+    if search_query:
+        from django.db.models import Q
+        teams = teams.filter(
+            Q(name__icontains=search_query) |
+            Q(manager__first_name__icontains=search_query) |
+            Q(manager__last_name__icontains=search_query)
+        )
+
+    # Apply sorting
+    valid_sort_fields = ['name', 'manager__last_name', 'manager_secret']
+    if sort_by in valid_sort_fields:
+        if order == 'desc':
+            teams = teams.order_by(f'-{sort_by}', 'name')
+        else:
+            teams = teams.order_by(sort_by, 'name')
+    else:
+        teams = teams.order_by('name')
+
+    # Pagination
+    paginator = Paginator(teams, 50)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # Get unassigned managers
+    unassigned_managers = Manager.objects.filter(teams__isnull=True).order_by('last_name', 'first_name')
+
+    context = {
+        'page_obj': page_obj,
+        'search_query': search_query,
+        'sort_by': sort_by,
+        'order': order,
+        'total_teams': Team.objects.count(),
+        'unassigned_managers': unassigned_managers
+    }
+    return render(request, 'players/teams_list.html', context)
+
+
+def team_edit_view(request, pk):
+    """View and edit a single team"""
+    team = get_object_or_404(Team, pk=pk)
+
+    if request.method == 'POST':
+        team.name = request.POST.get('name')
+        team.manager_secret = request.POST.get('manager_secret')
+
+        # Handle manager assignment
+        manager_id = request.POST.get('manager_id')
+        if manager_id == '':
+            team.manager = None
+        else:
+            try:
+                manager = Manager.objects.get(pk=manager_id)
+                team.manager = manager
+            except Manager.DoesNotExist:
+                pass
+
+        team.save()
+        messages.success(request, f'Team {team.name} updated successfully!')
+        return redirect('players:team_edit', pk=team.pk)
+
+    # Get all managers for dropdown
+    all_managers = Manager.objects.all().order_by('last_name', 'first_name')
+
+    context = {
+        'team': team,
+        'all_managers': all_managers
+    }
+    return render(request, 'players/team_edit.html', context)
+
+
+def team_create_view(request):
+    """Create a new team"""
+    if request.method == 'POST':
+        team = Team(
+            name=request.POST.get('name'),
+            manager_secret=request.POST.get('manager_secret'),
+        )
+
+        # Handle manager assignment
+        manager_id = request.POST.get('manager_id')
+        if manager_id:
+            try:
+                manager = Manager.objects.get(pk=manager_id)
+                team.manager = manager
+            except Manager.DoesNotExist:
+                pass
+
+        team.save()
+        messages.success(request, f'Team {team.name} created successfully!')
+        return redirect('players:teams_list')
+
+    # Get all managers for dropdown
+    all_managers = Manager.objects.all().order_by('last_name', 'first_name')
+
+    context = {'all_managers': all_managers}
+    return render(request, 'players/team_create.html', context)
+
+
+def team_delete_view(request, pk):
+    """Delete a team"""
+    team = get_object_or_404(Team, pk=pk)
+
+    if request.method == 'POST':
+        team_name = team.name
+        team.delete()
+        messages.success(request, f'Team {team_name} deleted successfully!')
+        return redirect('players:teams_list')
+
+    context = {'team': team}
+    return render(request, 'players/team_confirm_delete.html', context)
