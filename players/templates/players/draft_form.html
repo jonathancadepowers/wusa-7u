@@ -42,28 +42,34 @@
                             <strong>Draft's Current Status:</strong> Pending Set Up
                         </div>
 
+                        <!-- Read-only Draft Settings -->
+                        <div class="card mb-4 bg-light">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label class="form-label text-muted">Number of Rounds</label>
+                                        <p class="fs-5 mb-0">{% if draft %}{{ draft.rounds }}{% else %}{{ suggested_rounds }}{% endif %}</p>
+                                        {% if is_create %}
+                                            <small class="text-muted">Calculated as: Total Players / Number of Teams</small>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label text-muted">Picks Per Round</label>
+                                        <p class="fs-5 mb-0">{% if draft %}{{ draft.picks_per_round }}{% else %}{{ suggested_picks_per_round }}{% endif %}</p>
+                                        {% if is_create %}
+                                            <small class="text-muted">Equal to the number of teams in the database</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <form method="post">
                             {% csrf_token %}
 
-                            <div class="mb-3">
-                                <label for="rounds" class="form-label">
-                                    Number of Rounds *
-                                    {% if is_create %}
-                                        <i class="bi bi-info-circle text-muted" data-bs-toggle="tooltip" data-bs-placement="right" title="Calculated as: Total Players / Number of Teams"></i>
-                                    {% endif %}
-                                </label>
-                                <input type="number" class="form-control" id="rounds" name="rounds" value="{% if draft %}{{ draft.rounds }}{% else %}{{ suggested_rounds }}{% endif %}" required>
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="picks_per_round" class="form-label">
-                                    Picks Per Round *
-                                    {% if is_create %}
-                                        <i class="bi bi-info-circle text-muted" data-bs-toggle="tooltip" data-bs-placement="right" title="Equal to the number of teams in the database"></i>
-                                    {% endif %}
-                                </label>
-                                <input type="number" class="form-control" id="picks_per_round" name="picks_per_round" value="{% if draft %}{{ draft.picks_per_round }}{% else %}{{ suggested_picks_per_round }}{% endif %}" required>
-                            </div>
+                            <!-- Hidden fields to preserve rounds and picks_per_round values -->
+                            <input type="hidden" name="rounds" value="{% if draft %}{{ draft.rounds }}{% else %}{{ suggested_rounds }}{% endif %}">
+                            <input type="hidden" name="picks_per_round" value="{% if draft %}{{ draft.picks_per_round }}{% else %}{{ suggested_picks_per_round }}{% endif %}">
 
                             <div class="mb-3">
                                 <label for="draft_date" class="form-label">Draft Date *</label>
