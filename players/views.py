@@ -833,10 +833,14 @@ def player_rankings_view(request):
     # Get all players for the dropdown, ordered by name
     all_players = Player.objects.all().order_by('last_name', 'first_name')
 
+    # Get IDs of all players who are managers' daughters
+    manager_daughter_ids = list(Manager.objects.filter(daughter__isnull=False).values_list('daughter_id', flat=True))
+
     context = {
         'all_players': all_players,
         'team_secret': team_secret,
         'manager': manager,
-        'ranked_player_ids': json.dumps(ranked_player_ids)  # Pass as JSON for JavaScript
+        'ranked_player_ids': json.dumps(ranked_player_ids),  # Pass as JSON for JavaScript
+        'manager_daughter_ids': json.dumps(manager_daughter_ids)  # Pass as JSON for JavaScript
     }
     return render(request, 'players/player_rankings.html', context)

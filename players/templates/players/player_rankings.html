@@ -69,6 +69,11 @@
             max-height: 400px;
             overflow-y: auto;
         }
+        .manager-daughter-label {
+            color: #dc3545;
+            font-size: 0.85em;
+            margin-left: 5px;
+        }
     </style>
 </head>
 <body class="bg-light">
@@ -121,9 +126,9 @@
                                             </div>
                                             <div id="availablePlayers" class="player-drop-zone">
                                                 {% for player in all_players %}
-                                                    <div class="player-item" draggable="true" data-player-id="{{ player.id }}">
+                                                    <div class="player-item" draggable="true" data-player-id="{{ player.id }}" data-is-daughter="false">
                                                         <i class="bi bi-grip-vertical me-2"></i>
-                                                        <span>{{ player.first_name }} {{ player.last_name }}</span>
+                                                        <span class="player-name">{{ player.first_name }} {{ player.last_name }}</span>
                                                     </div>
                                                 {% endfor %}
                                             </div>
@@ -347,8 +352,37 @@
             document.getElementById('rankingsField').value = playerIds.join(',');
         }
 
+        function addManagerDaughterLabels() {
+            const managerDaughterIds = {{ manager_daughter_ids|safe }};
+            const allPlayerItems = document.querySelectorAll('.player-item');
+
+            allPlayerItems.forEach(item => {
+                const playerId = parseInt(item.getAttribute('data-player-id'));
+                const playerNameSpan = item.querySelector('.player-name');
+
+                if (managerDaughterIds.includes(playerId)) {
+                    item.setAttribute('data-is-daughter', 'true');
+
+                    // Remove existing label if any
+                    const existingLabel = item.querySelector('.manager-daughter-label');
+                    if (existingLabel) {
+                        existingLabel.remove();
+                    }
+
+                    // Add manager's daughter label
+                    const label = document.createElement('span');
+                    label.className = 'manager-daughter-label';
+                    label.textContent = "(Manager's Daughter)";
+                    playerNameSpan.parentNode.insertBefore(label, playerNameSpan.nextSibling);
+                }
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             initializeDragAndDrop();
+
+            // Mark manager's daughters
+            addManagerDaughterLabels();
 
             // Load existing rankings if they exist
             const existingRankings = {{ ranked_player_ids|safe }};
@@ -388,7 +422,7 @@
                 const playerItems = availablePlayers.querySelectorAll('.player-item');
 
                 playerItems.forEach(item => {
-                    const playerName = item.querySelector('span').textContent.toLowerCase();
+                    const playerName = item.querySelector('.player-name').textContent.toLowerCase();
                     if (playerName.includes(searchTerm)) {
                         item.style.display = '';
                     } else {
