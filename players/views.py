@@ -158,6 +158,47 @@ def player_delete_view(request, pk):
 
 
 @require_http_methods(["POST"])
+def assign_manager_team_view(request, pk):
+    """Assign or remove a manager from a team"""
+    manager = get_object_or_404(Manager, pk=pk)
+    team_id = request.POST.get('team_id')
+
+    if team_id == '':  # Remove from team
+        # Find and release any team currently managed by this manager
+        current_teams = Team.objects.filter(manager=manager)
+        for team in current_teams:
+            team.manager = None
+            team.save()
+        return JsonResponse({
+            'success': True,
+            'message': f'{manager.first_name} {manager.last_name} removed from team',
+            'team_name': None
+        })
+    else:
+        # Assign to team
+        try:
+            team = Team.objects.get(pk=team_id)
+            # Release manager from any current team first
+            current_teams = Team.objects.filter(manager=manager)
+            for current_team in current_teams:
+                current_team.manager = None
+                current_team.save()
+            # Assign to new team
+            team.manager = manager
+            team.save()
+            return JsonResponse({
+                'success': True,
+                'message': f'{manager.first_name} {manager.last_name} assigned to {team.name}',
+                'team_name': team.name
+            })
+        except Team.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': 'Invalid team selected'
+            }, status=400)
+
+
+@require_http_methods(["POST"])
 def assign_player_team_view(request, pk):
     """Assign or remove a player from a team"""
     player = get_object_or_404(Player, pk=pk)
@@ -370,7 +411,7 @@ def managers_list_view(request):
     """List all managers with search and pagination"""
     search_query = request.GET.get('search', '')
 
-    managers = Manager.objects.all()
+    managers = Manager.objects.prefetch_related('teams').all()
 
     # Apply search
     if search_query:
@@ -390,10 +431,14 @@ def managers_list_view(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
+    # Get unassigned teams (teams with no manager)
+    unassigned_teams = Team.objects.filter(manager__isnull=True).order_by('name')
+
     context = {
         'page_obj': page_obj,
         'search_query': search_query,
-        'total_managers': Manager.objects.count()
+        'total_managers': Manager.objects.count(),
+        'unassigned_teams': unassigned_teams
     }
     return render(request, 'players/managers_list.html', context)
 
