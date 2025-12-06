@@ -408,8 +408,10 @@ def team_detail_view(request, team_secret):
 
 
 def managers_list_view(request):
-    """List all managers with search and pagination"""
+    """List all managers with search, sorting, and pagination"""
     search_query = request.GET.get('search', '')
+    sort_by = request.GET.get('sort', 'last_name')
+    order = request.GET.get('order', 'asc')
 
     managers = Manager.objects.prefetch_related('teams').all()
 
@@ -423,8 +425,21 @@ def managers_list_view(request):
             Q(phone__icontains=search_query)
         )
 
-    # Order by last name
-    managers = managers.order_by('last_name', 'first_name')
+    # Apply sorting
+    valid_sort_fields = ['last_name', 'first_name', 'email', 'teams__name']
+    if sort_by in valid_sort_fields:
+        if order == 'desc':
+            if sort_by == 'teams__name':
+                managers = managers.order_by(f'-{sort_by}', 'last_name', 'first_name')
+            else:
+                managers = managers.order_by(f'-{sort_by}', 'last_name', 'first_name')
+        else:
+            if sort_by == 'teams__name':
+                managers = managers.order_by(f'{sort_by}', 'last_name', 'first_name')
+            else:
+                managers = managers.order_by(sort_by, 'last_name', 'first_name')
+    else:
+        managers = managers.order_by('last_name', 'first_name')
 
     # Pagination
     paginator = Paginator(managers, 25)  # 25 managers per page
@@ -437,6 +452,8 @@ def managers_list_view(request):
     context = {
         'page_obj': page_obj,
         'search_query': search_query,
+        'sort_by': sort_by,
+        'order': order,
         'total_managers': Manager.objects.count(),
         'unassigned_teams': unassigned_teams
     }
