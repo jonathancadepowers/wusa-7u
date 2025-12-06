@@ -10,12 +10,15 @@ class TeamAdmin(admin.ModelAdmin):
 
 @admin.register(Player)
 class PlayerAdmin(admin.ModelAdmin):
-    list_display = ['first_name', 'last_name', 'birthday', 'school', 'parent_email_1']
-    list_filter = ['school', 'jersey_size']
+    list_display = ['first_name', 'last_name', 'team', 'birthday', 'school', 'parent_email_1']
+    list_filter = ['team', 'school', 'jersey_size']
     search_fields = ['first_name', 'last_name', 'parent_email_1', 'parent_email_2']
     date_hierarchy = 'birthday'
 
     fieldsets = (
+        ('Team Assignment', {
+            'fields': ('team',)
+        }),
         ('Player Information', {
             'fields': ('first_name', 'last_name', 'birthday', 'school', 'jersey_size')
         }),

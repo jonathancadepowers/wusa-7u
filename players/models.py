@@ -17,6 +17,7 @@ class Team(models.Model):
 
 
 class Player(models.Model):
+    team = models.ForeignKey(Team, on_delete=models.SET_NULL, null=True, blank=True, related_name='players')
     last_name = models.CharField(max_length=100)
     first_name = models.CharField(max_length=100)
     birthday = models.DateField(blank=True, null=True)
