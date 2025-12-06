@@ -272,12 +272,36 @@ def team_detail_view(request, team_secret):
     except Team.DoesNotExist:
         raise Http404("Team not found")
 
+    if request.method == 'POST':
+        # Handle manager assignment/release
+        manager_id = request.POST.get('manager_id')
+
+        if manager_id == '':  # Release manager
+            team.manager = None
+            team.save()
+            messages.success(request, 'Manager released from team successfully!')
+        else:
+            # Assign manager
+            try:
+                manager = Manager.objects.get(pk=manager_id)
+                team.manager = manager
+                team.save()
+                messages.success(request, f'Manager {manager.first_name} {manager.last_name} assigned to team!')
+            except Manager.DoesNotExist:
+                messages.error(request, 'Invalid manager selected.')
+
+        return redirect('players:team_detail', team_secret=team_secret)
+
     # Get all players assigned to this team
     players = team.players.all().order_by('last_name', 'first_name')
 
+    # Get unassigned managers (managers with no team)
+    unassigned_managers = Manager.objects.filter(teams__isnull=True).order_by('last_name', 'first_name')
+
     context = {
         'team': team,
-        'players': players
+        'players': players,
+        'unassigned_managers': unassigned_managers
     }
     return render(request, 'players/team_detail.html', context)
 
