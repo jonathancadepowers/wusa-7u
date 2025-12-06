@@ -30,7 +30,7 @@
 
         <div class="card shadow">
             <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                <h4 class="mb-0"><i class="bi bi-people-fill me-2"></i>Player Management</h4>
+                <div></div>
                 <a href="{% url 'players:create' %}" class="btn btn-light btn-sm">
                     <i class="bi bi-plus-circle me-1"></i>Add New Player
                 </a>
@@ -39,7 +39,7 @@
                 <!-- Search Bar -->
                 <form method="get" class="mb-4">
                     <div class="input-group">
-                        <input type="text" name="search" class="form-control" placeholder="Search by name, school, email, or phone..." value="{{ search_query }}">
+                        <input type="text" name="search" class="form-control" placeholder="Search by player name or details..." value="{{ search_query }}">
                         <button class="btn btn-primary" type="submit">
                             <i class="bi bi-search"></i> Search
                         </button>
@@ -51,15 +51,6 @@
                     <input type="hidden" name="sort" value="{{ sort_by }}">
                     <input type="hidden" name="order" value="{{ order }}">
                 </form>
-
-                <!-- Stats -->
-                <div class="alert alert-info">
-                    <i class="bi bi-info-circle me-2"></i>
-                    Total Players: <strong>{{ total_players }}</strong>
-                    {% if search_query %}
-                        | Showing: <strong>{{ page_obj.paginator.count }}</strong> matches
-                    {% endif %}
-                </div>
 
                 <!-- Players Table -->
                 <div class="table-responsive">
@@ -74,14 +65,7 @@
                                         {% endif %}
                                     </a>
                                 </th>
-                                <th>
-                                    <a href="?sort=birthday&order={% if sort_by == 'birthday' and order == 'asc' %}desc{% else %}asc{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" class="text-decoration-none text-dark">
-                                        Birthday
-                                        {% if sort_by == 'birthday' %}
-                                            <i class="bi bi-arrow-{% if order == 'asc' %}up{% else %}down{% endif %}"></i>
-                                        {% endif %}
-                                    </a>
-                                </th>
+                                <th>Team</th>
                                 <th>
                                     <a href="?sort=school&order={% if sort_by == 'school' and order == 'asc' %}desc{% else %}asc{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" class="text-decoration-none text-dark">
                                         School
@@ -90,24 +74,7 @@
                                         {% endif %}
                                     </a>
                                 </th>
-                                <th>
-                                    <a href="?sort=parent_email_1&order={% if sort_by == 'parent_email_1' and order == 'asc' %}desc{% else %}asc{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" class="text-decoration-none text-dark">
-                                        Parent Email
-                                        {% if sort_by == 'parent_email_1' %}
-                                            <i class="bi bi-arrow-{% if order == 'asc' %}up{% else %}down{% endif %}"></i>
-                                        {% endif %}
-                                    </a>
-                                </th>
-                                <th>Parent Phone</th>
-                                <th>
-                                    <a href="?sort=jersey_size&order={% if sort_by == 'jersey_size' and order == 'asc' %}desc{% else %}asc{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" class="text-decoration-none text-dark">
-                                        Jersey Size
-                                        {% if sort_by == 'jersey_size' %}
-                                            <i class="bi bi-arrow-{% if order == 'asc' %}up{% else %}down{% endif %}"></i>
-                                        {% endif %}
-                                    </a>
-                                </th>
-                                <th>Team</th>
+                                <th>History</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -117,20 +84,13 @@
                                     <td>
                                         <strong>{{ player.first_name }} {{ player.last_name }}</strong>
                                     </td>
-                                    <td>{{ player.birthday }}</td>
-                                    <td>{{ player.school|default:"-" }}</td>
-                                    <td>{{ player.parent_email_1 }}</td>
-                                    <td>{{ player.parent_phone_1 }}</td>
-                                    <td>{{ player.jersey_size|default:"-" }}</td>
                                     <td>
                                         <button class="btn btn-sm btn-outline-secondary" onclick="openTeamModal({{ player.pk }}, '{{ player.first_name }} {{ player.last_name }}', {% if player.team %}{{ player.team.pk }}{% else %}null{% endif %}, '{% if player.team %}{{ player.team.name }}{% endif %}')" title="Assign Team">
-                                            {% if player.team %}
-                                                <i class="bi bi-trophy-fill me-1"></i><span id="team-name-{{ player.pk }}">{{ player.team.name }}</span>
-                                            {% else %}
-                                                <i class="bi bi-trophy me-1"></i><span id="team-name-{{ player.pk }}">No Team</span>
-                                            {% endif %}
+                                            <span id="team-name-{{ player.pk }}">{% if player.team %}{{ player.team.name }}{% else %}No Team{% endif %}</span>
                                         </button>
                                     </td>
+                                    <td>{{ player.school|default:"-" }}</td>
+                                    <td>{{ player.history|default:"-" }}</td>
                                     <td>
                                         <a href="{% url 'players:detail' player.pk %}" class="btn btn-sm btn-primary" title="View/Edit">
                                             <i class="bi bi-pencil"></i>
@@ -142,7 +102,7 @@
                                 </tr>
                             {% empty %}
                                 <tr>
-                                    <td colspan="8" class="text-center text-muted">
+                                    <td colspan="5" class="text-center text-muted">
                                         {% if search_query %}
                                             No players found matching "{{ search_query }}"
                                         {% else %}
@@ -267,10 +227,10 @@
 
                     if (data.team_name) {
                         teamNameSpan.textContent = data.team_name;
-                        teamButton.innerHTML = '<i class="bi bi-trophy-fill me-1"></i><span id="team-name-' + currentPlayerId + '">' + data.team_name + '</span>';
+                        teamButton.innerHTML = '<span id="team-name-' + currentPlayerId + '">' + data.team_name + '</span>';
                     } else {
                         teamNameSpan.textContent = 'No Team';
-                        teamButton.innerHTML = '<i class="bi bi-trophy me-1"></i><span id="team-name-' + currentPlayerId + '">No Team</span>';
+                        teamButton.innerHTML = '<span id="team-name-' + currentPlayerId + '">No Team</span>';
                     }
 
                     // Update the button's onclick to reflect new team
