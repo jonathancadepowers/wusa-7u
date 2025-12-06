@@ -13,7 +13,60 @@ from datetime import datetime
 
 def settings_view(request):
     """Main settings page"""
-    return render(request, 'players/settings.html')
+    from .models import Draft
+
+    # Check if there's an existing draft
+    draft_exists = Draft.objects.exists()
+
+    context = {
+        'draft_exists': draft_exists
+    }
+    return render(request, 'players/settings.html', context)
+
+
+def create_draft_view(request):
+    """Create a new draft"""
+    from .models import Draft
+
+    if request.method == 'POST':
+        draft = Draft(
+            rounds=request.POST.get('rounds'),
+            status=request.POST.get('status'),
+            draft_date=request.POST.get('draft_date'),
+            picks_per_round=request.POST.get('picks_per_round'),
+            public_url_secret=request.POST.get('public_url_secret'),
+            order=request.POST.get('order', '')
+        )
+        draft.save()
+        messages.success(request, 'Draft created successfully!')
+        return redirect('players:edit_draft')
+
+    return render(request, 'players/draft_form.html', {'draft': None, 'is_create': True})
+
+
+def edit_draft_view(request):
+    """Edit existing draft"""
+    from .models import Draft
+
+    # Get the first (and should be only) draft
+    draft = Draft.objects.first()
+
+    if not draft:
+        messages.error(request, 'No draft exists. Please create one first.')
+        return redirect('players:settings')
+
+    if request.method == 'POST':
+        draft.rounds = request.POST.get('rounds')
+        draft.status = request.POST.get('status')
+        draft.draft_date = request.POST.get('draft_date')
+        draft.picks_per_round = request.POST.get('picks_per_round')
+        draft.public_url_secret = request.POST.get('public_url_secret')
+        draft.order = request.POST.get('order', '')
+        draft.save()
+        messages.success(request, 'Draft updated successfully!')
+        return redirect('players:edit_draft')
+
+    return render(request, 'players/draft_form.html', {'draft': draft, 'is_create': False})
 
 
 def admin_dashboard_view(request):

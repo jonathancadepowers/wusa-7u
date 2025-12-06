@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if is_create %}Create Draft{% else %}Edit Draft{% endif %} - WUSA 7U</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-dark bg-primary">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">WUSA 7U - {% if is_create %}Create Draft{% else %}Edit Draft{% endif %}</span>
+            <a href="{% url 'players:settings' %}" class="btn btn-outline-light btn-sm">
+                <i class="bi bi-arrow-left"></i> Back to Settings
+            </a>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="row">
+            <div class="col-lg-8 offset-lg-2">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">
+                            <i class="bi bi-calendar-event me-2"></i>
+                            {% if is_create %}Create New Draft{% else %}Edit Draft{% endif %}
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <form method="post">
+                            {% csrf_token %}
+
+                            <div class="mb-3">
+                                <label for="rounds" class="form-label">Number of Rounds *</label>
+                                <input type="number" class="form-control" id="rounds" name="rounds" value="{% if draft %}{{ draft.rounds }}{% endif %}" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="picks_per_round" class="form-label">Picks Per Round *</label>
+                                <input type="number" class="form-control" id="picks_per_round" name="picks_per_round" value="{% if draft %}{{ draft.picks_per_round }}{% endif %}" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="draft_date" class="form-label">Draft Date *</label>
+                                <input type="date" class="form-control" id="draft_date" name="draft_date" value="{% if draft %}{{ draft.draft_date|date:'Y-m-d' }}{% endif %}" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="status" class="form-label">Status *</label>
+                                <select class="form-select" id="status" name="status" required>
+                                    <option value="pending" {% if draft and draft.status == 'pending' %}selected{% endif %}>Pending</option>
+                                    <option value="in_progress" {% if draft and draft.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                                    <option value="completed" {% if draft and draft.status == 'completed' %}selected{% endif %}>Completed</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="public_url_secret" class="form-label">Public URL Secret *</label>
+                                <input type="text" class="form-control" id="public_url_secret" name="public_url_secret" value="{% if draft %}{{ draft.public_url_secret }}{% endif %}" required>
+                                <div class="form-text">This will be used in the public draft URL</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="order" class="form-label">Draft Order</label>
+                                <textarea class="form-control" id="order" name="order" rows="4">{% if draft %}{{ draft.order }}{% endif %}</textarea>
+                                <div class="form-text">Enter the draft order details (optional)</div>
+                            </div>
+
+                            <div class="mt-4 d-flex justify-content-between">
+                                <a href="{% url 'players:settings' %}" class="btn btn-secondary">
+                                    <i class="bi bi-arrow-left me-1"></i>Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-save me-1"></i>{% if is_create %}Create Draft{% else %}Save Changes{% endif %}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -23,6 +23,21 @@
                         <h4 class="mb-0"><i class="bi bi-gear-fill me-2"></i>Application Settings</h4>
                     </div>
                     <div class="card-body">
+                        <h5 class="card-title">Draft Setup</h5>
+                        <p class="text-muted">Configure the player draft settings.</p>
+
+                        {% if draft_exists %}
+                            <a href="{% url 'players:edit_draft' %}" class="btn btn-primary">
+                                <i class="bi bi-pencil me-2"></i>Edit Draft
+                            </a>
+                        {% else %}
+                            <a href="{% url 'players:create_draft' %}" class="btn btn-success">
+                                <i class="bi bi-plus-circle me-2"></i>Create New Draft
+                            </a>
+                        {% endif %}
+
+                        <hr class="my-4">
+
                         <h5 class="card-title">Player Data Import</h5>
                         <p class="text-muted">Upload an Excel file (.xlsx) to import player data into the database.</p>
 
