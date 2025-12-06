@@ -1,11 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse
+from django.http import JsonResponse, Http404
 from django.views.decorators.http import require_http_methods
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from django.contrib import messages
 from django.core.paginator import Paginator
-from .models import Player
+from .models import Player, Team
 import pandas as pd
 import os
 from datetime import datetime
@@ -263,3 +263,20 @@ def import_players_view(request):
             'success': False,
             'error': f'Error processing file: {str(e)}'
         }, status=500)
+
+
+def team_detail_view(request, team_secret):
+    """Display team info and roster based on manager_secret"""
+    try:
+        team = Team.objects.get(manager_secret=team_secret)
+    except Team.DoesNotExist:
+        raise Http404("Team not found")
+
+    # Get all players assigned to this team
+    players = team.players.all().order_by('last_name', 'first_name')
+
+    context = {
+        'team': team,
+        'players': players
+    }
+    return render(request, 'players/team_detail.html', context)

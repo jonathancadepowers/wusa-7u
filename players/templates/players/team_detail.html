@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ team.name }} - WUSA 7U</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-dark bg-primary">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">WUSA 7U - {{ team.name }}</span>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="bi bi-trophy-fill me-2"></i>{{ team.name }}</h4>
+            </div>
+            <div class="card-body">
+                <!-- Manager Name -->
+                <div class="mb-4">
+                    <h5 class="text-muted">Manager</h5>
+                    <p class="fs-5">
+                        {% if players %}
+                            {{ players.0.manager_volunteer_name|default:"Not assigned" }}
+                        {% else %}
+                            Not assigned
+                        {% endif %}
+                    </p>
+                </div>
+
+                <!-- Players Table -->
+                <h5 class="text-muted mb-3">Team Roster</h5>
+                {% if players %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Birthday</th>
+                                    <th>School</th>
+                                    <th>Jersey Size</th>
+                                    <th>Parent Email</th>
+                                    <th>Parent Phone</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for player in players %}
+                                    <tr>
+                                        <td><strong>{{ player.first_name }} {{ player.last_name }}</strong></td>
+                                        <td>{{ player.birthday|default:"-" }}</td>
+                                        <td>{{ player.school|default:"-" }}</td>
+                                        <td>{{ player.jersey_size|default:"-" }}</td>
+                                        <td>{{ player.parent_email_1 }}</td>
+                                        <td>{{ player.parent_phone_1 }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="text-muted mt-3">
+                        <strong>Total Players:</strong> {{ players.count }}
+                    </p>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        No players assigned to this team yet.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
