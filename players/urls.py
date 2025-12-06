@@ -5,6 +5,7 @@ app_name = 'players'
 
 urlpatterns = [
     path('public_portal/', views.public_portal_view, name='public_portal'),
+    path('api/validate-team-secret/', views.validate_team_secret_view, name='validate_team_secret'),
     path('admin_dashboard/', views.admin_dashboard_view, name='admin_dashboard'),
     path('settings/', views.settings_view, name='settings'),
     path('api/import-players/', views.import_players_view, name='import_players'),

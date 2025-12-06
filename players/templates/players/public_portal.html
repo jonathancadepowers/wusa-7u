@@ -67,7 +67,6 @@
                     <div class="mb-3">
                         <label for="teamSecret" class="form-label">Team Secret</label>
                         <input type="text" class="form-control" id="teamSecret" placeholder="Enter your team secret" autocomplete="off">
-                        <div class="form-text">Contact your team manager if you don't have the team secret.</div>
                     </div>
                     <div id="errorMessage" class="alert alert-danger d-none">
                         <i class="bi bi-exclamation-triangle-fill me-2"></i>
@@ -76,8 +75,8 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="validateSecret()">
-                        <i class="bi bi-unlock-fill me-1"></i>Access Team Roster
+                    <button type="button" class="btn btn-primary" id="accessButton" onclick="validateSecret()">
+                        <i class="bi bi-unlock-fill me-1"></i>Access Team Page
                     </button>
                 </div>
             </div>
@@ -124,6 +123,7 @@
             const secret = secretInput.value.trim();
             const errorMessage = document.getElementById('errorMessage');
             const errorText = document.getElementById('errorText');
+            const accessButton = document.getElementById('accessButton');
 
             if (!secret) {
                 errorText.textContent = 'Please enter a team secret.';
@@ -131,9 +131,46 @@
                 return;
             }
 
-            // Redirect to the team detail page with the entered secret
-            // The Django view will handle validation and show 404 if invalid
-            window.location.href = `/teams/${secret}/`;
+            // Show loading state
+            const originalButtonHTML = accessButton.innerHTML;
+            accessButton.disabled = true;
+            accessButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Validating...';
+
+            // Hide previous errors
+            errorMessage.classList.add('d-none');
+
+            try {
+                const formData = new FormData();
+                formData.append('team_secret', secret);
+                formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+                const response = await fetch('/api/validate-team-secret/', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Redirect to the team page
+                    window.location.href = data.team_url;
+                } else {
+                    // Show error message
+                    errorText.textContent = data.error;
+                    errorMessage.classList.remove('d-none');
+
+                    // Reset button
+                    accessButton.disabled = false;
+                    accessButton.innerHTML = originalButtonHTML;
+                }
+            } catch (error) {
+                errorText.textContent = 'An error occurred. Please try again.';
+                errorMessage.classList.remove('d-none');
+
+                // Reset button
+                accessButton.disabled = false;
+                accessButton.innerHTML = originalButtonHTML;
+            }
         }
     </script>
 </body>

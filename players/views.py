@@ -30,6 +30,30 @@ def public_portal_view(request):
     return render(request, 'players/public_portal.html', context)
 
 
+@require_http_methods(["POST"])
+def validate_team_secret_view(request):
+    """Validate team secret and return team URL if valid"""
+    team_secret = request.POST.get('team_secret', '').strip()
+
+    if not team_secret:
+        return JsonResponse({
+            'success': False,
+            'error': 'Please enter a team secret.'
+        }, status=400)
+
+    try:
+        team = Team.objects.get(manager_secret=team_secret)
+        return JsonResponse({
+            'success': True,
+            'team_url': f'/teams/{team_secret}/'
+        })
+    except Team.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Invalid team secret. Please check and try again.'
+        }, status=400)
+
+
 def players_list_view(request):
     """List all players with search, sorting, and pagination"""
     search_query = request.GET.get('search', '')
