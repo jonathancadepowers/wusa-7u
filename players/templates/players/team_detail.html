@@ -42,21 +42,19 @@
                     </div>
                 </div>
 
-                <!-- Player Rankings Button -->
-                <div class="mb-4">
-                    <a href="{% url 'players:player_rankings' %}?team_secret={{ team.manager_secret }}" class="btn btn-success">
-                        <i class="bi bi-star-fill me-2"></i>Rank Players
-                    </a>
-                </div>
-
                 <!-- Players Table -->
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="text-muted mb-0">Team Roster</h5>
-                    {% if players %}
-                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#emailModal">
-                            <i class="bi bi-envelope me-1"></i>Email Entire Team
-                        </button>
-                    {% endif %}
+                    <div>
+                        <a href="{% url 'players:player_rankings' %}?team_secret={{ team.manager_secret }}" class="btn btn-success">
+                            <i class="bi bi-star-fill me-2"></i>Rank Players
+                        </a>
+                        {% if players %}
+                            <button type="button" class="btn btn-primary ms-2" data-bs-toggle="modal" data-bs-target="#emailModal">
+                                <i class="bi bi-envelope me-1"></i>Email Team
+                            </button>
+                        {% endif %}
+                    </div>
                 </div>
                 {% if players %}
                     <div class="table-responsive">
@@ -116,13 +114,13 @@
         </div>
     </div>
 
-    <!-- Email Entire Team Modal -->
+    <!-- Email Team Modal -->
     <div class="modal fade" id="emailModal" tabindex="-1" aria-labelledby="emailModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title" id="emailModalLabel">
-                        <i class="bi bi-envelope me-2"></i>Email Entire Team
+                        <i class="bi bi-envelope me-2"></i>Email Team
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
