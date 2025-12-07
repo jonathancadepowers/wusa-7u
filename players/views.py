@@ -1091,8 +1091,8 @@ def available_players_view(request):
     """Get list of players not yet drafted"""
     include_player_id = request.GET.get('include_player')
 
-    # Get all player IDs that have been drafted
-    drafted_player_ids = list(DraftPick.objects.values_list('player_id', flat=True))
+    # Get all player IDs that have been drafted (exclude empty picks)
+    drafted_player_ids = list(DraftPick.objects.filter(player__isnull=False).values_list('player_id', flat=True))
 
     # If we're editing and need to include a specific player, remove them from drafted list
     if include_player_id:
