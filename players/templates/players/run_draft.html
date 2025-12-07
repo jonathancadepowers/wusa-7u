@@ -134,10 +134,22 @@
                         <i class="bi bi-trophy-fill me-2"></i>
                         Draft: {{ draft.draft_date|date:"F j, Y" }} - {{ draft.status|title }}
                     </h5>
-                    <div>
-                        <select class="form-select form-select-sm text-white bg-primary border-white" id="currentPickSelect" style="min-width: 200px;">
-                            <option value="">Select Current Pick</option>
-                        </select>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="text-white">
+                            <small>
+                                <strong>Players Selected:</strong> <span id="playersSelected">0</span>
+                            </small>
+                        </div>
+                        <div class="text-white">
+                            <small>
+                                <strong>Players Remaining:</strong> <span id="playersRemaining">0</span>
+                            </small>
+                        </div>
+                        <div>
+                            <select class="form-select form-select-sm text-white bg-primary border-white" id="currentPickSelect" style="min-width: 200px;">
+                                <option value="">Select Current Pick</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -279,6 +291,16 @@
             pickPlayerModal.show();
         }
 
+        // Helper function to update player counts
+        function updatePlayerCounts() {
+            const totalCells = document.querySelectorAll('.draft-cell').length;
+            const pickedCells = document.querySelectorAll('.draft-cell.picked').length;
+            const remainingCells = totalCells - pickedCells;
+
+            document.getElementById('playersSelected').textContent = pickedCells;
+            document.getElementById('playersRemaining').textContent = remainingCells;
+        }
+
         // Helper function to get cell by round and pick
         function getCellByRoundPick(round, pick) {
             const rows = document.querySelectorAll('.draft-table tbody tr');
@@ -360,6 +382,9 @@
             if (firstUnpicked) {
                 setCurrentPick(firstUnpicked.round, firstUnpicked.pick);
             }
+
+            // Update player counts on load
+            updatePlayerCounts();
 
             // Click on + icon for new picks
             document.querySelectorAll('.add-icon').forEach(icon => {
@@ -502,6 +527,9 @@
                     // Reset button
                     this.disabled = false;
                     this.textContent = 'Pick Player';
+
+                    // Update player counts
+                    updatePlayerCounts();
 
                     // Auto-progress to next unpicked cell
                     const nextUnpicked = findNextUnpickedCell();
