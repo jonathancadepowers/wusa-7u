@@ -118,7 +118,12 @@
                                         <strong>{{ player.first_name }} {{ player.last_name }}</strong>
                                     </td>
                                     <td>
-                                        <button class="btn btn-sm btn-outline-secondary" onclick="openTeamModal({{ player.pk }}, '{{ player.first_name }} {{ player.last_name }}', {% if player.team %}{{ player.team.pk }}{% else %}null{% endif %}, '{% if player.team %}{{ player.team.name }}{% endif %}')" title="Assign Team">
+                                        <button class="btn btn-sm btn-outline-secondary team-assign-btn"
+                                                data-player-id="{{ player.pk }}"
+                                                data-player-name="{{ player.first_name }} {{ player.last_name }}"
+                                                data-team-id="{% if player.team %}{{ player.team.pk }}{% endif %}"
+                                                data-team-name="{% if player.team %}{{ player.team.name }}{% endif %}"
+                                                title="Assign Team">
                                             <span id="team-name-{{ player.pk }}">{% if player.team %}{{ player.team.name }}{% else %}No Team{% endif %}</span>
                                         </button>
                                     </td>
@@ -225,6 +230,17 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             teamModalInstance = new bootstrap.Modal(document.getElementById('teamModal'));
+
+            // Add event listeners to team assignment buttons
+            document.querySelectorAll('.team-assign-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const playerId = this.dataset.playerId;
+                    const playerName = this.dataset.playerName;
+                    const teamId = this.dataset.teamId || null;
+                    const teamName = this.dataset.teamName || '';
+                    openTeamModal(playerId, playerName, teamId, teamName);
+                });
+            });
         });
 
         function openTeamModal(playerId, playerName, currentTeamId, currentTeamName) {
@@ -266,16 +282,13 @@
 
                     if (data.team_name) {
                         teamNameSpan.textContent = data.team_name;
-                        teamButton.innerHTML = '<span id="team-name-' + currentPlayerId + '">' + data.team_name + '</span>';
                     } else {
                         teamNameSpan.textContent = 'No Team';
-                        teamButton.innerHTML = '<span id="team-name-' + currentPlayerId + '">No Team</span>';
                     }
 
-                    // Update the button's onclick to reflect new team
-                    const newTeamId = teamId || 'null';
-                    const newTeamName = data.team_name || '';
-                    teamButton.setAttribute('onclick', `openTeamModal(${currentPlayerId}, '${document.getElementById('modal-player-name').textContent}', ${newTeamId}, '${newTeamName}')`);
+                    // Update the button's data attributes to reflect new team
+                    teamButton.dataset.teamId = teamId || '';
+                    teamButton.dataset.teamName = data.team_name || '';
 
                     // Show success message and close modal
                     showAlert('success', data.message);
@@ -322,6 +335,8 @@
                 const value = this.checked;
                 const cell = this.closest('td');
 
+                console.log('Checkbox changed:', { playerId, field, value });
+
                 // Disable checkbox during update
                 this.disabled = true;
 
@@ -333,8 +348,12 @@
                     },
                     body: `field=${field}&value=${value}`
                 })
-                .then(response => response.json())
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    return response.json();
+                })
                 .then(data => {
+                    console.log('Response data:', data);
                     if (data.success) {
                         // Re-enable checkbox
                         this.disabled = false;
@@ -351,7 +370,8 @@
                     }
                 }.bind(this))
                 .catch(error => {
-                    alert('Error updating field');
+                    console.error('Fetch error:', error);
+                    alert('Error updating field: ' + error.message);
                     // Revert checkbox state
                     this.checked = !value;
                     this.disabled = false;
