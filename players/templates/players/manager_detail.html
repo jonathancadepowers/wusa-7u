@@ -1,19 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Manager - WUSA 7U</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-</head>
-<body class="bg-light">
-    <nav class="navbar navbar-dark bg-primary">
-        <div class="container-fluid">
-            <a class="navbar-brand mb-0 h1" href="{% url 'players:managers_list' %}">WUSA 7U - Edit Manager</a>
-        </div>
-    </nav>
+{% extends "base.html" %}
 
+{% block title %}Edit Manager - WUSA 7U{% endblock %}
+
+{% block page_title %}WUSA 7U - Edit Manager{% endblock %}
+
+{% block content %}
     <div class="container mt-4">
         {% if messages %}
             {% for message in messages %}
@@ -99,7 +90,4 @@
         </div>
         {% endif %}
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+{% endblock %}
