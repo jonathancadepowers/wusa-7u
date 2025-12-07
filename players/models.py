@@ -3,7 +3,6 @@ from django.db import models
 
 class Draft(models.Model):
     rounds = models.IntegerField()
-    draft_date = models.DateField()
     picks_per_round = models.IntegerField()
     order = models.TextField()
     final_round_draft_order = models.TextField(blank=True, null=True)
@@ -13,10 +12,10 @@ class Draft(models.Model):
 
     class Meta:
         db_table = 'draft'
-        ordering = ['-draft_date']
+        ordering = ['-created_at']
 
     def __str__(self):
-        return f"Draft {self.draft_date}"
+        return f"Draft {self.created_at.strftime('%Y-%m-%d')}"
 
 
 class DraftPick(models.Model):

@@ -134,13 +134,6 @@
                             <input type="hidden" name="rounds" value="{% if draft %}{{ draft.rounds }}{% else %}{{ suggested_rounds }}{% endif %}">
                             <input type="hidden" name="picks_per_round" value="{% if draft %}{{ draft.picks_per_round }}{% else %}{{ suggested_picks_per_round }}{% endif %}">
 
-                            <div class="mb-3">
-                                <label for="draft_date" class="form-label">Draft Date *</label>
-                                <input type="date" class="form-control" id="draft_date" name="draft_date" value="{% if draft %}{{ draft.draft_date|date:'Y-m-d' }}{% endif %}" required>
-                            </div>
-
-                            <hr class="my-4">
-
                             <!-- Draft Order Section -->
                             <h5 class="mb-3">Draft Order</h5>
 

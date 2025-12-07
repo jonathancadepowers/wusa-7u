@@ -4,8 +4,8 @@ from .models import Player, Team, Manager, Draft, PlayerRanking, ManagerDaughter
 
 @admin.register(Draft)
 class DraftAdmin(admin.ModelAdmin):
-    list_display = ['draft_date', 'rounds', 'picks_per_round', 'created_at']
-    list_filter = ['draft_date']
+    list_display = ['rounds', 'picks_per_round', 'created_at']
+    list_filter = ['created_at']
     search_fields = []
 
 

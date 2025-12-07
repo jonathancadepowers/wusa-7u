@@ -80,7 +80,6 @@ def edit_draft_view(request):
         if draft:
             # Update existing draft
             draft.rounds = rounds
-            draft.draft_date = request.POST.get('draft_date')
             draft.picks_per_round = picks_per_round
             draft.order = order
             draft.final_round_draft_order = final_round_draft_order
@@ -90,7 +89,6 @@ def edit_draft_view(request):
             # Create new draft
             draft = Draft(
                 rounds=rounds,
-                draft_date=request.POST.get('draft_date'),
                 picks_per_round=picks_per_round,
                 order=order,
                 final_round_draft_order=final_round_draft_order
