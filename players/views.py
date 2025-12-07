@@ -62,7 +62,7 @@ def edit_draft_view(request):
         order = request.POST.get('order', '')
 
         # Calculate if we need a final round with partial picks
-        player_count = Player.objects.filter(draftable=True).count()
+        player_count = Player.objects.count()
         total_regular_picks = rounds * picks_per_round
 
         # Generate final round draft order if needed
@@ -1350,9 +1350,9 @@ def simulate_draft_view(request):
         if not teams:
             return JsonResponse({'success': False, 'error': 'No teams found in draft order'})
 
-        # Get all draftable players who haven't been drafted yet
+        # Get all players who haven't been drafted yet
         drafted_player_ids = DraftPick.objects.filter(player__isnull=False).values_list('player_id', flat=True)
-        available_players = list(Player.objects.filter(draftable=True).exclude(id__in=drafted_player_ids))
+        available_players = list(Player.objects.exclude(id__in=drafted_player_ids))
 
         if not available_players:
             return JsonResponse({'success': False, 'error': 'No available players to draft'})

@@ -7,17 +7,17 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         draft = Draft.objects.latest('created_at')
-        total_players = Player.objects.filter(draftable=True).count()
+        total_players = Player.objects.count()
         total_slots = draft.rounds * draft.picks_per_round
-        
+
         if draft.final_round_draft_order:
             final_round_team_ids = [int(tid) for tid in draft.final_round_draft_order.split(',') if tid]
             total_slots += len(final_round_team_ids)
             self.stdout.write(f'Final round teams: {len(final_round_team_ids)}')
-        
+
         drafted_count = DraftPick.objects.filter(player__isnull=False).count()
-        
-        self.stdout.write(f'Total draftable players: {total_players}')
+
+        self.stdout.write(f'Total players: {total_players}')
         self.stdout.write(f'Rounds: {draft.rounds}')
         self.stdout.write(f'Picks per round: {draft.picks_per_round}')
         self.stdout.write(f'Total draft slots: {total_slots}')

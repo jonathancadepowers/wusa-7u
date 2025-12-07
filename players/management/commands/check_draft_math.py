@@ -7,10 +7,10 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         draft = Draft.objects.latest('created_at')
-        total_players = Player.objects.filter(draftable=True).count()
+        total_players = Player.objects.count()
         num_teams = Team.objects.count()
-        
-        self.stdout.write(f'Total draftable players: {total_players}')
+
+        self.stdout.write(f'Total players: {total_players}')
         self.stdout.write(f'Number of teams: {num_teams}')
         self.stdout.write(f'Players ÷ Teams = {total_players / num_teams if num_teams > 0 else 0}')
         self.stdout.write(f'')
