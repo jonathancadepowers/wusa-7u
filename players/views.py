@@ -1043,7 +1043,8 @@ def available_players_view(request):
         'id': player.id,
         'first_name': player.first_name,
         'last_name': player.last_name,
-        'conflict': player.conflict
+        'conflict': player.conflict,
+        'draftable': player.draftable
     } for player in available_players]
 
     return JsonResponse({

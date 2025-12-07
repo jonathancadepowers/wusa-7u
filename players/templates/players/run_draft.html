@@ -237,6 +237,9 @@
                     <div id="practiceSlotInfo" class="alert alert-primary" style="display: none;">
                         <strong>Team Practice:</strong> <span id="practiceSlotText"></span>
                     </div>
+                    <div id="notDraftableWarning" class="alert alert-danger" style="display: none;">
+                        <strong>Player is not draftable.</strong>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -433,6 +436,7 @@
                             option.value = player.id;
                             option.textContent = `${player.first_name} ${player.last_name}`;
                             option.dataset.conflict = player.conflict || '';
+                            option.dataset.draftable = player.draftable;
 
                             // Pre-select if this is the current player in edit mode
                             if (selectedPlayerId && player.id == selectedPlayerId) {
@@ -464,8 +468,10 @@
         $('#playerSelect').on('change', function(e) {
             const selectedOption = this.options[this.selectedIndex];
             const conflict = selectedOption ? selectedOption.dataset.conflict : '';
+            const draftable = selectedOption ? selectedOption.dataset.draftable === 'true' : true;
             const conflictInfo = document.getElementById('conflictInfo');
             const practiceSlotInfo = document.getElementById('practiceSlotInfo');
+            const notDraftableWarning = document.getElementById('notDraftableWarning');
             const confirmBtn = document.getElementById('confirmPickBtn');
 
             if (this.value) {
@@ -477,10 +483,18 @@
 
                 // Show practice slot info
                 practiceSlotInfo.style.display = 'block';
+
+                // Show/hide not draftable warning
+                if (!draftable) {
+                    notDraftableWarning.style.display = 'block';
+                } else {
+                    notDraftableWarning.style.display = 'none';
+                }
             } else {
                 confirmBtn.disabled = true;
                 conflictInfo.style.display = 'none';
                 practiceSlotInfo.style.display = 'none';
+                notDraftableWarning.style.display = 'none';
             }
         });
 
