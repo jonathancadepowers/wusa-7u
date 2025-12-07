@@ -310,6 +310,12 @@
                         <strong>Warning:</strong> There are <span id="preAssignedCount">0</span> players that — prior to this draft —
                         were already assigned to a team. These players must be unassigned from all teams before you can proceed.
                     </div>
+
+                    <!-- Warning 3: Already assigned via draft (BLOCKS action) -->
+                    <div id="alreadyAssignedWarning" class="alert alert-danger" style="display: none;">
+                        <strong>Warning:</strong> <span id="alreadyAssignedCount">0</span> draft picks have already been assigned to teams.
+                        The draft assignment has already been completed. You cannot assign players again unless you first reset the teams.
+                    </div>
                 </div>
                 <div class="modal-footer justify-content-start">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel - Do Not Proceed</button>
@@ -789,10 +795,12 @@
                         const undraftedNoun = document.getElementById('undraftedNoun');
                         const preAssignedWarning = document.getElementById('preAssignedWarning');
                         const preAssignedCount = document.getElementById('preAssignedCount');
+                        const alreadyAssignedWarning = document.getElementById('alreadyAssignedWarning');
+                        const alreadyAssignedCount = document.getElementById('alreadyAssignedCount');
                         const confirmBtn = document.getElementById('confirmAssignPlayersBtn');
 
                         // Check if elements exist (they might have been removed after a previous assignment)
-                        if (!undraftedWarning || !preAssignedWarning) {
+                        if (!undraftedWarning || !preAssignedWarning || !alreadyAssignedWarning) {
                             // Modal was previously used for assignment - reload page to reset modal state
                             alert('Please reload the page before opening the validation modal again.');
                             return;
@@ -809,13 +817,25 @@
                         }
 
                         // Handle warning 2: Pre-assigned players (BLOCKS action)
-
                         if (data.pre_assigned_count > 0) {
                             preAssignedCount.textContent = data.pre_assigned_count;
                             preAssignedWarning.style.display = 'block';
                             confirmBtn.disabled = true;
                         } else {
                             preAssignedWarning.style.display = 'none';
+                        }
+
+                        // Handle warning 3: Already assigned via draft (BLOCKS action)
+                        if (data.already_assigned_count > 0) {
+                            alreadyAssignedCount.textContent = data.already_assigned_count;
+                            alreadyAssignedWarning.style.display = 'block';
+                            confirmBtn.disabled = true;
+                        } else {
+                            alreadyAssignedWarning.style.display = 'none';
+                        }
+
+                        // Enable button only if no blocking warnings
+                        if (data.pre_assigned_count === 0 && data.already_assigned_count === 0) {
                             confirmBtn.disabled = false;
                         }
 

@@ -1222,10 +1222,15 @@ def validate_draft_assignment_view(request):
         # - BUT were NOT drafted (no DraftPick record)
         pre_assigned_count = Player.objects.filter(team__isnull=False).exclude(id__in=drafted_player_ids).count()
 
+        # Warning 3: Count draft picks that have already been assigned to teams
+        # This indicates that the assignment has already been completed
+        already_assigned_count = DraftPick.objects.filter(player_assigned_to_team=True).count()
+
         return JsonResponse({
             'success': True,
             'undrafted_count': unfilled_slots,
-            'pre_assigned_count': pre_assigned_count
+            'pre_assigned_count': pre_assigned_count,
+            'already_assigned_count': already_assigned_count
         })
 
     except Draft.DoesNotExist:
