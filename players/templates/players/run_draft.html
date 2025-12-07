@@ -239,13 +239,9 @@
             if (e.target.value) {
                 confirmBtn.disabled = false;
 
-                // Show/hide conflict info
-                if (conflict) {
-                    document.getElementById('conflictText').textContent = conflict;
-                    conflictInfo.style.display = 'block';
-                } else {
-                    conflictInfo.style.display = 'none';
-                }
+                // Always show conflict info when player is selected
+                document.getElementById('conflictText').textContent = conflict || 'None';
+                conflictInfo.style.display = 'block';
 
                 // Show practice slot info
                 practiceSlotInfo.style.display = 'block';
