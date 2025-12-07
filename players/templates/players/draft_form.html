@@ -119,7 +119,7 @@
                         {% if final_round_team_names %}
                         <div class="mb-4">
                             <label class="form-label">Final Round {{ final_round_number }} Draft Order (Read-Only)</label>
-                            <input type="text" class="form-control" value="{{ final_round_team_names|join:', ' }}" readonly>
+                            <textarea class="form-control" id="finalRoundOrder" readonly style="resize: none; overflow: hidden;">{{ final_round_team_names|join:', ' }}</textarea>
                             <div class="alert alert-warning mt-2 mb-0">
                                 <small>Clicking "Save Changes" below always randomly recalculates the draft order of the final round listed above.</small>
                             </div>
@@ -342,6 +342,13 @@
             });
         }
 
+        // Auto-resize textarea to fit content
+        function autoResizeTextarea(textarea) {
+            if (!textarea) return;
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+        }
+
         // Initialize existing draft order if editing
         document.addEventListener('DOMContentLoaded', function() {
             initializeDragAndDrop();
@@ -361,6 +368,12 @@
 
                 updateOrderField();
                 updateOrderBadges();
+            }
+
+            // Auto-resize final round order textarea
+            const finalRoundTextarea = document.getElementById('finalRoundOrder');
+            if (finalRoundTextarea) {
+                autoResizeTextarea(finalRoundTextarea);
             }
 
             // Update order field before form submission
