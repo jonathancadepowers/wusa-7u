@@ -23,6 +23,7 @@ class DraftPick(models.Model):
     pick = models.IntegerField()
     player = models.ForeignKey('Player', on_delete=models.SET_NULL, null=True, blank=True, related_name='draft_picks')
     team = models.ForeignKey('Team', on_delete=models.SET_NULL, null=True, blank=True, related_name='draft_picks')
+    player_assigned_to_team = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

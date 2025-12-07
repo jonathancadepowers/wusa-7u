@@ -1245,6 +1245,70 @@ def reset_draft_view(request):
         return JsonResponse({'success': False, 'error': str(e)})
 
 
+@csrf_exempt
+def assign_players_to_teams_view(request):
+    """Assign all drafted players to their teams based on draft picks"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+    try:
+        # Get all draft picks that have both a player and a team
+        draft_picks = DraftPick.objects.filter(
+            player__isnull=False,
+            team__isnull=False
+        ).select_related('player', 'team')
+
+        success_count = 0
+        already_assigned_count = 0
+        errors = []
+
+        for pick in draft_picks:
+            try:
+                # Check if already processed
+                if pick.player_assigned_to_team:
+                    already_assigned_count += 1
+                    continue
+
+                # Assign player to team
+                pick.player.team = pick.team
+                pick.player.save()
+
+                # Mark as assigned
+                pick.player_assigned_to_team = True
+                pick.save()
+
+                success_count += 1
+
+            except Exception as e:
+                errors.append({
+                    'round': pick.round,
+                    'pick': pick.pick,
+                    'player': f"{pick.player.first_name} {pick.player.last_name}" if pick.player else 'Unknown',
+                    'team': pick.team.name if pick.team else 'Unknown',
+                    'error': str(e)
+                })
+
+        # Count picks that couldn't be processed (missing player or team)
+        incomplete_picks = DraftPick.objects.filter(
+            models.Q(player__isnull=True) | models.Q(team__isnull=True)
+        ).count()
+
+        return JsonResponse({
+            'success': True,
+            'summary': {
+                'total_processed': success_count + already_assigned_count + len(errors),
+                'newly_assigned': success_count,
+                'already_assigned': already_assigned_count,
+                'errors': len(errors),
+                'incomplete_picks': incomplete_picks
+            },
+            'error_details': errors
+        })
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
 @require_http_methods(["POST"])
 @csrf_exempt
 def update_player_field(request, player_id):

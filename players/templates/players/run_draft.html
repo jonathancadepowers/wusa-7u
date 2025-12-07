@@ -786,8 +786,62 @@
 
         // Handle confirm assign players button (placeholder - no action yet)
         document.getElementById('confirmAssignPlayersBtn').addEventListener('click', function() {
-            // TODO: Implement the actual assignment logic later
-            alert('Assignment logic not yet implemented');
+            const btn = this;
+            btn.disabled = true;
+            btn.textContent = 'Assigning...';
+
+            fetch('/draft/assign-players/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                btn.disabled = false;
+                btn.textContent = 'Assign Players to Teams';
+
+                if (data.success) {
+                    // Build summary report
+                    const summary = data.summary;
+                    let reportHTML = '<div class="alert alert-success"><h5>Assignment Complete!</h5>';
+                    reportHTML += `<p><strong>Newly Assigned:</strong> ${summary.newly_assigned} players</p>`;
+
+                    if (summary.already_assigned > 0) {
+                        reportHTML += `<p><strong>Already Assigned:</strong> ${summary.already_assigned} players (skipped)</p>`;
+                    }
+
+                    if (summary.incomplete_picks > 0) {
+                        reportHTML += `<p class="text-warning"><strong>Incomplete Picks:</strong> ${summary.incomplete_picks} draft picks without player or team assignment</p>`;
+                    }
+
+                    if (summary.errors > 0) {
+                        reportHTML += `<p class="text-danger"><strong>Errors:</strong> ${summary.errors} players could not be assigned</p>`;
+                        reportHTML += '<ul>';
+                        data.error_details.forEach(err => {
+                            reportHTML += `<li>Round ${err.round}, Pick ${err.pick}: ${err.player} to ${err.team} - ${err.error}</li>`;
+                        });
+                        reportHTML += '</ul>';
+                    }
+
+                    reportHTML += '</div>';
+
+                    // Replace modal body content with report
+                    document.querySelector('#assignPlayersModal .modal-body').innerHTML = reportHTML;
+
+                    // Change footer buttons
+                    document.querySelector('#assignPlayersModal .modal-footer').innerHTML =
+                        '<button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>';
+                } else {
+                    alert('Error assigning players: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                btn.disabled = false;
+                btn.textContent = 'Assign Players to Teams';
+                alert('Network error: ' + error.message);
+            });
         });
 
         // Handle reset draft button click
