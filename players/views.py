@@ -1093,6 +1093,7 @@ def make_pick_view(request):
 
 
 @require_http_methods(["POST"])
+@csrf_exempt
 def update_player_field(request, player_id):
     """Update a single boolean field on a player (for inline admin editing)"""
     try:
