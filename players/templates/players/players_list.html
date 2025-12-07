@@ -328,6 +328,10 @@
         }
 
         // Inline editing for boolean fields
+        console.log('Setting up inline edit checkboxes...');
+        const checkboxes = document.querySelectorAll('.inline-edit-checkbox');
+        console.log('Found ' + checkboxes.length + ' checkboxes');
+
         document.querySelectorAll('.inline-edit-checkbox').forEach(checkbox => {
             checkbox.addEventListener('change', function() {
                 const playerId = this.dataset.playerId;
