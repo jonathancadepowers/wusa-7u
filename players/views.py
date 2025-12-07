@@ -1095,6 +1095,41 @@ def make_pick_view(request):
         return JsonResponse({'success': False, 'error': str(e)})
 
 
+@csrf_exempt
+def undraft_pick_view(request):
+    """Delete a draft pick record"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+    try:
+        data = json.loads(request.body)
+        round_num = data.get('round')
+        pick_num = data.get('pick')
+        team_name = data.get('team_name')
+
+        # Get the team by name
+        team = Team.objects.get(name=team_name)
+
+        # Delete the draft pick if it exists
+        draft_pick = DraftPick.objects.filter(
+            round=round_num,
+            pick=pick_num,
+            team=team
+        ).first()
+
+        if draft_pick:
+            draft_pick.delete()
+
+        return JsonResponse({
+            'success': True
+        })
+
+    except Team.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Team not found'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
 @require_http_methods(["POST"])
 @csrf_exempt
 def update_player_field(request, player_id):

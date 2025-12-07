@@ -13,6 +13,7 @@ urlpatterns = [
     path('draft/run/', views.run_draft_view, name='run_draft'),
     path('draft/available-players/', views.available_players_view, name='available_players'),
     path('draft/make-pick/', views.make_pick_view, name='make_pick'),
+    path('draft/undraft-pick/', views.undraft_pick_view, name='undraft_pick'),
     path('api/import-players/', views.import_players_view, name='import_players'),
     path('players/', views.players_list_view, name='list'),
     path('players/create/', views.player_create_view, name='create'),

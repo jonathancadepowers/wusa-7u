@@ -242,8 +242,11 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="confirmPickBtn" disabled>Pick Player</button>
+                    <button type="button" class="btn btn-danger" id="undraftPlayerBtn" style="display: none;">Undraft Player</button>
+                    <div class="ms-auto">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="confirmPickBtn" disabled>Pick Player</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -282,10 +285,12 @@
             // Reset and hide conflict and practice slot boxes
             document.getElementById('conflictInfo').style.display = 'none';
             document.getElementById('practiceSlotInfo').style.display = 'none';
+            document.getElementById('notDraftableWarning').style.display = 'none';
             document.getElementById('conflictText').textContent = '';
 
-            // Update button text
+            // Update button text and show/hide undraft button
             document.getElementById('confirmPickBtn').textContent = isEdit ? 'Update Player' : 'Pick Player';
+            document.getElementById('undraftPlayerBtn').style.display = isEdit ? 'inline-block' : 'none';
 
             // Load available players
             loadAvailablePlayers(currentPlayerId);
@@ -566,6 +571,65 @@
                 alert('Error making pick');
                 this.disabled = false;
                 this.textContent = 'Pick Player';
+            });
+        });
+
+        // Handle undraft button
+        document.getElementById('undraftPlayerBtn').addEventListener('click', function() {
+            if (!confirm('Are you sure you want to undraft this player?')) {
+                return;
+            }
+
+            const teamName = currentCell.dataset.teamName;
+
+            // Disable button during request
+            this.disabled = true;
+            this.textContent = 'Undrafting...';
+
+            // Submit the undraft request
+            fetch('/draft/undraft-pick/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    round: currentRound,
+                    pick: currentPick,
+                    team_name: teamName
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Clear the cell
+                    const teamNameSpan = currentCell.querySelector('.team-name');
+                    teamNameSpan.textContent = teamName;
+
+                    // Mark cell as unpicked and remove player data
+                    currentCell.classList.remove('picked');
+                    delete currentCell.dataset.playerId;
+                    delete currentCell.dataset.playerName;
+
+                    // Close modal
+                    pickPlayerModal.hide();
+
+                    // Reset button
+                    this.disabled = false;
+                    this.textContent = 'Undraft Player';
+
+                    // Update player counts
+                    updatePlayerCounts();
+                } else {
+                    alert('Error: ' + data.error);
+                    this.disabled = false;
+                    this.textContent = 'Undraft Player';
+                }
+            })
+            .catch(error => {
+                alert('Error undrafting player');
+                this.disabled = false;
+                this.textContent = 'Undraft Player';
             });
         });
 
