@@ -957,6 +957,8 @@ def run_draft_view(request):
 
             if not team_order or len(team_order) == 0:
                 errors.append('No teams have been assigned to the draft order.')
+            elif len(team_order) != draft.picks_per_round:
+                errors.append(f'Draft order is incomplete. Expected {draft.picks_per_round} teams but only {len(team_order)} are assigned.')
         except (json.JSONDecodeError, ValueError):
             errors.append('Draft order data is invalid.')
 
