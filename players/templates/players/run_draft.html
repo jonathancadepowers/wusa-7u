@@ -329,11 +329,8 @@
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-warning">
-                        <strong>Testing Feature:</strong> This feature should only be used for testing purposes. You must enter a password to proceed.
-                    </div>
-                    <div class="mb-3">
-                        <label for="simulatePassword" class="form-label">Password</label>
-                        <input type="password" class="form-control" id="simulatePassword" placeholder="Enter password">
+                        <strong>Testing Feature:</strong> This feature should only be used for testing purposes.
+                        It will randomly assign all players to teams in the draft.
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -885,12 +882,6 @@
         // Handle confirm simulate draft button
         document.getElementById('confirmSimulateDraftBtn').addEventListener('click', function() {
             const btn = this;
-            const password = document.getElementById('simulatePassword').value;
-
-            if (!password) {
-                alert('Please enter a password');
-                return;
-            }
 
             btn.disabled = true;
             btn.textContent = 'Simulating...';
@@ -900,8 +891,7 @@
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': getCookie('csrftoken')
-                },
-                body: JSON.stringify({ password: password })
+                }
             })
             .then(response => response.json())
             .then(data => {

@@ -1329,16 +1329,7 @@ def simulate_draft_view(request):
         return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
     try:
-        import json
         import random
-
-        # Get password from request
-        data = json.loads(request.body)
-        password = data.get('password', '')
-
-        # Verify password
-        if password != 'tex@5city':
-            return JsonResponse({'success': False, 'error': 'Invalid password'})
 
         # Get the current draft
         try:
