@@ -1,87 +1,76 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - WUSA 7U</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-</head>
-<body class="bg-light">
-    <nav class="navbar navbar-dark bg-primary">
-        <div class="container-fluid">
-            <span class="navbar-brand mb-0 h1">WUSA 7U - Admin Dashboard</span>
-            <div>
-                <a href="{% url 'players:settings' %}" class="btn btn-outline-light btn-sm me-2">Settings</a>
-                <a href="/admin/" class="btn btn-outline-light btn-sm">Admin</a>
-            </div>
-        </div>
-    </nav>
+{% extends "base.html" %}
 
-    <div class="container mt-5">
-        <div class="row justify-content-center">
-            <div class="col-md-8">
-                <div class="card shadow">
-                    <div class="card-body">
-                        <div class="list-group">
-                            <a href="{% url 'players:list' %}" class="list-group-item list-group-item-action d-flex align-items-center py-3">
-                                <div class="me-3 text-primary" style="font-size: 2rem;">
-                                    <i class="bi bi-people-fill"></i>
-                                </div>
-                                <div>
-                                    <h5 class="mb-1">Players</h5>
-                                    <p class="mb-0 text-muted">View and manage player information</p>
-                                </div>
-                                <div class="ms-auto">
-                                    <i class="bi bi-chevron-right"></i>
-                                </div>
-                            </a>
+{% block title %}Admin Dashboard - WUSA 7U{% endblock %}
 
-                            <a href="{% url 'players:managers_list' %}" class="list-group-item list-group-item-action d-flex align-items-center py-3">
-                                <div class="me-3 text-success" style="font-size: 2rem;">
-                                    <i class="bi bi-person-badge-fill"></i>
-                                </div>
-                                <div>
-                                    <h5 class="mb-1">Managers</h5>
-                                    <p class="mb-0 text-muted">View and manage team managers</p>
-                                </div>
-                                <div class="ms-auto">
-                                    <i class="bi bi-chevron-right"></i>
-                                </div>
-                            </a>
+{% block page_title %}WUSA 7U - Admin Dashboard{% endblock %}
 
-                            <a href="{% url 'players:teams_list' %}" class="list-group-item list-group-item-action d-flex align-items-center py-3">
-                                <div class="me-3 text-warning" style="font-size: 2rem;">
-                                    <i class="bi bi-trophy-fill"></i>
-                                </div>
-                                <div>
-                                    <h5 class="mb-1">Teams</h5>
-                                    <p class="mb-0 text-muted">View and manage teams</p>
-                                </div>
-                                <div class="ms-auto">
-                                    <i class="bi bi-chevron-right"></i>
-                                </div>
-                            </a>
+{% block navbar_actions %}
+<a href="{% url 'players:settings' %}" class="btn btn-outline-light btn-sm me-2">Settings</a>
+<a href="/admin/" class="btn btn-outline-light btn-sm">Admin</a>
+{% endblock %}
 
-                            <a href="{% url 'players:public_portal' %}" class="list-group-item list-group-item-action d-flex align-items-center py-3">
-                                <div class="me-3 text-info" style="font-size: 2rem;">
-                                    <i class="bi bi-globe"></i>
-                                </div>
-                                <div>
-                                    <h5 class="mb-1">Public Portal</h5>
-                                    <p class="mb-0 text-muted">Public-facing team access page</p>
-                                </div>
-                                <div class="ms-auto">
-                                    <i class="bi bi-chevron-right"></i>
-                                </div>
-                            </a>
-                        </div>
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-body">
+                    <div class="list-group">
+                        <a href="{% url 'players:list' %}" class="list-group-item list-group-item-action d-flex align-items-center py-3">
+                            <div class="me-3 text-primary" style="font-size: 2rem;">
+                                <i class="bi bi-people-fill"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-1">Players</h5>
+                                <p class="mb-0 text-muted">View and manage player information</p>
+                            </div>
+                            <div class="ms-auto">
+                                <i class="bi bi-chevron-right"></i>
+                            </div>
+                        </a>
+
+                        <a href="{% url 'players:managers_list' %}" class="list-group-item list-group-item-action d-flex align-items-center py-3">
+                            <div class="me-3 text-success" style="font-size: 2rem;">
+                                <i class="bi bi-person-badge-fill"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-1">Managers</h5>
+                                <p class="mb-0 text-muted">View and manage team managers</p>
+                            </div>
+                            <div class="ms-auto">
+                                <i class="bi bi-chevron-right"></i>
+                            </div>
+                        </a>
+
+                        <a href="{% url 'players:teams_list' %}" class="list-group-item list-group-item-action d-flex align-items-center py-3">
+                            <div class="me-3 text-warning" style="font-size: 2rem;">
+                                <i class="bi bi-trophy-fill"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-1">Teams</h5>
+                                <p class="mb-0 text-muted">View and manage teams</p>
+                            </div>
+                            <div class="ms-auto">
+                                <i class="bi bi-chevron-right"></i>
+                            </div>
+                        </a>
+
+                        <a href="{% url 'players:public_portal' %}" class="list-group-item list-group-item-action d-flex align-items-center py-3">
+                            <div class="me-3 text-info" style="font-size: 2rem;">
+                                <i class="bi bi-globe"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-1">Public Portal</h5>
+                                <p class="mb-0 text-muted">Public-facing team access page</p>
+                            </div>
+                            <div class="ms-auto">
+                                <i class="bi bi-chevron-right"></i>
+                            </div>
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+</div>
+{% endblock %}

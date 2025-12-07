@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}WUSA 7U{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-light">
+    <!-- Hamburger Navigation -->
+    <nav class="navbar navbar-dark bg-primary">
+        <div class="container-fluid">
+            <!-- Hamburger Menu Button -->
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#navMenu" aria-controls="navMenu" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <span class="navbar-brand mb-0 h1">{% block page_title %}WUSA 7U{% endblock %}</span>
+
+            <div>
+                {% block navbar_actions %}
+                <a href="/admin/" class="btn btn-outline-light btn-sm">Admin</a>
+                {% endblock %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Off-canvas Navigation Menu -->
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="navMenu" aria-labelledby="navMenuLabel">
+        <div class="offcanvas-header bg-primary text-white">
+            <h5 class="offcanvas-title" id="navMenuLabel">Navigation</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body p-0">
+            <div class="list-group list-group-flush">
+                <!-- Manager Dashboards -->
+                <a href="{% url 'players:public_portal' %}" class="list-group-item list-group-item-action py-3">
+                    <i class="bi bi-house-door me-2"></i>
+                    Manager Dashboards
+                </a>
+
+                <!-- Admin Section Header -->
+                <div class="list-group-item bg-light text-muted small fw-bold">
+                    ADMIN
+                </div>
+
+                <!-- Players -->
+                <a href="{% url 'players:list' %}" class="list-group-item list-group-item-action py-3">
+                    <i class="bi bi-people me-2"></i>
+                    Players
+                </a>
+
+                <!-- Managers -->
+                <a href="{% url 'players:managers_list' %}" class="list-group-item list-group-item-action py-3">
+                    <i class="bi bi-person-badge me-2"></i>
+                    Managers
+                </a>
+
+                <!-- Teams -->
+                <a href="{% url 'players:teams_list' %}" class="list-group-item list-group-item-action py-3">
+                    <i class="bi bi-shield me-2"></i>
+                    Teams
+                </a>
+
+                <!-- Settings -->
+                <a href="{% url 'players:settings' %}" class="list-group-item list-group-item-action py-3">
+                    <i class="bi bi-gear me-2"></i>
+                    Settings
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% block content %}{% endblock %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
