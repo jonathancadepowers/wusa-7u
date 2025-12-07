@@ -1012,8 +1012,14 @@ def run_draft_view(request):
 
 def available_players_view(request):
     """Get list of players not yet drafted"""
+    include_player_id = request.GET.get('include_player')
+
     # Get all player IDs that have been drafted
-    drafted_player_ids = DraftPick.objects.values_list('player_id', flat=True)
+    drafted_player_ids = list(DraftPick.objects.values_list('player_id', flat=True))
+
+    # If we're editing and need to include a specific player, remove them from drafted list
+    if include_player_id:
+        drafted_player_ids = [pid for pid in drafted_player_ids if str(pid) != str(include_player_id)]
 
     # Get all players not in the drafted list
     available_players = Player.objects.exclude(id__in=drafted_player_ids).order_by('last_name', 'first_name')
@@ -1034,7 +1040,7 @@ def available_players_view(request):
 
 @csrf_exempt
 def make_pick_view(request):
-    """Create a draft pick record"""
+    """Create or update a draft pick record"""
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
@@ -1051,12 +1057,14 @@ def make_pick_view(request):
         # Get the team by name
         team = Team.objects.get(name=team_name)
 
-        # Create the draft pick
-        draft_pick = DraftPick.objects.create(
+        # Create or update the draft pick
+        draft_pick, created = DraftPick.objects.update_or_create(
             round=round_num,
             pick=pick_num,
-            player=player,
-            team=team
+            defaults={
+                'player': player,
+                'team': team
+            }
         )
 
         return JsonResponse({

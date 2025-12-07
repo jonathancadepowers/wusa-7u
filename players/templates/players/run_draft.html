@@ -43,6 +43,14 @@
         .draft-table tbody td:first-child {
             background-color: #f8f9fa;
         }
+        .draft-cell.picked {
+            background-color: #d1e7dd;
+        }
+        .draft-cell.picked:hover .team-name {
+            color: #0d6efd;
+            text-decoration: underline;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body class="bg-light">
@@ -114,20 +122,13 @@
                     </div>
                 {% endif %}
 
-                <div class="mt-4">
-                    {% if show_grid %}
-                        <a href="{% url 'players:settings' %}" class="btn btn-secondary">
-                            <i class="bi bi-arrow-left me-1"></i>Back to Settings
-                        </a>
-                    {% else %}
+                {% if not show_grid %}
+                    <div class="mt-4">
                         <a href="{% url 'players:edit_draft' %}" class="btn btn-primary">
                             <i class="bi bi-pencil me-1"></i>Configure Draft
                         </a>
-                        <a href="{% url 'players:settings' %}" class="btn btn-secondary ms-2">
-                            <i class="bi bi-arrow-left me-1"></i>Back to Settings
-                        </a>
-                    {% endif %}
-                </div>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -168,54 +169,80 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         const pickPlayerModal = new bootstrap.Modal(document.getElementById('pickPlayerModal'));
-        let currentRound, currentPick, currentTeamId, currentCell;
+        let currentRound, currentPick, currentTeamId, currentCell, isEditMode, currentPlayerId;
         const picksPerRound = {{ draft.picks_per_round }};
 
-        // Add click handlers to all + icons
+        function openPickModal(cell, isEdit = false) {
+            const row = cell.closest('tr');
+            const rowIndex = Array.from(row.parentNode.children).indexOf(row);
+            const cellIndex = Array.from(row.children).indexOf(cell) - 1; // -1 to exclude first column
+
+            currentRound = cellIndex + 1;
+            currentPick = rowIndex + 1;
+            currentCell = cell;
+            isEditMode = isEdit;
+            currentPlayerId = cell.dataset.playerId || null;
+
+            // Calculate overall pick number
+            const overallPick = (currentRound - 1) * picksPerRound + currentPick;
+
+            // Get team name and practice slot
+            const teamName = cell.querySelector('.team-name').textContent;
+            const practiceSlot = cell.dataset.practiceSlot || 'Not set';
+
+            // Update modal
+            document.getElementById('pickInfo').textContent = `Round ${currentRound}, Pick ${overallPick}`;
+            document.getElementById('practiceSlotText').textContent = practiceSlot;
+
+            // Reset and hide conflict and practice slot boxes
+            document.getElementById('conflictInfo').style.display = 'none';
+            document.getElementById('practiceSlotInfo').style.display = 'none';
+            document.getElementById('conflictText').textContent = '';
+
+            // Update button text
+            document.getElementById('confirmPickBtn').textContent = isEdit ? 'Update Player' : 'Pick Player';
+
+            // Load available players
+            loadAvailablePlayers(currentPlayerId);
+
+            // Show modal
+            pickPlayerModal.show();
+        }
+
+        // Add click handlers
         document.addEventListener('DOMContentLoaded', function() {
+            // Click on + icon for new picks
             document.querySelectorAll('.add-icon').forEach(icon => {
                 icon.addEventListener('click', function(e) {
                     const cell = e.target.closest('.draft-cell');
-                    const row = cell.closest('tr');
-                    const rowIndex = Array.from(row.parentNode.children).indexOf(row);
-                    const cellIndex = Array.from(row.children).indexOf(cell) - 1; // -1 to exclude first column
-
-                    currentRound = cellIndex + 1;
-                    currentPick = rowIndex + 1;
-                    currentCell = cell;
-
-                    // Calculate overall pick number
-                    const overallPick = (currentRound - 1) * picksPerRound + currentPick;
-
-                    // Get team name and practice slot
-                    const teamName = cell.querySelector('.team-name').textContent;
-                    const practiceSlot = cell.dataset.practiceSlot || 'Not set';
-
-                    // Update modal
-                    document.getElementById('pickInfo').textContent = `Round ${currentRound}, Pick ${overallPick}`;
-                    document.getElementById('practiceSlotText').textContent = practiceSlot;
-
-                    // Reset and hide conflict and practice slot boxes
-                    document.getElementById('conflictInfo').style.display = 'none';
-                    document.getElementById('practiceSlotInfo').style.display = 'none';
-                    document.getElementById('conflictText').textContent = '';
-
-                    // Load available players
-                    loadAvailablePlayers();
-
-                    // Show modal
-                    pickPlayerModal.show();
+                    if (!cell.classList.contains('picked')) {
+                        openPickModal(cell, false);
+                    }
                 });
+            });
+
+            // Click on player name for editing
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('team-name')) {
+                    const cell = e.target.closest('.draft-cell');
+                    if (cell && cell.classList.contains('picked')) {
+                        openPickModal(cell, true);
+                    }
+                }
             });
         });
 
         // Load available players
-        function loadAvailablePlayers() {
+        function loadAvailablePlayers(selectedPlayerId = null) {
             const playerSelect = document.getElementById('playerSelect');
             playerSelect.innerHTML = '<option value="">Loading players...</option>';
             document.getElementById('confirmPickBtn').disabled = true;
 
-            fetch('/draft/available-players/')
+            const url = selectedPlayerId
+                ? `/draft/available-players/?include_player=${selectedPlayerId}`
+                : '/draft/available-players/';
+
+            fetch(url)
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
@@ -225,8 +252,19 @@
                             option.value = player.id;
                             option.textContent = `${player.first_name} ${player.last_name}`;
                             option.dataset.conflict = player.conflict || '';
+
+                            // Pre-select if this is the current player in edit mode
+                            if (selectedPlayerId && player.id == selectedPlayerId) {
+                                option.selected = true;
+                            }
+
                             playerSelect.appendChild(option);
                         });
+
+                        // If editing and player is selected, trigger change event
+                        if (selectedPlayerId) {
+                            playerSelect.dispatchEvent(new Event('change'));
+                        }
                     } else {
                         playerSelect.innerHTML = '<option value="">Error loading players</option>';
                     }
@@ -286,7 +324,13 @@
             .then(data => {
                 if (data.success) {
                     // Update the cell with player name
-                    currentCell.querySelector('.team-name').textContent = data.player_name;
+                    const teamNameSpan = currentCell.querySelector('.team-name');
+                    teamNameSpan.textContent = data.player_name;
+
+                    // Mark cell as picked and store player ID
+                    currentCell.classList.add('picked');
+                    currentCell.dataset.playerId = playerId;
+                    currentCell.dataset.playerName = data.player_name;
 
                     // Close modal
                     pickPlayerModal.hide();
