@@ -116,6 +116,7 @@
                                                 {% with existing_pick=draft_picks_map|get_item:round_num|get_item:pick_num %}
                                                     <td class="draft-cell{% if existing_pick %} picked{% endif %}"
                                                         data-practice-slot="{{ team.practice_slot }}"
+                                                        data-team-name="{{ team }}"
                                                         {% if existing_pick %}data-player-id="{{ existing_pick.player_id }}" data-player-name="{{ existing_pick.player_name }}"{% endif %}>
                                                         <span class="team-name">{% if existing_pick %}{{ existing_pick.player_name }}{% else %}{{ team }}{% endif %}</span>
                                                         <i class="bi bi-plus-circle add-icon"></i>
@@ -319,7 +320,7 @@
         // Handle pick confirmation
         document.getElementById('confirmPickBtn').addEventListener('click', function() {
             const playerId = document.getElementById('playerSelect').value;
-            const teamName = currentCell.querySelector('.team-name').textContent;
+            const teamName = currentCell.dataset.teamName;
 
             if (!playerId) return;
 
