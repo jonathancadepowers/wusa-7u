@@ -782,11 +782,23 @@
                 })
                 .then(data => {
                     if (data.success) {
-                        // Handle warning 1: Undrafted players (does not block)
+                        // Get all required elements first
                         const undraftedWarning = document.getElementById('undraftedWarning');
                         const undraftedCount = document.getElementById('undraftedCount');
                         const undraftedVerb = document.getElementById('undraftedVerb');
                         const undraftedNoun = document.getElementById('undraftedNoun');
+                        const preAssignedWarning = document.getElementById('preAssignedWarning');
+                        const preAssignedCount = document.getElementById('preAssignedCount');
+                        const confirmBtn = document.getElementById('confirmAssignPlayersBtn');
+
+                        // Check if elements exist (they might have been removed after a previous assignment)
+                        if (!undraftedWarning || !preAssignedWarning) {
+                            // Modal was previously used for assignment - reload page to reset modal state
+                            alert('Please reload the page before opening the validation modal again.');
+                            return;
+                        }
+
+                        // Handle warning 1: Undrafted players (does not block)
                         if (data.undrafted_count > 0) {
                             undraftedCount.textContent = data.undrafted_count;
                             undraftedVerb.textContent = data.undrafted_count === 1 ? 'is' : 'are';
@@ -797,9 +809,6 @@
                         }
 
                         // Handle warning 2: Pre-assigned players (BLOCKS action)
-                        const preAssignedWarning = document.getElementById('preAssignedWarning');
-                        const preAssignedCount = document.getElementById('preAssignedCount');
-                        const confirmBtn = document.getElementById('confirmAssignPlayersBtn');
 
                         if (data.pre_assigned_count > 0) {
                             preAssignedCount.textContent = data.pre_assigned_count;
