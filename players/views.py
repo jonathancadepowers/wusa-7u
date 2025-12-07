@@ -1133,11 +1133,20 @@ def undraft_pick_view(request):
 def validate_draft_assignment_view(request):
     """Validate draft assignment and return warning counts"""
     try:
-        # Get all player IDs that have been drafted
-        drafted_player_ids = set(DraftPick.objects.values_list('player_id', flat=True))
+        # Get the most recent draft
+        draft = Draft.objects.latest('created_at')
 
-        # Warning 1: Count players who are NOT in any draft pick (undrafted)
-        undrafted_count = Player.objects.exclude(id__in=drafted_player_ids).count()
+        # Calculate total draft slots
+        total_slots = draft.rounds * draft.picks_per_round
+
+        # Count how many slots have been filled (have a player assigned)
+        filled_slots = DraftPick.objects.filter(player__isnull=False).count()
+
+        # Warning 1: Count remaining unfilled draft slots
+        unfilled_slots = total_slots - filled_slots
+
+        # Get all player IDs that have been drafted
+        drafted_player_ids = set(DraftPick.objects.filter(player__isnull=False).values_list('player_id', flat=True))
 
         # Warning 2: Count players who:
         # - ARE assigned to a team (team is not null)
@@ -1146,7 +1155,7 @@ def validate_draft_assignment_view(request):
 
         return JsonResponse({
             'success': True,
-            'undrafted_count': undrafted_count,
+            'undrafted_count': unfilled_slots,
             'pre_assigned_count': pre_assigned_count
         })
 
