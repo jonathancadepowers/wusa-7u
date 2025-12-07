@@ -17,6 +17,7 @@ urlpatterns = [
     path('draft/validate-assignment/', views.validate_draft_assignment_view, name='validate_draft_assignment'),
     path('draft/reset/', views.reset_draft_view, name='reset_draft'),
     path('draft/assign-players/', views.assign_players_to_teams_view, name='assign_players_to_teams'),
+    path('draft/simulate/', views.simulate_draft_view, name='simulate_draft'),
     path('api/import-players/', views.import_players_view, name='import_players'),
     path('players/', views.players_list_view, name='list'),
     path('players/create/', views.player_create_view, name='create'),

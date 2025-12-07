@@ -115,6 +115,9 @@
         <div class="container-fluid">
             <span class="navbar-brand mb-0 h1">WUSA 7U - Run Draft</span>
             <div class="d-flex gap-2">
+                <button type="button" class="btn btn-info" id="simulateDraftBtn">
+                    Simulate Draft
+                </button>
                 <button type="button" class="btn btn-warning" id="resetDraftBtn">
                     Reset Draft
                 </button>
@@ -316,6 +319,31 @@
         </div>
     </div>
 
+    <!-- Simulate Draft Modal -->
+    <div class="modal fade" id="simulateDraftModal" tabindex="-1" aria-labelledby="simulateDraftModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title" id="simulateDraftModalLabel">Simulate Draft (Testing Only)</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <strong>Testing Feature:</strong> This feature should only be used for testing purposes. You must enter a password to proceed.
+                    </div>
+                    <div class="mb-3">
+                        <label for="simulatePassword" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="simulatePassword" placeholder="Enter password">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-info" id="confirmSimulateDraftBtn">Simulate Draft</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Reset Draft Modal -->
     <div class="modal fade" id="resetDraftModal" tabindex="-1" aria-labelledby="resetDraftModalLabel" aria-hidden="true">
         <div class="modal-dialog">
@@ -344,6 +372,7 @@
         const pickPlayerModal = new bootstrap.Modal(document.getElementById('pickPlayerModal'));
         const assignPlayersModal = new bootstrap.Modal(document.getElementById('assignPlayersModal'));
         const resetDraftModal = new bootstrap.Modal(document.getElementById('resetDraftModal'));
+        const simulateDraftModal = new bootstrap.Modal(document.getElementById('simulateDraftModal'));
         let currentRound, currentPick, currentTeamId, currentCell, isEditMode, currentPlayerId;
         const picksPerRound = {{ draft.picks_per_round|default:"0" }};
 
@@ -841,6 +870,52 @@
                 btn.disabled = false;
                 btn.textContent = 'Assign Players to Teams';
                 alert('Network error: ' + error.message);
+            });
+        });
+
+        // Handle simulate draft button click
+        document.getElementById('simulateDraftBtn').addEventListener('click', function() {
+            simulateDraftModal.show();
+        });
+
+        // Handle confirm simulate draft button
+        document.getElementById('confirmSimulateDraftBtn').addEventListener('click', function() {
+            const btn = this;
+            const password = document.getElementById('simulatePassword').value;
+
+            if (!password) {
+                alert('Please enter a password');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Simulating...';
+
+            fetch('/draft/simulate/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ password: password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Close modal and reload the page to show simulated draft
+                    simulateDraftModal.hide();
+                    window.location.reload();
+                } else {
+                    alert('Error simulating draft: ' + (data.error || 'Unknown error'));
+                    btn.disabled = false;
+                    btn.textContent = 'Simulate Draft';
+                }
+            })
+            .catch(error => {
+                alert('Error simulating draft');
+                console.error('Error:', error);
+                btn.disabled = false;
+                btn.textContent = 'Simulate Draft';
             });
         });
 

@@ -1309,6 +1309,130 @@ def assign_players_to_teams_view(request):
         return JsonResponse({'success': False, 'error': str(e)})
 
 
+@csrf_exempt
+def simulate_draft_view(request):
+    """Simulate a draft by randomly assigning all players to teams (for testing only)"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+    try:
+        import json
+        import random
+
+        # Get password from request
+        data = json.loads(request.body)
+        password = data.get('password', '')
+
+        # Verify password
+        if password != 'tex@5city':
+            return JsonResponse({'success': False, 'error': 'Invalid password'})
+
+        # Get the current draft
+        try:
+            draft = Draft.objects.latest('created_at')
+        except Draft.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'No draft found'})
+
+        # Parse draft order to get team IDs
+        order_data = draft.order.strip()
+        if order_data.startswith('['):
+            team_ids = json.loads(order_data)
+        else:
+            team_ids = [int(tid.strip()) for tid in order_data.split(',') if tid.strip()]
+
+        # Get all teams
+        teams = list(Team.objects.filter(id__in=team_ids))
+        if not teams:
+            return JsonResponse({'success': False, 'error': 'No teams found in draft order'})
+
+        # Get all draftable players who haven't been drafted yet
+        drafted_player_ids = DraftPick.objects.filter(player__isnull=False).values_list('player_id', flat=True)
+        available_players = list(Player.objects.filter(draftable=True).exclude(id__in=drafted_player_ids))
+
+        if not available_players:
+            return JsonResponse({'success': False, 'error': 'No available players to draft'})
+
+        # Shuffle players randomly
+        random.shuffle(available_players)
+
+        # Calculate how many picks we need
+        total_slots = draft.rounds * draft.picks_per_round
+
+        # Handle final round if exists
+        if draft.final_round_draft_order:
+            final_round_team_ids = [int(tid) for tid in draft.final_round_draft_order.split(',') if tid]
+            total_slots += len(final_round_team_ids)
+
+        # Determine how many players to draft (min of available or needed)
+        players_to_draft = min(len(available_players), total_slots)
+
+        picks_created = 0
+        current_player_index = 0
+
+        # Create picks for regular rounds
+        for round_num in range(1, draft.rounds + 1):
+            if current_player_index >= players_to_draft:
+                break
+
+            # Snake draft: reverse order on even rounds
+            if round_num % 2 == 0:
+                round_teams = list(reversed(teams))
+            else:
+                round_teams = teams
+
+            for pick_num, team in enumerate(round_teams, start=1):
+                if current_player_index >= players_to_draft:
+                    break
+
+                # Create or update draft pick
+                draft_pick, created = DraftPick.objects.update_or_create(
+                    round=round_num,
+                    pick=pick_num,
+                    defaults={
+                        'player': available_players[current_player_index],
+                        'team': team
+                    }
+                )
+
+                picks_created += 1
+                current_player_index += 1
+
+        # Handle final round if needed and we still have players
+        if draft.final_round_draft_order and current_player_index < players_to_draft:
+            final_round_team_ids = [int(tid) for tid in draft.final_round_draft_order.split(',') if tid]
+            final_round_teams = Team.objects.filter(id__in=final_round_team_ids)
+            teams_dict = {team.id: team for team in final_round_teams}
+
+            final_round_num = draft.rounds + 1
+
+            for pick_num, team_id in enumerate(final_round_team_ids, start=1):
+                if current_player_index >= players_to_draft:
+                    break
+
+                team = teams_dict.get(team_id)
+                if team:
+                    draft_pick, created = DraftPick.objects.update_or_create(
+                        round=final_round_num,
+                        pick=pick_num,
+                        defaults={
+                            'player': available_players[current_player_index],
+                            'team': team
+                        }
+                    )
+
+                    picks_created += 1
+                    current_player_index += 1
+
+        return JsonResponse({
+            'success': True,
+            'picks_created': picks_created,
+            'players_drafted': current_player_index
+        })
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
 @require_http_methods(["POST"])
 @csrf_exempt
 def update_player_field(request, player_id):
