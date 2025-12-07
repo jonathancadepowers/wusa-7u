@@ -5,7 +5,7 @@ from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from django.contrib import messages
 from django.core.paginator import Paginator
-from .models import Player, Team, Manager, PlayerRanking, ManagerDaughterRanking
+from .models import Player, Team, Manager, PlayerRanking, ManagerDaughterRanking, Draft
 import pandas as pd
 import json
 import os
@@ -918,3 +918,24 @@ def manager_daughter_rankings_view(request):
         'manager_daughter_ids': json.dumps(list(manager_daughter_ids))  # Pass as JSON for JavaScript
     }
     return render(request, 'players/manager_daughter_rankings.html', context)
+
+
+def run_draft_view(request):
+    """Run the draft - display grid of rounds and picks"""
+    # Get the most recent active draft
+    try:
+        draft = Draft.objects.filter(status='active').latest('created_at')
+    except Draft.DoesNotExist:
+        messages.error(request, 'No active draft found.')
+        return redirect('players:settings')
+
+    # Create ranges for rounds and picks
+    rounds = list(range(1, draft.rounds + 1))
+    picks = list(range(1, draft.picks_per_round + 1))
+
+    context = {
+        'draft': draft,
+        'rounds': rounds,
+        'picks': picks,
+    }
+    return render(request, 'players/run_draft.html', context)
