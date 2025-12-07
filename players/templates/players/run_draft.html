@@ -86,7 +86,7 @@
                                     <tr>
                                         <td class="text-center"><strong>{{ pick_num }}</strong></td>
                                         {% for round_num in rounds %}
-                                            <td class="draft-cell">
+                                            <td class="draft-cell" data-practice-slot="{{ pick_assignments|get_item:round_num|get_item:pick_num.practice_slot }}">
                                                 <span class="team-name">{{ pick_assignments|get_item:round_num|get_item:pick_num }}</span>
                                                 <i class="bi bi-plus-circle add-icon"></i>
                                             </td>
@@ -151,6 +151,9 @@
                     <div id="conflictInfo" class="alert alert-warning" style="display: none;">
                         <strong>Conflict:</strong> <span id="conflictText"></span>
                     </div>
+                    <div id="practiceSlotInfo" class="alert alert-primary">
+                        <strong>Team Practice:</strong> <span id="practiceSlotText"></span>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -182,11 +185,13 @@
                     // Calculate overall pick number
                     const overallPick = (currentRound - 1) * picksPerRound + currentPick;
 
-                    // Get team ID from pick_assignments
+                    // Get team name and practice slot
                     const teamName = cell.querySelector('.team-name').textContent;
+                    const practiceSlot = cell.dataset.practiceSlot || 'Not set';
 
                     // Update modal
                     document.getElementById('pickInfo').textContent = `Round ${currentRound}, Pick ${overallPick}`;
+                    document.getElementById('practiceSlotText').textContent = practiceSlot;
 
                     // Load available players
                     loadAvailablePlayers();
