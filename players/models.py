@@ -20,6 +20,23 @@ class Draft(models.Model):
         return f"Draft {self.draft_date}"
 
 
+class DraftPick(models.Model):
+    round = models.IntegerField()
+    pick = models.IntegerField()
+    player = models.ForeignKey('Player', on_delete=models.SET_NULL, null=True, blank=True, related_name='draft_picks')
+    team = models.ForeignKey('Team', on_delete=models.SET_NULL, null=True, blank=True, related_name='draft_picks')
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'draft_picks'
+        ordering = ['round', 'pick']
+
+    def __str__(self):
+        return f"Round {self.round}, Pick {self.pick}"
+
+
 class Manager(models.Model):
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
