@@ -62,7 +62,7 @@ def edit_draft_view(request):
         order = request.POST.get('order', '')
 
         # Calculate if we need a final round with partial picks
-        player_count = Player.objects.count()
+        player_count = Player.objects.filter(draftable=True).count()
         total_regular_picks = rounds * picks_per_round
 
         # Generate final round draft order if needed
