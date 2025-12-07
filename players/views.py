@@ -1000,12 +1000,13 @@ def run_draft_view(request):
                 team_index = len(ordered_teams) - pick_num
                 pick_assignments[round_num][pick_num] = ordered_teams[team_index]
 
-    # Load existing draft picks
+    # Load existing draft picks - structure as nested dict like pick_assignments
     existing_picks = DraftPick.objects.select_related('player', 'team').all()
     draft_picks_map = {}
     for draft_pick in existing_picks:
-        key = f"{draft_pick.round}_{draft_pick.pick}"
-        draft_picks_map[key] = {
+        if draft_pick.round not in draft_picks_map:
+            draft_picks_map[draft_pick.round] = {}
+        draft_picks_map[draft_pick.round][draft_pick.pick] = {
             'player_name': f"{draft_pick.player.first_name} {draft_pick.player.last_name}",
             'player_id': draft_pick.player.id
         }
