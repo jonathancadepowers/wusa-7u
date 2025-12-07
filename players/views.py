@@ -1331,6 +1331,15 @@ def simulate_draft_view(request):
     try:
         import random
 
+        # Check if draft picks already exist
+        existing_picks = DraftPick.objects.count()
+        if existing_picks > 0:
+            return JsonResponse({
+                'success': False,
+                'error': 'Draft picks already exist. Please reset the draft before simulating.',
+                'existing_picks': existing_picks
+            })
+
         # Get the current draft
         try:
             draft = Draft.objects.latest('created_at')

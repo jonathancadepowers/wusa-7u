@@ -332,6 +332,9 @@
                         <strong>Testing Feature:</strong> This feature should only be used for testing purposes.
                         It will randomly assign all players to teams in the draft.
                     </div>
+                    <div id="simulateDraftError" class="alert alert-danger" style="display: none;">
+                        <strong>Error:</strong> <span id="simulateDraftErrorText"></span>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -876,12 +879,20 @@
 
         // Handle simulate draft button click
         document.getElementById('simulateDraftBtn').addEventListener('click', function() {
+            // Reset error display
+            const errorDiv = document.getElementById('simulateDraftError');
+            errorDiv.style.display = 'none';
             simulateDraftModal.show();
         });
 
         // Handle confirm simulate draft button
         document.getElementById('confirmSimulateDraftBtn').addEventListener('click', function() {
             const btn = this;
+            const errorDiv = document.getElementById('simulateDraftError');
+            const errorText = document.getElementById('simulateDraftErrorText');
+
+            // Hide any previous errors
+            errorDiv.style.display = 'none';
 
             btn.disabled = true;
             btn.textContent = 'Simulating...';
@@ -900,13 +911,16 @@
                     simulateDraftModal.hide();
                     window.location.reload();
                 } else {
-                    alert('Error simulating draft: ' + (data.error || 'Unknown error'));
+                    // Show error in modal
+                    errorText.textContent = data.error || 'Unknown error';
+                    errorDiv.style.display = 'block';
                     btn.disabled = false;
                     btn.textContent = 'Simulate Draft';
                 }
             })
             .catch(error => {
-                alert('Error simulating draft');
+                errorText.textContent = 'An unexpected error occurred. Please try again.';
+                errorDiv.style.display = 'block';
                 console.error('Error:', error);
                 btn.disabled = false;
                 btn.textContent = 'Simulate Draft';
