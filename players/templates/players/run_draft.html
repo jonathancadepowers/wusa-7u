@@ -774,7 +774,12 @@
         document.getElementById('openAssignPlayersBtn').addEventListener('click', function() {
             // Fetch validation data
             fetch('/draft/validate-assignment/')
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     if (data.success) {
                         // Handle warning 1: Undrafted players (does not block)
@@ -808,12 +813,16 @@
                         // Show the modal
                         assignPlayersModal.show();
                     } else {
-                        alert('Error loading validation data: ' + data.error);
+                        let errorMsg = 'Error loading validation data: ' + (data.error || 'Unknown error');
+                        if (data.traceback) {
+                            console.error('Server traceback:', data.traceback);
+                        }
+                        alert(errorMsg);
                     }
                 })
                 .catch(error => {
-                    alert('Error loading validation data');
-                    console.error('Error:', error);
+                    alert('Error loading validation data: ' + error.message);
+                    console.error('Fetch error:', error);
                 });
         });
 
