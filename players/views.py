@@ -1130,6 +1130,30 @@ def undraft_pick_view(request):
         return JsonResponse({'success': False, 'error': str(e)})
 
 
+def validate_draft_assignment_view(request):
+    """Validate draft assignment and return warning counts"""
+    try:
+        # Get all player IDs that have been drafted
+        drafted_player_ids = set(DraftPick.objects.values_list('player_id', flat=True))
+
+        # Warning 1: Count players who are NOT in any draft pick (undrafted)
+        undrafted_count = Player.objects.exclude(id__in=drafted_player_ids).count()
+
+        # Warning 2: Count players who:
+        # - ARE assigned to a team (team is not null)
+        # - BUT were NOT drafted (no DraftPick record)
+        pre_assigned_count = Player.objects.filter(team__isnull=False).exclude(id__in=drafted_player_ids).count()
+
+        return JsonResponse({
+            'success': True,
+            'undrafted_count': undrafted_count,
+            'pre_assigned_count': pre_assigned_count
+        })
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
 @require_http_methods(["POST"])
 @csrf_exempt
 def update_player_field(request, player_id):

@@ -114,6 +114,9 @@
     <nav class="navbar navbar-dark bg-primary">
         <div class="container-fluid">
             <span class="navbar-brand mb-0 h1">WUSA 7U - Run Draft</span>
+            <button type="button" class="btn btn-danger" id="openAssignPlayersBtn">
+                Draft Complete - Assign Players to Teams
+            </button>
         </div>
     </nav>
 
@@ -250,11 +253,51 @@
         </div>
     </div>
 
+    <!-- Assign Players to Teams Modal -->
+    <div class="modal fade" id="assignPlayersModal" tabindex="-1" aria-labelledby="assignPlayersModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="assignPlayersModalLabel">Draft Complete - Assign Players to Teams</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <p class="mb-0">
+                            Clicking "Assign Players to Teams" below will assign all players to the teams that drafted them.
+                            This action is difficult to undo — do not proceed until the draft board is 100% correct.
+                        </p>
+                        <p class="mb-0 mt-2">
+                            <small>(Note: One-off trades can still be completed AFTER clicking the button below.)</small>
+                        </p>
+                    </div>
+
+                    <!-- Warning 1: Undrafted players (does not block) -->
+                    <div id="undraftedWarning" class="alert alert-warning" style="display: none;">
+                        <strong>Warning:</strong> There are still <span id="undraftedCount">0</span> unassigned/undrafted players.
+                        Are you sure you want to continue?
+                    </div>
+
+                    <!-- Warning 2: Pre-assigned players (BLOCKS action) -->
+                    <div id="preAssignedWarning" class="alert alert-danger" style="display: none;">
+                        <strong>Warning:</strong> There are <span id="preAssignedCount">0</span> players that — prior to this draft —
+                        were already assigned to a team. These players must be unassigned from all teams before you can proceed.
+                    </div>
+                </div>
+                <div class="modal-footer justify-content-start">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel - Do Not Proceed</button>
+                    <button type="button" class="btn btn-success" id="confirmAssignPlayersBtn">Assign Players to Teams</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         const pickPlayerModal = new bootstrap.Modal(document.getElementById('pickPlayerModal'));
+        const assignPlayersModal = new bootstrap.Modal(document.getElementById('assignPlayersModal'));
         let currentRound, currentPick, currentTeamId, currentCell, isEditMode, currentPlayerId;
         const picksPerRound = {{ draft.picks_per_round|default:"0" }};
 
@@ -650,6 +693,55 @@
 
             // Trigger the change event to update conflict info and enable the pick button
             $('#playerSelect').trigger('change');
+        });
+
+        // Handle opening assign players modal
+        document.getElementById('openAssignPlayersBtn').addEventListener('click', function() {
+            // Fetch validation data
+            fetch('/draft/validate-assignment/')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Handle warning 1: Undrafted players (does not block)
+                        const undraftedWarning = document.getElementById('undraftedWarning');
+                        const undraftedCount = document.getElementById('undraftedCount');
+                        if (data.undrafted_count > 0) {
+                            undraftedCount.textContent = data.undrafted_count;
+                            undraftedWarning.style.display = 'block';
+                        } else {
+                            undraftedWarning.style.display = 'none';
+                        }
+
+                        // Handle warning 2: Pre-assigned players (BLOCKS action)
+                        const preAssignedWarning = document.getElementById('preAssignedWarning');
+                        const preAssignedCount = document.getElementById('preAssignedCount');
+                        const confirmBtn = document.getElementById('confirmAssignPlayersBtn');
+
+                        if (data.pre_assigned_count > 0) {
+                            preAssignedCount.textContent = data.pre_assigned_count;
+                            preAssignedWarning.style.display = 'block';
+                            confirmBtn.disabled = true;
+                        } else {
+                            preAssignedWarning.style.display = 'none';
+                            confirmBtn.disabled = false;
+                        }
+
+                        // Show the modal
+                        assignPlayersModal.show();
+                    } else {
+                        alert('Error loading validation data: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    alert('Error loading validation data');
+                    console.error('Error:', error);
+                });
+        });
+
+        // Handle confirm assign players button (placeholder - no action yet)
+        document.getElementById('confirmAssignPlayersBtn').addEventListener('click', function() {
+            // TODO: Implement the actual assignment logic later
+            alert('Assignment logic not yet implemented');
         });
 
         // Helper function to get CSRF token
