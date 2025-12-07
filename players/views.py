@@ -986,9 +986,6 @@ def run_draft_view(request):
     if not draft.picks_per_round or draft.picks_per_round <= 0:
         errors.append('Draft must have a valid number of picks per round.')
 
-    if not draft.draft_date:
-        errors.append('Draft must have a draft date set.')
-
     # Check if order field has team assignments
     if not draft.order or draft.order.strip() == '':
         errors.append('Draft order has not been set. Please configure the draft order.')
@@ -1223,6 +1220,25 @@ def validate_draft_assignment_view(request):
             'success': True,
             'undrafted_count': unfilled_slots,
             'pre_assigned_count': pre_assigned_count
+        })
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+@csrf_exempt
+def reset_draft_view(request):
+    """Delete all draft picks to reset the draft"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+    try:
+        # Delete all draft picks
+        deleted_count = DraftPick.objects.all().delete()[0]
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Successfully reset draft. Deleted {deleted_count} draft picks.'
         })
 
     except Exception as e:
