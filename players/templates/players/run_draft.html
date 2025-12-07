@@ -77,6 +77,18 @@
         .select2-container--bootstrap-5 .select2-selection {
             min-height: calc(1.5em + 0.75rem + 2px);
         }
+        .current-pick {
+            animation: glow 2s ease-in-out infinite;
+            box-shadow: 0 0 10px rgba(13, 110, 253, 0.5);
+        }
+        @keyframes glow {
+            0%, 100% {
+                box-shadow: 0 0 10px rgba(13, 110, 253, 0.5);
+            }
+            50% {
+                box-shadow: 0 0 20px rgba(13, 110, 253, 0.8);
+            }
+        }
     </style>
 </head>
 <body class="bg-light">
@@ -248,6 +260,52 @@
             pickPlayerModal.show();
         }
 
+        // Helper function to get cell by round and pick
+        function getCellByRoundPick(round, pick) {
+            const rows = document.querySelectorAll('.draft-table tbody tr');
+            if (pick <= 0 || pick > rows.length) return null;
+
+            const row = rows[pick - 1];
+            const cells = row.querySelectorAll('.draft-cell');
+            if (round <= 0 || round > cells.length) return null;
+
+            return cells[round - 1];
+        }
+
+        // Helper function to find next unpicked cell
+        function findNextUnpickedCell() {
+            const numRounds = {{ draft.rounds|default:"0" }};
+            const numPicks = {{ draft.picks_per_round|default:"0" }};
+
+            for (let round = 1; round <= numRounds; round++) {
+                for (let pick = 1; pick <= numPicks; pick++) {
+                    const cell = getCellByRoundPick(round, pick);
+                    if (cell && !cell.classList.contains('picked')) {
+                        return { round, pick, cell };
+                    }
+                }
+            }
+            return null;
+        }
+
+        // Function to set current pick
+        function setCurrentPick(round, pick) {
+            // Remove current-pick class from all cells
+            document.querySelectorAll('.draft-cell').forEach(cell => {
+                cell.classList.remove('current-pick');
+            });
+
+            // Add current-pick class to selected cell
+            const cell = getCellByRoundPick(round, pick);
+            if (cell) {
+                cell.classList.add('current-pick');
+            }
+
+            // Update dropdown value
+            const currentPickSelect = document.getElementById('currentPickSelect');
+            currentPickSelect.value = `${round}_${pick}`;
+        }
+
         // Add click handlers
         document.addEventListener('DOMContentLoaded', function() {
             // Populate current pick dropdown
@@ -263,6 +321,25 @@
                     option.textContent = `Round ${round} - Pick ${overallPick}`;
                     currentPickSelect.appendChild(option);
                 }
+            }
+
+            // Handle current pick selection change
+            currentPickSelect.addEventListener('change', function() {
+                if (this.value) {
+                    const [round, pick] = this.value.split('_').map(Number);
+                    setCurrentPick(round, pick);
+                } else {
+                    // Clear current pick highlight
+                    document.querySelectorAll('.draft-cell').forEach(cell => {
+                        cell.classList.remove('current-pick');
+                    });
+                }
+            });
+
+            // Auto-select first unpicked cell on load
+            const firstUnpicked = findNextUnpickedCell();
+            if (firstUnpicked) {
+                setCurrentPick(firstUnpicked.round, firstUnpicked.pick);
             }
 
             // Click on + icon for new picks
@@ -406,6 +483,18 @@
                     // Reset button
                     this.disabled = false;
                     this.textContent = 'Pick Player';
+
+                    // Auto-progress to next unpicked cell
+                    const nextUnpicked = findNextUnpickedCell();
+                    if (nextUnpicked) {
+                        setCurrentPick(nextUnpicked.round, nextUnpicked.pick);
+                    } else {
+                        // Draft is complete, clear current pick highlight
+                        document.querySelectorAll('.draft-cell').forEach(cell => {
+                            cell.classList.remove('current-pick');
+                        });
+                        document.getElementById('currentPickSelect').value = '';
+                    }
                 } else {
                     alert('Error: ' + data.error);
                     this.disabled = false;
