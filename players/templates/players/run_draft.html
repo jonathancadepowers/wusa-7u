@@ -879,9 +879,24 @@
 
         // Handle simulate draft button click
         document.getElementById('simulateDraftBtn').addEventListener('click', function() {
-            // Reset error display
             const errorDiv = document.getElementById('simulateDraftError');
-            errorDiv.style.display = 'none';
+            const errorText = document.getElementById('simulateDraftErrorText');
+            const confirmBtn = document.getElementById('confirmSimulateDraftBtn');
+
+            // Check if draft picks exist
+            const filledCells = document.querySelectorAll('.draft-cell.picked').length;
+
+            if (filledCells > 0) {
+                // Show warning that picks already exist
+                errorText.textContent = 'Draft picks already exist. Please reset the draft before simulating.';
+                errorDiv.style.display = 'block';
+                confirmBtn.disabled = true;
+            } else {
+                // Hide warning and enable button
+                errorDiv.style.display = 'none';
+                confirmBtn.disabled = false;
+            }
+
             simulateDraftModal.show();
         });
 
