@@ -88,6 +88,7 @@ class Player(models.Model):
     jersey_size = models.CharField(max_length=50, blank=True, null=True)
     manager_volunteer_name = models.CharField(max_length=100, blank=True, null=True)
     assistant_manager_volunteer_name = models.CharField(max_length=100, blank=True, null=True)
+    attended_try_out = models.BooleanField(default=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
