@@ -922,12 +922,12 @@ def manager_daughter_rankings_view(request):
 
 def run_draft_view(request):
     """Run the draft - display grid of rounds and picks"""
-    # Get the most recent active draft
+    # Get the most recent draft
     try:
-        draft = Draft.objects.filter(status='active').latest('created_at')
+        draft = Draft.objects.latest('created_at')
     except Draft.DoesNotExist:
-        messages.error(request, 'No active draft found.')
-        return redirect('players:settings')
+        messages.error(request, 'No draft found. Please create a draft first.')
+        return redirect('players:create_draft')
 
     # Create ranges for rounds and picks
     rounds = list(range(1, draft.rounds + 1))
