@@ -3,7 +3,7 @@ import django
 import random
 
 # Setup Django
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'wusa7u.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
 
 from players.models import Team
