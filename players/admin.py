@@ -24,10 +24,31 @@ class TeamAdmin(admin.ModelAdmin):
 
 @admin.register(Player)
 class PlayerAdmin(admin.ModelAdmin):
-    list_display = ['first_name', 'last_name', 'team', 'birthday', 'school', 'parent_email_1', 'attended_try_out', 'draftable']
+    list_display = ['first_name', 'last_name', 'team', 'birthday', 'school', 'parent_email_1', 'attended_try_out_display', 'draftable_display']
     list_filter = ['team', 'school', 'jersey_size', 'attended_try_out', 'draftable']
     search_fields = ['first_name', 'last_name', 'parent_email_1', 'parent_email_2']
     date_hierarchy = 'birthday'
+
+    class Media:
+        js = ('admin/js/player_inline_edit.js',)
+
+    def attended_try_out_display(self, obj):
+        from django.utils.html import format_html
+        checked = 'checked' if obj.attended_try_out else ''
+        return format_html(
+            '<input type="checkbox" class="inline-edit-checkbox" data-player-id="{}" data-field="attended_try_out" {}>',
+            obj.id, checked
+        )
+    attended_try_out_display.short_description = 'Attended try out'
+
+    def draftable_display(self, obj):
+        from django.utils.html import format_html
+        checked = 'checked' if obj.draftable else ''
+        return format_html(
+            '<input type="checkbox" class="inline-edit-checkbox" data-player-id="{}" data-field="draftable" {}>',
+            obj.id, checked
+        )
+    draftable_display.short_description = 'Draftable'
 
     fieldsets = (
         ('Team Assignment', {

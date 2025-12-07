@@ -17,6 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.http import HttpResponse
+from players import views as player_views
 
 
 def hello_world(request):
@@ -26,5 +27,6 @@ def hello_world(request):
 urlpatterns = [
     path('', hello_world, name='home'),
     path('admin/', admin.site.urls),
+    path('admin/players/player/<int:player_id>/update-field/', player_views.update_player_field, name='admin_update_player_field'),
     path('', include('players.urls')),
 ]

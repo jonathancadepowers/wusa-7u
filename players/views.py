@@ -1090,3 +1090,24 @@ def make_pick_view(request):
         return JsonResponse({'success': False, 'error': 'Team not found'})
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
+
+
+@require_http_methods(["POST"])
+def update_player_field(request, player_id):
+    """Update a single boolean field on a player (for inline admin editing)"""
+    try:
+        player = get_object_or_404(Player, id=player_id)
+        field = request.POST.get('field')
+        value = request.POST.get('value') == 'true'
+
+        # Only allow updating these specific fields
+        if field not in ['attended_try_out', 'draftable']:
+            return JsonResponse({'success': False, 'error': 'Invalid field'})
+
+        setattr(player, field, value)
+        player.save()
+
+        return JsonResponse({'success': True})
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
