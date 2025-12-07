@@ -15,19 +15,22 @@
             border-radius: 4px;
             flex: 1;
         }
-        .card-body {
+        .draft-order-row {
+            display: flex;
+            align-items: stretch;
+        }
+        .draft-order-col {
+            display: flex;
+        }
+        .draft-order-card {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+        .draft-order-card .card-body {
             display: flex;
             flex-direction: column;
             flex: 1;
-        }
-        .card {
-            height: 100%;
-        }
-        .row {
-            display: flex;
-        }
-        .col-md-6 {
-            display: flex;
         }
         .team-item {
             background-color: #fff;
@@ -142,9 +145,9 @@
                             <!-- Draft Order Section -->
                             <h5 class="mb-3">Draft Order</h5>
 
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="card">
+                            <div class="row draft-order-row">
+                                <div class="col-md-6 draft-order-col">
+                                    <div class="card draft-order-card">
                                         <div class="card-header bg-secondary text-white">
                                             <strong>Available Teams</strong>
                                         </div>
@@ -159,8 +162,8 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="card">
+                                <div class="col-md-6 draft-order-col">
+                                    <div class="card draft-order-card">
                                         <div class="card-header bg-primary text-white">
                                             <strong>Draft Order</strong>
                                         </div>
