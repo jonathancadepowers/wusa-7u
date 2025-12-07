@@ -73,8 +73,8 @@ def edit_draft_view(request):
             # Parse the order to get team IDs
             if order:
                 team_ids = [int(tid) for tid in order.split(',') if tid]
-                # Randomly select teams for final round
-                final_round_teams = random.sample(team_ids, min(extra_picks_needed, len(team_ids)))
+                # Use the first N teams from the draft order for final round
+                final_round_teams = team_ids[:extra_picks_needed]
                 final_round_draft_order = ','.join(map(str, final_round_teams))
 
         if draft:
