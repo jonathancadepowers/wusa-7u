@@ -7,6 +7,8 @@
     <title>Run Draft - WUSA 7U</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
     <style>
         .draft-grid {
             overflow-x: auto;
@@ -68,6 +70,12 @@
         .draft-cell.picked:hover .team-name {
             text-decoration: underline;
             cursor: pointer;
+        }
+        .select2-container {
+            z-index: 9999;
+        }
+        .select2-container--bootstrap-5 .select2-selection {
+            min-height: calc(1.5em + 0.75rem + 2px);
         }
     </style>
 </head>
@@ -189,6 +197,8 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         const pickPlayerModal = new bootstrap.Modal(document.getElementById('pickPlayerModal'));
         let currentRound, currentPick, currentTeamId, currentCell, isEditMode, currentPlayerId;
@@ -256,8 +266,14 @@
 
         // Load available players
         function loadAvailablePlayers(selectedPlayerId = null) {
-            const playerSelect = document.getElementById('playerSelect');
-            playerSelect.innerHTML = '<option value="">Loading players...</option>';
+            const playerSelect = $('#playerSelect');
+
+            // Destroy existing Select2 instance if it exists
+            if (playerSelect.hasClass("select2-hidden-accessible")) {
+                playerSelect.select2('destroy');
+            }
+
+            playerSelect.html('<option value="">Loading players...</option>');
             document.getElementById('confirmPickBtn').disabled = true;
 
             const url = selectedPlayerId
@@ -268,7 +284,7 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        playerSelect.innerHTML = '<option value="">-- Select a player --</option>';
+                        playerSelect.html('<option value="">-- Select a player --</option>');
                         data.players.forEach(player => {
                             const option = document.createElement('option');
                             option.value = player.id;
@@ -280,28 +296,36 @@
                                 option.selected = true;
                             }
 
-                            playerSelect.appendChild(option);
+                            playerSelect.append(option);
+                        });
+
+                        // Initialize Select2 with Bootstrap 5 theme
+                        playerSelect.select2({
+                            theme: 'bootstrap-5',
+                            dropdownParent: $('#pickPlayerModal'),
+                            width: '100%',
+                            placeholder: '-- Select a player --'
                         });
 
                         // If editing and player is selected, trigger change event
                         if (selectedPlayerId) {
-                            playerSelect.dispatchEvent(new Event('change'));
+                            playerSelect.trigger('change');
                         }
                     } else {
-                        playerSelect.innerHTML = '<option value="">Error loading players</option>';
+                        playerSelect.html('<option value="">Error loading players</option>');
                     }
                 });
         }
 
-        // Handle player selection
-        document.getElementById('playerSelect').addEventListener('change', function(e) {
-            const selectedOption = e.target.options[e.target.selectedIndex];
-            const conflict = selectedOption.dataset.conflict;
+        // Handle player selection (using jQuery for Select2 compatibility)
+        $('#playerSelect').on('change', function(e) {
+            const selectedOption = this.options[this.selectedIndex];
+            const conflict = selectedOption ? selectedOption.dataset.conflict : '';
             const conflictInfo = document.getElementById('conflictInfo');
             const practiceSlotInfo = document.getElementById('practiceSlotInfo');
             const confirmBtn = document.getElementById('confirmPickBtn');
 
-            if (e.target.value) {
+            if (this.value) {
                 confirmBtn.disabled = false;
 
                 // Always show conflict info when player is selected
