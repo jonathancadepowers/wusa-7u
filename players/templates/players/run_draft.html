@@ -166,6 +166,9 @@
                                     {% for round_num in rounds %}
                                         <th class="text-center">Round {{ round_num }}</th>
                                     {% endfor %}
+                                    {% if has_final_round %}
+                                        <th class="text-center">Round {{ final_round_number }}</th>
+                                    {% endif %}
                                 </tr>
                             </thead>
                             <tbody>
@@ -185,6 +188,23 @@
                                                 {% endwith %}
                                             {% endwith %}
                                         {% endfor %}
+                                        {% if has_final_round %}
+                                            {% with team=pick_assignments|get_item:final_round_number|get_item:pick_num %}
+                                                {% if team %}
+                                                    {% with existing_pick=draft_picks_map|get_item:final_round_number|get_item:pick_num %}
+                                                        <td class="draft-cell{% if existing_pick %} picked{% endif %}"
+                                                            data-practice-slot="{{ team.practice_slot }}"
+                                                            data-team-name="{{ team }}"
+                                                            {% if existing_pick %}data-player-id="{{ existing_pick.player_id }}" data-player-name="{{ existing_pick.player_name }}"{% endif %}>
+                                                            <span class="team-name">{% if existing_pick %}{{ existing_pick.player_name }}{% else %}{{ team }}{% endif %}</span>
+                                                            <i class="bi bi-plus-circle add-icon"></i>
+                                                        </td>
+                                                    {% endwith %}
+                                                {% else %}
+                                                    <td class="bg-light"></td>
+                                                {% endif %}
+                                            {% endwith %}
+                                        {% endif %}
                                     </tr>
                                 {% endfor %}
                             </tbody>

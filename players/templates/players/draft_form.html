@@ -1,3 +1,4 @@
+{% load custom_filters %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -95,14 +96,18 @@
                         <div class="card mb-4 bg-light">
                             <div class="card-body">
                                 <div class="row">
-                                    <div class="col-md-6">
+                                    <div class="col-md-4">
+                                        <label class="form-label text-muted">Total Players</label>
+                                        <p class="fs-5 mb-0">{{ player_count }}</p>
+                                    </div>
+                                    <div class="col-md-4">
                                         <label class="form-label text-muted">Number of Rounds</label>
                                         <p class="fs-5 mb-0">{% if draft %}{{ draft.rounds }}{% else %}{{ suggested_rounds }}{% endif %}</p>
                                         {% if is_create %}
                                             <small class="text-muted">Calculated as: Total Players / Number of Teams</small>
                                         {% endif %}
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-4">
                                         <label class="form-label text-muted">Picks Per Round</label>
                                         <p class="fs-5 mb-0">{% if draft %}{{ draft.picks_per_round }}{% else %}{{ suggested_picks_per_round }}{% endif %}</p>
                                         {% if is_create %}
@@ -112,6 +117,23 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Extra Round Info -->
+                        {% if needs_extra_round %}
+                        <div class="alert alert-info mb-4">
+                            <strong>Note:</strong> Since there are {{ player_count }} total players in the division, and since {{ draft.rounds }} rounds times {{ draft.picks_per_round }} picks per round will result in {{ total_regular_picks }} players drafted, we will need an additional round (a {{ final_round_number }}{{ final_round_number|ordinal }} round) wherein only {{ extra_picks_needed }} team{{ extra_picks_needed|pluralize }} will draft a player. These {{ extra_picks_needed }} team{{ extra_picks_needed|pluralize }} will be selected randomly when you click "Save Changes" below.
+                        </div>
+
+                        {% if final_round_team_names %}
+                        <div class="mb-4">
+                            <label class="form-label">Final Round {{ final_round_number }} Draft Order (Read-Only)</label>
+                            <input type="text" class="form-control" value="{{ final_round_team_names|join:', ' }}" readonly>
+                            <div class="alert alert-warning mt-2 mb-0">
+                                <small>Clicking "Save Changes" below always randomly recalculates the draft order of the final round listed above.</small>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endif %}
 
                         <form method="post">
                             {% csrf_token %}

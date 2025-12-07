@@ -51,29 +51,52 @@ def edit_draft_view(request):
     from .models import Draft
     import string
     import random
+    import json
 
     # Get the first (and should be only) draft
     draft = Draft.objects.first()
 
     if request.method == 'POST':
+        rounds = int(request.POST.get('rounds'))
+        picks_per_round = int(request.POST.get('picks_per_round'))
+        order = request.POST.get('order', '')
+
+        # Calculate if we need a final round with partial picks
+        player_count = Player.objects.count()
+        total_regular_picks = rounds * picks_per_round
+
+        # Generate final round draft order if needed
+        final_round_draft_order = ''
+        if player_count > total_regular_picks:
+            # We need extra picks
+            extra_picks_needed = player_count - total_regular_picks
+            # Parse the order to get team IDs
+            if order:
+                team_ids = [int(tid) for tid in order.split(',') if tid]
+                # Randomly select teams for final round
+                final_round_teams = random.sample(team_ids, min(extra_picks_needed, len(team_ids)))
+                final_round_draft_order = ','.join(map(str, final_round_teams))
+
         if draft:
             # Update existing draft (status is not editable from form)
-            draft.rounds = request.POST.get('rounds')
+            draft.rounds = rounds
             draft.draft_date = request.POST.get('draft_date')
-            draft.picks_per_round = request.POST.get('picks_per_round')
+            draft.picks_per_round = picks_per_round
             draft.public_url_secret = request.POST.get('public_url_secret')
-            draft.order = request.POST.get('order', '')
+            draft.order = order
+            draft.final_round_draft_order = final_round_draft_order
             draft.save()
             messages.success(request, 'Draft updated successfully!')
         else:
             # Create new draft with default status
             draft = Draft(
-                rounds=request.POST.get('rounds'),
+                rounds=rounds,
                 status='Pending Set Up',
                 draft_date=request.POST.get('draft_date'),
-                picks_per_round=request.POST.get('picks_per_round'),
+                picks_per_round=picks_per_round,
                 public_url_secret=request.POST.get('public_url_secret'),
-                order=request.POST.get('order', '')
+                order=order,
+                final_round_draft_order=final_round_draft_order
             )
             draft.save()
             messages.success(request, 'Draft created successfully!')
@@ -100,6 +123,9 @@ def edit_draft_view(request):
         characters = string.ascii_letters + string.digits
         suggested_secret = ''.join(random.choice(characters) for _ in range(8))
 
+    # Get total player count
+    player_count = Player.objects.count()
+
     # Get all teams for draft order
     all_teams = Team.objects.all().order_by('name')
 
@@ -108,6 +134,26 @@ def edit_draft_view(request):
     if draft and draft.order:
         ordered_team_ids = [int(tid) for tid in draft.order.split(',') if tid]
 
+    # Calculate extra round info if draft exists
+    needs_extra_round = False
+    total_regular_picks = 0
+    extra_picks_needed = 0
+    final_round_number = 0
+    final_round_team_names = []
+
+    if draft:
+        total_regular_picks = draft.rounds * draft.picks_per_round
+        if player_count > total_regular_picks:
+            needs_extra_round = True
+            extra_picks_needed = player_count - total_regular_picks
+            final_round_number = draft.rounds + 1
+
+            # Get team names for final round order if it exists
+            if draft.final_round_draft_order:
+                final_round_team_ids = [int(tid) for tid in draft.final_round_draft_order.split(',') if tid]
+                teams_dict = {team.id: team.name for team in all_teams}
+                final_round_team_names = [teams_dict.get(tid, '') for tid in final_round_team_ids]
+
     context = {
         'draft': draft,
         'is_create': is_create,
@@ -115,7 +161,13 @@ def edit_draft_view(request):
         'suggested_picks_per_round': suggested_picks_per_round,
         'suggested_secret': suggested_secret,
         'all_teams': all_teams,
-        'ordered_team_ids': ordered_team_ids
+        'ordered_team_ids': ordered_team_ids,
+        'player_count': player_count,
+        'needs_extra_round': needs_extra_round,
+        'total_regular_picks': total_regular_picks,
+        'extra_picks_needed': extra_picks_needed,
+        'final_round_number': final_round_number,
+        'final_round_team_names': final_round_team_names,
     }
     return render(request, 'players/draft_form.html', context)
 
@@ -1013,6 +1065,25 @@ def run_draft_view(request):
             'player_id': draft_pick.player.id
         }
 
+    # Check if there's a final round with partial picks
+    has_final_round = False
+    final_round_number = 0
+
+    if draft.final_round_draft_order:
+        has_final_round = True
+        final_round_number = draft.rounds + 1
+
+        # Parse final round team IDs
+        final_round_team_ids = [int(tid) for tid in draft.final_round_draft_order.split(',') if tid]
+
+        # Get team objects for final round
+        final_teams_dict = {team.id: team for team in Team.objects.filter(id__in=final_round_team_ids)}
+
+        # Add final round to pick_assignments
+        pick_assignments[final_round_number] = {}
+        for pick_num, team_id in enumerate(final_round_team_ids, start=1):
+            pick_assignments[final_round_number][pick_num] = final_teams_dict[team_id]
+
     context = {
         'draft': draft,
         'rounds': rounds,
@@ -1020,6 +1091,8 @@ def run_draft_view(request):
         'pick_assignments': pick_assignments,
         'draft_picks_map': draft_picks_map,
         'show_grid': True,
+        'has_final_round': has_final_round,
+        'final_round_number': final_round_number,
     }
     return render(request, 'players/run_draft.html', context)
 

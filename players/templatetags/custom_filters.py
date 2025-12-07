@@ -18,3 +18,19 @@ def multiply(value, arg):
         return int(value) * int(arg)
     except (ValueError, TypeError):
         return 0
+
+
+@register.filter
+def ordinal(value):
+    """Convert an integer to its ordinal representation (1st, 2nd, 3rd, etc.)"""
+    try:
+        value = int(value)
+    except (ValueError, TypeError):
+        return value
+
+    if 10 <= value % 100 <= 20:
+        suffix = 'th'
+    else:
+        suffix = {1: 'st', 2: 'nd', 3: 'rd'}.get(value % 10, 'th')
+
+    return f"{value}{suffix}"
