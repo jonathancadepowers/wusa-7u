@@ -79,14 +79,18 @@
         }
         .current-pick {
             animation: glow 2s ease-in-out infinite;
-            box-shadow: 0 0 10px rgba(13, 110, 253, 0.5);
+            box-shadow: 0 0 15px rgba(13, 110, 253, 0.8) !important;
+            background-color: rgba(13, 110, 253, 0.1) !important;
+            border: 2px solid rgba(13, 110, 253, 0.5) !important;
         }
         @keyframes glow {
             0%, 100% {
-                box-shadow: 0 0 10px rgba(13, 110, 253, 0.5);
+                box-shadow: 0 0 15px rgba(13, 110, 253, 0.6);
+                background-color: rgba(13, 110, 253, 0.1);
             }
             50% {
-                box-shadow: 0 0 20px rgba(13, 110, 253, 0.8);
+                box-shadow: 0 0 30px rgba(13, 110, 253, 1);
+                background-color: rgba(13, 110, 253, 0.2);
             }
         }
     </style>
