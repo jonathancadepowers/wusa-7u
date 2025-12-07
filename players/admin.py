@@ -24,8 +24,8 @@ class TeamAdmin(admin.ModelAdmin):
 
 @admin.register(Player)
 class PlayerAdmin(admin.ModelAdmin):
-    list_display = ['first_name', 'last_name', 'team', 'birthday', 'school', 'parent_email_1']
-    list_filter = ['team', 'school', 'jersey_size']
+    list_display = ['first_name', 'last_name', 'team', 'birthday', 'school', 'parent_email_1', 'attended_try_out', 'draftable']
+    list_filter = ['team', 'school', 'jersey_size', 'attended_try_out', 'draftable']
     search_fields = ['first_name', 'last_name', 'parent_email_1', 'parent_email_2']
     date_hierarchy = 'birthday'
 
