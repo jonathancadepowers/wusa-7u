@@ -195,6 +195,11 @@
                     document.getElementById('pickInfo').textContent = `Round ${currentRound}, Pick ${overallPick}`;
                     document.getElementById('practiceSlotText').textContent = practiceSlot;
 
+                    // Reset and hide conflict and practice slot boxes
+                    document.getElementById('conflictInfo').style.display = 'none';
+                    document.getElementById('practiceSlotInfo').style.display = 'none';
+                    document.getElementById('conflictText').textContent = '';
+
                     // Load available players
                     loadAvailablePlayers();
 
