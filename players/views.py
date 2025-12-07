@@ -78,23 +78,20 @@ def edit_draft_view(request):
                 final_round_draft_order = ','.join(map(str, final_round_teams))
 
         if draft:
-            # Update existing draft (status is not editable from form)
+            # Update existing draft
             draft.rounds = rounds
             draft.draft_date = request.POST.get('draft_date')
             draft.picks_per_round = picks_per_round
-            draft.public_url_secret = request.POST.get('public_url_secret')
             draft.order = order
             draft.final_round_draft_order = final_round_draft_order
             draft.save()
             messages.success(request, 'Draft updated successfully!')
         else:
-            # Create new draft with default status
+            # Create new draft
             draft = Draft(
                 rounds=rounds,
-                status='Pending Set Up',
                 draft_date=request.POST.get('draft_date'),
                 picks_per_round=picks_per_round,
-                public_url_secret=request.POST.get('public_url_secret'),
                 order=order,
                 final_round_draft_order=final_round_draft_order
             )
@@ -107,7 +104,6 @@ def edit_draft_view(request):
     # Calculate default values for new draft
     suggested_rounds = 0
     suggested_picks_per_round = 0
-    suggested_secret = ''
 
     if is_create:
         # Count players and teams
@@ -118,10 +114,6 @@ def edit_draft_view(request):
         if team_count > 0:
             suggested_rounds = int(player_count / team_count)
             suggested_picks_per_round = team_count
-
-        # Generate random 8-character alphanumeric secret
-        characters = string.ascii_letters + string.digits
-        suggested_secret = ''.join(random.choice(characters) for _ in range(8))
 
     # Get total player count
     player_count = Player.objects.count()
@@ -159,7 +151,6 @@ def edit_draft_view(request):
         'is_create': is_create,
         'suggested_rounds': suggested_rounds,
         'suggested_picks_per_round': suggested_picks_per_round,
-        'suggested_secret': suggested_secret,
         'all_teams': all_teams,
         'ordered_team_ids': ordered_team_ids,
         'player_count': player_count,

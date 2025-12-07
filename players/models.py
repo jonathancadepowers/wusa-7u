@@ -3,10 +3,8 @@ from django.db import models
 
 class Draft(models.Model):
     rounds = models.IntegerField()
-    status = models.TextField()
     draft_date = models.DateField()
     picks_per_round = models.IntegerField()
-    public_url_secret = models.CharField(max_length=100)
     order = models.TextField()
     final_round_draft_order = models.TextField(blank=True, null=True)
 

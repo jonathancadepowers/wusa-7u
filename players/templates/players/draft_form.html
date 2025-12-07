@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
         .team-drop-zone {
-            min-height: 300px;
+            min-height: 400px;
             padding: 10px;
             border: 2px dashed #dee2e6;
             border-radius: 4px;
@@ -38,9 +38,6 @@
         .team-drop-zone.drag-over {
             background-color: #e3f2fd;
             border-color: #2196f3;
-        }
-        .min-vh-20 {
-            min-height: 300px;
         }
         .rank-badge {
             background-color: #0d6efd;
@@ -87,11 +84,6 @@
                         </h4>
                     </div>
                     <div class="card-body">
-                        <!-- Status Display (Read-only) -->
-                        <div class="alert alert-info mb-4">
-                            <strong>Draft's Current Status:</strong> Pending Set Up
-                        </div>
-
                         <!-- Read-only Draft Settings -->
                         <div class="card mb-4 bg-light">
                             <div class="card-body">
@@ -121,7 +113,7 @@
                         <!-- Extra Round Info -->
                         {% if needs_extra_round %}
                         <div class="alert alert-info mb-4">
-                            <strong>Note:</strong> Since there are {{ player_count }} total players in the division, and since {{ draft.rounds }} rounds times {{ draft.picks_per_round }} picks per round will result in {{ total_regular_picks }} players drafted, we will need an additional round (a {{ final_round_number|ordinal }} round) wherein only {{ extra_picks_needed }} team{{ extra_picks_needed|pluralize }} will draft a player. These {{ extra_picks_needed }} team{{ extra_picks_needed|pluralize }} will be selected randomly when you click "Save Changes" below.
+                            <strong>Note:</strong> Since there are {{ player_count }} total players in the division, and since {{ draft.rounds }} rounds times {{ draft.picks_per_round }} picks per round will result in {{ total_regular_picks }} players drafted, we will need an additional round (a {{ final_round_number|ordinal }} round) wherein only {{ extra_picks_needed }} team{{ extra_picks_needed|pluralize }} will draft a player. These {{ extra_picks_needed }} team{{ extra_picks_needed|pluralize }} will be selected randomly when you click "Save Changes" below and displayed below.
                         </div>
 
                         {% if final_round_team_names %}
@@ -147,11 +139,6 @@
                                 <input type="date" class="form-control" id="draft_date" name="draft_date" value="{% if draft %}{{ draft.draft_date|date:'Y-m-d' }}{% endif %}" required>
                             </div>
 
-                            <div class="mb-3">
-                                <label for="public_url_secret" class="form-label">Public URL Secret *</label>
-                                <input type="text" class="form-control" id="public_url_secret" name="public_url_secret" value="{% if draft %}{{ draft.public_url_secret }}{% else %}{{ suggested_secret }}{% endif %}" required>
-                            </div>
-
                             <hr class="my-4">
 
                             <!-- Draft Order Section -->
@@ -164,7 +151,7 @@
                                             <strong>Available Teams</strong>
                                         </div>
                                         <div class="card-body">
-                                            <div id="availableTeams" class="team-drop-zone min-vh-20">
+                                            <div id="availableTeams" class="team-drop-zone">
                                                 {% for team in all_teams %}
                                                     <div class="team-item" draggable="true" data-team-id="{{ team.id }}">
                                                         <i class="bi bi-grip-vertical me-2"></i>{{ team.name }}
@@ -180,7 +167,7 @@
                                             <strong>Draft Order</strong>
                                         </div>
                                         <div class="card-body">
-                                            <div id="draftOrder" class="team-drop-zone min-vh-20">
+                                            <div id="draftOrder" class="team-drop-zone">
                                                 <!-- Teams will be dropped here -->
                                             </div>
                                         </div>
