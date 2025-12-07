@@ -301,7 +301,7 @@
 
                     <!-- Warning 1: Undrafted players (does not block) -->
                     <div id="undraftedWarning" class="alert alert-warning" style="display: none;">
-                        <strong>Warning:</strong> There are still <span id="undraftedCount">0</span> unassigned/undrafted players.
+                        <strong>Warning:</strong> There <span id="undraftedVerb">are</span> still <span id="undraftedCount">0</span> unassigned/undrafted <span id="undraftedNoun">players</span>.
                         Are you sure you want to continue?
                     </div>
 
@@ -780,8 +780,12 @@
                         // Handle warning 1: Undrafted players (does not block)
                         const undraftedWarning = document.getElementById('undraftedWarning');
                         const undraftedCount = document.getElementById('undraftedCount');
+                        const undraftedVerb = document.getElementById('undraftedVerb');
+                        const undraftedNoun = document.getElementById('undraftedNoun');
                         if (data.undrafted_count > 0) {
                             undraftedCount.textContent = data.undrafted_count;
+                            undraftedVerb.textContent = data.undrafted_count === 1 ? 'is' : 'are';
+                            undraftedNoun.textContent = data.undrafted_count === 1 ? 'player' : 'players';
                             undraftedWarning.style.display = 'block';
                         } else {
                             undraftedWarning.style.display = 'none';
