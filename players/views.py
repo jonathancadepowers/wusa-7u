@@ -184,12 +184,27 @@ def public_portal_view(request):
 def validate_team_secret_view(request):
     """Validate team secret and return team URL if valid"""
     team_secret = request.POST.get('team_secret', '').strip()
+    MASTER_PASSWORD = 'tex@city'
 
     if not team_secret:
         return JsonResponse({
             'success': False,
             'error': 'Please enter a team secret.'
         }, status=400)
+
+    # Check if master password is used - redirect to first team
+    if team_secret == MASTER_PASSWORD:
+        first_team = Team.objects.order_by('name').first()
+        if first_team:
+            return JsonResponse({
+                'success': True,
+                'team_url': f'/teams/{first_team.manager_secret}/'
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'error': 'No teams available.'
+            }, status=400)
 
     try:
         team = Team.objects.get(manager_secret=team_secret)
