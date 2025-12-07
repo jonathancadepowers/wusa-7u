@@ -9,3 +9,12 @@ def get_item(dictionary, key):
     if dictionary is None:
         return None
     return dictionary.get(key)
+
+
+@register.filter
+def multiply(value, arg):
+    """Multiply the value by the arg"""
+    try:
+        return int(value) * int(arg)
+    except (ValueError, TypeError):
+        return 0
