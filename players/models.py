@@ -59,6 +59,7 @@ class Team(models.Model):
     manager = models.ForeignKey(Manager, on_delete=models.SET_NULL, null=True, blank=True, related_name='teams')
     name = models.CharField(max_length=100)
     manager_secret = models.CharField(max_length=100)
+    practice_slot = models.TextField(blank=True, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
