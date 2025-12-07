@@ -929,6 +929,46 @@ def run_draft_view(request):
         messages.error(request, 'No draft found. Please create a draft first.')
         return redirect('players:create_draft')
 
+    # Validate draft has all required fields
+    errors = []
+
+    if not draft.rounds or draft.rounds <= 0:
+        errors.append('Draft must have a valid number of rounds.')
+
+    if not draft.picks_per_round or draft.picks_per_round <= 0:
+        errors.append('Draft must have a valid number of picks per round.')
+
+    if not draft.draft_date:
+        errors.append('Draft must have a draft date set.')
+
+    # Check if order field has team assignments
+    if not draft.order or draft.order.strip() == '':
+        errors.append('Draft order has not been set. Please configure the draft order.')
+    else:
+        # Try to parse the order field (should be comma-separated team IDs or JSON)
+        try:
+            order_data = draft.order.strip()
+            if order_data.startswith('['):
+                # JSON format
+                team_order = json.loads(order_data)
+            else:
+                # Comma-separated format
+                team_order = [tid.strip() for tid in order_data.split(',') if tid.strip()]
+
+            if not team_order or len(team_order) == 0:
+                errors.append('No teams have been assigned to the draft order.')
+        except (json.JSONDecodeError, ValueError):
+            errors.append('Draft order data is invalid.')
+
+    # If there are validation errors, show error page
+    if errors:
+        context = {
+            'draft': draft,
+            'errors': errors,
+            'show_grid': False,
+        }
+        return render(request, 'players/run_draft.html', context)
+
     # Create ranges for rounds and picks
     rounds = list(range(1, draft.rounds + 1))
     picks = list(range(1, draft.picks_per_round + 1))
@@ -937,5 +977,6 @@ def run_draft_view(request):
         'draft': draft,
         'rounds': rounds,
         'picks': picks,
+        'show_grid': True,
     }
     return render(request, 'players/run_draft.html', context)

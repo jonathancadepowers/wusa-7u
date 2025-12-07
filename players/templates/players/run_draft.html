@@ -50,35 +50,60 @@
                 </h5>
             </div>
             <div class="card-body">
-                <div class="draft-grid">
-                    <table class="table table-bordered draft-table">
-                        <thead>
-                            <tr>
-                                <th class="text-center">Pick</th>
-                                {% for round_num in rounds %}
-                                    <th class="text-center">Round {{ round_num }}</th>
-                                {% endfor %}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for pick_num in picks %}
+                {% if show_grid %}
+                    <div class="draft-grid">
+                        <table class="table table-bordered draft-table">
+                            <thead>
                                 <tr>
-                                    <td class="text-center"><strong>{{ pick_num }}</strong></td>
+                                    <th class="text-center">Pick</th>
                                     {% for round_num in rounds %}
-                                        <td class="draft-cell">
-                                            <i class="bi bi-plus-circle add-icon"></i>
-                                        </td>
+                                        <th class="text-center">Round {{ round_num }}</th>
                                     {% endfor %}
                                 </tr>
+                            </thead>
+                            <tbody>
+                                {% for pick_num in picks %}
+                                    <tr>
+                                        <td class="text-center"><strong>{{ pick_num }}</strong></td>
+                                        {% for round_num in rounds %}
+                                            <td class="draft-cell">
+                                                <i class="bi bi-plus-circle add-icon"></i>
+                                            </td>
+                                        {% endfor %}
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-danger">
+                        <h5><i class="bi bi-exclamation-triangle me-2"></i>Draft Configuration Incomplete</h5>
+                        <p class="mb-0">The draft cannot be run because of the following issues:</p>
+                        <ul class="mt-2 mb-0">
+                            {% for error in errors %}
+                                <li>{{ error }}</li>
                             {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+                        </ul>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Please configure the draft settings before running the draft.
+                    </div>
+                {% endif %}
 
                 <div class="mt-4">
-                    <a href="{% url 'players:settings' %}" class="btn btn-secondary">
-                        <i class="bi bi-arrow-left me-1"></i>Back to Settings
-                    </a>
+                    {% if show_grid %}
+                        <a href="{% url 'players:settings' %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left me-1"></i>Back to Settings
+                        </a>
+                    {% else %}
+                        <a href="{% url 'players:edit_draft' %}" class="btn btn-primary">
+                            <i class="bi bi-pencil me-1"></i>Configure Draft
+                        </a>
+                        <a href="{% url 'players:settings' %}" class="btn btn-secondary ms-2">
+                            <i class="bi bi-arrow-left me-1"></i>Back to Settings
+                        </a>
+                    {% endif %}
                 </div>
             </div>
         </div>
