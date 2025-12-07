@@ -116,6 +116,9 @@ def edit_draft_view(request):
     # Get total player count
     player_count = Player.objects.count()
 
+    # Check if there are any draft picks
+    has_draft_picks = DraftPick.objects.exists()
+
     # Get all teams for draft order
     all_teams = Team.objects.all().order_by('name')
 
@@ -157,6 +160,7 @@ def edit_draft_view(request):
         'extra_picks_needed': extra_picks_needed,
         'final_round_number': final_round_number,
         'final_round_team_names': final_round_team_names,
+        'has_draft_picks': has_draft_picks,
     }
     return render(request, 'players/draft_form.html', context)
 

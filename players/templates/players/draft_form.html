@@ -84,6 +84,13 @@
                         </h4>
                     </div>
                     <div class="card-body">
+                        <!-- Draft In Progress Warning -->
+                        {% if has_draft_picks %}
+                        <div class="alert alert-danger mb-4">
+                            <strong>Warning:</strong> There is either a draft currently in progress or the draft has been completed. You cannot modify the draft's settings below while in this state.
+                        </div>
+                        {% endif %}
+
                         <!-- Read-only Draft Settings -->
                         <div class="card mb-4 bg-light">
                             <div class="card-body">
@@ -175,7 +182,7 @@
                                 <a href="{% url 'players:settings' %}" class="btn btn-secondary">
                                     <i class="bi bi-arrow-left me-1"></i>Cancel
                                 </a>
-                                <button type="submit" class="btn btn-primary">
+                                <button type="submit" class="btn btn-primary" {% if has_draft_picks %}disabled{% endif %}>
                                     <i class="bi bi-save me-1"></i>{% if is_create %}Create Draft{% else %}Save Changes{% endif %}
                                 </button>
                             </div>
@@ -351,7 +358,12 @@
 
         // Initialize existing draft order if editing
         document.addEventListener('DOMContentLoaded', function() {
-            initializeDragAndDrop();
+            const hasDraftPicks = {{ has_draft_picks|yesno:"true,false" }};
+
+            // Only initialize drag and drop if there are no draft picks
+            if (!hasDraftPicks) {
+                initializeDragAndDrop();
+            }
 
             // If there's an existing order, populate the draft order zone
             const existingOrder = {{ ordered_team_ids|safe }};
