@@ -49,9 +49,14 @@
                         </form>
                     </div>
                     <div class="col-md-3 text-end">
-                        <a href="{% url 'players:create' %}" class="btn btn-success w-100">
-                            <i class="bi bi-plus-circle me-1"></i>Add New Player
-                        </a>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-danger flex-grow-1" data-bs-toggle="modal" data-bs-target="#resetTeamsModal">
+                                Reset Teams
+                            </button>
+                            <a href="{% url 'players:create' %}" class="btn btn-success flex-grow-1">
+                                <i class="bi bi-plus-circle me-1"></i>Add New Player
+                            </a>
+                        </div>
                     </div>
                 </div>
 
@@ -373,6 +378,75 @@
                 });
             });
         });
+    </script>
+
+    <!-- Reset Teams Modal -->
+    <div class="modal fade" id="resetTeamsModal" tabindex="-1" aria-labelledby="resetTeamsModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="resetTeamsModalLabel">Danger Zone: Reset Teams</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <strong>Testing Feature:</strong> This feature should only be used for testing purposes.
+                        It will remove all players from all teams, and cannot be undone.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmResetTeamsBtn">Reset All Teams</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Handle reset teams confirmation
+        document.getElementById('confirmResetTeamsBtn').addEventListener('click', function() {
+            const btn = this;
+            btn.disabled = true;
+            btn.textContent = 'Resetting...';
+
+            fetch('{% url "players:reset_teams" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown error'));
+                    btn.disabled = false;
+                    btn.textContent = 'Reset All Teams';
+                }
+            })
+            .catch(error => {
+                alert('Error: ' + error.message);
+                btn.disabled = false;
+                btn.textContent = 'Reset All Teams';
+            });
+        });
+
+        // Helper function to get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
     </script>
 </body>
 </html>

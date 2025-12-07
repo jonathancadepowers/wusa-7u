@@ -1259,6 +1259,31 @@ def reset_draft_view(request):
 
 
 @csrf_exempt
+def reset_teams_view(request):
+    """Remove all players from all teams (for testing purposes)"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+    try:
+        # Count players currently assigned to teams
+        count = Player.objects.filter(team__isnull=False).count()
+
+        # Unassociate players from teams
+        Player.objects.all().update(team=None)
+
+        # Reset the player_assigned_to_team flag on all draft picks
+        DraftPick.objects.filter(player_assigned_to_team=True).update(player_assigned_to_team=False)
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Successfully removed {count} players from teams and reset assignment flags.'
+        })
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+@csrf_exempt
 def assign_players_to_teams_view(request):
     """Assign all drafted players to their teams based on draft picks"""
     if request.method != 'POST':
