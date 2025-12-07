@@ -1202,6 +1202,11 @@ def validate_draft_assignment_view(request):
         # Calculate total draft slots
         total_slots = draft.rounds * draft.picks_per_round
 
+        # Add final round picks if configured
+        if draft.final_round_draft_order:
+            final_round_team_ids = [int(tid) for tid in draft.final_round_draft_order.split(',') if tid]
+            total_slots += len(final_round_team_ids)
+
         # Count how many slots have been filled (have a player assigned)
         filled_slots = DraftPick.objects.filter(player__isnull=False).count()
 
