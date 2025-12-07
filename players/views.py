@@ -1098,19 +1098,33 @@ def make_pick_view(request):
 @csrf_exempt
 def update_player_field(request, player_id):
     """Update a single boolean field on a player (for inline admin editing)"""
+    import logging
+    logger = logging.getLogger(__name__)
+
     try:
+        logger.info(f"update_player_field called for player_id={player_id}")
+        logger.info(f"POST data: {request.POST}")
+
         player = get_object_or_404(Player, id=player_id)
         field = request.POST.get('field')
         value = request.POST.get('value') == 'true'
 
+        logger.info(f"Field: {field}, Value: {value}")
+
         # Only allow updating these specific fields
         if field not in ['attended_try_out', 'draftable']:
+            logger.error(f"Invalid field: {field}")
             return JsonResponse({'success': False, 'error': 'Invalid field'})
 
+        old_value = getattr(player, field)
         setattr(player, field, value)
         player.save()
+        new_value = getattr(player, field)
 
-        return JsonResponse({'success': True})
+        logger.info(f"Updated {field} from {old_value} to {new_value} for player {player.first_name} {player.last_name}")
+
+        return JsonResponse({'success': True, 'field': field, 'value': new_value})
 
     except Exception as e:
+        logger.error(f"Error updating field: {str(e)}")
         return JsonResponse({'success': False, 'error': str(e)})
