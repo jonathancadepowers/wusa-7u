@@ -13,17 +13,22 @@
                         <h4 class="mb-0"><i class="bi bi-gear-fill me-2"></i>Application Settings</h4>
                     </div>
                     <div class="card-body">
-                        <h5 class="card-title">Draft Setup</h5>
+                        <h5 class="card-title">Draft</h5>
 
-                        {% if draft_exists %}
-                            <a href="{% url 'players:edit_draft' %}" class="btn btn-primary">
-                                <i class="bi bi-pencil me-2"></i>Edit Draft
-                            </a>
-                        {% else %}
-                            <a href="{% url 'players:edit_draft' %}" class="btn btn-success">
-                                <i class="bi bi-plus-circle me-2"></i>Create New Draft
-                            </a>
-                        {% endif %}
+                        <div class="d-flex gap-2">
+                            {% if draft_exists %}
+                                <a href="{% url 'players:edit_draft' %}" class="btn btn-primary">
+                                    <i class="bi bi-pencil me-2"></i>Edit Draft
+                                </a>
+                                <a href="{% url 'players:run_draft' %}" class="btn btn-success">
+                                    <i class="bi bi-play-circle me-2"></i>Run Draft
+                                </a>
+                            {% else %}
+                                <a href="{% url 'players:edit_draft' %}" class="btn btn-success">
+                                    <i class="bi bi-plus-circle me-2"></i>Create New Draft
+                                </a>
+                            {% endif %}
+                        </div>
 
                         <hr class="my-4">
 
