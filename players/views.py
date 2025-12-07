@@ -1355,23 +1355,12 @@ def simulate_draft_view(request):
         # Shuffle players randomly
         random.shuffle(available_players)
 
-        # Calculate how many picks we need
-        total_slots = draft.rounds * draft.picks_per_round
-
-        # Handle final round if exists
-        if draft.final_round_draft_order:
-            final_round_team_ids = [int(tid) for tid in draft.final_round_draft_order.split(',') if tid]
-            total_slots += len(final_round_team_ids)
-
-        # Determine how many players to draft (min of available or needed)
-        players_to_draft = min(len(available_players), total_slots)
-
         picks_created = 0
         current_player_index = 0
 
         # Create picks for regular rounds
         for round_num in range(1, draft.rounds + 1):
-            if current_player_index >= players_to_draft:
+            if current_player_index >= len(available_players):
                 break
 
             # Snake draft: reverse order on even rounds
@@ -1381,7 +1370,7 @@ def simulate_draft_view(request):
                 round_teams = teams
 
             for pick_num, team in enumerate(round_teams, start=1):
-                if current_player_index >= players_to_draft:
+                if current_player_index >= len(available_players):
                     break
 
                 # Create or update draft pick
@@ -1398,7 +1387,7 @@ def simulate_draft_view(request):
                 current_player_index += 1
 
         # Handle final round if needed and we still have players
-        if draft.final_round_draft_order and current_player_index < players_to_draft:
+        if draft.final_round_draft_order and current_player_index < len(available_players):
             final_round_team_ids = [int(tid) for tid in draft.final_round_draft_order.split(',') if tid]
             final_round_teams = Team.objects.filter(id__in=final_round_team_ids)
             teams_dict = {team.id: team for team in final_round_teams}
@@ -1406,7 +1395,7 @@ def simulate_draft_view(request):
             final_round_num = draft.rounds + 1
 
             for pick_num, team_id in enumerate(final_round_team_ids, start=1):
-                if current_player_index >= players_to_draft:
+                if current_player_index >= len(available_players):
                     break
 
                 team = teams_dict.get(team_id)
