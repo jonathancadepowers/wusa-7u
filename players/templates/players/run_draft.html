@@ -243,6 +243,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-danger" id="undraftPlayerBtn" style="display: none;">Undraft Player</button>
+                    <button type="button" class="btn btn-info" id="randomPickBtn">Random Pick</button>
                     <div class="ms-auto">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                         <button type="button" class="btn btn-primary" id="confirmPickBtn" disabled>Pick Player</button>
@@ -631,6 +632,27 @@
                 this.disabled = false;
                 this.textContent = 'Undraft Player';
             });
+        });
+
+        // Handle random pick button
+        document.getElementById('randomPickBtn').addEventListener('click', function() {
+            const playerSelect = document.getElementById('playerSelect');
+            const options = Array.from(playerSelect.options).filter(opt => opt.value !== '');
+
+            if (options.length === 0) {
+                alert('No players available for random selection');
+                return;
+            }
+
+            // Select a random player
+            const randomIndex = Math.floor(Math.random() * options.length);
+            const randomOption = options[randomIndex];
+
+            // Set the value in the select
+            playerSelect.value = randomOption.value;
+
+            // Trigger the change event to update conflict info and enable the pick button
+            $('#playerSelect').trigger('change');
         });
 
         // Helper function to get CSRF token
