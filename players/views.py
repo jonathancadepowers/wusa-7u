@@ -975,10 +975,35 @@ def run_draft_view(request):
     rounds = list(range(1, draft.rounds + 1))
     picks = list(range(1, draft.picks_per_round + 1))
 
+    # Parse the order field to get team objects
+    order_data = draft.order.strip()
+    if order_data.startswith('['):
+        team_ids = json.loads(order_data)
+    else:
+        team_ids = [int(tid.strip()) for tid in order_data.split(',') if tid.strip()]
+
+    # Get team objects in order
+    teams_dict = {team.id: team for team in Team.objects.filter(id__in=team_ids)}
+    ordered_teams = [teams_dict[tid] for tid in team_ids]
+
+    # Create a mapping of round -> pick -> team for snake draft
+    pick_assignments = {}
+    for round_num in rounds:
+        pick_assignments[round_num] = {}
+        if round_num % 2 == 1:  # Odd rounds: normal order
+            for pick_num in picks:
+                team_index = pick_num - 1
+                pick_assignments[round_num][pick_num] = ordered_teams[team_index]
+        else:  # Even rounds: reversed order (snake draft)
+            for pick_num in picks:
+                team_index = len(ordered_teams) - pick_num
+                pick_assignments[round_num][pick_num] = ordered_teams[team_index]
+
     context = {
         'draft': draft,
         'rounds': rounds,
         'picks': picks,
+        'pick_assignments': pick_assignments,
         'show_grid': True,
     }
     return render(request, 'players/run_draft.html', context)

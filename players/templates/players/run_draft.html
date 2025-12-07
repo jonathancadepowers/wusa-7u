@@ -1,3 +1,4 @@
+{% load custom_filters %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -18,10 +19,23 @@
             vertical-align: middle;
             padding: 20px;
             border: 1px solid #dee2e6;
+            cursor: pointer;
+            position: relative;
+        }
+        .team-name {
+            font-weight: 500;
+            color: #212529;
         }
         .add-icon {
             font-size: 2rem;
             color: #0d6efd;
+            display: none;
+        }
+        .draft-cell:hover .team-name {
+            display: none;
+        }
+        .draft-cell:hover .add-icon {
+            display: inline;
         }
     </style>
 </head>
@@ -67,6 +81,7 @@
                                         <td class="text-center"><strong>{{ pick_num }}</strong></td>
                                         {% for round_num in rounds %}
                                             <td class="draft-cell">
+                                                <span class="team-name">{{ pick_assignments|get_item:round_num|get_item:pick_num }}</span>
                                                 <i class="bi bi-plus-circle add-icon"></i>
                                             </td>
                                         {% endfor %}
