@@ -89,6 +89,7 @@ class Player(models.Model):
     manager_volunteer_name = models.CharField(max_length=100, blank=True, null=True)
     assistant_manager_volunteer_name = models.CharField(max_length=100, blank=True, null=True)
     attended_try_out = models.BooleanField(default=True)
+    draftable = models.BooleanField(default=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
