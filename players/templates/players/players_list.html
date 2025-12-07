@@ -335,6 +335,7 @@
 
         document.querySelectorAll('.inline-edit-checkbox').forEach(checkbox => {
             checkbox.addEventListener('change', function() {
+                const checkboxElement = this;
                 const playerId = this.dataset.playerId;
                 const field = this.dataset.field;
                 const value = this.checked;
@@ -343,7 +344,7 @@
                 console.log('Checkbox changed:', { playerId, field, value });
 
                 // Disable checkbox during update
-                this.disabled = true;
+                checkboxElement.disabled = true;
 
                 fetch(`/admin/players/player/${playerId}/update-field/`, {
                     method: 'POST',
@@ -361,7 +362,7 @@
                     console.log('Response data:', data);
                     if (data.success) {
                         // Re-enable checkbox
-                        this.disabled = false;
+                        checkboxElement.disabled = false;
                         // Brief success indication
                         cell.style.backgroundColor = '#d4edda';
                         setTimeout(() => {
@@ -370,17 +371,17 @@
                     } else {
                         alert('Error updating field: ' + data.error);
                         // Revert checkbox state
-                        this.checked = !value;
-                        this.disabled = false;
+                        checkboxElement.checked = !value;
+                        checkboxElement.disabled = false;
                     }
-                }.bind(this))
+                })
                 .catch(error => {
                     console.error('Fetch error:', error);
                     alert('Error updating field: ' + error.message);
                     // Revert checkbox state
-                    this.checked = !value;
-                    this.disabled = false;
-                }.bind(this));
+                    checkboxElement.checked = !value;
+                    checkboxElement.disabled = false;
+                });
             });
         });
     </script>
