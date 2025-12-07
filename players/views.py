@@ -1000,11 +1000,22 @@ def run_draft_view(request):
                 team_index = len(ordered_teams) - pick_num
                 pick_assignments[round_num][pick_num] = ordered_teams[team_index]
 
+    # Load existing draft picks
+    existing_picks = DraftPick.objects.select_related('player', 'team').all()
+    draft_picks_map = {}
+    for draft_pick in existing_picks:
+        key = f"{draft_pick.round}_{draft_pick.pick}"
+        draft_picks_map[key] = {
+            'player_name': f"{draft_pick.player.first_name} {draft_pick.player.last_name}",
+            'player_id': draft_pick.player.id
+        }
+
     context = {
         'draft': draft,
         'rounds': rounds,
         'picks': picks,
         'pick_assignments': pick_assignments,
+        'draft_picks_map': draft_picks_map,
         'show_grid': True,
     }
     return render(request, 'players/run_draft.html', context)
