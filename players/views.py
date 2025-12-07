@@ -178,7 +178,7 @@ def players_list_view(request):
         )
 
     # Apply sorting
-    valid_sort_fields = ['last_name', 'first_name', 'team__name', 'school', 'history']
+    valid_sort_fields = ['last_name', 'first_name', 'team__name', 'school', 'history', 'attended_try_out', 'draftable']
     if sort_by in valid_sort_fields:
         if order == 'desc':
             # For team sorting, handle null values
