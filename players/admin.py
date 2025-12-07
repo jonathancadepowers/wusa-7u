@@ -34,7 +34,7 @@ class PlayerAdmin(admin.ModelAdmin):
             'fields': ('team',)
         }),
         ('Player Information', {
-            'fields': ('first_name', 'last_name', 'birthday', 'school', 'jersey_size')
+            'fields': ('first_name', 'last_name', 'birthday', 'school', 'jersey_size', 'attended_try_out')
         }),
         ('Registration Details', {
             'fields': ('history', 'conflict', 'additional_registration_info')
