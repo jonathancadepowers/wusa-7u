@@ -233,6 +233,8 @@ def player_detail_view(request, pk):
         player.jersey_size = request.POST.get('jersey_size') or None
         player.manager_volunteer_name = request.POST.get('manager_volunteer_name') or None
         player.assistant_manager_volunteer_name = request.POST.get('assistant_manager_volunteer_name') or None
+        player.attended_try_out = request.POST.get('attended_try_out') == 'on'
+        player.draftable = request.POST.get('draftable') == 'on'
 
         # Handle team assignment
         team_id = request.POST.get('team_id')

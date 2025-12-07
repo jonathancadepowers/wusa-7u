@@ -72,6 +72,25 @@
                                 </div>
                             </div>
 
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="attended_try_out" name="attended_try_out" {% if player.attended_try_out %}checked{% endif %}>
+                                        <label class="form-check-label" for="attended_try_out">
+                                            Attended Try Out
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="draftable" name="draftable" {% if player.draftable %}checked{% endif %}>
+                                        <label class="form-check-label" for="draftable">
+                                            Draftable
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="mb-3">
                                 <label for="team_id" class="form-label">Team</label>
                                 <select class="form-select" id="team_id" name="team_id">
