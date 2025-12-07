@@ -86,10 +86,12 @@
                                     <tr>
                                         <td class="text-center"><strong>{{ pick_num }}</strong></td>
                                         {% for round_num in rounds %}
-                                            <td class="draft-cell" data-practice-slot="{{ pick_assignments|get_item:round_num|get_item:pick_num.practice_slot }}">
-                                                <span class="team-name">{{ pick_assignments|get_item:round_num|get_item:pick_num }}</span>
-                                                <i class="bi bi-plus-circle add-icon"></i>
-                                            </td>
+                                            {% with team=pick_assignments|get_item:round_num|get_item:pick_num %}
+                                                <td class="draft-cell" data-practice-slot="{{ team.practice_slot }}">
+                                                    <span class="team-name">{{ team }}</span>
+                                                    <i class="bi bi-plus-circle add-icon"></i>
+                                                </td>
+                                            {% endwith %}
                                         {% endfor %}
                                     </tr>
                                 {% endfor %}
