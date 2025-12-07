@@ -153,7 +153,7 @@
                     <div id="conflictInfo" class="alert alert-warning" style="display: none;">
                         <strong>Conflict:</strong> <span id="conflictText"></span>
                     </div>
-                    <div id="practiceSlotInfo" class="alert alert-primary">
+                    <div id="practiceSlotInfo" class="alert alert-primary" style="display: none;">
                         <strong>Team Practice:</strong> <span id="practiceSlotText"></span>
                     </div>
                 </div>
@@ -233,19 +233,26 @@
             const selectedOption = e.target.options[e.target.selectedIndex];
             const conflict = selectedOption.dataset.conflict;
             const conflictInfo = document.getElementById('conflictInfo');
+            const practiceSlotInfo = document.getElementById('practiceSlotInfo');
             const confirmBtn = document.getElementById('confirmPickBtn');
 
             if (e.target.value) {
                 confirmBtn.disabled = false;
+
+                // Show/hide conflict info
                 if (conflict) {
                     document.getElementById('conflictText').textContent = conflict;
                     conflictInfo.style.display = 'block';
                 } else {
                     conflictInfo.style.display = 'none';
                 }
+
+                // Show practice slot info
+                practiceSlotInfo.style.display = 'block';
             } else {
                 confirmBtn.disabled = true;
                 conflictInfo.style.display = 'none';
+                practiceSlotInfo.style.display = 'none';
             }
         });
 
