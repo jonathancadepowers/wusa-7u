@@ -1228,8 +1228,15 @@ def validate_draft_assignment_view(request):
             'pre_assigned_count': pre_assigned_count
         })
 
+    except Draft.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'No draft found. Please create a draft first.'})
     except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)})
+        import traceback
+        return JsonResponse({
+            'success': False,
+            'error': f'{type(e).__name__}: {str(e)}',
+            'traceback': traceback.format_exc()
+        })
 
 
 @csrf_exempt
