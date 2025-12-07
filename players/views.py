@@ -5,7 +5,8 @@ from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from django.contrib import messages
 from django.core.paginator import Paginator
-from .models import Player, Team, Manager, PlayerRanking, ManagerDaughterRanking, Draft
+from django.views.decorators.csrf import csrf_exempt
+from .models import Player, Team, Manager, PlayerRanking, ManagerDaughterRanking, Draft, DraftPick
 import pandas as pd
 import json
 import os
@@ -1007,3 +1008,65 @@ def run_draft_view(request):
         'show_grid': True,
     }
     return render(request, 'players/run_draft.html', context)
+
+
+def available_players_view(request):
+    """Get list of players not yet drafted"""
+    # Get all player IDs that have been drafted
+    drafted_player_ids = DraftPick.objects.values_list('player_id', flat=True)
+
+    # Get all players not in the drafted list
+    available_players = Player.objects.exclude(id__in=drafted_player_ids).order_by('last_name', 'first_name')
+
+    # Build response
+    players_data = [{
+        'id': player.id,
+        'first_name': player.first_name,
+        'last_name': player.last_name,
+        'conflict': player.conflict
+    } for player in available_players]
+
+    return JsonResponse({
+        'success': True,
+        'players': players_data
+    })
+
+
+@csrf_exempt
+def make_pick_view(request):
+    """Create a draft pick record"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+    try:
+        data = json.loads(request.body)
+        round_num = data.get('round')
+        pick_num = data.get('pick')
+        player_id = data.get('player_id')
+        team_name = data.get('team_name')
+
+        # Get the player
+        player = Player.objects.get(id=player_id)
+
+        # Get the team by name
+        team = Team.objects.get(name=team_name)
+
+        # Create the draft pick
+        draft_pick = DraftPick.objects.create(
+            round=round_num,
+            pick=pick_num,
+            player=player,
+            team=team
+        )
+
+        return JsonResponse({
+            'success': True,
+            'player_name': f"{player.first_name} {player.last_name}"
+        })
+
+    except Player.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Player not found'})
+    except Team.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Team not found'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
