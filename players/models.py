@@ -141,3 +141,17 @@ class TeamPreference(models.Model):
 
     def __str__(self):
         return f"Team Preferences for {self.manager}" if self.manager else f"Team Preferences {self.id}"
+
+
+class PracticeSlot(models.Model):
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='practice_slots')
+    practice_slot = models.TextField()
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'practice_slots'
+
+    def __str__(self):
+        return f"{self.team.name if self.team else 'No Team'} - {self.practice_slot}"
