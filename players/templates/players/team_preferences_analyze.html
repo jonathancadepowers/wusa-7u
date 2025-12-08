@@ -20,10 +20,11 @@
                             <span id="successMessage"></span>
                         </div>
 
-                        <div class="mb-4">
-                            <button type="button" class="btn btn-primary" id="runAnalysisBtn">
-                                <i class="bi bi-play-circle me-2"></i>Run Analysis
-                            </button>
+                        <div id="loadingMessage" class="text-center my-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Running analysis...</p>
                         </div>
 
                         <div id="analysisResults" style="display: none;">
@@ -59,15 +60,17 @@
         let currentAssignments = [];
         let allTeams = [];
 
-        document.getElementById('runAnalysisBtn').addEventListener('click', function() {
-            const btn = this;
-            const originalHtml = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Running...';
+        // Run analysis automatically on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            runAnalysis();
+        });
 
+        function runAnalysis() {
             // Hide previous alerts
             document.getElementById('errorAlert').style.display = 'none';
             document.getElementById('successAlert').style.display = 'none';
+            document.getElementById('loadingMessage').style.display = 'block';
+            document.getElementById('analysisResults').style.display = 'none';
 
             fetch('{% url "players:run_team_analysis" %}', {
                 method: 'POST',
@@ -78,8 +81,7 @@
             })
             .then(response => response.json())
             .then(data => {
-                btn.disabled = false;
-                btn.innerHTML = originalHtml;
+                document.getElementById('loadingMessage').style.display = 'none';
 
                 if (data.success) {
                     currentAssignments = data.assignments;
@@ -90,11 +92,10 @@
                 }
             })
             .catch(error => {
-                btn.disabled = false;
-                btn.innerHTML = originalHtml;
+                document.getElementById('loadingMessage').style.display = 'none';
                 showError('An unexpected error occurred: ' + error.message);
             });
-        });
+        }
 
         function displayResults(assignments) {
             const tableBody = document.getElementById('assignmentsTable');
@@ -211,8 +212,6 @@
                     showSuccess(data.message);
                     // Disable the assign button after successful assignment
                     btn.disabled = true;
-                    // Hide the run analysis button
-                    document.getElementById('runAnalysisBtn').disabled = true;
                 } else {
                     showError(data.error);
                 }
