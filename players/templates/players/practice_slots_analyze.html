@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+
+{% block title %}Practice Slots Analysis - WUSA 7U{% endblock %}
+
+{% block page_title %}WUSA 7U - Practice Slots Analysis{% endblock %}
+
+{% block content %}
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-lg-10 offset-lg-1">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <div id="errorAlert" class="alert alert-danger" style="display: none;">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <span id="errorMessage"></span>
+                        </div>
+
+                        <div id="successAlert" class="alert alert-success" style="display: none;">
+                            <i class="bi bi-check-circle me-2"></i>
+                            <span id="successMessage"></span>
+                        </div>
+
+                        <div id="loadingMessage" class="text-center my-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Running analysis...</p>
+                        </div>
+
+                        <div id="analysisResults" style="display: none;">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-bordered">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Team</th>
+                                            <th>Practice Slot</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="assignmentsTable">
+                                        <!-- Results will be inserted here -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="mt-4 text-end">
+                                <button type="button" class="btn btn-success btn-lg" id="assignBtn">
+                                    <i class="bi bi-check2-square me-2"></i>Assign Practice Slots to Teams
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        let currentAssignments = [];
+        let allSlots = [];
+
+        // Run analysis automatically on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            runAnalysis();
+        });
+
+        function runAnalysis() {
+            // Hide previous alerts
+            document.getElementById('errorAlert').style.display = 'none';
+            document.getElementById('successAlert').style.display = 'none';
+            document.getElementById('loadingMessage').style.display = 'block';
+            document.getElementById('analysisResults').style.display = 'none';
+
+            fetch('{% url "players:run_practice_slots_analysis" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loadingMessage').style.display = 'none';
+
+                if (data.success) {
+                    currentAssignments = data.assignments;
+                    allSlots = data.all_slots;
+                    displayResults(data.assignments);
+                } else {
+                    showError(data.error);
+                }
+            })
+            .catch(error => {
+                document.getElementById('loadingMessage').style.display = 'none';
+                showError('An unexpected error occurred: ' + error.message);
+            });
+        }
+
+        function displayResults(assignments) {
+            const tableBody = document.getElementById('assignmentsTable');
+            tableBody.innerHTML = '';
+
+            assignments.forEach((assignment, index) => {
+                const row = document.createElement('tr');
+
+                // Team column
+                const teamCell = document.createElement('td');
+                teamCell.textContent = assignment.team_name;
+                if (assignment.has_rankings) {
+                    teamCell.innerHTML += ' <span class="badge bg-success">Has Rankings</span>';
+                } else {
+                    teamCell.innerHTML += ' <span class="badge bg-warning text-dark">No Rankings Submitted</span>';
+                }
+                row.appendChild(teamCell);
+
+                // Practice slot dropdown column
+                const slotCell = document.createElement('td');
+                const select = document.createElement('select');
+                select.className = 'form-select';
+                select.setAttribute('data-index', index);
+                select.addEventListener('change', handleSlotChange);
+
+                // Add "No Slot Selected" option
+                const noSlotOption = document.createElement('option');
+                noSlotOption.value = '';
+                noSlotOption.textContent = '-- No Slot Selected --';
+                select.appendChild(noSlotOption);
+
+                // Add options for all slots
+                allSlots.forEach(slot => {
+                    const option = document.createElement('option');
+                    option.value = slot.id;
+                    option.textContent = slot.practice_slot;
+                    if (slot.id === assignment.slot_id) {
+                        option.selected = true;
+                    }
+                    select.appendChild(option);
+                });
+
+                slotCell.appendChild(select);
+                row.appendChild(slotCell);
+
+                tableBody.appendChild(row);
+            });
+
+            // Update available options for all dropdowns
+            updateAllDropdowns();
+
+            document.getElementById('analysisResults').style.display = 'block';
+        }
+
+        function handleSlotChange(event) {
+            const index = parseInt(event.target.getAttribute('data-index'));
+            const newSlotValue = event.target.value;
+
+            if (newSlotValue === '') {
+                // No slot selected
+                currentAssignments[index].slot_id = null;
+                currentAssignments[index].slot_text = null;
+            } else {
+                const newSlotId = parseInt(newSlotValue);
+                currentAssignments[index].slot_id = newSlotId;
+                const selectedSlot = allSlots.find(s => s.id === newSlotId);
+                if (selectedSlot) {
+                    currentAssignments[index].slot_text = selectedSlot.practice_slot;
+                }
+            }
+
+            // Update all dropdowns to reflect new availability
+            updateAllDropdowns();
+        }
+
+        function updateAllDropdowns() {
+            // Get all currently assigned slot IDs (filter out nulls)
+            const assignedSlotIds = currentAssignments.map(a => a.slot_id).filter(id => id !== null);
+
+            // Update each dropdown
+            const selects = document.querySelectorAll('#assignmentsTable select');
+            selects.forEach((select, index) => {
+                const currentlySelectedId = currentAssignments[index].slot_id;
+                const options = select.querySelectorAll('option');
+
+                options.forEach(option => {
+                    // Skip the "No Slot Selected" option
+                    if (option.value === '') {
+                        return;
+                    }
+
+                    const slotId = parseInt(option.value);
+                    // Disable if slot is assigned to someone else
+                    if (assignedSlotIds.includes(slotId) && slotId !== currentlySelectedId) {
+                        option.disabled = true;
+                        option.textContent = option.textContent.split(' (Assigned)')[0] + ' (Assigned)';
+                    } else {
+                        option.disabled = false;
+                        option.textContent = option.textContent.split(' (Assigned)')[0];
+                    }
+                });
+            });
+        }
+
+        document.getElementById('assignBtn').addEventListener('click', function() {
+            if (!currentAssignments || currentAssignments.length === 0) {
+                showError('No assignments to save. Please run the analysis first.');
+                return;
+            }
+
+            // Check if all teams have slots assigned
+            const unassignedTeams = currentAssignments.filter(a => a.slot_id === null);
+            if (unassignedTeams.length > 0) {
+                showError(`Cannot assign: ${unassignedTeams.length} team(s) have no practice slot selected. Please assign practice slots to all teams.`);
+                return;
+            }
+
+            const btn = this;
+            const originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Assigning...';
+
+            // Hide previous alerts
+            document.getElementById('errorAlert').style.display = 'none';
+            document.getElementById('successAlert').style.display = 'none';
+
+            const formData = new FormData();
+            formData.append('assignments', JSON.stringify(currentAssignments));
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+            fetch('{% url "players:assign_practice_slots_to_teams" %}', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+
+                if (data.success) {
+                    showSuccess(data.message);
+                    // Disable the assign button after successful assignment
+                    btn.disabled = true;
+                } else {
+                    showError(data.error);
+                }
+            })
+            .catch(error => {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+                showError('An unexpected error occurred: ' + error.message);
+            });
+        });
+
+        function showError(message) {
+            const errorAlert = document.getElementById('errorAlert');
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.textContent = message;
+            errorAlert.style.display = 'block';
+
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function showSuccess(message) {
+            const successAlert = document.getElementById('successAlert');
+            const successMessage = document.getElementById('successMessage');
+            successMessage.textContent = message;
+            successAlert.style.display = 'block';
+
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+{% endblock %}

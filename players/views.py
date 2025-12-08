@@ -1060,6 +1060,166 @@ def practice_slot_rankings_view(request):
     return render(request, 'players/practice_slot_rankings.html', context)
 
 
+@login_required
+def practice_slots_analyze_view(request):
+    """Display practice slots analysis page"""
+    return render(request, 'players/practice_slots_analyze.html')
+
+
+@login_required
+@require_http_methods(["POST"])
+def run_practice_slots_analysis_view(request):
+    """Run analysis to match teams with their preferred practice slots"""
+    from .models import PracticeSlot, PracticeSlotRanking
+    import random
+
+    try:
+        # Validation 1: Check if any teams already have practice slots assigned
+        teams_with_slots = Team.objects.exclude(practice_slot__isnull=True).exclude(practice_slot='').count()
+        if teams_with_slots > 0:
+            return JsonResponse({
+                'success': False,
+                'error': 'Some teams already have practice slots assigned. This analysis can only be used when no teams have practice slots assigned yet.'
+            }, status=400)
+
+        # Get all teams and practice slots
+        all_teams = list(Team.objects.all())
+        all_slots = list(PracticeSlot.objects.all())
+
+        # Validation 2: Check if team and slot counts match
+        if len(all_teams) != len(all_slots):
+            return JsonResponse({
+                'success': False,
+                'error': f'The number of teams ({len(all_teams)}) does not match the number of practice slots ({len(all_slots)}). They must be equal.'
+            }, status=400)
+
+        # Randomly shuffle teams
+        random.shuffle(all_teams)
+
+        # Available slots (will be removed as they're assigned)
+        available_slots = {slot.id: slot for slot in all_slots}
+
+        # Assignments
+        assignments = []
+
+        for team in all_teams:
+            assigned_slot = None
+            has_rankings = False
+
+            # Try to get team's practice slot rankings
+            try:
+                ranking = PracticeSlotRanking.objects.get(team=team)
+                rankings_data = json.loads(ranking.rankings)
+                has_rankings = True
+
+                # Try to assign most preferred available slot
+                for item in rankings_data:
+                    slot_id = item['slot_id']
+                    if slot_id in available_slots:
+                        assigned_slot = available_slots[slot_id]
+                        del available_slots[slot_id]
+                        break
+
+            except PracticeSlotRanking.DoesNotExist:
+                pass
+
+            # If no ranking or no preferred slot available, assign first available
+            if not assigned_slot and available_slots:
+                slot_id = next(iter(available_slots))
+                assigned_slot = available_slots[slot_id]
+                del available_slots[slot_id]
+
+            assignments.append({
+                'team_id': team.id,
+                'team_name': team.name,
+                'slot_id': assigned_slot.id if assigned_slot else None,
+                'slot_text': assigned_slot.practice_slot if assigned_slot else None,
+                'has_rankings': has_rankings
+            })
+
+        return JsonResponse({
+            'success': True,
+            'assignments': assignments,
+            'all_slots': [{'id': s.id, 'practice_slot': s.practice_slot} for s in all_slots]
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def assign_practice_slots_to_teams_view(request):
+    """Assign practice slots to teams based on analysis results"""
+    from .models import PracticeSlot
+
+    try:
+        assignments_json = request.POST.get('assignments', '')
+
+        if not assignments_json:
+            return JsonResponse({
+                'success': False,
+                'error': 'No assignment data provided.'
+            }, status=400)
+
+        try:
+            assignments = json.loads(assignments_json)
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'success': False,
+                'error': 'Invalid assignment data.'
+            }, status=400)
+
+        # Validate that each slot is assigned exactly once
+        slot_ids = [a['slot_id'] for a in assignments]
+        if len(slot_ids) != len(set(slot_ids)):
+            return JsonResponse({
+                'success': False,
+                'error': 'Each practice slot must be assigned to exactly one team.'
+            }, status=400)
+
+        # Perform the assignments
+        assigned_count = 0
+        for assignment in assignments:
+            team_id = assignment['team_id']
+            slot_id = assignment['slot_id']
+
+            if not team_id or not slot_id:
+                continue
+
+            team = Team.objects.get(id=team_id)
+            slot = PracticeSlot.objects.get(id=slot_id)
+
+            # Store the practice slot text in the team's practice_slot field
+            team.practice_slot = slot.practice_slot
+            team.save()
+            assigned_count += 1
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Successfully assigned practice slots to {assigned_count} team(s)!'
+        })
+
+    except Team.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'One or more teams not found.'
+        }, status=404)
+    except PracticeSlot.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'One or more practice slots not found.'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
 def run_draft_view(request):
     """Run the draft - display grid of rounds and picks"""
     # Get the most recent draft
