@@ -37,4 +37,6 @@ urlpatterns = [
     path('managers/<int:pk>/assign-team/', views.assign_manager_team_view, name='assign_manager_team'),
     path('player_rankings/', views.player_rankings_view, name='player_rankings'),
     path('manager_daughter_rankings/', views.manager_daughter_rankings_view, name='manager_daughter_rankings'),
+    path('team_preferences/', views.team_preferences_view, name='team_preferences'),
+    path('team_preferences/save/', views.save_team_preferences_view, name='save_team_preferences'),
 ]

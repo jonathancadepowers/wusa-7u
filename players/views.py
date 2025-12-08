@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 from django.views.decorators.csrf import csrf_exempt
 from django.db import models
-from .models import Player, Team, Manager, PlayerRanking, ManagerDaughterRanking, Draft, DraftPick
+from .models import Player, Team, Manager, PlayerRanking, ManagerDaughterRanking, Draft, DraftPick, TeamPreference
 import pandas as pd
 import json
 import os
@@ -1500,3 +1500,73 @@ def update_player_field(request, player_id):
 
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
+
+
+def team_preferences_view(request):
+    """Team name preferences page for managers"""
+    # Get all team names from the teams table
+    all_teams = Team.objects.all().order_by('name')
+
+    context = {
+        'all_teams': all_teams,
+    }
+    return render(request, 'players/team_preferences.html', context)
+
+
+@require_http_methods(["POST"])
+def save_team_preferences_view(request):
+    """Save team name preferences for a manager"""
+    try:
+        email = request.POST.get('email', '').strip()
+        preferences_json = request.POST.get('preferences', '')
+
+        # Validate email is provided
+        if not email:
+            return JsonResponse({
+                'success': False,
+                'error': 'Please enter your email address.'
+            }, status=400)
+
+        # Validate preferences data
+        if not preferences_json:
+            return JsonResponse({
+                'success': False,
+                'error': 'Please rank at least one team name before submitting.'
+            }, status=400)
+
+        # Check if email matches a manager
+        try:
+            manager = Manager.objects.get(email=email)
+        except Manager.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': 'Email address not found. Please make sure you entered the email address that matches your manager registration.'
+            }, status=400)
+
+        # Parse the preferences JSON
+        try:
+            preferences_data = json.loads(preferences_json)
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'success': False,
+                'error': 'Invalid preferences data.'
+            }, status=400)
+
+        # Create or update the team preference record
+        team_preference, created = TeamPreference.objects.update_or_create(
+            manager=manager,
+            defaults={'preferences': preferences_data}
+        )
+
+        action = 'saved' if created else 'updated'
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Your team name preferences have been {action} successfully!'
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
