@@ -45,4 +45,8 @@ urlpatterns = [
     path('team_preferences/assign/', views.assign_managers_to_teams_view, name='assign_managers_to_teams'),
     path('team_preferences/get-manager-emails/', views.get_manager_emails_view, name='get_manager_emails'),
     path('team_preferences/send-email/', views.send_team_preferences_email_view, name='send_team_preferences_email'),
+    path('manage_practice_slots/', views.manage_practice_slots_view, name='manage_practice_slots'),
+    path('practice_slots/create/', views.create_practice_slot_view, name='create_practice_slot'),
+    path('practice_slots/<int:pk>/update/', views.update_practice_slot_view, name='update_practice_slot'),
+    path('practice_slots/<int:pk>/delete/', views.delete_practice_slot_view, name='delete_practice_slot'),
 ]

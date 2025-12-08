@@ -151,6 +151,8 @@ class PracticeSlot(models.Model):
 
     class Meta:
         db_table = 'available_practice_slots'
+        verbose_name = 'Available Practice Slot'
+        verbose_name_plural = 'Available Practice Slots'
 
     def __str__(self):
         return f"Practice Slot: {self.practice_slot}"

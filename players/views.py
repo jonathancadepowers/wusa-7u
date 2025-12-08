@@ -1837,3 +1837,116 @@ def send_team_preferences_email_view(request):
             'success': False,
             'error': f'An error occurred: {str(e)}'
         }, status=500)
+
+
+@login_required
+def manage_practice_slots_view(request):
+    """View to manage practice slots with CRUD operations"""
+    from .models import PracticeSlot
+
+    practice_slots = PracticeSlot.objects.all().order_by('-created_at')
+
+    context = {
+        'practice_slots': practice_slots
+    }
+
+    return render(request, 'players/manage_practice_slots.html', context)
+
+
+@login_required
+@require_http_methods(["POST"])
+def create_practice_slot_view(request):
+    """Create a new practice slot"""
+    from .models import PracticeSlot
+
+    try:
+        practice_slot = request.POST.get('practice_slot', '').strip()
+
+        if not practice_slot:
+            return JsonResponse({
+                'success': False,
+                'error': 'Practice slot text is required.'
+            }, status=400)
+
+        slot = PracticeSlot.objects.create(practice_slot=practice_slot)
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Practice slot created successfully!',
+            'slot': {
+                'id': slot.id,
+                'practice_slot': slot.practice_slot,
+                'created_at': slot.created_at.strftime('%Y-%m-%d %H:%M:%S')
+            }
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def update_practice_slot_view(request, pk):
+    """Update an existing practice slot"""
+    from .models import PracticeSlot
+
+    try:
+        slot = PracticeSlot.objects.get(pk=pk)
+        practice_slot = request.POST.get('practice_slot', '').strip()
+
+        if not practice_slot:
+            return JsonResponse({
+                'success': False,
+                'error': 'Practice slot text is required.'
+            }, status=400)
+
+        slot.practice_slot = practice_slot
+        slot.save()
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Practice slot updated successfully!',
+            'slot': {
+                'id': slot.id,
+                'practice_slot': slot.practice_slot,
+                'updated_at': slot.updated_at.strftime('%Y-%m-%d %H:%M:%S')
+            }
+        })
+    except PracticeSlot.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Practice slot not found.'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def delete_practice_slot_view(request, pk):
+    """Delete a practice slot"""
+    from .models import PracticeSlot
+
+    try:
+        slot = PracticeSlot.objects.get(pk=pk)
+        slot.delete()
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Practice slot deleted successfully!'
+        })
+    except PracticeSlot.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Practice slot not found.'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
