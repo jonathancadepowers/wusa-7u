@@ -73,9 +73,14 @@
             <div class="col-lg-10 offset-lg-1">
                 <div class="card shadow">
                     <div class="card-body">
+                        <div class="alert alert-warning" id="incompleteWarning" style="display: none;">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Your rankings are not complete. You must rank all <span id="totalTeamCount">0</span> team names before submitting.
+                        </div>
+
                         <div class="alert alert-info">
                             <i class="bi bi-info-circle me-2"></i>
-                            Enter your email address and drag team names from the available list to the rankings area on the right. Arrange them in order from #1 (most preferred) to least preferred.
+                            Enter your email address and drag ALL team names from the available list to the rankings area on the right. Arrange them in order from #1 (most preferred) to least preferred.
                         </div>
 
                         <div id="successAlert" class="alert alert-success" style="display: none;">
@@ -281,6 +286,7 @@
         function updateRankBadges() {
             const rankedZone = document.getElementById('rankedTeams');
             const rankedItems = rankedZone.querySelectorAll('.team-item');
+            const totalTeams = parseInt(document.getElementById('totalTeamCount').textContent);
 
             rankedItems.forEach((item, index) => {
                 // Remove existing rank badge if any
@@ -299,10 +305,18 @@
             // Update rank count
             document.getElementById('rankCount').textContent = rankedItems.length;
 
-            // Enable/disable submit button
+            // Show/hide incomplete warning
+            const incompleteWarning = document.getElementById('incompleteWarning');
+            if (rankedItems.length !== totalTeams) {
+                incompleteWarning.style.display = 'block';
+            } else {
+                incompleteWarning.style.display = 'none';
+            }
+
+            // Enable/disable submit button - now requires ALL teams to be ranked
             const submitBtn = document.getElementById('submitBtn');
             const emailInput = document.getElementById('emailInput');
-            if (rankedItems.length > 0 && emailInput.value.trim() !== '') {
+            if (rankedItems.length === totalTeams && emailInput.value.trim() !== '') {
                 submitBtn.disabled = false;
             } else {
                 submitBtn.disabled = true;
@@ -326,15 +340,22 @@
         document.addEventListener('DOMContentLoaded', function() {
             initializeDragAndDrop();
 
+            // Count total teams and display in warning
+            const totalTeams = document.querySelectorAll('#availableTeams .team-item').length;
+            document.getElementById('totalTeamCount').textContent = totalTeams;
+
+            // Show warning initially
+            document.getElementById('incompleteWarning').style.display = 'block';
+
             // Disable submit button initially
             document.getElementById('submitBtn').disabled = true;
 
-            // Enable submit button when email is entered and teams are ranked
+            // Enable submit button when email is entered and ALL teams are ranked
             const emailInput = document.getElementById('emailInput');
             emailInput.addEventListener('input', function() {
                 const rankedCount = document.querySelectorAll('#rankedTeams .team-item').length;
                 const submitBtn = document.getElementById('submitBtn');
-                if (this.value.trim() !== '' && rankedCount > 0) {
+                if (this.value.trim() !== '' && rankedCount === totalTeams) {
                     submitBtn.disabled = false;
                 } else {
                     submitBtn.disabled = true;
@@ -365,9 +386,10 @@
 
                 const email = document.getElementById('emailInput').value.trim();
                 const rankedCount = document.querySelectorAll('#rankedTeams .team-item').length;
+                const totalTeams = parseInt(document.getElementById('totalTeamCount').textContent);
 
-                if (rankedCount === 0) {
-                    showError('Please rank at least one team name before submitting.');
+                if (rankedCount !== totalTeams) {
+                    showError(`Please rank all ${totalTeams} team names before submitting. You have currently ranked ${rankedCount}.`);
                     return false;
                 }
 

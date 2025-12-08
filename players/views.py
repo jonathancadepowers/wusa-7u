@@ -1552,6 +1552,16 @@ def save_team_preferences_view(request):
                 'error': 'Invalid preferences data.'
             }, status=400)
 
+        # Validate that all teams are ranked
+        total_teams = Team.objects.count()
+        ranked_teams = len(preferences_data.get('team_ids', []))
+
+        if ranked_teams != total_teams:
+            return JsonResponse({
+                'success': False,
+                'error': f'You must rank all {total_teams} team names. You have currently ranked {ranked_teams}.'
+            }, status=400)
+
         # Create or update the team preference record
         team_preference, created = TeamPreference.objects.update_or_create(
             manager=manager,
