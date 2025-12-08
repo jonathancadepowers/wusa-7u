@@ -2,18 +2,16 @@
 
 {% block title %}Manage Practice Slots - WUSA 7U{% endblock %}
 
-{% block page_title %}WUSA 7U - Manage Practice Slots{% endblock %}
+{% block page_title %}{% endblock %}
 
 {% block content %}
-    <div class="container mt-5">
-        <div class="row justify-content-center">
-            <div class="col-md-10">
+    <div class="container-fluid mt-5">
+        <div class="row">
+            <div class="col-12">
+                <h2 class="mb-4"><i class="bi bi-calendar-week me-2"></i>WUSA 7U - Manage Practice Slots</h2>
                 <div class="card shadow">
-                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                        <h4 class="mb-0"><i class="bi bi-calendar-week me-2"></i>Available Practice Slots</h4>
-                        <a href="{% url 'players:settings' %}" class="btn btn-light btn-sm">
-                            <i class="bi bi-arrow-left me-1"></i>Back to Settings
-                        </a>
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">Available Practice Slots</h4>
                     </div>
                     <div class="card-body">
                         <!-- Success/Error Messages -->
