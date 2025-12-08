@@ -1074,14 +1074,6 @@ def run_practice_slots_analysis_view(request):
     import random
 
     try:
-        # Validation 1: Check if any teams already have practice slots assigned
-        teams_with_slots = Team.objects.exclude(practice_slot__isnull=True).exclude(practice_slot='').count()
-        if teams_with_slots > 0:
-            return JsonResponse({
-                'success': False,
-                'error': 'Some teams already have practice slots assigned. This analysis can only be used when no teams have practice slots assigned yet.'
-            }, status=400)
-
         # Get all teams and practice slots
         all_teams = list(Team.objects.all())
         all_slots = list(PracticeSlot.objects.all())
@@ -1154,7 +1146,7 @@ def run_practice_slots_analysis_view(request):
 @require_http_methods(["POST"])
 def assign_practice_slots_to_teams_view(request):
     """Assign practice slots to teams based on analysis results"""
-    from .models import PracticeSlot
+    from .models import PracticeSlot, PracticeSlotRanking
 
     try:
         assignments_json = request.POST.get('assignments', '')
@@ -1181,7 +1173,7 @@ def assign_practice_slots_to_teams_view(request):
                 'error': 'Each practice slot must be assigned to exactly one team.'
             }, status=400)
 
-        # Perform the assignments
+        # Perform the assignments by setting the foreign key relationship
         assigned_count = 0
         for assignment in assignments:
             team_id = assignment['team_id']
@@ -1193,8 +1185,8 @@ def assign_practice_slots_to_teams_view(request):
             team = Team.objects.get(id=team_id)
             slot = PracticeSlot.objects.get(id=slot_id)
 
-            # Store the practice slot text in the team's practice_slot field
-            team.practice_slot = slot.practice_slot
+            # Set the practice_slot foreign key on the team
+            team.practice_slot = slot
             team.save()
             assigned_count += 1
 
