@@ -17,14 +17,30 @@ class Command(BaseCommand):
         created_count = 0
         updated_count = 0
 
+        # Find Blazing Comets team
+        blazing_comets = None
+        for team in teams:
+            if team.name == 'Blazing Comets':
+                blazing_comets = team
+                break
+
+        if not blazing_comets:
+            self.stdout.write(self.style.ERROR('Blazing Comets team not found in database.'))
+            return
+
         for manager in managers:
-            # Shuffle teams to create random preferences
-            shuffled_teams = random.sample(teams, len(teams))
+            # Start with Blazing Comets as first choice
+            # Then shuffle the remaining teams
+            other_teams = [t for t in teams if t.id != blazing_comets.id]
+            shuffled_other_teams = random.sample(other_teams, len(other_teams))
+
+            # Blazing Comets first, then random order for the rest
+            ordered_teams = [blazing_comets] + shuffled_other_teams
 
             # Create preferences data
             preferences_data = {
-                'team_ids': [str(team.id) for team in shuffled_teams],
-                'team_names': [team.name for team in shuffled_teams]
+                'team_ids': [str(team.id) for team in ordered_teams],
+                'team_names': [team.name for team in ordered_teams]
             }
 
             # Create or update team preference
