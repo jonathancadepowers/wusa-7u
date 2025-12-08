@@ -107,8 +107,10 @@
                 // Manager column
                 const managerCell = document.createElement('td');
                 managerCell.textContent = assignment.manager_name;
-                if (!assignment.has_preferences) {
-                    managerCell.innerHTML += ' <span class="badge bg-warning text-dark">No Preferences</span>';
+                if (assignment.has_preferences) {
+                    managerCell.innerHTML += ' <span class="badge bg-success">Submitted</span>';
+                } else {
+                    managerCell.innerHTML += ' <span class="badge bg-warning text-dark">No Preferences Submitted</span>';
                 }
                 row.appendChild(managerCell);
 
