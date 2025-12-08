@@ -121,6 +121,12 @@
                 select.setAttribute('data-index', index);
                 select.addEventListener('change', handleTeamChange);
 
+                // Add "No Team Selected" option
+                const noTeamOption = document.createElement('option');
+                noTeamOption.value = '';
+                noTeamOption.textContent = '-- No Team Selected --';
+                select.appendChild(noTeamOption);
+
                 // Add options for all teams
                 allTeams.forEach(team => {
                     const option = document.createElement('option');
@@ -146,12 +152,19 @@
 
         function handleTeamChange(event) {
             const index = parseInt(event.target.getAttribute('data-index'));
-            const newTeamId = parseInt(event.target.value);
+            const newTeamValue = event.target.value;
 
-            currentAssignments[index].team_id = newTeamId;
-            const selectedTeam = allTeams.find(t => t.id === newTeamId);
-            if (selectedTeam) {
-                currentAssignments[index].team_name = selectedTeam.name;
+            if (newTeamValue === '') {
+                // No team selected
+                currentAssignments[index].team_id = null;
+                currentAssignments[index].team_name = null;
+            } else {
+                const newTeamId = parseInt(newTeamValue);
+                currentAssignments[index].team_id = newTeamId;
+                const selectedTeam = allTeams.find(t => t.id === newTeamId);
+                if (selectedTeam) {
+                    currentAssignments[index].team_name = selectedTeam.name;
+                }
             }
 
             // Update all dropdowns to reflect new availability
@@ -159,8 +172,8 @@
         }
 
         function updateAllDropdowns() {
-            // Get all currently assigned team IDs
-            const assignedTeamIds = currentAssignments.map(a => a.team_id);
+            // Get all currently assigned team IDs (filter out nulls)
+            const assignedTeamIds = currentAssignments.map(a => a.team_id).filter(id => id !== null);
 
             // Update each dropdown
             const selects = document.querySelectorAll('#assignmentsTable select');
@@ -169,6 +182,11 @@
                 const options = select.querySelectorAll('option');
 
                 options.forEach(option => {
+                    // Skip the "No Team Selected" option
+                    if (option.value === '') {
+                        return;
+                    }
+
                     const teamId = parseInt(option.value);
                     // Disable if team is assigned to someone else
                     if (assignedTeamIds.includes(teamId) && teamId !== currentlySelectedId) {
@@ -185,6 +203,13 @@
         document.getElementById('assignBtn').addEventListener('click', function() {
             if (!currentAssignments || currentAssignments.length === 0) {
                 showError('No assignments to save. Please run the analysis first.');
+                return;
+            }
+
+            // Check if all managers have teams assigned
+            const unassignedManagers = currentAssignments.filter(a => a.team_id === null);
+            if (unassignedManagers.length > 0) {
+                showError(`Cannot assign: ${unassignedManagers.length} manager(s) have no team selected. Please assign teams to all managers.`);
                 return;
             }
 
