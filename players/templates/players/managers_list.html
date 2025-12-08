@@ -19,7 +19,7 @@
             <div class="card-body">
                 <!-- Search Bar and Add Button -->
                 <div class="row mb-4 align-items-end">
-                    <div class="col-md-9">
+                    <div class="col-md-6">
                         <form method="get">
                             <div class="input-group">
                                 <input type="text" name="search" class="form-control" placeholder="Search by manager name or details..." value="{{ search_query }}">
@@ -32,12 +32,12 @@
                             </div>
                         </form>
                     </div>
-                    <div class="col-md-3 text-end">
-                        <div class="d-flex gap-2">
-                            <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#unassignAllModal">
+                    <div class="col-md-6 text-end">
+                        <div class="d-flex gap-2 justify-content-end">
+                            <button type="button" class="btn btn-warning text-nowrap" data-bs-toggle="modal" data-bs-target="#unassignAllModal">
                                 <i class="bi bi-exclamation-triangle me-1"></i>Unassign All Managers
                             </button>
-                            <a href="{% url 'players:manager_create' %}" class="btn btn-success">
+                            <a href="{% url 'players:manager_create' %}" class="btn btn-success text-nowrap">
                                 <i class="bi bi-plus-circle me-1"></i>Add Manager
                             </a>
                         </div>
