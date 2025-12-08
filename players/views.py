@@ -1728,3 +1728,22 @@ def assign_managers_to_teams_view(request):
             'success': False,
             'error': f'An error occurred: {str(e)}'
         }, status=500)
+
+
+@require_http_methods(["POST"])
+def unassign_all_managers_view(request):
+    """Remove all managers from all teams (testing feature)"""
+    try:
+        # Get all teams and remove their manager assignments
+        teams_updated = Team.objects.filter(manager__isnull=False).update(manager=None)
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Successfully removed {teams_updated} manager assignments from teams.'
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
