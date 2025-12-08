@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Player, Team, Manager, Draft, PlayerRanking, ManagerDaughterRanking, DraftPick
+from .models import Player, Team, Manager, Draft, PlayerRanking, ManagerDaughterRanking, DraftPick, TeamPreference
 
 
 @admin.register(Draft)
@@ -92,3 +92,24 @@ class DraftPickAdmin(admin.ModelAdmin):
     list_display = ['round', 'pick', 'team', 'player', 'created_at', 'updated_at']
     list_filter = ['round', 'team']
     search_fields = ['player__first_name', 'player__last_name', 'team__name']
+
+
+@admin.register(TeamPreference)
+class TeamPreferenceAdmin(admin.ModelAdmin):
+    list_display = ['id', 'manager', 'created_at', 'updated_at']
+    list_filter = ['manager']
+    search_fields = ['manager__first_name', 'manager__last_name']
+    readonly_fields = ['created_at', 'updated_at']
+
+    fieldsets = (
+        ('Manager', {
+            'fields': ('manager',)
+        }),
+        ('Preferences', {
+            'fields': ('preferences',)
+        }),
+        ('Metadata', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
