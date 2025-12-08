@@ -117,19 +117,27 @@ class TeamPreferenceAdmin(admin.ModelAdmin):
 
 @admin.register(PracticeSlot)
 class PracticeSlotAdmin(admin.ModelAdmin):
-    list_display = ['id', 'practice_slot', 'created_at', 'updated_at']
+    list_display = ['id', 'practice_slot', 'get_assigned_team', 'created_at', 'updated_at']
     search_fields = ['practice_slot']
-    readonly_fields = ['created_at', 'updated_at']
+    readonly_fields = ['created_at', 'updated_at', 'get_assigned_team']
 
     fieldsets = (
         ('Practice Slot', {
-            'fields': ('practice_slot',)
+            'fields': ('practice_slot', 'get_assigned_team')
         }),
         ('Metadata', {
             'fields': ('created_at', 'updated_at'),
             'classes': ('collapse',)
         }),
     )
+
+    def get_assigned_team(self, obj):
+        """Display which team is assigned to this practice slot"""
+        teams = obj.teams.all()
+        if teams.exists():
+            return ', '.join([team.name for team in teams])
+        return 'Not assigned'
+    get_assigned_team.short_description = 'Assigned Team'
 
 
 @admin.register(PracticeSlotRanking)
