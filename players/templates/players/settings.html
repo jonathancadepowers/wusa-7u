@@ -4,6 +4,15 @@
 
 {% block page_title %}WUSA 7U - Settings{% endblock %}
 
+{% block extra_css %}
+    <style>
+        .tox-tinymce {
+            border: 1px solid #ced4da !important;
+            border-radius: 0.375rem !important;
+        }
+    </style>
+{% endblock %}
+
 {% block content %}
     <div class="container mt-5">
         <div class="row justify-content-center">
@@ -156,6 +165,8 @@
 {% endblock %}
 
 {% block extra_js %}
+    <!-- TinyMCE -->
+    <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
     <script>
         // Show file name when selected
         document.getElementById('excelFile').addEventListener('change', function(e) {
@@ -276,31 +287,48 @@
         }
 
         // Team Preferences Email Modal
+        let tinymceEditor = null;
+
         document.addEventListener('DOMContentLoaded', function() {
+            // Initialize TinyMCE
+            tinymce.init({
+                selector: '#emailBody',
+                height: 400,
+                menubar: false,
+                plugins: 'link lists',
+                toolbar: 'undo redo | formatselect | bold italic underline | link | bullist numlist | removeformat',
+                setup: function(editor) {
+                    tinymceEditor = editor;
+                }
+            });
+
             // Set default email body with current domain
             const teamPreferencesModal = document.getElementById('teamPreferencesEmailModal');
             teamPreferencesModal.addEventListener('show.bs.modal', function() {
-                const emailBody = document.getElementById('emailBody');
-                if (!emailBody.value) {
-                    const currentDomain = window.location.origin;
-                    const defaultText = `Hello WUSA Managers-
-
-As mentioned, we need to collect your preferences for team names.
-
-To submit your choices, go to the following URL: ${currentDomain}/team_preferences/
-
-Please have your choices submitted within the next 24 hours, and let us know if you have any questions.
-
-Thanks,
-
--Your Division Managers`;
-                    emailBody.value = defaultText;
-                }
+                // Wait for TinyMCE to be ready
+                setTimeout(function() {
+                    if (tinymceEditor && tinymceEditor.getContent() === '') {
+                        const currentDomain = window.location.origin;
+                        const defaultHtml = `<p>Hello WUSA Managers-</p>
+<p>As mentioned, we need to collect your preferences for team names.</p>
+<p>To submit your choices, go to the following URL: <a href="${currentDomain}/team_preferences/">${currentDomain}/team_preferences/</a></p>
+<p>Please have your choices submitted within the next 24 hours, and let us know if you have any questions.</p>
+<p>Thanks,</p>
+<p>-Your Division Managers</p>`;
+                        tinymceEditor.setContent(defaultHtml);
+                    }
+                }, 100);
             });
 
             // Handle send email button
             document.getElementById('sendEmailBtn').addEventListener('click', function() {
                 const form = document.getElementById('teamPreferencesEmailForm');
+
+                // Get content from TinyMCE and set it to the textarea
+                if (tinymceEditor) {
+                    document.getElementById('emailBody').value = tinymceEditor.getContent();
+                }
+
                 const formData = new FormData(form);
 
                 const btn = this;
@@ -324,8 +352,11 @@ Thanks,
                     if (data.success) {
                         document.getElementById('emailSuccessMessage').textContent = data.message;
                         document.getElementById('emailSuccessAlert').style.display = 'block';
-                        // Clear form
+                        // Clear form and TinyMCE
                         form.reset();
+                        if (tinymceEditor) {
+                            tinymceEditor.setContent('');
+                        }
                     } else {
                         document.getElementById('emailErrorMessage').textContent = data.error;
                         document.getElementById('emailErrorAlert').style.display = 'block';

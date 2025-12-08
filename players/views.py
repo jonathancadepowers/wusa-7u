@@ -1752,15 +1752,16 @@ def unassign_all_managers_view(request):
 @require_http_methods(["POST"])
 def send_team_preferences_email_view(request):
     """Send team preferences email to all managers"""
-    from django.core.mail import send_mail
+    from django.core.mail import EmailMultiAlternatives
     from django.conf import settings as django_settings
+    from django.utils.html import strip_tags
 
     try:
         subject = request.POST.get('subject', '').strip()
-        body = request.POST.get('body', '').strip()
+        html_body = request.POST.get('body', '').strip()
         cc_emails = request.POST.get('cc_emails', '').strip()
 
-        if not subject or not body:
+        if not subject or not html_body:
             return JsonResponse({
                 'success': False,
                 'error': 'Subject and body are required.'
@@ -1779,6 +1780,9 @@ def send_team_preferences_email_view(request):
         if cc_emails:
             cc_list = [email.strip() for email in cc_emails.split(',') if email.strip()]
 
+        # Create plain text version from HTML
+        text_body = strip_tags(html_body)
+
         # Send email to each manager
         sent_count = 0
         failed_emails = []
@@ -1786,14 +1790,15 @@ def send_team_preferences_email_view(request):
         for manager in managers:
             if manager.email:
                 try:
-                    send_mail(
+                    msg = EmailMultiAlternatives(
                         subject=subject,
-                        message=body,
+                        body=text_body,
                         from_email=django_settings.DEFAULT_FROM_EMAIL,
-                        recipient_list=[manager.email],
+                        to=[manager.email],
                         cc=cc_list if cc_list else None,
-                        fail_silently=False,
                     )
+                    msg.attach_alternative(html_body, "text/html")
+                    msg.send(fail_silently=False)
                     sent_count += 1
                 except Exception as e:
                     failed_emails.append(f"{manager.email} ({str(e)})")
