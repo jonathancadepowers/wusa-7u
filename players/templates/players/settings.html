@@ -315,17 +315,7 @@
             teamPreferencesModal.addEventListener('show.bs.modal', function() {
                 if (quillEditor && quillEditor.root.innerHTML === '<p><br></p>') {
                     const currentDomain = window.location.origin;
-                    const defaultHtml = `<p>Hello WUSA Managers-</p>
-<p><br></p>
-<p>As mentioned, we need to collect your preferences for team names.</p>
-<p><br></p>
-<p>To submit your choices, go to the following URL: <a href="${currentDomain}/team_preferences/" target="_blank">${currentDomain}/team_preferences/</a></p>
-<p><br></p>
-<p>Please have your choices submitted within the next 24 hours, and let us know if you have any questions.</p>
-<p><br></p>
-<p>Thanks,</p>
-<p><br></p>
-<p>-Your Division Managers</p>`;
+                    const defaultHtml = `<p>Hello WUSA Managers-<br><br>As mentioned, we need to collect your preferences for team names. To submit your choices, go to the following URL: <a href="${currentDomain}/team_preferences/" target="_blank">${currentDomain}/team_preferences/</a><br><br>Please have your choices submitted within the next 24 hours, and let us know if you have any questions.<br><br>Thanks,<br>-Your Division Managers</p>`;
                     quillEditor.root.innerHTML = defaultHtml;
                 }
             });
