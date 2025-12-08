@@ -117,15 +117,11 @@ class TeamPreferenceAdmin(admin.ModelAdmin):
 
 @admin.register(PracticeSlot)
 class PracticeSlotAdmin(admin.ModelAdmin):
-    list_display = ['id', 'team', 'practice_slot', 'created_at', 'updated_at']
-    list_filter = ['team']
-    search_fields = ['team__name', 'practice_slot']
+    list_display = ['id', 'practice_slot', 'created_at', 'updated_at']
+    search_fields = ['practice_slot']
     readonly_fields = ['created_at', 'updated_at']
 
     fieldsets = (
-        ('Team', {
-            'fields': ('team',)
-        }),
         ('Practice Slot', {
             'fields': ('practice_slot',)
         }),

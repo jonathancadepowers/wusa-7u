@@ -144,7 +144,6 @@ class TeamPreference(models.Model):
 
 
 class PracticeSlot(models.Model):
-    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='practice_slots')
     practice_slot = models.TextField()
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -154,4 +153,4 @@ class PracticeSlot(models.Model):
         db_table = 'available_practice_slots'
 
     def __str__(self):
-        return f"{self.team.name if self.team else 'No Team'} - {self.practice_slot}"
+        return f"Practice Slot: {self.practice_slot}"
