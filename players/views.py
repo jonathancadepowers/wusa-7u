@@ -985,6 +985,81 @@ def manager_daughter_rankings_view(request):
     return render(request, 'players/manager_daughter_rankings.html', context)
 
 
+def practice_slot_rankings_view(request):
+    """Create or update practice slot rankings for a team"""
+    from .models import PracticeSlot, PracticeSlotRanking
+
+    # Get team_secret from URL parameter
+    team_secret = request.GET.get('team_secret', request.POST.get('team_secret', ''))
+
+    # Find the team associated with this team_secret
+    team = None
+    if team_secret:
+        try:
+            team = Team.objects.get(manager_secret=team_secret)
+        except Team.DoesNotExist:
+            messages.error(request, 'Invalid team secret.')
+
+    if request.method == 'POST':
+        # Get the rankings data from the form (comma-separated slot IDs in ranked order)
+        rankings_data = request.POST.get('rankings', '')
+
+        if rankings_data:
+            # Parse the comma-separated IDs
+            slot_ids = [int(sid) for sid in rankings_data.split(',') if sid]
+
+            # Create a JSON structure with rank and slot ID
+            rankings_json = json.dumps([
+                {"rank": idx + 1, "slot_id": slot_id}
+                for idx, slot_id in enumerate(slot_ids)
+            ])
+
+            # Update or create ranking for this team (ensures only one ranking per team)
+            if team:
+                PracticeSlotRanking.objects.update_or_create(
+                    team=team,
+                    defaults={'rankings': rankings_json}
+                )
+            else:
+                # If no team, just create a new ranking
+                PracticeSlotRanking.objects.create(rankings=rankings_json)
+
+            messages.success(request, f'Practice slot rankings saved successfully! ({len(slot_ids)} slots ranked)')
+
+            # Redirect back to team page if team_secret was provided
+            if team_secret:
+                return redirect('players:team_detail', team_secret=team_secret)
+            else:
+                return redirect('players:practice_slot_rankings')
+        else:
+            messages.error(request, 'No rankings data provided.')
+
+    # Load existing rankings for this team
+    existing_ranking = None
+    ranked_slot_ids = []
+    if team:
+        try:
+            existing_ranking = PracticeSlotRanking.objects.get(team=team)
+            # Parse the JSON to get slot IDs in order
+            rankings_data = json.loads(existing_ranking.rankings)
+            ranked_slot_ids = [item['slot_id'] for item in rankings_data]
+        except PracticeSlotRanking.DoesNotExist:
+            pass
+
+    # Get all practice slots, ordered by practice_slot
+    all_slots = PracticeSlot.objects.all().order_by('practice_slot')
+    total_slots = all_slots.count()
+
+    context = {
+        'all_slots': all_slots,
+        'total_slots': total_slots,
+        'team_secret': team_secret,
+        'team': team,
+        'ranked_slot_ids': json.dumps(ranked_slot_ids),  # Pass as JSON for JavaScript
+    }
+    return render(request, 'players/practice_slot_rankings.html', context)
+
+
 def run_draft_view(request):
     """Run the draft - display grid of rounds and picks"""
     # Get the most recent draft

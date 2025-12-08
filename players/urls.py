@@ -38,6 +38,7 @@ urlpatterns = [
     path('managers/unassign-all/', views.unassign_all_managers_view, name='unassign_all_managers'),
     path('player_rankings/', views.player_rankings_view, name='player_rankings'),
     path('manager_daughter_rankings/', views.manager_daughter_rankings_view, name='manager_daughter_rankings'),
+    path('practice_slot_rankings/', views.practice_slot_rankings_view, name='practice_slot_rankings'),
     path('team_preferences/', views.team_preferences_view, name='team_preferences'),
     path('team_preferences/save/', views.save_team_preferences_view, name='save_team_preferences'),
     path('team_preferences/analyze/', views.team_preferences_analyze_view, name='team_preferences_analyze'),

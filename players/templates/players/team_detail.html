@@ -37,6 +37,9 @@
                     <a href="{% url 'players:manager_daughter_rankings' %}?team_secret={{ team.manager_secret }}" class="btn btn-warning ms-2">
                         <i class="bi bi-star-half me-2"></i>Rank Manager's Daughters
                     </a>
+                    <a href="{% url 'players:practice_slot_rankings' %}?team_secret={{ team.manager_secret }}" class="btn btn-info ms-2">
+                        <i class="bi bi-calendar-week me-2"></i>Rank Practice Slots
+                    </a>
                     {% if players %}
                         <button type="button" class="btn btn-primary ms-2" data-bs-toggle="modal" data-bs-target="#emailModal">
                             <i class="bi bi-envelope me-1"></i>Email Team
