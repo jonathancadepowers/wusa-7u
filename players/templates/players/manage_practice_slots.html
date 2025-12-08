@@ -60,11 +60,11 @@
                                                         <td class="slot-text">{{ slot.practice_slot }}</td>
                                                         <td>{{ slot.created_at|date:"Y-m-d H:i" }}</td>
                                                         <td>
-                                                            <button class="btn btn-sm btn-warning edit-slot-btn" data-slot-id="{{ slot.id }}" data-slot-text="{{ slot.practice_slot }}">
-                                                                <i class="bi bi-pencil"></i> Edit
+                                                            <button class="btn btn-sm btn-warning edit-slot-btn" data-slot-id="{{ slot.id }}" data-slot-text="{{ slot.practice_slot }}" title="Edit">
+                                                                <i class="bi bi-pencil"></i>
                                                             </button>
-                                                            <button class="btn btn-sm btn-danger delete-slot-btn" data-slot-id="{{ slot.id }}">
-                                                                <i class="bi bi-trash"></i> Delete
+                                                            <button class="btn btn-sm btn-danger delete-slot-btn" data-slot-id="{{ slot.id }}" title="Delete">
+                                                                <i class="bi bi-trash"></i>
                                                             </button>
                                                         </td>
                                                     </tr>
