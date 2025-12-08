@@ -127,3 +127,17 @@ class ManagerDaughterRanking(models.Model):
 
     def __str__(self):
         return f"Manager Daughter Ranking {self.id} by {self.manager}" if self.manager else f"Manager Daughter Ranking {self.id}"
+
+
+class TeamPreference(models.Model):
+    manager = models.ForeignKey(Manager, on_delete=models.CASCADE, related_name='team_preferences')
+    preferences = models.JSONField(default=dict)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'team_preferences'
+
+    def __str__(self):
+        return f"Team Preferences for {self.manager}" if self.manager else f"Team Preferences {self.id}"
