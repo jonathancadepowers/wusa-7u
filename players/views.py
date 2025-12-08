@@ -1513,6 +1513,12 @@ def team_preferences_view(request):
     return render(request, 'players/team_preferences.html', context)
 
 
+def team_preferences_analyze_view(request):
+    """Analyze team preferences and assign managers to teams"""
+    context = {}
+    return render(request, 'players/team_preferences_analyze.html', context)
+
+
 @require_http_methods(["POST"])
 def save_team_preferences_view(request):
     """Save team name preferences for a manager"""
@@ -1573,6 +1579,148 @@ def save_team_preferences_view(request):
         return JsonResponse({
             'success': True,
             'message': f'Your team name preferences have been {action} successfully!'
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
+@require_http_methods(["POST"])
+def run_team_analysis_view(request):
+    """Run analysis to match managers with their preferred teams"""
+    import random
+
+    try:
+        # Validation 1: Check if any managers already have teams assigned
+        managers_with_teams = Manager.objects.filter(teams__isnull=False).count()
+        if managers_with_teams > 0:
+            return JsonResponse({
+                'success': False,
+                'error': 'Some managers are already assigned to teams. This analysis can only be used when no managers have teams assigned yet.'
+            }, status=400)
+
+        # Get all managers and teams
+        all_managers = list(Manager.objects.all())
+        all_teams = list(Team.objects.all())
+
+        # Validation 2: Check if manager and team counts match
+        if len(all_managers) != len(all_teams):
+            return JsonResponse({
+                'success': False,
+                'error': f'The number of managers ({len(all_managers)}) does not match the number of teams ({len(all_teams)}). They must be equal.'
+            }, status=400)
+
+        # Separate managers with and without preferences
+        managers_with_prefs = []
+        managers_without_prefs = []
+
+        for manager in all_managers:
+            try:
+                pref = TeamPreference.objects.get(manager=manager)
+                managers_with_prefs.append({
+                    'manager': manager,
+                    'preferences': pref.preferences
+                })
+            except TeamPreference.DoesNotExist:
+                managers_without_prefs.append({
+                    'manager': manager,
+                    'preferences': None
+                })
+
+        # Randomly shuffle managers with preferences
+        random.shuffle(managers_with_prefs)
+
+        # Create final list: managers with prefs first, then without
+        ordered_managers = managers_with_prefs + managers_without_prefs
+
+        # Available teams (will be removed as they're assigned)
+        available_teams = {team.id: team for team in all_teams}
+
+        # Assignments
+        assignments = []
+
+        for manager_data in ordered_managers:
+            manager = manager_data['manager']
+            preferences = manager_data['preferences']
+            assigned_team = None
+
+            if preferences and 'team_ids' in preferences:
+                # Try to assign most preferred available team
+                for team_id_str in preferences['team_ids']:
+                    team_id = int(team_id_str)
+                    if team_id in available_teams:
+                        assigned_team = available_teams[team_id]
+                        del available_teams[team_id]
+                        break
+
+            # If no preference or no preferred team available, assign first available
+            if not assigned_team and available_teams:
+                team_id = next(iter(available_teams))
+                assigned_team = available_teams[team_id]
+                del available_teams[team_id]
+
+            assignments.append({
+                'manager_id': manager.id,
+                'manager_name': f"{manager.first_name} {manager.last_name}",
+                'team_id': assigned_team.id if assigned_team else None,
+                'team_name': assigned_team.name if assigned_team else None,
+                'has_preferences': preferences is not None
+            })
+
+        return JsonResponse({
+            'success': True,
+            'assignments': assignments,
+            'all_teams': [{'id': t.id, 'name': t.name} for t in all_teams]
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
+@require_http_methods(["POST"])
+def assign_managers_to_teams_view(request):
+    """Assign managers to teams based on analysis results"""
+    try:
+        assignments_json = request.POST.get('assignments', '')
+
+        if not assignments_json:
+            return JsonResponse({
+                'success': False,
+                'error': 'No assignment data provided.'
+            }, status=400)
+
+        try:
+            assignments = json.loads(assignments_json)
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'success': False,
+                'error': 'Invalid assignment data.'
+            }, status=400)
+
+        # Validate that each team is assigned exactly once
+        team_ids = [a['team_id'] for a in assignments]
+        if len(team_ids) != len(set(team_ids)):
+            return JsonResponse({
+                'success': False,
+                'error': 'Each team must be assigned to exactly one manager.'
+            }, status=400)
+
+        # Perform the assignments
+        for assignment in assignments:
+            manager = Manager.objects.get(id=assignment['manager_id'])
+            team = Team.objects.get(id=assignment['team_id'])
+            team.manager = manager
+            team.save()
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Successfully assigned {len(assignments)} managers to teams!'
         })
 
     except Exception as e:

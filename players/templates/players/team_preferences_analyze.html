@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+
+{% block title %}Team Preferences Analysis - WUSA 7U{% endblock %}
+
+{% block page_title %}WUSA 7U - Team Preferences Analysis{% endblock %}
+
+{% block content %}
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-lg-10 offset-lg-1">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <div id="errorAlert" class="alert alert-danger" style="display: none;">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <span id="errorMessage"></span>
+                        </div>
+
+                        <div id="successAlert" class="alert alert-success" style="display: none;">
+                            <i class="bi bi-check-circle me-2"></i>
+                            <span id="successMessage"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <button type="button" class="btn btn-primary" id="runAnalysisBtn">
+                                <i class="bi bi-play-circle me-2"></i>Run Analysis
+                            </button>
+                        </div>
+
+                        <div id="analysisResults" style="display: none;">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-bordered">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Manager</th>
+                                            <th>Team</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="assignmentsTable">
+                                        <!-- Results will be inserted here -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="mt-4">
+                                <button type="button" class="btn btn-success btn-lg" id="assignBtn">
+                                    <i class="bi bi-check2-square me-2"></i>Assign Managers to Teams
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        let currentAssignments = [];
+        let allTeams = [];
+
+        document.getElementById('runAnalysisBtn').addEventListener('click', function() {
+            const btn = this;
+            const originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Running...';
+
+            // Hide previous alerts
+            document.getElementById('errorAlert').style.display = 'none';
+            document.getElementById('successAlert').style.display = 'none';
+
+            fetch('{% url "players:run_team_analysis" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+
+                if (data.success) {
+                    currentAssignments = data.assignments;
+                    allTeams = data.all_teams;
+                    displayResults(data.assignments);
+                } else {
+                    showError(data.error);
+                }
+            })
+            .catch(error => {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+                showError('An unexpected error occurred: ' + error.message);
+            });
+        });
+
+        function displayResults(assignments) {
+            const tableBody = document.getElementById('assignmentsTable');
+            tableBody.innerHTML = '';
+
+            assignments.forEach((assignment, index) => {
+                const row = document.createElement('tr');
+
+                // Manager column
+                const managerCell = document.createElement('td');
+                managerCell.textContent = assignment.manager_name;
+                if (!assignment.has_preferences) {
+                    managerCell.innerHTML += ' <span class="badge bg-warning text-dark">No Preferences</span>';
+                }
+                row.appendChild(managerCell);
+
+                // Team dropdown column
+                const teamCell = document.createElement('td');
+                const select = document.createElement('select');
+                select.className = 'form-select';
+                select.setAttribute('data-index', index);
+                select.addEventListener('change', handleTeamChange);
+
+                // Add options for all teams
+                allTeams.forEach(team => {
+                    const option = document.createElement('option');
+                    option.value = team.id;
+                    option.textContent = team.name;
+                    if (team.id === assignment.team_id) {
+                        option.selected = true;
+                    }
+                    select.appendChild(option);
+                });
+
+                teamCell.appendChild(select);
+                row.appendChild(teamCell);
+
+                tableBody.appendChild(row);
+            });
+
+            // Update available options for all dropdowns
+            updateAllDropdowns();
+
+            document.getElementById('analysisResults').style.display = 'block';
+        }
+
+        function handleTeamChange(event) {
+            const index = parseInt(event.target.getAttribute('data-index'));
+            const newTeamId = parseInt(event.target.value);
+
+            currentAssignments[index].team_id = newTeamId;
+            const selectedTeam = allTeams.find(t => t.id === newTeamId);
+            if (selectedTeam) {
+                currentAssignments[index].team_name = selectedTeam.name;
+            }
+
+            // Update all dropdowns to reflect new availability
+            updateAllDropdowns();
+        }
+
+        function updateAllDropdowns() {
+            // Get all currently assigned team IDs
+            const assignedTeamIds = currentAssignments.map(a => a.team_id);
+
+            // Update each dropdown
+            const selects = document.querySelectorAll('#assignmentsTable select');
+            selects.forEach((select, index) => {
+                const currentlySelectedId = currentAssignments[index].team_id;
+                const options = select.querySelectorAll('option');
+
+                options.forEach(option => {
+                    const teamId = parseInt(option.value);
+                    // Disable if team is assigned to someone else
+                    if (assignedTeamIds.includes(teamId) && teamId !== currentlySelectedId) {
+                        option.disabled = true;
+                        option.textContent = option.textContent.split(' (Assigned)')[0] + ' (Assigned)';
+                    } else {
+                        option.disabled = false;
+                        option.textContent = option.textContent.split(' (Assigned)')[0];
+                    }
+                });
+            });
+        }
+
+        document.getElementById('assignBtn').addEventListener('click', function() {
+            if (!currentAssignments || currentAssignments.length === 0) {
+                showError('No assignments to save. Please run the analysis first.');
+                return;
+            }
+
+            const btn = this;
+            const originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Assigning...';
+
+            // Hide previous alerts
+            document.getElementById('errorAlert').style.display = 'none';
+            document.getElementById('successAlert').style.display = 'none';
+
+            const formData = new FormData();
+            formData.append('assignments', JSON.stringify(currentAssignments));
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+            fetch('{% url "players:assign_managers_to_teams" %}', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+
+                if (data.success) {
+                    showSuccess(data.message);
+                    // Disable the assign button after successful assignment
+                    btn.disabled = true;
+                    // Hide the run analysis button
+                    document.getElementById('runAnalysisBtn').disabled = true;
+                } else {
+                    showError(data.error);
+                }
+            })
+            .catch(error => {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+                showError('An unexpected error occurred: ' + error.message);
+            });
+        });
+
+        function showError(message) {
+            const errorAlert = document.getElementById('errorAlert');
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.textContent = message;
+            errorAlert.style.display = 'block';
+
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function showSuccess(message) {
+            const successAlert = document.getElementById('successAlert');
+            const successMessage = document.getElementById('successMessage');
+            successMessage.textContent = message;
+            successAlert.style.display = 'block';
+
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+{% endblock %}
