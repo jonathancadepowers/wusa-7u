@@ -416,21 +416,47 @@
                 // Get HTML content from Quill
                 const html = quillEditor.root.innerHTML;
 
-                // Create temporary textarea to copy HTML
-                const tempTextarea = document.createElement('textarea');
-                tempTextarea.value = html;
-                document.body.appendChild(tempTextarea);
-                tempTextarea.select();
-                document.execCommand('copy');
-                document.body.removeChild(tempTextarea);
+                // Use Clipboard API if available, otherwise fall back to execCommand
+                if (navigator.clipboard && navigator.clipboard.write) {
+                    const blob = new Blob([html], { type: 'text/html' });
+                    const clipboardItem = new ClipboardItem({
+                        'text/html': blob,
+                        'text/plain': new Blob([quillEditor.getText()], { type: 'text/plain' })
+                    });
+                    navigator.clipboard.write([clipboardItem]).then(() => {
+                        // Visual feedback
+                        const btn = event.target.closest('button');
+                        const originalHTML = btn.innerHTML;
+                        btn.innerHTML = '<i class="bi bi-check"></i>';
+                        setTimeout(() => {
+                            btn.innerHTML = originalHTML;
+                        }, 1500);
+                    });
+                } else {
+                    // Fallback for older browsers
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = html;
+                    tempDiv.style.position = 'absolute';
+                    tempDiv.style.left = '-9999px';
+                    document.body.appendChild(tempDiv);
 
-                // Visual feedback
-                const btn = event.target.closest('button');
-                const originalHTML = btn.innerHTML;
-                btn.innerHTML = '<i class="bi bi-check"></i>';
-                setTimeout(() => {
-                    btn.innerHTML = originalHTML;
-                }, 1500);
+                    const range = document.createRange();
+                    range.selectNodeContents(tempDiv);
+                    const selection = window.getSelection();
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+
+                    document.execCommand('copy');
+                    document.body.removeChild(tempDiv);
+
+                    // Visual feedback
+                    const btn = event.target.closest('button');
+                    const originalHTML = btn.innerHTML;
+                    btn.innerHTML = '<i class="bi bi-check"></i>';
+                    setTimeout(() => {
+                        btn.innerHTML = originalHTML;
+                    }, 1500);
+                }
             }
         }
 
@@ -439,21 +465,47 @@
                 // Get HTML content from Quill
                 const html = teamPagesQuillEditor.root.innerHTML;
 
-                // Create temporary textarea to copy HTML
-                const tempTextarea = document.createElement('textarea');
-                tempTextarea.value = html;
-                document.body.appendChild(tempTextarea);
-                tempTextarea.select();
-                document.execCommand('copy');
-                document.body.removeChild(tempTextarea);
+                // Use Clipboard API if available, otherwise fall back to execCommand
+                if (navigator.clipboard && navigator.clipboard.write) {
+                    const blob = new Blob([html], { type: 'text/html' });
+                    const clipboardItem = new ClipboardItem({
+                        'text/html': blob,
+                        'text/plain': new Blob([teamPagesQuillEditor.getText()], { type: 'text/plain' })
+                    });
+                    navigator.clipboard.write([clipboardItem]).then(() => {
+                        // Visual feedback
+                        const btn = event.target.closest('button');
+                        const originalHTML = btn.innerHTML;
+                        btn.innerHTML = '<i class="bi bi-check"></i>';
+                        setTimeout(() => {
+                            btn.innerHTML = originalHTML;
+                        }, 1500);
+                    });
+                } else {
+                    // Fallback for older browsers
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = html;
+                    tempDiv.style.position = 'absolute';
+                    tempDiv.style.left = '-9999px';
+                    document.body.appendChild(tempDiv);
 
-                // Visual feedback
-                const btn = event.target.closest('button');
-                const originalHTML = btn.innerHTML;
-                btn.innerHTML = '<i class="bi bi-check"></i>';
-                setTimeout(() => {
-                    btn.innerHTML = originalHTML;
-                }, 1500);
+                    const range = document.createRange();
+                    range.selectNodeContents(tempDiv);
+                    const selection = window.getSelection();
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+
+                    document.execCommand('copy');
+                    document.body.removeChild(tempDiv);
+
+                    // Visual feedback
+                    const btn = event.target.closest('button');
+                    const originalHTML = btn.innerHTML;
+                    btn.innerHTML = '<i class="bi bi-check"></i>';
+                    setTimeout(() => {
+                        btn.innerHTML = originalHTML;
+                    }, 1500);
+                }
             }
         }
     </script>
