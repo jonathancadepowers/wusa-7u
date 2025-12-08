@@ -1063,7 +1063,14 @@ def practice_slot_rankings_view(request):
 @login_required
 def practice_slots_analyze_view(request):
     """Display practice slots analysis page"""
-    return render(request, 'players/practice_slots_analyze.html')
+    # Check if any teams already have practice slots assigned
+    teams_with_slots = Team.objects.filter(practice_slot__isnull=False).count()
+
+    context = {
+        'teams_with_slots': teams_with_slots
+    }
+
+    return render(request, 'players/practice_slots_analyze.html', context)
 
 
 @login_required

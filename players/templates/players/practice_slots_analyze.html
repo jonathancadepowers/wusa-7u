@@ -10,6 +10,22 @@
             <div class="col-lg-10 offset-lg-1">
                 <div class="card shadow">
                     <div class="card-body">
+                        {% if teams_with_slots > 0 %}
+                            <div class="alert alert-warning">
+                                <h4 class="alert-heading"><i class="bi bi-exclamation-triangle me-2"></i>Practice Slots Already Assigned</h4>
+                                <p>Some teams already have practice slots assigned. This analysis can only be used when no teams have practice slots assigned yet.</p>
+                                <hr>
+                                <p class="mb-0">
+                                    <strong>{{ teams_with_slots }}</strong> team(s) currently have practice slots assigned.
+                                    If you want to reassign practice slots, please clear the existing assignments first by editing each team in the admin panel.
+                                </p>
+                                <div class="mt-3">
+                                    <a href="{% url 'players:settings' %}" class="btn btn-secondary">
+                                        <i class="bi bi-arrow-left me-1"></i>Back to Settings
+                                    </a>
+                                </div>
+                            </div>
+                        {% else %}
                         <div id="errorAlert" class="alert alert-danger" style="display: none;">
                             <i class="bi bi-exclamation-triangle me-2"></i>
                             <span id="errorMessage"></span>
@@ -48,6 +64,7 @@
                                 </button>
                             </div>
                         </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
