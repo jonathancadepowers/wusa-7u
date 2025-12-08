@@ -1747,3 +1747,70 @@ def unassign_all_managers_view(request):
             'success': False,
             'error': f'An error occurred: {str(e)}'
         }, status=500)
+
+
+@require_http_methods(["POST"])
+def send_team_preferences_email_view(request):
+    """Send team preferences email to all managers"""
+    from django.core.mail import send_mail
+    from django.conf import settings as django_settings
+
+    try:
+        subject = request.POST.get('subject', '').strip()
+        body = request.POST.get('body', '').strip()
+        cc_emails = request.POST.get('cc_emails', '').strip()
+
+        if not subject or not body:
+            return JsonResponse({
+                'success': False,
+                'error': 'Subject and body are required.'
+            }, status=400)
+
+        # Get all managers
+        managers = Manager.objects.all()
+        if not managers:
+            return JsonResponse({
+                'success': False,
+                'error': 'No managers found in the database.'
+            }, status=400)
+
+        # Parse CC emails
+        cc_list = []
+        if cc_emails:
+            cc_list = [email.strip() for email in cc_emails.split(',') if email.strip()]
+
+        # Send email to each manager
+        sent_count = 0
+        failed_emails = []
+
+        for manager in managers:
+            if manager.email:
+                try:
+                    send_mail(
+                        subject=subject,
+                        message=body,
+                        from_email=django_settings.DEFAULT_FROM_EMAIL,
+                        recipient_list=[manager.email],
+                        cc=cc_list if cc_list else None,
+                        fail_silently=False,
+                    )
+                    sent_count += 1
+                except Exception as e:
+                    failed_emails.append(f"{manager.email} ({str(e)})")
+
+        if failed_emails:
+            return JsonResponse({
+                'success': False,
+                'error': f'Sent {sent_count} emails but failed to send to: {", ".join(failed_emails)}'
+            }, status=500)
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Successfully sent {sent_count} emails to managers!'
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)

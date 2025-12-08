@@ -46,6 +46,15 @@
 
                         <hr class="my-4">
 
+                        <h5 class="card-title">Emails</h5>
+                        <p class="text-muted">Send emails to managers for various purposes.</p>
+
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#teamPreferencesEmailModal">
+                            <i class="bi bi-envelope me-2"></i>Send Team Preferences Email
+                        </button>
+
+                        <hr class="my-4">
+
                         <h5 class="card-title">Player Data Import</h5>
                         <p class="text-muted">Upload an Excel file (.xlsx) to import player data into the database.</p>
 
@@ -91,6 +100,55 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Team Preferences Email Modal -->
+    <div class="modal fade" id="teamPreferencesEmailModal" tabindex="-1" aria-labelledby="teamPreferencesEmailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="teamPreferencesEmailModalLabel">Send Team Preferences Email</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="emailSuccessAlert" class="alert alert-success" style="display: none;">
+                        <i class="bi bi-check-circle me-2"></i>
+                        <span id="emailSuccessMessage"></span>
+                    </div>
+
+                    <div id="emailErrorAlert" class="alert alert-danger" style="display: none;">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <span id="emailErrorMessage"></span>
+                    </div>
+
+                    <form id="teamPreferencesEmailForm">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label for="ccEmails" class="form-label">CC Email Addresses (optional)</label>
+                            <input type="text" class="form-control" id="ccEmails" name="cc_emails" placeholder="email1@example.com, email2@example.com">
+                            <div class="form-text">Enter multiple email addresses separated by commas</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="emailSubject" class="form-label">Subject</label>
+                            <input type="text" class="form-control" id="emailSubject" name="subject" value="WUSA Team Preferences Submission" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="emailBody" class="form-label">Email Body</label>
+                            <textarea class="form-control" id="emailBody" name="body" rows="12" required></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="sendEmailBtn">
+                        <i class="bi bi-send me-1"></i>Send Email
+                    </button>
                 </div>
             </div>
         </div>
@@ -216,5 +274,71 @@
 
             modal.show();
         }
+
+        // Team Preferences Email Modal
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set default email body with current domain
+            const teamPreferencesModal = document.getElementById('teamPreferencesEmailModal');
+            teamPreferencesModal.addEventListener('show.bs.modal', function() {
+                const emailBody = document.getElementById('emailBody');
+                if (!emailBody.value) {
+                    const currentDomain = window.location.origin;
+                    const defaultText = `Hello WUSA Managers-
+
+As mentioned, we need to collect your preferences for team names.
+
+To submit your choices, go to the following URL: ${currentDomain}/team_preferences/
+
+Please have your choices submitted within the next 24 hours, and let us know if you have any questions.
+
+Thanks,
+
+-Your Division Managers`;
+                    emailBody.value = defaultText;
+                }
+            });
+
+            // Handle send email button
+            document.getElementById('sendEmailBtn').addEventListener('click', function() {
+                const form = document.getElementById('teamPreferencesEmailForm');
+                const formData = new FormData(form);
+
+                const btn = this;
+                const originalHtml = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sending...';
+
+                // Hide previous alerts
+                document.getElementById('emailSuccessAlert').style.display = 'none';
+                document.getElementById('emailErrorAlert').style.display = 'none';
+
+                fetch('{% url "players:send_team_preferences_email" %}', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+
+                    if (data.success) {
+                        document.getElementById('emailSuccessMessage').textContent = data.message;
+                        document.getElementById('emailSuccessAlert').style.display = 'block';
+                        // Clear form
+                        form.reset();
+                    } else {
+                        document.getElementById('emailErrorMessage').textContent = data.error;
+                        document.getElementById('emailErrorAlert').style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                    document.getElementById('emailErrorMessage').textContent = 'An unexpected error occurred.';
+                    document.getElementById('emailErrorAlert').style.display = 'block';
+                    console.error('Error:', error);
+                });
+            });
+        });
     </script>
 {% endblock %}
