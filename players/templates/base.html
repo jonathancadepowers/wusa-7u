@@ -12,12 +12,14 @@
     <!-- Hamburger Navigation -->
     <nav class="navbar navbar-dark bg-primary">
         <div class="container-fluid">
-            <!-- Hamburger Menu Button -->
-            <button class="navbar-toggler border-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#navMenu" aria-controls="navMenu" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+            <div class="d-flex align-items-center">
+                <!-- Hamburger Menu Button -->
+                <button class="navbar-toggler border-0 me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#navMenu" aria-controls="navMenu" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
 
-            <span class="navbar-brand mb-0 h1">{% block page_title %}WUSA 7U{% endblock %}</span>
+                <span class="navbar-brand mb-0 h1">{% block page_title %}WUSA 7U{% endblock %}</span>
+            </div>
 
             <div>
                 {% block navbar_actions %}{% endblock %}
