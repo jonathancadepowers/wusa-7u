@@ -156,3 +156,19 @@ class PracticeSlot(models.Model):
 
     def __str__(self):
         return f"Practice Slot: {self.practice_slot}"
+
+
+class PracticeSlotRanking(models.Model):
+    team = models.ForeignKey('Team', on_delete=models.CASCADE, related_name='practice_slot_rankings')
+    rankings = models.JSONField(default=dict)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'practice_slot_rankings'
+        verbose_name = 'Practice Slot Ranking'
+        verbose_name_plural = 'Practice Slot Rankings'
+
+    def __str__(self):
+        return f"Practice Slot Rankings for {self.team}" if self.team else f"Practice Slot Rankings {self.id}"
