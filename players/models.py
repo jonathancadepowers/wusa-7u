@@ -150,9 +150,9 @@ class PracticeSlot(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = 'available_practice_slots'
-        verbose_name = 'Available Practice Slot'
-        verbose_name_plural = 'Available Practice Slots'
+        db_table = 'practice_slots'
+        verbose_name = 'Practice Slot'
+        verbose_name_plural = 'Practice Slots'
 
     def __str__(self):
         return f"Practice Slot: {self.practice_slot}"
