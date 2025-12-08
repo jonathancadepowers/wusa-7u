@@ -1749,6 +1749,24 @@ def unassign_all_managers_view(request):
         }, status=500)
 
 
+@require_http_methods(["GET"])
+def get_manager_emails_view(request):
+    """Get all manager email addresses"""
+    try:
+        managers = Manager.objects.all().order_by('first_name', 'last_name')
+        emails = [manager.email for manager in managers if manager.email]
+
+        return JsonResponse({
+            'success': True,
+            'emails': emails
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
 @require_http_methods(["POST"])
 def send_team_preferences_email_view(request):
     """Send team preferences email to all managers"""

@@ -127,46 +127,29 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="teamPreferencesEmailModalLabel">Send Team Preferences Email</h5>
+                    <h5 class="modal-title" id="teamPreferencesEmailModalLabel">Manager Email Information</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div id="emailSuccessAlert" class="alert alert-success" style="display: none;">
-                        <i class="bi bi-check-circle me-2"></i>
-                        <span id="emailSuccessMessage"></span>
+                    <div class="mb-3">
+                        <label for="allManagerEmails" class="form-label d-flex align-items-center">
+                            All Manager Emails
+                            <button type="button" class="btn btn-sm btn-outline-secondary ms-2" onclick="copyToClipboard('allManagerEmails')" title="Copy to clipboard">
+                                <i class="bi bi-clipboard"></i>
+                            </button>
+                        </label>
+                        <textarea class="form-control" id="allManagerEmails" rows="4" readonly></textarea>
                     </div>
 
-                    <div id="emailErrorAlert" class="alert alert-danger" style="display: none;">
-                        <i class="bi bi-exclamation-triangle me-2"></i>
-                        <span id="emailErrorMessage"></span>
+                    <div class="mb-3">
+                        <label for="emailBodyEditor" class="form-label d-flex align-items-center">
+                            Email Body
+                            <button type="button" class="btn btn-sm btn-outline-secondary ms-2" onclick="copyEmailBody()" title="Copy to clipboard">
+                                <i class="bi bi-clipboard"></i>
+                            </button>
+                        </label>
+                        <div id="emailBodyEditor"></div>
                     </div>
-
-                    <form id="teamPreferencesEmailForm">
-                        {% csrf_token %}
-
-                        <div class="mb-3">
-                            <label for="ccEmails" class="form-label">CC Email Addresses (optional)</label>
-                            <input type="text" class="form-control" id="ccEmails" name="cc_emails" placeholder="email1@example.com, email2@example.com">
-                            <div class="form-text">Enter multiple email addresses separated by commas</div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="emailSubject" class="form-label">Subject</label>
-                            <input type="text" class="form-control" id="emailSubject" name="subject" value="WUSA Team Preferences Submission" required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="emailBodyEditor" class="form-label">Email Body</label>
-                            <div id="emailBodyEditor"></div>
-                            <textarea id="emailBody" name="body" style="display:none;" required></textarea>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="sendEmailBtn">
-                        <i class="bi bi-send me-1"></i>Send Email
-                    </button>
                 </div>
             </div>
         </div>
@@ -313,66 +296,66 @@
                 }
             });
 
-            // Set default email body with current domain
+            // Set default email body and load manager emails when modal opens
             const teamPreferencesModal = document.getElementById('teamPreferencesEmailModal');
             teamPreferencesModal.addEventListener('show.bs.modal', function() {
+                // Set default email body
                 if (quillEditor && quillEditor.root.innerHTML === '<p><br></p>') {
                     const currentDomain = window.location.origin;
                     const defaultHtml = `<p>Hello WUSA Managers-</p><p>As mentioned, we need to collect your preferences for team names. To submit your choices, go to the following URL: <a href="${currentDomain}/team_preferences/" target="_blank">${currentDomain}/team_preferences/</a></p><p>Please have your choices submitted within the next 24 hours, and let us know if you have any questions.</p><p>Thanks,<br>-Your Division Managers</p>`;
                     quillEditor.root.innerHTML = defaultHtml;
                 }
-            });
 
-            // Handle send email button
-            document.getElementById('sendEmailBtn').addEventListener('click', function() {
-                const form = document.getElementById('teamPreferencesEmailForm');
-
-                // Get content from Quill and set it to the textarea
-                if (quillEditor) {
-                    document.getElementById('emailBody').value = quillEditor.root.innerHTML;
-                }
-
-                const formData = new FormData(form);
-
-                const btn = this;
-                const originalHtml = btn.innerHTML;
-                btn.disabled = true;
-                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sending...';
-
-                // Hide previous alerts
-                document.getElementById('emailSuccessAlert').style.display = 'none';
-                document.getElementById('emailErrorAlert').style.display = 'none';
-
-                fetch('{% url "players:send_team_preferences_email" %}', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    btn.disabled = false;
-                    btn.innerHTML = originalHtml;
-
-                    if (data.success) {
-                        document.getElementById('emailSuccessMessage').textContent = data.message;
-                        document.getElementById('emailSuccessAlert').style.display = 'block';
-                        // Clear form and Quill
-                        form.reset();
-                        if (quillEditor) {
-                            quillEditor.root.innerHTML = '<p><br></p>';
+                // Load all manager emails
+                fetch('{% url "players:get_manager_emails" %}')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            document.getElementById('allManagerEmails').value = data.emails.join(', ');
                         }
-                    } else {
-                        document.getElementById('emailErrorMessage').textContent = data.error;
-                        document.getElementById('emailErrorAlert').style.display = 'block';
-                    }
-                })
-                .catch(error => {
-                    btn.disabled = false;
-                    btn.innerHTML = originalHtml;
-                    document.getElementById('emailErrorMessage').textContent = 'An unexpected error occurred.';
-                    document.getElementById('emailErrorAlert').style.display = 'block';
-                    console.error('Error:', error);
-                });
+                    })
+                    .catch(error => {
+                        console.error('Error loading manager emails:', error);
+                    });
             });
         });
+
+        // Copy to clipboard functions
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            element.select();
+            document.execCommand('copy');
+
+            // Visual feedback
+            const btn = event.target.closest('button');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="bi bi-check"></i>';
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+            }, 1500);
+        }
+
+        function copyEmailBody() {
+            if (quillEditor) {
+                // Get HTML content from Quill
+                const html = quillEditor.root.innerHTML;
+
+                // Create temporary textarea to copy HTML
+                const tempTextarea = document.createElement('textarea');
+                tempTextarea.value = html;
+                document.body.appendChild(tempTextarea);
+                tempTextarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempTextarea);
+
+                // Visual feedback
+                const btn = event.target.closest('button');
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = '<i class="bi bi-check"></i>';
+                setTimeout(() => {
+                    btn.innerHTML = originalHTML;
+                }, 1500);
+            }
+        }
     </script>
 {% endblock %}

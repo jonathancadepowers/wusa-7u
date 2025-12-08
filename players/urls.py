@@ -43,5 +43,6 @@ urlpatterns = [
     path('team_preferences/analyze/', views.team_preferences_analyze_view, name='team_preferences_analyze'),
     path('team_preferences/run-analysis/', views.run_team_analysis_view, name='run_team_analysis'),
     path('team_preferences/assign/', views.assign_managers_to_teams_view, name='assign_managers_to_teams'),
+    path('team_preferences/get-manager-emails/', views.get_manager_emails_view, name='get_manager_emails'),
     path('team_preferences/send-email/', views.send_team_preferences_email_view, name='send_team_preferences_email'),
 ]
