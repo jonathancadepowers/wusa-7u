@@ -5,10 +5,15 @@
 {% block page_title %}WUSA 7U - Settings{% endblock %}
 
 {% block extra_css %}
+    <!-- Quill CSS -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <style>
-        .tox-tinymce {
-            border: 1px solid #ced4da !important;
-            border-radius: 0.375rem !important;
+        #emailBodyEditor {
+            height: 300px;
+            background-color: white;
+        }
+        .ql-container {
+            font-family: inherit;
         }
     </style>
 {% endblock %}
@@ -148,8 +153,9 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="emailBody" class="form-label">Email Body</label>
-                            <textarea class="form-control" id="emailBody" name="body" rows="12" required></textarea>
+                            <label for="emailBodyEditor" class="form-label">Email Body</label>
+                            <div id="emailBodyEditor"></div>
+                            <textarea id="emailBody" name="body" style="display:none;" required></textarea>
                         </div>
                     </form>
                 </div>
@@ -165,8 +171,8 @@
 {% endblock %}
 
 {% block extra_js %}
-    <!-- TinyMCE -->
-    <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+    <!-- Quill JS -->
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     <script>
         // Show file name when selected
         document.getElementById('excelFile').addEventListener('change', function(e) {
@@ -287,46 +293,50 @@
         }
 
         // Team Preferences Email Modal
-        let tinymceEditor = null;
+        let quillEditor = null;
 
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize TinyMCE
-            tinymce.init({
-                selector: '#emailBody',
-                height: 400,
-                menubar: false,
-                plugins: 'link lists',
-                toolbar: 'undo redo | formatselect | bold italic underline | link | bullist numlist | removeformat',
-                setup: function(editor) {
-                    tinymceEditor = editor;
+            // Initialize Quill
+            quillEditor = new Quill('#emailBodyEditor', {
+                theme: 'snow',
+                modules: {
+                    toolbar: [
+                        [{ 'header': [1, 2, 3, false] }],
+                        ['bold', 'italic', 'underline'],
+                        ['link'],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        ['clean']
+                    ]
                 }
             });
 
             // Set default email body with current domain
             const teamPreferencesModal = document.getElementById('teamPreferencesEmailModal');
             teamPreferencesModal.addEventListener('show.bs.modal', function() {
-                // Wait for TinyMCE to be ready
-                setTimeout(function() {
-                    if (tinymceEditor && tinymceEditor.getContent() === '') {
-                        const currentDomain = window.location.origin;
-                        const defaultHtml = `<p>Hello WUSA Managers-</p>
+                if (quillEditor && quillEditor.root.innerHTML === '<p><br></p>') {
+                    const currentDomain = window.location.origin;
+                    const defaultHtml = `<p>Hello WUSA Managers-</p>
+<p><br></p>
 <p>As mentioned, we need to collect your preferences for team names.</p>
-<p>To submit your choices, go to the following URL: <a href="${currentDomain}/team_preferences/">${currentDomain}/team_preferences/</a></p>
+<p><br></p>
+<p>To submit your choices, go to the following URL: <a href="${currentDomain}/team_preferences/" target="_blank">${currentDomain}/team_preferences/</a></p>
+<p><br></p>
 <p>Please have your choices submitted within the next 24 hours, and let us know if you have any questions.</p>
+<p><br></p>
 <p>Thanks,</p>
+<p><br></p>
 <p>-Your Division Managers</p>`;
-                        tinymceEditor.setContent(defaultHtml);
-                    }
-                }, 100);
+                    quillEditor.root.innerHTML = defaultHtml;
+                }
             });
 
             // Handle send email button
             document.getElementById('sendEmailBtn').addEventListener('click', function() {
                 const form = document.getElementById('teamPreferencesEmailForm');
 
-                // Get content from TinyMCE and set it to the textarea
-                if (tinymceEditor) {
-                    document.getElementById('emailBody').value = tinymceEditor.getContent();
+                // Get content from Quill and set it to the textarea
+                if (quillEditor) {
+                    document.getElementById('emailBody').value = quillEditor.root.innerHTML;
                 }
 
                 const formData = new FormData(form);
@@ -352,10 +362,10 @@
                     if (data.success) {
                         document.getElementById('emailSuccessMessage').textContent = data.message;
                         document.getElementById('emailSuccessAlert').style.display = 'block';
-                        // Clear form and TinyMCE
+                        // Clear form and Quill
                         form.reset();
-                        if (tinymceEditor) {
-                            tinymceEditor.setContent('');
+                        if (quillEditor) {
+                            quillEditor.root.innerHTML = '<p><br></p>';
                         }
                     } else {
                         document.getElementById('emailErrorMessage').textContent = data.error;
