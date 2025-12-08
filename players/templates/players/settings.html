@@ -66,9 +66,14 @@
                         <h5 class="card-title">Emails</h5>
                         <p class="text-muted">Send emails to managers for various purposes.</p>
 
-                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#teamPreferencesEmailModal">
-                            <i class="bi bi-envelope me-2"></i>Send Team Preferences Email
-                        </button>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#teamPreferencesEmailModal">
+                                <i class="bi bi-envelope me-2"></i>Send Team Preferences Email
+                            </button>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#teamPagesEmailModal">
+                                <i class="bi bi-envelope me-2"></i>Send Team Pages to Managers
+                            </button>
+                        </div>
 
                         <hr class="my-4">
 
@@ -149,6 +154,39 @@
                             </button>
                         </label>
                         <div id="emailBodyEditor"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Team Pages Email Modal -->
+    <div class="modal fade" id="teamPagesEmailModal" tabindex="-1" aria-labelledby="teamPagesEmailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="teamPagesEmailModalLabel">Team Pages Email Information</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="allManagerEmailsTeamPages" class="form-label d-flex align-items-center">
+                            All Manager Emails
+                            <button type="button" class="btn btn-sm btn-outline-secondary ms-2" onclick="copyToClipboard('allManagerEmailsTeamPages')" title="Copy to clipboard">
+                                <i class="bi bi-clipboard"></i>
+                            </button>
+                        </label>
+                        <textarea class="form-control" id="allManagerEmailsTeamPages" rows="4" readonly></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="teamPagesEmailBodyEditor" class="form-label d-flex align-items-center">
+                            Email Body
+                            <button type="button" class="btn btn-sm btn-outline-secondary ms-2" onclick="copyTeamPagesEmailBody()" title="Copy to clipboard">
+                                <i class="bi bi-clipboard"></i>
+                            </button>
+                        </label>
+                        <div id="teamPagesEmailBodyEditor"></div>
                     </div>
                 </div>
             </div>
@@ -280,9 +318,10 @@
 
         // Team Preferences Email Modal
         let quillEditor = null;
+        let teamPagesQuillEditor = null;
 
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize Quill
+            // Initialize Quill for Team Preferences
             quillEditor = new Quill('#emailBodyEditor', {
                 theme: 'snow',
                 modules: {
@@ -296,7 +335,21 @@
                 }
             });
 
-            // Set default email body and load manager emails when modal opens
+            // Initialize Quill for Team Pages
+            teamPagesQuillEditor = new Quill('#teamPagesEmailBodyEditor', {
+                theme: 'snow',
+                modules: {
+                    toolbar: [
+                        [{ 'header': [1, 2, 3, false] }],
+                        ['bold', 'italic', 'underline'],
+                        ['link'],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        ['clean']
+                    ]
+                }
+            });
+
+            // Set default email body and load manager emails for Team Preferences modal
             const teamPreferencesModal = document.getElementById('teamPreferencesEmailModal');
             teamPreferencesModal.addEventListener('show.bs.modal', function() {
                 // Set default email body
@@ -312,6 +365,29 @@
                     .then(data => {
                         if (data.success) {
                             document.getElementById('allManagerEmails').value = data.emails.join(', ');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading manager emails:', error);
+                    });
+            });
+
+            // Set default email body and load manager emails for Team Pages modal
+            const teamPagesModal = document.getElementById('teamPagesEmailModal');
+            teamPagesModal.addEventListener('show.bs.modal', function() {
+                // Set default email body
+                if (teamPagesQuillEditor && teamPagesQuillEditor.root.innerHTML === '<p><br></p>') {
+                    const currentDomain = window.location.origin;
+                    const defaultHtml = `<p>Hello WUSA Managers-</p><p>As mentioned, we've created a basic website where you can view your team roster and perform other tasks. To access it, go here: <a href="${currentDomain}/public_portal/" target="_blank">${currentDomain}/public_portal/</a></p><p>Select your team and, when prompted, enter the "Team Secret" that was provided to you by your Division Manager. (If you don't have, reply to this email, just to me. Don't share this secret with anyone.)</p><p>Once you view your dashboard, complete the tasks listed at the top.</p><p>Thanks,</p><p>-Your Division Managers</p>`;
+                    teamPagesQuillEditor.root.innerHTML = defaultHtml;
+                }
+
+                // Load all manager emails
+                fetch('{% url "players:get_manager_emails" %}')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            document.getElementById('allManagerEmailsTeamPages').value = data.emails.join(', ');
                         }
                     })
                     .catch(error => {
@@ -339,6 +415,29 @@
             if (quillEditor) {
                 // Get HTML content from Quill
                 const html = quillEditor.root.innerHTML;
+
+                // Create temporary textarea to copy HTML
+                const tempTextarea = document.createElement('textarea');
+                tempTextarea.value = html;
+                document.body.appendChild(tempTextarea);
+                tempTextarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempTextarea);
+
+                // Visual feedback
+                const btn = event.target.closest('button');
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = '<i class="bi bi-check"></i>';
+                setTimeout(() => {
+                    btn.innerHTML = originalHTML;
+                }, 1500);
+            }
+        }
+
+        function copyTeamPagesEmailBody() {
+            if (teamPagesQuillEditor) {
+                // Get HTML content from Quill
+                const html = teamPagesQuillEditor.root.innerHTML;
 
                 // Create temporary textarea to copy HTML
                 const tempTextarea = document.createElement('textarea');
