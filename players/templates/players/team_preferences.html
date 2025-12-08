@@ -302,14 +302,6 @@
             // Update rank count
             document.getElementById('rankCount').textContent = rankedItems.length;
 
-            // Show/hide incomplete warning
-            const incompleteWarning = document.getElementById('incompleteWarning');
-            if (rankedItems.length !== totalTeams) {
-                incompleteWarning.style.display = 'block';
-            } else {
-                incompleteWarning.style.display = 'none';
-            }
-
             // Enable/disable submit button - now requires ALL teams to be ranked
             const submitBtn = document.getElementById('submitBtn');
             const emailInput = document.getElementById('emailInput');
@@ -340,9 +332,6 @@
             // Count total teams and display in warning
             const totalTeams = document.querySelectorAll('#availableTeams .team-item').length;
             document.getElementById('totalTeamCount').textContent = totalTeams;
-
-            // Show warning initially
-            document.getElementById('incompleteWarning').style.display = 'block';
 
             // Disable submit button initially
             document.getElementById('submitBtn').disabled = true;
@@ -386,6 +375,8 @@
                 const totalTeams = parseInt(document.getElementById('totalTeamCount').textContent);
 
                 if (rankedCount !== totalTeams) {
+                    // Show the warning banner
+                    document.getElementById('incompleteWarning').style.display = 'block';
                     showError(`Please rank all ${totalTeams} team names before submitting. You have currently ranked ${rankedCount}.`);
                     return false;
                 }
@@ -394,6 +385,9 @@
                     showError('Please enter your email address.');
                     return false;
                 }
+
+                // Hide the warning banner if it was shown
+                document.getElementById('incompleteWarning').style.display = 'none';
 
                 updatePreferencesField();
 
