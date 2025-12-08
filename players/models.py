@@ -151,7 +151,7 @@ class PracticeSlot(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = 'practice_slots'
+        db_table = 'available_practice_slots'
 
     def __str__(self):
         return f"{self.team.name if self.team else 'No Team'} - {self.practice_slot}"
