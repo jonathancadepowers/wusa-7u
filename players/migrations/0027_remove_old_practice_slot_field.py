@@ -4,6 +4,12 @@ from django.db import migrations, models
 import django.db.models.deletion
 
 
+def clear_practice_slots(apps, schema_editor):
+    """Clear all practice_slot values before changing field type"""
+    Team = apps.get_model('players', 'Team')
+    Team.objects.all().update(practice_slot=None)
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -11,6 +17,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunPython(clear_practice_slots, reverse_code=migrations.RunPython.noop),
         migrations.AlterField(
             model_name='team',
             name='practice_slot',
