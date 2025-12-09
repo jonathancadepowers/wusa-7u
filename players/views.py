@@ -625,18 +625,18 @@ def team_detail_view(request, team_secret):
             })
 
             # Task 2: Rank Manager's Daughters
-            # This is for ranking ALL manager's daughters in the division, not just their own
-            # We can't easily count "expected" daughters, so we'll use a simpler logic:
-            # - Not started if no ranking exists
-            # - Completed if any ranking exists (they've submitted something)
+            # Get total count of all manager's daughters in the division
+            manager_daughter_ids = Manager.objects.filter(daughter__isnull=False).values_list('daughter_id', flat=True)
+            total_daughters = len(manager_daughter_ids)
+
             try:
                 daughter_ranking = ManagerDaughterRanking.objects.get(manager=team.manager)
                 ranking_data = json.loads(daughter_ranking.ranking)
                 if len(ranking_data) == 0:
                     daughter_ranking_status = 'not_started'
+                elif len(ranking_data) < total_daughters:
+                    daughter_ranking_status = 'in_progress'
                 else:
-                    # If they've ranked at least one daughter, consider it completed
-                    # (We don't have a good way to know how many daughters there should be)
                     daughter_ranking_status = 'completed'
             except ManagerDaughterRanking.DoesNotExist:
                 daughter_ranking_status = 'not_started'
