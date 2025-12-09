@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Player, Team, Manager, Draft, PlayerRanking, ManagerDaughterRanking, DraftPick, TeamPreference, PracticeSlot, PracticeSlotRanking
+from .models import Player, Team, Manager, Draft, PlayerRanking, ManagerDaughterRanking, DraftPick, TeamPreference, PracticeSlot, PracticeSlotRanking, GeneralSetting
 
 
 @admin.register(Draft)
@@ -150,6 +150,23 @@ class PracticeSlotRankingAdmin(admin.ModelAdmin):
     fieldsets = (
         ('Practice Slot Ranking', {
             'fields': ('team', 'rankings')
+        }),
+        ('Metadata', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(GeneralSetting)
+class GeneralSettingAdmin(admin.ModelAdmin):
+    list_display = ['key', 'value', 'created_at', 'updated_at']
+    search_fields = ['key', 'value']
+    readonly_fields = ['created_at', 'updated_at']
+
+    fieldsets = (
+        ('Setting', {
+            'fields': ('key', 'value')
         }),
         ('Metadata', {
             'fields': ('created_at', 'updated_at'),

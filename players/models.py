@@ -172,3 +172,18 @@ class PracticeSlotRanking(models.Model):
 
     def __str__(self):
         return f"Practice Slot Rankings for {self.team}" if self.team else f"Practice Slot Rankings {self.id}"
+
+
+class GeneralSetting(models.Model):
+    key = models.CharField(max_length=255, unique=True)
+    value = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'general_settings'
+        verbose_name = 'General Setting'
+        verbose_name_plural = 'General Settings'
+
+    def __str__(self):
+        return f"{self.key}: {self.value}"
