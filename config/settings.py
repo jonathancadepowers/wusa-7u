@@ -138,12 +138,29 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Channels configuration
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379')],
-            "ssl_cert_reqs": None if os.environ.get('REDIS_URL', '').startswith('rediss://') else ssl.CERT_REQUIRED,
+# Parse Redis URL and configure SSL for Heroku Redis
+redis_url = os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379')
+
+if redis_url.startswith('rediss://'):
+    # For Heroku Redis with SSL, disable certificate verification
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {
+                "hosts": [{
+                    "address": redis_url,
+                    "ssl": {"ssl_cert_reqs": None},
+                }],
+            },
         },
-    },
-}
+    }
+else:
+    # For local development without SSL
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {
+                "hosts": [redis_url],
+            },
+        },
+    }
