@@ -142,15 +142,17 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 redis_url = os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379')
 
 if redis_url.startswith('rediss://'):
-    # For Heroku Redis with SSL, disable certificate verification
+    # For Heroku Redis with SSL, parse URL and add SSL context
+    import ssl as ssl_module
+    ssl_context = ssl_module.create_default_context()
+    ssl_context.check_hostname = False
+    ssl_context.verify_mode = ssl_module.CERT_NONE
+
     CHANNEL_LAYERS = {
         'default': {
             'BACKEND': 'channels_redis.core.RedisChannelLayer',
             'CONFIG': {
-                "hosts": [{
-                    "address": redis_url,
-                    "ssl": {"ssl_cert_reqs": None},
-                }],
+                "hosts": [(redis_url, {'ssl_cert_reqs': None})],
             },
         },
     }
