@@ -39,6 +39,7 @@ urlpatterns = [
     path('player_rankings/', views.player_rankings_view, name='player_rankings'),
     path('player_rankings/analyze/', views.player_rankings_analyze_view, name='player_rankings_analyze'),
     path('player_rankings/analyze/public/', views.player_rankings_analyze_public_view, name='player_rankings_analyze_public'),
+    path('player_rankings/release/', views.release_player_rankings_view, name='release_player_rankings'),
     path('manager_daughter_rankings/', views.manager_daughter_rankings_view, name='manager_daughter_rankings'),
     path('manager_daughter_rankings/analyze/', views.manager_daughter_rankings_analyze_view, name='manager_daughter_rankings_analyze'),
     path('practice_slot_rankings/', views.practice_slot_rankings_view, name='practice_slot_rankings'),

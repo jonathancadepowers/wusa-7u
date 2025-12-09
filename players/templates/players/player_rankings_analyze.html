@@ -69,10 +69,13 @@
                             </div>
                         {% endif %}
 
-                        <div class="mt-4">
+                        <div class="mt-4 d-flex justify-content-between">
                             <a href="{% url 'players:settings' %}" class="btn btn-secondary">
                                 <i class="bi bi-arrow-left me-1"></i>Back to Settings
                             </a>
+                            <button type="button" class="btn btn-primary" id="releaseRankingsBtn">
+                                <i class="bi bi-unlock me-2"></i>Release Rankings to Coaches
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -88,6 +91,42 @@
             var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
             var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
                 return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+
+        // Release Rankings to Coaches
+        document.getElementById('releaseRankingsBtn').addEventListener('click', function() {
+            if (!confirm('Are you sure you want to release the player rankings to all coaches? This will make the rankings visible on their team pages.')) {
+                return;
+            }
+
+            const btn = this;
+            const originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Releasing...';
+
+            fetch('{% url "players:release_player_rankings" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+
+                if (data.success) {
+                    alert('Player rankings have been successfully released to coaches!');
+                } else {
+                    alert('Error: ' + (data.error || 'Failed to release rankings'));
+                }
+            })
+            .catch(error => {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+                alert('An unexpected error occurred: ' + error.message);
             });
         });
     </script>

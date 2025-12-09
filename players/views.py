@@ -1810,10 +1810,49 @@ def player_rankings_analyze_view(request):
     return render(request, 'players/player_rankings_analyze.html', context)
 
 
+@login_required
+@require_http_methods(["POST"])
+def release_player_rankings_view(request):
+    """Release player rankings to coaches by creating/updating general setting"""
+    from .models import GeneralSetting
+
+    try:
+        # Create or update the setting to true
+        setting, created = GeneralSetting.objects.update_or_create(
+            key='player_rankings_public',
+            defaults={'value': 'true'}
+        )
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Player rankings have been released to coaches.'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
 def player_rankings_analyze_public_view(request):
     """Public view of player rankings analysis (no login required)"""
-    from .models import PlayerRanking, Manager, Player
+    from .models import PlayerRanking, Manager, Player, GeneralSetting
     from collections import defaultdict
+
+    # Check if rankings are released
+    rankings_released = False
+    try:
+        setting = GeneralSetting.objects.get(key='player_rankings_public')
+        rankings_released = setting.value.lower() == 'true'
+    except GeneralSetting.DoesNotExist:
+        rankings_released = False
+
+    # If not released, show message
+    if not rankings_released:
+        context = {
+            'rankings_released': False
+        }
+        return render(request, 'players/player_rankings_analyze_public.html', context)
 
     # Get all player rankings
     all_rankings = PlayerRanking.objects.all()
@@ -1858,15 +1897,10 @@ def player_rankings_analyze_public_view(request):
     player_stats.sort(key=lambda x: (-x['borda_count'], x['average_rank']))
     top_players = player_stats[:20]
 
-    # Find managers who haven't submitted rankings
-    all_managers = Manager.objects.all()
-    managers_with_rankings = PlayerRanking.objects.filter(manager__isnull=False).values_list('manager_id', flat=True).distinct()
-    managers_without_rankings = all_managers.exclude(id__in=managers_with_rankings)
-
+    # Don't show manager submission info on public page
     context = {
         'top_players': top_players,
-        'managers_without_rankings': managers_without_rankings,
-        'managers_without_count': managers_without_rankings.count(),
+        'rankings_released': True,
     }
     return render(request, 'players/player_rankings_analyze_public.html', context)
 
