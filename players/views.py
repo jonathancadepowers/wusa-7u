@@ -1984,9 +1984,70 @@ def manager_daughter_rankings_analyze_view(request):
     return render(request, 'players/manager_daughter_rankings_analyze.html', context)
 
 
+@login_required
 def try_out_check_in_view(request):
     """Try out check in form"""
     return render(request, 'players/try_out_check_in.html')
+
+
+@login_required
+def search_players_view(request):
+    """Search players by name for autocomplete"""
+    from .models import Player
+
+    query = request.GET.get('q', '').strip()
+
+    if len(query) < 2:
+        return JsonResponse({'results': []})
+
+    # Search by first name or last name
+    from django.db.models import Q
+    players = Player.objects.filter(
+        Q(first_name__icontains=query) | Q(last_name__icontains=query)
+    ).order_by('last_name', 'first_name')[:10]  # Limit to 10 results
+
+    results = []
+    for player in players:
+        results.append({
+            'id': player.id,
+            'name': f"{player.first_name} {player.last_name}",
+            'attended_try_out': player.attended_try_out
+        })
+
+    return JsonResponse({'results': results})
+
+
+@login_required
+@require_http_methods(["POST"])
+def toggle_try_out_attendance_view(request):
+    """Toggle player try-out attendance"""
+    from .models import Player
+
+    try:
+        data = json.loads(request.body)
+        player_id = data.get('player_id')
+        attended = data.get('attended')
+
+        if not player_id:
+            return JsonResponse({'success': False, 'error': 'Player ID is required'}, status=400)
+
+        player = Player.objects.get(id=player_id)
+        player.attended_try_out = attended
+        player.save()
+
+        action = "checked in" if attended else "check-in removed"
+        message = f"{player.first_name} {player.last_name} has been {action} successfully!"
+
+        return JsonResponse({
+            'success': True,
+            'message': message,
+            'player_name': f"{player.first_name} {player.last_name}",
+            'attended': player.attended_try_out
+        })
+    except Player.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Player not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
 def team_preferences_analyze_view(request):

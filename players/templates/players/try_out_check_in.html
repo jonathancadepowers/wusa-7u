@@ -5,21 +5,237 @@
 {% block page_title %}WUSA 7U - Try Out Check In{% endblock %}
 
 {% block content %}
-    <div class="container mt-4">
+    <div class="container mt-5">
         <div class="row">
-            <div class="col-lg-10 offset-lg-1">
-                <div class="card shadow">
-                    <div class="card-body">
-                        <p class="text-muted">Try out check in form - UI to be implemented.</p>
-                        
-                        <div class="mt-3">
-                            <a href="{% url 'players:settings' %}" class="btn btn-secondary">
-                                <i class="bi bi-arrow-left me-1"></i>Back to Settings
-                            </a>
+            <div class="col-lg-8 offset-lg-2">
+                <div class="card shadow-lg">
+                    <div class="card-body p-5">
+                        <!-- Flash Message Area -->
+                        <div id="flashMessage" class="alert alert-success d-none mb-4" role="alert">
+                            <i class="bi bi-check-circle-fill me-2"></i>
+                            <span id="flashMessageText"></span>
+                        </div>
+
+                        <h2 class="text-center mb-4">Try Out Check In</h2>
+
+                        <!-- Search Box -->
+                        <div class="mb-4">
+                            <label for="playerSearch" class="form-label fs-4">Search for Player:</label>
+                            <input
+                                type="text"
+                                class="form-control form-control-lg fs-3"
+                                id="playerSearch"
+                                placeholder="Start typing player name..."
+                                autocomplete="off">
+
+                            <!-- Autocomplete Results -->
+                            <div id="autocompleteResults" class="list-group mt-2" style="display: none;"></div>
+                        </div>
+
+                        <!-- Selected Player Section -->
+                        <div id="selectedPlayerSection" class="mt-4" style="display: none;">
+                            <div class="card bg-light">
+                                <div class="card-body text-center p-4">
+                                    <h3 class="mb-4" id="selectedPlayerName"></h3>
+                                    <button type="button" class="btn btn-success btn-lg fs-3 px-5 py-3" id="checkInBtn" style="display: none;">
+                                        <i class="bi bi-check-circle me-2"></i>Check In
+                                    </button>
+                                    <button type="button" class="btn btn-warning btn-lg fs-3 px-5 py-3" id="removeCheckInBtn" style="display: none;">
+                                        <i class="bi bi-x-circle me-2"></i>Remove Check In
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        let selectedPlayer = null;
+        let searchTimeout = null;
+
+        const playerSearch = document.getElementById('playerSearch');
+        const autocompleteResults = document.getElementById('autocompleteResults');
+        const selectedPlayerSection = document.getElementById('selectedPlayerSection');
+        const selectedPlayerName = document.getElementById('selectedPlayerName');
+        const checkInBtn = document.getElementById('checkInBtn');
+        const removeCheckInBtn = document.getElementById('removeCheckInBtn');
+        const flashMessage = document.getElementById('flashMessage');
+        const flashMessageText = document.getElementById('flashMessageText');
+
+        // Search for players as user types
+        playerSearch.addEventListener('input', function() {
+            const query = this.value.trim();
+
+            // Clear previous timeout
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
+
+            if (query.length < 2) {
+                autocompleteResults.style.display = 'none';
+                autocompleteResults.innerHTML = '';
+                return;
+            }
+
+            // Debounce search
+            searchTimeout = setTimeout(() => {
+                fetch(`{% url 'players:search_players' %}?q=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        displaySearchResults(data.results);
+                    })
+                    .catch(error => {
+                        console.error('Error searching players:', error);
+                    });
+            }, 300);
+        });
+
+        // Display search results
+        function displaySearchResults(results) {
+            autocompleteResults.innerHTML = '';
+
+            if (results.length === 0) {
+                autocompleteResults.style.display = 'none';
+                return;
+            }
+
+            results.forEach(player => {
+                const item = document.createElement('a');
+                item.href = '#';
+                item.className = 'list-group-item list-group-item-action fs-4 py-3';
+                item.innerHTML = `
+                    ${player.name}
+                    ${player.attended_try_out ? '<span class="badge bg-success float-end">Checked In</span>' : ''}
+                `;
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    selectPlayer(player);
+                });
+                autocompleteResults.appendChild(item);
+            });
+
+            autocompleteResults.style.display = 'block';
+        }
+
+        // Select a player
+        function selectPlayer(player) {
+            selectedPlayer = player;
+            selectedPlayerName.textContent = player.name;
+            selectedPlayerSection.style.display = 'block';
+            autocompleteResults.style.display = 'none';
+
+            // Show appropriate button
+            if (player.attended_try_out) {
+                checkInBtn.style.display = 'none';
+                removeCheckInBtn.style.display = 'inline-block';
+            } else {
+                checkInBtn.style.display = 'inline-block';
+                removeCheckInBtn.style.display = 'none';
+            }
+        }
+
+        // Check in player
+        checkInBtn.addEventListener('click', function() {
+            toggleAttendance(true);
+        });
+
+        // Remove check in
+        removeCheckInBtn.addEventListener('click', function() {
+            toggleAttendance(false);
+        });
+
+        // Toggle attendance
+        function toggleAttendance(attended) {
+            if (!selectedPlayer) return;
+
+            const btn = attended ? checkInBtn : removeCheckInBtn;
+            const originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+
+            fetch('{% url "players:toggle_try_out_attendance" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    player_id: selectedPlayer.id,
+                    attended: attended
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show flash message
+                    showFlashMessage(data.message);
+
+                    // Reset the page after a short delay
+                    setTimeout(() => {
+                        resetPage();
+                    }, 1500);
+                } else {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                    alert('Error: ' + (data.error || 'Failed to update attendance'));
+                }
+            })
+            .catch(error => {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+                alert('An unexpected error occurred: ' + error.message);
+            });
+        }
+
+        // Show flash message
+        function showFlashMessage(message) {
+            flashMessageText.textContent = message;
+            flashMessage.classList.remove('d-none');
+        }
+
+        // Reset page to original state
+        function resetPage() {
+            // Hide flash message
+            flashMessage.classList.add('d-none');
+
+            // Clear search input
+            playerSearch.value = '';
+
+            // Hide autocomplete results
+            autocompleteResults.style.display = 'none';
+            autocompleteResults.innerHTML = '';
+
+            // Hide selected player section
+            selectedPlayerSection.style.display = 'none';
+
+            // Clear selected player
+            selectedPlayer = null;
+
+            // Re-enable buttons and restore original text
+            checkInBtn.disabled = false;
+            checkInBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Check In';
+            removeCheckInBtn.disabled = false;
+            removeCheckInBtn.innerHTML = '<i class="bi bi-x-circle me-2"></i>Remove Check In';
+
+            // Focus back on search input
+            playerSearch.focus();
+        }
+
+        // Hide autocomplete when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!playerSearch.contains(e.target) && !autocompleteResults.contains(e.target)) {
+                autocompleteResults.style.display = 'none';
+            }
+        });
+
+        // Focus search input on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            playerSearch.focus();
+        });
+    </script>
 {% endblock %}
