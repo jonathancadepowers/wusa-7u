@@ -1751,7 +1751,57 @@ def team_preferences_view(request):
 @login_required
 def player_rankings_analyze_view(request):
     """Analyze manager player rankings"""
-    return render(request, 'players/player_rankings_analyze.html')
+    from .models import PlayerRanking, Manager, Player
+    from collections import defaultdict
+
+    # Get all player rankings
+    all_rankings = PlayerRanking.objects.all()
+
+    # Dictionary to accumulate scores for each player
+    # Lower score is better (rank 1 is best)
+    player_scores = defaultdict(list)
+
+    # Process each ranking submission
+    for ranking in all_rankings:
+        try:
+            rankings_data = json.loads(ranking.ranking)
+            for item in rankings_data:
+                player_id = item.get('player_id')
+                rank = item.get('rank')
+                if player_id and rank:
+                    player_scores[player_id].append(rank)
+        except (json.JSONDecodeError, KeyError):
+            continue
+
+    # Calculate average rank for each player
+    player_averages = []
+    for player_id, ranks in player_scores.items():
+        avg_rank = sum(ranks) / len(ranks)
+        try:
+            player = Player.objects.get(id=player_id)
+            player_averages.append({
+                'player': player,
+                'average_rank': avg_rank,
+                'num_rankings': len(ranks)
+            })
+        except Player.DoesNotExist:
+            continue
+
+    # Sort by average rank (lower is better) and take top 20
+    player_averages.sort(key=lambda x: x['average_rank'])
+    top_players = player_averages[:20]
+
+    # Find managers who haven't submitted rankings
+    all_managers = Manager.objects.all()
+    managers_with_rankings = PlayerRanking.objects.filter(manager__isnull=False).values_list('manager_id', flat=True).distinct()
+    managers_without_rankings = all_managers.exclude(id__in=managers_with_rankings)
+
+    context = {
+        'top_players': top_players,
+        'managers_without_rankings': managers_without_rankings,
+        'managers_without_count': managers_without_rankings.count(),
+    }
+    return render(request, 'players/player_rankings_analyze.html', context)
 
 
 @login_required
