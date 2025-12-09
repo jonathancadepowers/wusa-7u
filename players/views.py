@@ -1327,6 +1327,13 @@ def run_draft_view(request):
         messages.error(request, 'No draft found. Please create a draft first.')
         return redirect('players:create_draft')
 
+    # Get the draft portal status
+    try:
+        portal_setting = GeneralSetting.objects.get(key='open_draft_portal_to_managers')
+        portal_open = portal_setting.value == 'true'
+    except GeneralSetting.DoesNotExist:
+        portal_open = False
+
     # Validate draft has all required fields
     errors = []
 
@@ -1363,6 +1370,7 @@ def run_draft_view(request):
             'draft': draft,
             'errors': errors,
             'show_grid': False,
+            'portal_open': portal_open,
         }
         return render(request, 'players/run_draft.html', context)
 
@@ -1433,8 +1441,40 @@ def run_draft_view(request):
         'show_grid': True,
         'has_final_round': has_final_round,
         'final_round_number': final_round_number,
+        'portal_open': portal_open,
     }
     return render(request, 'players/run_draft.html', context)
+
+
+@login_required
+def toggle_draft_portal_view(request):
+    """Toggle the open_draft_portal_to_managers setting"""
+    if request.method == 'POST':
+        try:
+            # Get or create the setting
+            setting, created = GeneralSetting.objects.get_or_create(
+                key='open_draft_portal_to_managers',
+                defaults={'value': 'true'}
+            )
+
+            # If it already existed, toggle its value
+            if not created:
+                if setting.value == 'true':
+                    setting.value = 'false'
+                    messages.success(request, 'Manager Draft Portal has been closed.')
+                else:
+                    setting.value = 'true'
+                    messages.success(request, 'Manager Draft Portal has been opened.')
+                setting.save()
+            else:
+                messages.success(request, 'Manager Draft Portal has been opened.')
+
+            return redirect('players:run_draft')
+        except Exception as e:
+            messages.error(request, f'Error toggling draft portal: {str(e)}')
+            return redirect('players:run_draft')
+
+    return redirect('players:run_draft')
 
 
 def available_players_view(request):
