@@ -1750,7 +1750,12 @@ def team_preferences_view(request):
 
 def team_preferences_analyze_view(request):
     """Analyze team preferences and assign managers to teams"""
-    context = {}
+    # Check if any managers already have teams assigned
+    managers_with_teams = Manager.objects.filter(teams__isnull=False).count()
+
+    context = {
+        'managers_with_teams': managers_with_teams
+    }
     return render(request, 'players/team_preferences_analyze.html', context)
 
 
