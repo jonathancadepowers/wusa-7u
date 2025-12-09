@@ -1822,19 +1822,32 @@ def player_rankings_analyze_view(request):
 @login_required
 @require_http_methods(["POST"])
 def release_player_rankings_view(request):
-    """Release player rankings to coaches by creating/updating general setting"""
+    """Toggle player rankings release status"""
     from .models import GeneralSetting
 
     try:
-        # Create or update the setting to true
+        # Get current state
+        try:
+            setting = GeneralSetting.objects.get(key='player_rankings_public')
+            current_value = setting.value.lower() == 'true'
+        except GeneralSetting.DoesNotExist:
+            current_value = False
+
+        # Toggle the value
+        new_value = 'false' if current_value else 'true'
+
+        # Create or update the setting
         setting, created = GeneralSetting.objects.update_or_create(
             key='player_rankings_public',
-            defaults={'value': 'true'}
+            defaults={'value': new_value}
         )
+
+        message = 'Player rankings have been released to coaches.' if new_value == 'true' else 'Player rankings have been unreleased from coaches.'
 
         return JsonResponse({
             'success': True,
-            'message': 'Player rankings have been released to coaches.'
+            'message': message,
+            'new_state': new_value
         })
     except Exception as e:
         return JsonResponse({

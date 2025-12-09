@@ -78,9 +78,15 @@
                         {% endif %}
 
                         <div class="mt-4 text-end">
-                            <button type="button" class="btn btn-primary" id="releaseRankingsBtn">
-                                <i class="bi bi-unlock me-2"></i>Release Rankings to Coaches
-                            </button>
+                            {% if rankings_released %}
+                                <button type="button" class="btn btn-warning" id="releaseRankingsBtn">
+                                    <i class="bi bi-lock me-2"></i>Unrelease Rankings from Coaches
+                                </button>
+                            {% else %}
+                                <button type="button" class="btn btn-primary" id="releaseRankingsBtn">
+                                    <i class="bi bi-unlock me-2"></i>Release Rankings to Coaches
+                                </button>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -99,16 +105,21 @@
             });
         });
 
-        // Release Rankings to Coaches
+        // Toggle Release Rankings
         document.getElementById('releaseRankingsBtn').addEventListener('click', function() {
-            if (!confirm('Are you sure you want to release the player rankings to all coaches? This will make the rankings visible on their team pages.')) {
+            const isReleased = this.classList.contains('btn-warning');
+            const confirmMessage = isReleased
+                ? 'Are you sure you want to unrelease the player rankings from coaches? This will hide the rankings from their team pages.'
+                : 'Are you sure you want to release the player rankings to all coaches? This will make the rankings visible on their team pages.';
+
+            if (!confirm(confirmMessage)) {
                 return;
             }
 
             const btn = this;
             const originalHtml = btn.innerHTML;
             btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Releasing...';
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
 
             fetch('{% url "players:release_player_rankings" %}', {
                 method: 'POST',
@@ -119,13 +130,14 @@
             })
             .then(response => response.json())
             .then(data => {
-                btn.disabled = false;
-                btn.innerHTML = originalHtml;
-
                 if (data.success) {
-                    alert('Player rankings have been successfully released to coaches!');
+                    alert(data.message);
+                    // Reload the page to show updated state
+                    window.location.reload();
                 } else {
-                    alert('Error: ' + (data.error || 'Failed to release rankings'));
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                    alert('Error: ' + (data.error || 'Failed to update rankings status'));
                 }
             })
             .catch(error => {
