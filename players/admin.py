@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Player, Team, Manager, Draft, PlayerRanking, ManagerDaughterRanking, DraftPick, TeamPreference, PracticeSlot, PracticeSlotRanking, GeneralSetting
+from .models import Player, Team, Manager, Draft, PlayerRanking, ManagerDaughterRanking, DraftPick, TeamPreference, PracticeSlot, PracticeSlotRanking, GeneralSetting, StarredDraftPick
 
 
 @admin.register(Draft)
@@ -167,6 +167,24 @@ class GeneralSettingAdmin(admin.ModelAdmin):
     fieldsets = (
         ('Setting', {
             'fields': ('key', 'value')
+        }),
+        ('Metadata', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(StarredDraftPick)
+class StarredDraftPickAdmin(admin.ModelAdmin):
+    list_display = ['id', 'team', 'player', 'created_at', 'updated_at']
+    list_filter = ['team']
+    search_fields = ['team__name', 'player__first_name', 'player__last_name']
+    readonly_fields = ['created_at', 'updated_at']
+
+    fieldsets = (
+        ('Starred Pick', {
+            'fields': ('team', 'player')
         }),
         ('Metadata', {
             'fields': ('created_at', 'updated_at'),
