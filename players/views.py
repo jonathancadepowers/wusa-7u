@@ -604,14 +604,14 @@ def team_detail_view(request, team_secret):
 
     if team.manager:
         try:
-            # Task 1: Rank All Players
-            total_players = Player.objects.count()
+            # Task 1: Rank All Players (top 20)
+            expected_player_count = 20
             try:
                 player_ranking = PlayerRanking.objects.get(manager=team.manager)
                 ranking_data = json.loads(player_ranking.ranking)
                 if len(ranking_data) == 0:
                     player_ranking_status = 'not_started'
-                elif len(ranking_data) < total_players:
+                elif len(ranking_data) < expected_player_count:
                     player_ranking_status = 'in_progress'
                 else:
                     player_ranking_status = 'completed'
