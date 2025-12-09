@@ -603,66 +603,76 @@ def team_detail_view(request, team_secret):
     checklist_items = []
 
     if team.manager:
-        # Task 1: Rank All Players
-        total_players = Player.objects.count()
         try:
-            player_ranking = PlayerRanking.objects.get(manager=team.manager)
-            ranking_data = json.loads(player_ranking.ranking)
-            if len(ranking_data) == 0:
+            # Task 1: Rank All Players
+            total_players = Player.objects.count()
+            try:
+                player_ranking = PlayerRanking.objects.get(manager=team.manager)
+                ranking_data = json.loads(player_ranking.ranking)
+                if len(ranking_data) == 0:
+                    player_ranking_status = 'not_started'
+                elif len(ranking_data) < total_players:
+                    player_ranking_status = 'in_progress'
+                else:
+                    player_ranking_status = 'completed'
+            except PlayerRanking.DoesNotExist:
                 player_ranking_status = 'not_started'
-            elif len(ranking_data) < total_players:
-                player_ranking_status = 'in_progress'
-            else:
-                player_ranking_status = 'completed'
-        except PlayerRanking.DoesNotExist:
-            player_ranking_status = 'not_started'
 
-        checklist_items.append({
-            'title': 'Rank All Players',
-            'url': f"/player_rankings/?team_secret={team.manager_secret}",
-            'status': player_ranking_status
-        })
+            checklist_items.append({
+                'title': 'Rank All Players',
+                'url': f"/player_rankings/?team_secret={team.manager_secret}",
+                'status': player_ranking_status
+            })
 
-        # Task 2: Rank Manager's Daughters
-        # Get count of manager's daughters
-        total_daughters = Player.objects.filter(manager_daughter=team.manager).count()
-        try:
-            daughter_ranking = ManagerDaughterRanking.objects.get(manager=team.manager)
-            ranking_data = json.loads(daughter_ranking.ranking)
-            if len(ranking_data) == 0:
-                daughter_ranking_status = 'not_started'
-            elif len(ranking_data) < total_daughters:
-                daughter_ranking_status = 'in_progress'
+            # Task 2: Rank Manager's Daughters
+            # Get count of manager's daughters
+            total_daughters = Player.objects.filter(manager_daughter=team.manager).count()
+            if total_daughters > 0:
+                try:
+                    daughter_ranking = ManagerDaughterRanking.objects.get(manager=team.manager)
+                    ranking_data = json.loads(daughter_ranking.ranking)
+                    if len(ranking_data) == 0:
+                        daughter_ranking_status = 'not_started'
+                    elif len(ranking_data) < total_daughters:
+                        daughter_ranking_status = 'in_progress'
+                    else:
+                        daughter_ranking_status = 'completed'
+                except ManagerDaughterRanking.DoesNotExist:
+                    daughter_ranking_status = 'not_started'
             else:
+                # If manager has no daughters, mark as completed
                 daughter_ranking_status = 'completed'
-        except ManagerDaughterRanking.DoesNotExist:
-            daughter_ranking_status = 'not_started'
 
-        checklist_items.append({
-            'title': "Rank Manager's Daughters",
-            'url': f"/manager_daughter_rankings/?team_secret={team.manager_secret}",
-            'status': daughter_ranking_status
-        })
+            checklist_items.append({
+                'title': "Rank Manager's Daughters",
+                'url': f"/manager_daughter_rankings/?team_secret={team.manager_secret}",
+                'status': daughter_ranking_status
+            })
 
-        # Task 3: Rank Practice Slots
-        total_slots = PracticeSlot.objects.count()
-        try:
-            practice_ranking = PracticeSlotRanking.objects.get(team=team)
-            ranking_data = json.loads(practice_ranking.rankings)
-            if len(ranking_data) == 0:
+            # Task 3: Rank Practice Slots
+            total_slots = PracticeSlot.objects.count()
+            try:
+                practice_ranking = PracticeSlotRanking.objects.get(team=team)
+                ranking_data = json.loads(practice_ranking.rankings)
+                if len(ranking_data) == 0:
+                    practice_ranking_status = 'not_started'
+                elif len(ranking_data) < total_slots:
+                    practice_ranking_status = 'in_progress'
+                else:
+                    practice_ranking_status = 'completed'
+            except PracticeSlotRanking.DoesNotExist:
                 practice_ranking_status = 'not_started'
-            elif len(ranking_data) < total_slots:
-                practice_ranking_status = 'in_progress'
-            else:
-                practice_ranking_status = 'completed'
-        except PracticeSlotRanking.DoesNotExist:
-            practice_ranking_status = 'not_started'
 
-        checklist_items.append({
-            'title': 'Rank Practice Slots',
-            'url': f"/practice_slot_rankings/?team_secret={team.manager_secret}",
-            'status': practice_ranking_status
-        })
+            checklist_items.append({
+                'title': 'Rank Practice Slots',
+                'url': f"/practice_slot_rankings/?team_secret={team.manager_secret}",
+                'status': practice_ranking_status
+            })
+        except Exception as e:
+            # If there's any error, just don't show the checklist
+            import logging
+            logging.error(f"Error calculating checklist: {e}")
+            checklist_items = []
 
     context = {
         'team': team,
