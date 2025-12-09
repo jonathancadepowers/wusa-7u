@@ -1748,6 +1748,18 @@ def team_preferences_view(request):
     return render(request, 'players/team_preferences.html', context)
 
 
+@login_required
+def player_rankings_analyze_view(request):
+    """Analyze manager player rankings"""
+    return render(request, 'players/player_rankings_analyze.html')
+
+
+@login_required
+def manager_daughter_rankings_analyze_view(request):
+    """Analyze manager daughter rankings"""
+    return render(request, 'players/manager_daughter_rankings_analyze.html')
+
+
 def team_preferences_analyze_view(request):
     """Analyze team preferences and assign managers to teams"""
     # Check if any managers already have teams assigned

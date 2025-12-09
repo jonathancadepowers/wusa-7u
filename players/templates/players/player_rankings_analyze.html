@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Player Rankings Analysis - WUSA 7U{% endblock %}
+
+{% block page_title %}WUSA 7U - Player Rankings Analysis{% endblock %}
+
+{% block content %}
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-lg-10 offset-lg-1">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <p class="text-muted">Player rankings analysis page - UI to be implemented.</p>
+                        
+                        <div class="mt-3">
+                            <a href="{% url 'players:settings' %}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left me-1"></i>Back to Settings
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
