@@ -63,6 +63,18 @@ def edit_draft_view(request):
         picks_per_round = int(request.POST.get('picks_per_round'))
         order = request.POST.get('order', '')
 
+        # Handle non-draftable players
+        non_draftable_player_ids = request.POST.getlist('non_draftable_players')
+
+        # Update draftable status for all players who didn't attend try-outs
+        no_show_players = Player.objects.filter(attended_try_out=False)
+        for player in no_show_players:
+            if str(player.id) in non_draftable_player_ids:
+                player.draftable = False
+            else:
+                player.draftable = True
+            player.save()
+
         # Calculate if we need a final round with partial picks
         player_count = Player.objects.count()
         total_regular_picks = rounds * picks_per_round
@@ -149,6 +161,9 @@ def edit_draft_view(request):
                 teams_dict = {team.id: team.name for team in all_teams}
                 final_round_team_names = [teams_dict.get(tid, '') for tid in final_round_team_ids]
 
+    # Get players who didn't attend try-outs
+    no_show_players = Player.objects.filter(attended_try_out=False).order_by('last_name', 'first_name')
+
     context = {
         'draft': draft,
         'is_create': is_create,
@@ -163,6 +178,7 @@ def edit_draft_view(request):
         'final_round_number': final_round_number,
         'final_round_team_names': final_round_team_names,
         'has_draft_picks': has_draft_picks,
+        'no_show_players': no_show_players,
     }
     return render(request, 'players/draft_form.html', context)
 

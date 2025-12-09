@@ -190,6 +190,40 @@
                             {% endif %}
                             {% endif %}
 
+                            <!-- Try-Out No-Shows Section -->
+                            {% if no_show_players %}
+                            <hr class="my-4">
+                            <h5 class="mb-3">Try-Out No-Shows</h5>
+
+                            <div class="alert alert-info mb-4">
+                                <strong>Note:</strong> Once "Save Changes" is clicked below, any player selected below will be marked as "not draftable" in the upcoming draft. These players can still technically be drafted, but a warning (which can be overridden) will appear if someone attempts to draft them.
+                            </div>
+
+                            <div class="card bg-light mb-4">
+                                <div class="card-body">
+                                    <p class="mb-3"><strong>Players who did not attend try-outs:</strong></p>
+                                    <div class="row">
+                                        {% for player in no_show_players %}
+                                        <div class="col-md-6 mb-2">
+                                            <div class="form-check">
+                                                <input
+                                                    class="form-check-input"
+                                                    type="checkbox"
+                                                    name="non_draftable_players"
+                                                    value="{{ player.id }}"
+                                                    id="noshow_{{ player.id }}"
+                                                    {% if not player.draftable %}checked{% endif %}>
+                                                <label class="form-check-label" for="noshow_{{ player.id }}">
+                                                    {{ player.first_name }} {{ player.last_name }}
+                                                </label>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+
                             <div class="mt-4 d-flex justify-content-between">
                                 <a href="{% url 'players:settings' %}" class="btn btn-secondary">
                                     <i class="bi bi-arrow-left me-1"></i>Cancel
