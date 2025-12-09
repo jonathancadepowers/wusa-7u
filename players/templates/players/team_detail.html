@@ -32,10 +32,14 @@
                 <!-- Pre-Season Checklist -->
                 {% if checklist_items %}
                 <div class="card bg-light border-success mb-4">
-                    <div class="card-header bg-success text-white">
-                        <h5 class="mb-0"><i class="bi bi-list-check me-2"></i>Pre-Season Checklist</h5>
+                    <div class="card-header bg-success text-white" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#checklistCollapse">
+                        <h5 class="mb-0">
+                            <i class="bi bi-list-check me-2"></i>Pre-Season Checklist
+                            <i class="bi bi-chevron-down float-end"></i>
+                        </h5>
                     </div>
-                    <div class="card-body">
+                    <div class="collapse show" id="checklistCollapse">
+                        <div class="card-body">
                         <p class="text-muted mb-3">Complete these tasks before the draft:</p>
                         <div class="list-group">
                             {% for item in checklist_items %}
@@ -58,6 +62,7 @@
                             </a>
                             {% endfor %}
                         </div>
+                        </div>
                     </div>
                 </div>
                 {% endif %}
@@ -73,10 +78,14 @@
                 {% if not portal_open %}
                     {% if players %}
                     <div class="card bg-light border-primary mb-4">
-                        <div class="card-header bg-primary text-white">
-                            <h5 class="mb-0"><i class="bi bi-people-fill me-2"></i>Team Roster</h5>
+                        <div class="card-header bg-primary text-white" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#rosterCollapse">
+                            <h5 class="mb-0">
+                                <i class="bi bi-people-fill me-2"></i>Team Roster
+                                <i class="bi bi-chevron-down float-end"></i>
+                            </h5>
                         </div>
-                        <div class="card-body">
+                        <div class="collapse" id="rosterCollapse">
+                            <div class="card-body">
                             <div class="table-responsive">
                                 <table class="table table-hover" id="playerTable">
                                 <thead class="table-light">
@@ -124,6 +133,7 @@
                             <p class="text-muted mt-3">
                                 <strong>Total Players:</strong> {{ players.count }}
                             </p>
+                            </div>
                         </div>
                     </div>
                     {% else %}
@@ -137,10 +147,14 @@
                 <!-- Draft Pool / Available Players Section -->
                 {% if portal_open %}
                 <div class="card bg-light border-info mb-4">
-                    <div class="card-header bg-info text-white">
-                        <h5 class="mb-0"><i class="bi bi-collection me-2"></i>Draft Pool / Available Players</h5>
+                    <div class="card-header bg-info text-white" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#draftPoolCollapse">
+                        <h5 class="mb-0">
+                            <i class="bi bi-collection me-2"></i>Draft Pool / Available Players
+                            <i class="bi bi-chevron-down float-end"></i>
+                        </h5>
                     </div>
-                    <div class="card-body">
+                    <div class="collapse" id="draftPoolCollapse">
+                        <div class="card-body">
                         {% if available_players %}
                         <!-- Search Box -->
                         <div class="mb-3">
@@ -206,6 +220,7 @@
                             No players available in the draft pool.
                         </div>
                         {% endif %}
+                        </div>
                     </div>
                 </div>
                 {% endif %}
@@ -525,8 +540,35 @@
             });
         }
 
-        // Available Players Search function
+        // Handle collapse chevron rotation
         document.addEventListener('DOMContentLoaded', function() {
+            // Add event listeners to all collapsible elements
+            const collapseElements = document.querySelectorAll('.collapse');
+            collapseElements.forEach(element => {
+                element.addEventListener('show.bs.collapse', function() {
+                    const header = document.querySelector(`[data-bs-target="#${this.id}"]`);
+                    if (header) {
+                        const chevron = header.querySelector('.bi-chevron-down');
+                        if (chevron) {
+                            chevron.classList.remove('bi-chevron-down');
+                            chevron.classList.add('bi-chevron-up');
+                        }
+                    }
+                });
+
+                element.addEventListener('hide.bs.collapse', function() {
+                    const header = document.querySelector(`[data-bs-target="#${this.id}"]`);
+                    if (header) {
+                        const chevron = header.querySelector('.bi-chevron-up');
+                        if (chevron) {
+                            chevron.classList.remove('bi-chevron-up');
+                            chevron.classList.add('bi-chevron-down');
+                        }
+                    }
+                });
+            });
+
+            // Available Players Search function
             const searchInput = document.getElementById('availablePlayersSearch');
             if (searchInput) {
                 searchInput.addEventListener('keyup', function() {
