@@ -1758,10 +1758,11 @@ def player_rankings_analyze_view(request):
     all_rankings = PlayerRanking.objects.all()
 
     # Dictionary to accumulate scores for each player
-    # Lower score is better (rank 1 is best)
+    # For Borda count: higher rank position = higher points
     player_scores = defaultdict(list)
+    max_rank = 0  # Track the maximum rank seen to determine Borda points
 
-    # Process each ranking submission
+    # First pass: collect all ranks and find max rank
     for ranking in all_rankings:
         try:
             rankings_data = json.loads(ranking.ranking)
@@ -1770,26 +1771,31 @@ def player_rankings_analyze_view(request):
                 rank = item.get('rank')
                 if player_id and rank:
                     player_scores[player_id].append(rank)
+                    max_rank = max(max_rank, rank)
         except (json.JSONDecodeError, KeyError):
             continue
 
-    # Calculate average rank for each player
-    player_averages = []
+    # Calculate Borda count and average rank for each player
+    player_stats = []
     for player_id, ranks in player_scores.items():
+        # Borda count: rank 1 gets max_rank points, rank 2 gets (max_rank - 1) points, etc.
+        borda_count = sum(max_rank - rank + 1 for rank in ranks)
         avg_rank = sum(ranks) / len(ranks)
+
         try:
             player = Player.objects.get(id=player_id)
-            player_averages.append({
+            player_stats.append({
                 'player': player,
                 'average_rank': avg_rank,
+                'borda_count': borda_count,
                 'num_rankings': len(ranks)
             })
         except Player.DoesNotExist:
             continue
 
-    # Sort by average rank (lower is better) and take top 20
-    player_averages.sort(key=lambda x: x['average_rank'])
-    top_players = player_averages[:20]
+    # Sort by Borda count (higher is better), then by average rank as tiebreaker
+    player_stats.sort(key=lambda x: (-x['borda_count'], x['average_rank']))
+    top_players = player_stats[:20]
 
     # Find managers who haven't submitted rankings
     all_managers = Manager.objects.all()

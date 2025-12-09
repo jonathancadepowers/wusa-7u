@@ -40,6 +40,7 @@
                                         <tr>
                                             <th style="width: 80px;">Rank</th>
                                             <th>Player Name</th>
+                                            <th style="width: 120px;">Borda Count</th>
                                             <th style="width: 150px;">Average Score</th>
                                             <th style="width: 120px;">Rankings Received</th>
                                         </tr>
@@ -49,6 +50,7 @@
                                             <tr>
                                                 <td class="text-center">{{ forloop.counter }}</td>
                                                 <td>{{ item.player.first_name }} {{ item.player.last_name }}</td>
+                                                <td class="text-center"><strong>{{ item.borda_count }}</strong></td>
                                                 <td class="text-center">{{ item.average_rank|floatformat:2 }}</td>
                                                 <td class="text-center">{{ item.num_rankings }}</td>
                                             </tr>
