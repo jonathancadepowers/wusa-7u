@@ -588,6 +588,9 @@ def import_players_view(request):
 
 def team_detail_view(request, team_secret):
     """Display team info and roster based on manager_secret (read-only)"""
+    from .models import PlayerRanking, ManagerDaughterRanking, PracticeSlotRanking
+    import json
+
     try:
         team = Team.objects.get(manager_secret=team_secret)
     except Team.DoesNotExist:
@@ -596,9 +599,65 @@ def team_detail_view(request, team_secret):
     # Get all players assigned to this team
     players = team.players.all().order_by('last_name', 'first_name')
 
+    # Calculate checklist status for this manager
+    checklist_items = []
+
+    if team.manager:
+        # Task 1: Rank All Players
+        try:
+            player_ranking = PlayerRanking.objects.get(manager=team.manager)
+            ranking_data = json.loads(player_ranking.ranking)
+            if len(ranking_data) == 0:
+                player_ranking_status = 'not_started'
+            else:
+                player_ranking_status = 'completed'
+        except PlayerRanking.DoesNotExist:
+            player_ranking_status = 'not_started'
+
+        checklist_items.append({
+            'title': 'Rank All Players',
+            'url': f"/player_rankings/?team_secret={team.manager_secret}",
+            'status': player_ranking_status
+        })
+
+        # Task 2: Rank Manager's Daughters
+        try:
+            daughter_ranking = ManagerDaughterRanking.objects.get(manager=team.manager)
+            ranking_data = json.loads(daughter_ranking.ranking)
+            if len(ranking_data) == 0:
+                daughter_ranking_status = 'not_started'
+            else:
+                daughter_ranking_status = 'completed'
+        except ManagerDaughterRanking.DoesNotExist:
+            daughter_ranking_status = 'not_started'
+
+        checklist_items.append({
+            'title': "Rank Manager's Daughters",
+            'url': f"/manager_daughter_rankings/?team_secret={team.manager_secret}",
+            'status': daughter_ranking_status
+        })
+
+        # Task 3: Rank Practice Slots
+        try:
+            practice_ranking = PracticeSlotRanking.objects.get(team=team)
+            ranking_data = json.loads(practice_ranking.rankings)
+            if len(ranking_data) == 0:
+                practice_ranking_status = 'not_started'
+            else:
+                practice_ranking_status = 'completed'
+        except PracticeSlotRanking.DoesNotExist:
+            practice_ranking_status = 'not_started'
+
+        checklist_items.append({
+            'title': 'Rank Practice Slots',
+            'url': f"/practice_slot_rankings/?team_secret={team.manager_secret}",
+            'status': practice_ranking_status
+        })
+
     context = {
         'team': team,
-        'players': players
+        'players': players,
+        'checklist_items': checklist_items
     }
     return render(request, 'players/team_detail.html', context)
 
