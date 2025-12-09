@@ -1929,8 +1929,59 @@ def player_rankings_analyze_public_view(request):
 
 @login_required
 def manager_daughter_rankings_analyze_view(request):
-    """Analyze manager daughter rankings"""
-    return render(request, 'players/manager_daughter_rankings_analyze.html')
+    """Analyze manager daughter rankings with Borda count"""
+    from .models import ManagerDaughterRanking, Manager, Player
+    from collections import defaultdict
+
+    # Get all manager daughter rankings
+    all_rankings = ManagerDaughterRanking.objects.all()
+    player_scores = defaultdict(list)
+    max_rank = 0
+
+    # Process all rankings to collect scores for each player
+    for ranking in all_rankings:
+        rankings_data = json.loads(ranking.ranking)
+        for item in rankings_data:
+            player_id = item.get('player_id')
+            rank = item.get('rank')
+            if player_id and rank:
+                player_scores[player_id].append(rank)
+                max_rank = max(max_rank, rank)
+
+    # Calculate Borda count for each player
+    player_stats = []
+    for player_id, ranks in player_scores.items():
+        # Borda count: rank 1 gets max_rank points, rank 2 gets max_rank-1 points, etc.
+        borda_count = sum(max_rank - rank + 1 for rank in ranks)
+        avg_rank = sum(ranks) / len(ranks)
+        try:
+            player = Player.objects.get(id=player_id)
+            player_stats.append({
+                'player': player,
+                'average_rank': avg_rank,
+                'borda_count': borda_count,
+                'num_rankings': len(ranks)
+            })
+        except Player.DoesNotExist:
+            continue
+
+    # Sort by Borda count (higher is better), then by average rank (lower is better)
+    player_stats.sort(key=lambda x: (-x['borda_count'], x['average_rank']))
+
+    # Get top 20 players
+    top_players = player_stats[:20]
+
+    # Get managers who haven't submitted rankings
+    all_managers = Manager.objects.all()
+    managers_with_rankings = ManagerDaughterRanking.objects.values_list('manager_id', flat=True)
+    managers_without_rankings = all_managers.exclude(id__in=managers_with_rankings)
+
+    context = {
+        'top_players': top_players,
+        'managers_without_rankings': managers_without_rankings,
+        'managers_without_count': managers_without_rankings.count(),
+    }
+    return render(request, 'players/manager_daughter_rankings_analyze.html', context)
 
 
 def try_out_check_in_view(request):
