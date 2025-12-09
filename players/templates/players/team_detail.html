@@ -61,29 +61,13 @@
                 {% endif %}
 
                 <!-- Action Buttons -->
-                <div class="mb-3 d-flex justify-content-between align-items-center">
-                    <div>
-                        <a href="{% url 'players:player_rankings_analyze_public' %}" class="btn btn-secondary">
-                            <i class="bi bi-list-ol me-2"></i>View All Rankings
-                        </a>
-                    </div>
-                    <div>
-                        <a href="{% url 'players:player_rankings' %}?team_secret={{ team.manager_secret }}" class="btn btn-success">
-                            <i class="bi bi-star-fill me-2"></i>Rank Players
-                        </a>
-                        <a href="{% url 'players:manager_daughter_rankings' %}?team_secret={{ team.manager_secret }}" class="btn btn-warning ms-2">
-                            <i class="bi bi-star-half me-2"></i>Rank Manager's Daughters
-                        </a>
-                        <a href="{% url 'players:practice_slot_rankings' %}?team_secret={{ team.manager_secret }}" class="btn btn-info ms-2">
-                            <i class="bi bi-calendar-week me-2"></i>Rank Practice Slots
-                        </a>
-                        {% if players %}
-                            <button type="button" class="btn btn-primary ms-2" data-bs-toggle="modal" data-bs-target="#emailModal">
-                                <i class="bi bi-envelope me-1"></i>Email Team
-                            </button>
-                        {% endif %}
-                    </div>
+                {% if players %}
+                <div class="mb-3 text-end">
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#emailModal">
+                        <i class="bi bi-envelope me-1"></i>Email Team
+                    </button>
                 </div>
+                {% endif %}
                 {% if players %}
                     <div class="table-responsive">
                         <table class="table table-hover" id="playerTable">

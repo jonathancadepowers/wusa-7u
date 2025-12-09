@@ -666,6 +666,14 @@ def team_detail_view(request, team_secret):
                 'url': f"/practice_slot_rankings/?team_secret={team.manager_secret}",
                 'status': practice_ranking_status
             })
+
+            # Task 4: View All Rankings
+            # This is always marked as "completed" since it's just a view action
+            checklist_items.append({
+                'title': 'View All Rankings',
+                'url': '/player_rankings/analyze/public/',
+                'status': 'completed'
+            })
         except Exception as e:
             # If there's any error, just don't show the checklist
             import logging
