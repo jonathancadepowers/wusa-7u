@@ -201,7 +201,7 @@
 
                             <div class="card bg-light mb-4">
                                 <div class="card-body">
-                                    <p class="mb-3"><strong>Players who did not attend try-outs:</strong></p>
+                                    <p class="mb-3"><strong>Select players who should be declared NOT draftable:</strong></p>
                                     <div class="row">
                                         {% for player in no_show_players %}
                                         <div class="col-md-6 mb-2">
@@ -212,7 +212,7 @@
                                                     name="non_draftable_players"
                                                     value="{{ player.id }}"
                                                     id="noshow_{{ player.id }}"
-                                                    {% if not player.draftable %}checked{% endif %}>
+                                                    checked>
                                                 <label class="form-check-label" for="noshow_{{ player.id }}">
                                                     {{ player.first_name }} {{ player.last_name }}
                                                 </label>
