@@ -152,15 +152,19 @@ if redis_url.startswith('rediss://'):
     ssl_context.check_hostname = False
     ssl_context.verify_mode = ssl.CERT_NONE
 
+    # Build connection params for channels-redis
+    connection_kwargs = {
+        'password': parsed.password,
+        'ssl': ssl_context,
+    }
+
     CHANNEL_LAYERS = {
         'default': {
             'BACKEND': 'channels_redis.core.RedisChannelLayer',
             'CONFIG': {
-                "hosts": [{
-                    'address': (parsed.hostname, parsed.port or 6379),
-                    'password': parsed.password,
-                    'ssl': ssl_context,
-                }],
+                "hosts": [
+                    (parsed.hostname, parsed.port or 6379, connection_kwargs)
+                ],
             },
         },
     }
