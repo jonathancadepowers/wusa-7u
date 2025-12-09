@@ -46,7 +46,6 @@
                                         <table class="table table-striped table-hover">
                                             <thead>
                                                 <tr>
-                                                    <th>ID</th>
                                                     <th>Practice Slot</th>
                                                     <th>Created</th>
                                                     <th>Actions</th>
@@ -55,7 +54,6 @@
                                             <tbody id="slotsTableBody">
                                                 {% for slot in practice_slots %}
                                                     <tr data-slot-id="{{ slot.id }}">
-                                                        <td>{{ slot.id }}</td>
                                                         <td class="slot-text">{{ slot.practice_slot }}</td>
                                                         <td>{{ slot.created_at|date:"Y-m-d H:i" }}</td>
                                                         <td>
