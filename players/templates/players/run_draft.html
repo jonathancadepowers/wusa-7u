@@ -904,7 +904,12 @@
 
                     // Change footer buttons
                     document.querySelector('#assignPlayersModal .modal-footer').innerHTML =
-                        '<button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>';
+                        '<button type="button" class="btn btn-primary" data-bs-dismiss="modal" id="closeAssignModalBtn">Close</button>';
+
+                    // Reload page when modal is closed to update button state
+                    document.getElementById('closeAssignModalBtn').addEventListener('click', function() {
+                        location.reload();
+                    });
                 } else {
                     alert('Error assigning players: ' + (data.error || 'Unknown error'));
                 }
