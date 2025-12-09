@@ -187,3 +187,19 @@ class GeneralSetting(models.Model):
 
     def __str__(self):
         return f"{self.key}: {self.value}"
+
+
+class StarredDraftPick(models.Model):
+    player = models.ForeignKey('Player', on_delete=models.CASCADE, related_name='starred_by_teams')
+    team = models.ForeignKey('Team', on_delete=models.CASCADE, related_name='starred_players')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'starred_draft_picks'
+        unique_together = ('player', 'team')
+        verbose_name = 'Starred Draft Pick'
+        verbose_name_plural = 'Starred Draft Picks'
+
+    def __str__(self):
+        return f"{self.team} starred {self.player}"

@@ -184,9 +184,11 @@
                                                 <i class="bi bi-eye"></i>
                                             </button>
                                         </td>
-                                        <td>
-                                            <!-- Starred placeholder for future functionality -->
-                                            <i class="bi bi-star" style="color: #ddd;"></i>
+                                        <td class="text-center">
+                                            <i class="bi {% if player.id in starred_player_ids %}bi-star-fill{% else %}bi-star{% endif %} star-icon"
+                                               data-player-id="{{ player.id }}"
+                                               style="cursor: pointer; color: {% if player.id in starred_player_ids %}#ffc107{% else %}#ddd{% endif %}; font-size: 1.2rem;"
+                                               title="{% if player.id in starred_player_ids %}Unstar player{% else %}Star player{% endif %}"></i>
                                         </td>
                                     </tr>
                                     {% endfor %}
@@ -470,6 +472,17 @@
             const isAscending = availablePlayersSortDirection[columnIndex];
 
             rows.sort((a, b) => {
+                // Handle Starred column (index 5) specially
+                if (columnIndex === 5) {
+                    const aStarIcon = a.cells[columnIndex].querySelector('i');
+                    const bStarIcon = b.cells[columnIndex].querySelector('i');
+                    const aStarred = aStarIcon && aStarIcon.classList.contains('bi-star-fill') ? 1 : 0;
+                    const bStarred = bStarIcon && bStarIcon.classList.contains('bi-star-fill') ? 1 : 0;
+
+                    if (aStarred === bStarred) return 0;
+                    return isAscending ? bStarred - aStarred : aStarred - bStarred;
+                }
+
                 const aValue = a.cells[columnIndex].textContent.trim();
                 const bValue = b.cells[columnIndex].textContent.trim();
 
@@ -531,6 +544,47 @@
                     });
                 });
             }
+
+            // Handle star clicks
+            const starIcons = document.querySelectorAll('.star-icon');
+            starIcons.forEach(icon => {
+                icon.addEventListener('click', function() {
+                    const playerId = this.getAttribute('data-player-id');
+                    const teamSecret = '{{ team.manager_secret }}';
+
+                    // Send AJAX request
+                    fetch(`/teams/${teamSecret}/toggle-star/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: `player_id=${playerId}`
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Toggle star appearance
+                            if (data.starred) {
+                                this.classList.remove('bi-star');
+                                this.classList.add('bi-star-fill');
+                                this.style.color = '#ffc107';
+                                this.setAttribute('title', 'Unstar player');
+                            } else {
+                                this.classList.remove('bi-star-fill');
+                                this.classList.add('bi-star');
+                                this.style.color = '#ddd';
+                                this.setAttribute('title', 'Star player');
+                            }
+                        } else {
+                            alert('Error: ' + data.error);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Failed to toggle star');
+                    });
+                });
+            });
         });
     </script>
 {% endblock %}

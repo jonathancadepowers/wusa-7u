@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.views.decorators.csrf import csrf_exempt
 from django.db import models
-from .models import Player, Team, Manager, PlayerRanking, ManagerDaughterRanking, Draft, DraftPick, TeamPreference, GeneralSetting
+from .models import Player, Team, Manager, PlayerRanking, ManagerDaughterRanking, Draft, DraftPick, TeamPreference, GeneralSetting, StarredDraftPick
 import pandas as pd
 import json
 import os
@@ -608,11 +608,14 @@ def team_detail_view(request, team_secret):
 
     # Get available players (not yet drafted) if portal is open
     available_players = []
+    starred_player_ids = set()
     if portal_open:
         # Get all player IDs that have been drafted
         drafted_player_ids = DraftPick.objects.filter(player__isnull=False).values_list('player_id', flat=True)
         # Get players not in that list
         available_players = Player.objects.exclude(id__in=drafted_player_ids).order_by('last_name', 'first_name')
+        # Get starred player IDs for this team
+        starred_player_ids = set(StarredDraftPick.objects.filter(team=team).values_list('player_id', flat=True))
 
     # Calculate checklist status for this manager
     checklist_items = []
@@ -700,9 +703,43 @@ def team_detail_view(request, team_secret):
         'players': players,
         'checklist_items': checklist_items,
         'portal_open': portal_open,
-        'available_players': available_players
+        'available_players': available_players,
+        'starred_player_ids': starred_player_ids
     }
     return render(request, 'players/team_detail.html', context)
+
+
+@csrf_exempt
+def toggle_star_player_view(request, team_secret):
+    """Toggle starring a player for a team"""
+    if request.method == 'POST':
+        try:
+            player_id = request.POST.get('player_id')
+
+            # Get the team
+            team = Team.objects.get(manager_secret=team_secret)
+            player = Player.objects.get(id=player_id)
+
+            # Check if already starred
+            starred = StarredDraftPick.objects.filter(team=team, player=player).first()
+
+            if starred:
+                # Unstar - delete the record
+                starred.delete()
+                return JsonResponse({'success': True, 'starred': False})
+            else:
+                # Star - create the record
+                StarredDraftPick.objects.create(team=team, player=player)
+                return JsonResponse({'success': True, 'starred': True})
+
+        except Team.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Team not found'}, status=404)
+        except Player.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Player not found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=400)
 
 
 def managers_list_view(request):
