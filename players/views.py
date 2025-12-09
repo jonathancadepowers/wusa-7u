@@ -1589,6 +1589,23 @@ def make_pick_view(request):
             }
         )
 
+        # Broadcast the draft pick to all connected WebSocket clients
+        from asgiref.sync import async_to_sync
+        from channels.layers import get_channel_layer
+
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            'draft_updates',
+            {
+                'type': 'draft_update',
+                'player_id': player.id,
+                'player_name': f"{player.first_name} {player.last_name}",
+                'team_name': team.name,
+                'round': round_num,
+                'pick': pick_num
+            }
+        )
+
         return JsonResponse({
             'success': True,
             'player_name': f"{player.first_name} {player.last_name}"
