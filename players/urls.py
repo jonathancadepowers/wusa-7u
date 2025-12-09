@@ -41,6 +41,7 @@ urlpatterns = [
     path('manager_daughter_rankings/', views.manager_daughter_rankings_view, name='manager_daughter_rankings'),
     path('manager_daughter_rankings/analyze/', views.manager_daughter_rankings_analyze_view, name='manager_daughter_rankings_analyze'),
     path('practice_slot_rankings/', views.practice_slot_rankings_view, name='practice_slot_rankings'),
+    path('try_out_check_in/', views.try_out_check_in_view, name='try_out_check_in'),
     path('team_preferences/', views.team_preferences_view, name='team_preferences'),
     path('team_preferences/save/', views.save_team_preferences_view, name='save_team_preferences'),
     path('team_preferences/analyze/', views.team_preferences_analyze_view, name='team_preferences_analyze'),

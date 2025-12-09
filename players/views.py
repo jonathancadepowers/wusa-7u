@@ -1760,6 +1760,11 @@ def manager_daughter_rankings_analyze_view(request):
     return render(request, 'players/manager_daughter_rankings_analyze.html')
 
 
+def try_out_check_in_view(request):
+    """Try out check in form"""
+    return render(request, 'players/try_out_check_in.html')
+
+
 def team_preferences_analyze_view(request):
     """Analyze team preferences and assign managers to teams"""
     # Check if any managers already have teams assigned
