@@ -63,73 +63,75 @@
                 {% endif %}
 
                 <!-- Action Buttons -->
-                {% if players %}
+                {% if players and not portal_open %}
                 <div class="mb-3 text-end">
                     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#emailModal">
                         <i class="bi bi-envelope me-1"></i>Email Team
                     </button>
                 </div>
                 {% endif %}
-                {% if players %}
-                <div class="card bg-light border-primary mb-4">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0"><i class="bi bi-people-fill me-2"></i>Team Roster</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-hover" id="playerTable">
-                            <thead class="table-light">
-                                <tr>
-                                    <th style="cursor: pointer;" onclick="sortTable(0)">
-                                        Name <i class="bi"></i>
-                                    </th>
-                                    <th style="cursor: pointer;" onclick="sortTable(1)">
-                                        Birthday <i class="bi"></i>
-                                    </th>
-                                    <th style="cursor: pointer;" onclick="sortTable(2)">
-                                        School <i class="bi"></i>
-                                    </th>
-                                    <th style="cursor: pointer;" onclick="sortTable(3)">
-                                        History <i class="bi"></i>
-                                    </th>
-                                    <th style="cursor: pointer;" onclick="sortTable(4)">
-                                        Parent Email <i class="bi"></i>
-                                    </th>
-                                    <th style="cursor: pointer;" onclick="sortTable(5)">
-                                        Parent Phone <i class="bi"></i>
-                                    </th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for player in players %}
-                                    <tr>
-                                        <td><strong>{{ player.first_name }} {{ player.last_name }}</strong></td>
-                                        <td>{{ player.birthday|default:"-" }}</td>
-                                        <td>{{ player.school|default:"-" }}</td>
-                                        <td>{{ player.history|default:"-" }}</td>
-                                        <td>{{ player.parent_email_1 }}</td>
-                                        <td>{{ player.parent_phone_1 }}</td>
-                                        <td>
-                                            <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#playerModal{{ player.pk }}" title="View Details">
-                                                <i class="bi bi-eye"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                {% if not portal_open %}
+                    {% if players %}
+                    <div class="card bg-light border-primary mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="bi bi-people-fill me-2"></i>Team Roster</h5>
                         </div>
-                        <p class="text-muted mt-3">
-                            <strong>Total Players:</strong> {{ players.count }}
-                        </p>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="playerTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="cursor: pointer;" onclick="sortTable(0)">
+                                            Name <i class="bi"></i>
+                                        </th>
+                                        <th style="cursor: pointer;" onclick="sortTable(1)">
+                                            Birthday <i class="bi"></i>
+                                        </th>
+                                        <th style="cursor: pointer;" onclick="sortTable(2)">
+                                            School <i class="bi"></i>
+                                        </th>
+                                        <th style="cursor: pointer;" onclick="sortTable(3)">
+                                            History <i class="bi"></i>
+                                        </th>
+                                        <th style="cursor: pointer;" onclick="sortTable(4)">
+                                            Parent Email <i class="bi"></i>
+                                        </th>
+                                        <th style="cursor: pointer;" onclick="sortTable(5)">
+                                            Parent Phone <i class="bi"></i>
+                                        </th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for player in players %}
+                                        <tr>
+                                            <td><strong>{{ player.first_name }} {{ player.last_name }}</strong></td>
+                                            <td>{{ player.birthday|default:"-" }}</td>
+                                            <td>{{ player.school|default:"-" }}</td>
+                                            <td>{{ player.history|default:"-" }}</td>
+                                            <td>{{ player.parent_email_1 }}</td>
+                                            <td>{{ player.parent_phone_1 }}</td>
+                                            <td>
+                                                <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#playerModal{{ player.pk }}" title="View Details">
+                                                    <i class="bi bi-eye"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            </div>
+                            <p class="text-muted mt-3">
+                                <strong>Total Players:</strong> {{ players.count }}
+                            </p>
+                        </div>
                     </div>
-                </div>
-                {% else %}
-                    <div class="alert alert-info">
-                        <i class="bi bi-info-circle me-2"></i>
-                        No players assigned to this team yet.
-                    </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            No players assigned to this team yet.
+                        </div>
+                    {% endif %}
                 {% endif %}
 
                 <!-- Draft Pool / Available Players Section -->
