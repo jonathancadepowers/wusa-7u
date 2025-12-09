@@ -604,11 +604,14 @@ def team_detail_view(request, team_secret):
 
     if team.manager:
         # Task 1: Rank All Players
+        total_players = Player.objects.count()
         try:
             player_ranking = PlayerRanking.objects.get(manager=team.manager)
             ranking_data = json.loads(player_ranking.ranking)
             if len(ranking_data) == 0:
                 player_ranking_status = 'not_started'
+            elif len(ranking_data) < total_players:
+                player_ranking_status = 'in_progress'
             else:
                 player_ranking_status = 'completed'
         except PlayerRanking.DoesNotExist:
@@ -621,11 +624,15 @@ def team_detail_view(request, team_secret):
         })
 
         # Task 2: Rank Manager's Daughters
+        # Get count of manager's daughters
+        total_daughters = Player.objects.filter(manager_daughter=team.manager).count()
         try:
             daughter_ranking = ManagerDaughterRanking.objects.get(manager=team.manager)
             ranking_data = json.loads(daughter_ranking.ranking)
             if len(ranking_data) == 0:
                 daughter_ranking_status = 'not_started'
+            elif len(ranking_data) < total_daughters:
+                daughter_ranking_status = 'in_progress'
             else:
                 daughter_ranking_status = 'completed'
         except ManagerDaughterRanking.DoesNotExist:
@@ -638,11 +645,15 @@ def team_detail_view(request, team_secret):
         })
 
         # Task 3: Rank Practice Slots
+        from .models import PracticeSlot
+        total_slots = PracticeSlot.objects.count()
         try:
             practice_ranking = PracticeSlotRanking.objects.get(team=team)
             ranking_data = json.loads(practice_ranking.rankings)
             if len(ranking_data) == 0:
                 practice_ranking_status = 'not_started'
+            elif len(ranking_data) < total_slots:
+                practice_ranking_status = 'in_progress'
             else:
                 practice_ranking_status = 'completed'
         except PracticeSlotRanking.DoesNotExist:
