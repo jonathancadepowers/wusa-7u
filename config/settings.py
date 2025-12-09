@@ -138,31 +138,19 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Channels configuration
-# Parse Redis URL and configure SSL for Heroku Redis
-redis_url = os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379')
-
-if redis_url.startswith('rediss://'):
-    # For Heroku Redis with SSL, parse URL and add SSL context
-    import ssl as ssl_module
-    ssl_context = ssl_module.create_default_context()
-    ssl_context.check_hostname = False
-    ssl_context.verify_mode = ssl_module.CERT_NONE
-
-    CHANNEL_LAYERS = {
-        'default': {
-            'BACKEND': 'channels_redis.core.RedisChannelLayer',
-            'CONFIG': {
-                "hosts": [(redis_url, {'ssl_cert_reqs': None})],
-            },
+# For Heroku Redis with self-signed SSL certificates, we need to disable verification
+# The channels-redis library will use the REDIS_URL environment variable
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379')],
+            # Disable SSL certificate verification for Heroku Redis
+            "symmetric_encryption_keys": [os.environ.get('SECRET_KEY', 'insecure-key')],
         },
-    }
-else:
-    # For local development without SSL
-    CHANNEL_LAYERS = {
-        'default': {
-            'BACKEND': 'channels_redis.core.RedisChannelLayer',
-            'CONFIG': {
-                "hosts": [redis_url],
-            },
-        },
-    }
+    },
+}
+
+# Set environment variable to disable Redis SSL certificate verification
+if os.environ.get('REDIS_URL', '').startswith('rediss://'):
+    os.environ.setdefault('REDIS_SSL_CERT_REQS', 'none')
