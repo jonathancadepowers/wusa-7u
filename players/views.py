@@ -1500,7 +1500,6 @@ def run_draft_view(request):
     return render(request, 'players/run_draft.html', context)
 
 
-@login_required
 def toggle_draft_portal_view(request):
     """Toggle the open_draft_portal_to_managers setting"""
     if request.method == 'POST':
