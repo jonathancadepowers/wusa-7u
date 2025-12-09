@@ -625,23 +625,21 @@ def team_detail_view(request, team_secret):
             })
 
             # Task 2: Rank Manager's Daughters
-            # Get count of manager's daughters
-            total_daughters = Player.objects.filter(manager_daughter=team.manager).count()
-            if total_daughters > 0:
-                try:
-                    daughter_ranking = ManagerDaughterRanking.objects.get(manager=team.manager)
-                    ranking_data = json.loads(daughter_ranking.ranking)
-                    if len(ranking_data) == 0:
-                        daughter_ranking_status = 'not_started'
-                    elif len(ranking_data) < total_daughters:
-                        daughter_ranking_status = 'in_progress'
-                    else:
-                        daughter_ranking_status = 'completed'
-                except ManagerDaughterRanking.DoesNotExist:
+            # This is for ranking ALL manager's daughters in the division, not just their own
+            # We can't easily count "expected" daughters, so we'll use a simpler logic:
+            # - Not started if no ranking exists
+            # - Completed if any ranking exists (they've submitted something)
+            try:
+                daughter_ranking = ManagerDaughterRanking.objects.get(manager=team.manager)
+                ranking_data = json.loads(daughter_ranking.ranking)
+                if len(ranking_data) == 0:
                     daughter_ranking_status = 'not_started'
-            else:
-                # If manager has no daughters, mark as completed
-                daughter_ranking_status = 'completed'
+                else:
+                    # If they've ranked at least one daughter, consider it completed
+                    # (We don't have a good way to know how many daughters there should be)
+                    daughter_ranking_status = 'completed'
+            except ManagerDaughterRanking.DoesNotExist:
+                daughter_ranking_status = 'not_started'
 
             checklist_items.append({
                 'title': "Rank Manager's Daughters",
