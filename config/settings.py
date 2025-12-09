@@ -29,6 +29,8 @@ DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = ['wusa-7u-6b0e52b973f0.herokuapp.com', 'localhost', '127.0.0.1']
 
+# CSRF trusted origins for ASGI/WebSocket support
+CSRF_TRUSTED_ORIGINS = ['https://wusa-7u-6b0e52b973f0.herokuapp.com']
 
 # Application definition
 
