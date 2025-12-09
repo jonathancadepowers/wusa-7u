@@ -1779,6 +1779,20 @@ def assign_players_to_teams_view(request):
             models.Q(player__isnull=True) | models.Q(team__isnull=True)
         ).count()
 
+        # Close the draft portal to managers after assignment
+        try:
+            portal_setting, created = GeneralSetting.objects.get_or_create(
+                key='open_draft_portal_to_managers',
+                defaults={'value': 'false'}
+            )
+            if not created and portal_setting.value == 'true':
+                portal_setting.value = 'false'
+                portal_setting.save()
+        except Exception as e:
+            # Log error but don't fail the assignment
+            import logging
+            logging.error(f"Error closing draft portal: {e}")
+
         return JsonResponse({
             'success': True,
             'summary': {
