@@ -66,14 +66,12 @@ def edit_draft_view(request):
         # Handle non-draftable players
         non_draftable_player_ids = request.POST.getlist('non_draftable_players')
 
-        # Update draftable status for all players who didn't attend try-outs
-        no_show_players = Player.objects.filter(attended_try_out=False)
-        for player in no_show_players:
-            if str(player.id) in non_draftable_player_ids:
-                player.draftable = False
-            else:
-                player.draftable = True
-            player.save()
+        # Step 1: Set ALL players to draftable = True
+        Player.objects.all().update(draftable=True)
+
+        # Step 2: Set selected players to draftable = False
+        if non_draftable_player_ids:
+            Player.objects.filter(id__in=non_draftable_player_ids).update(draftable=False)
 
         # Calculate if we need a final round with partial picks
         player_count = Player.objects.count()
