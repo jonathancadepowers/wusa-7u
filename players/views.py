@@ -668,11 +668,11 @@ def team_detail_view(request, team_secret):
             })
 
             # Task 4: View All Rankings
-            # This is always marked as "completed" since it's just a view action
+            # This is just a view action, so no status
             checklist_items.append({
                 'title': 'View All Rankings',
                 'url': '/player_rankings/analyze/public/',
-                'status': 'completed'
+                'status': 'n/a'
             })
         except Exception as e:
             # If there's any error, just don't show the checklist

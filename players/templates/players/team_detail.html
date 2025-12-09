@@ -31,8 +31,8 @@
 
                 <!-- Pre-Season Checklist -->
                 {% if checklist_items %}
-                <div class="card bg-light border-primary mb-4">
-                    <div class="card-header bg-primary text-white">
+                <div class="card bg-light border-success mb-4">
+                    <div class="card-header bg-success text-white">
                         <h5 class="mb-0"><i class="bi bi-list-check me-2"></i>Pre-Season Checklist</h5>
                     </div>
                     <div class="card-body">
@@ -49,6 +49,8 @@
                                         <span class="badge bg-success"><i class="bi bi-check-circle-fill me-1"></i>Completed</span>
                                     {% elif item.status == 'in_progress' %}
                                         <span class="badge bg-warning text-dark"><i class="bi bi-clock-fill me-1"></i>In Progress</span>
+                                    {% elif item.status == 'n/a' %}
+                                        <span class="badge bg-secondary">N/A</span>
                                     {% else %}
                                         <span class="badge bg-secondary"><i class="bi bi-circle me-1"></i>Not Started</span>
                                     {% endif %}
@@ -69,8 +71,13 @@
                 </div>
                 {% endif %}
                 {% if players %}
-                    <div class="table-responsive">
-                        <table class="table table-hover" id="playerTable">
+                <div class="card bg-light border-primary mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-people-fill me-2"></i>Team Roster</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="playerTable">
                             <thead class="table-light">
                                 <tr>
                                     <th style="cursor: pointer;" onclick="sortTable(0)">
@@ -112,10 +119,12 @@
                                 {% endfor %}
                             </tbody>
                         </table>
+                        </div>
+                        <p class="text-muted mt-3">
+                            <strong>Total Players:</strong> {{ players.count }}
+                        </p>
                     </div>
-                    <p class="text-muted mt-3">
-                        <strong>Total Players:</strong> {{ players.count }}
-                    </p>
+                </div>
                 {% else %}
                     <div class="alert alert-info">
                         <i class="bi bi-info-circle me-2"></i>
