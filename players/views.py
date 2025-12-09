@@ -1751,8 +1751,16 @@ def team_preferences_view(request):
 @login_required
 def player_rankings_analyze_view(request):
     """Analyze manager player rankings"""
-    from .models import PlayerRanking, Manager, Player
+    from .models import PlayerRanking, Manager, Player, GeneralSetting
     from collections import defaultdict
+
+    # Check if rankings have been released
+    rankings_released = False
+    try:
+        setting = GeneralSetting.objects.get(key='player_rankings_public')
+        rankings_released = setting.value.lower() == 'true'
+    except GeneralSetting.DoesNotExist:
+        rankings_released = False
 
     # Get all player rankings
     all_rankings = PlayerRanking.objects.all()
@@ -1806,6 +1814,7 @@ def player_rankings_analyze_view(request):
         'top_players': top_players,
         'managers_without_rankings': managers_without_rankings,
         'managers_without_count': managers_without_rankings.count(),
+        'rankings_released': rankings_released,
     }
     return render(request, 'players/player_rankings_analyze.html', context)
 
