@@ -588,7 +588,7 @@ def import_players_view(request):
 
 def team_detail_view(request, team_secret):
     """Display team info and roster based on manager_secret (read-only)"""
-    from .models import PlayerRanking, ManagerDaughterRanking, PracticeSlotRanking
+    from .models import PlayerRanking, ManagerDaughterRanking, PracticeSlotRanking, PracticeSlot
     import json
 
     try:
@@ -645,7 +645,6 @@ def team_detail_view(request, team_secret):
         })
 
         # Task 3: Rank Practice Slots
-        from .models import PracticeSlot
         total_slots = PracticeSlot.objects.count()
         try:
             practice_ranking = PracticeSlotRanking.objects.get(team=team)
