@@ -125,9 +125,9 @@
                 const teamCell = document.createElement('td');
                 teamCell.textContent = assignment.team_name;
                 if (assignment.has_rankings) {
-                    teamCell.innerHTML += ' <span class="badge bg-success">Has Rankings</span>';
+                    teamCell.innerHTML += ' <span class="badge bg-success">Ranking Submitted</span>';
                 } else {
-                    teamCell.innerHTML += ' <span class="badge bg-warning text-dark">No Rankings Submitted</span>';
+                    teamCell.innerHTML += ' <span class="badge bg-warning text-dark">No Ranking Submitted</span>';
                 }
                 row.appendChild(teamCell);
 
