@@ -33,16 +33,20 @@
                         <!-- Top 20 Players Ranking -->
                         <h5 class="mb-3">Top 20 Players (Based on Manager Rankings)</h5>
 
+                        <p class="text-muted mb-4">
+                            The Borda Count is a voting system where each rank position earns points - a rank of 1 earns the most points, rank 2 earns slightly fewer, and so on. Players are ranked by their total points, with higher scores indicating better overall performance across all manager rankings.
+                        </p>
+
                         {% if top_players %}
                             <div class="table-responsive">
                                 <table class="table table-striped table-bordered">
                                     <thead class="table-dark">
                                         <tr>
-                                            <th style="width: 80px;">Rank</th>
-                                            <th>Player Name</th>
-                                            <th style="width: 120px;">Borda Count</th>
-                                            <th style="width: 150px;">Average Score</th>
-                                            <th style="width: 120px;">Rankings Received</th>
+                                            <th style="width: 80px;" class="text-center">Rank</th>
+                                            <th class="text-center">Player Name</th>
+                                            <th style="width: 150px;" class="text-center">Average Score</th>
+                                            <th style="width: 120px;" class="text-center">Rankings Received</th>
+                                            <th style="width: 120px;" class="text-center">Borda Count</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -50,9 +54,9 @@
                                             <tr>
                                                 <td class="text-center">{{ forloop.counter }}</td>
                                                 <td>{{ item.player.first_name }} {{ item.player.last_name }}</td>
-                                                <td class="text-center"><strong>{{ item.borda_count }}</strong></td>
-                                                <td class="text-center">{{ item.average_rank|floatformat:2 }}</td>
+                                                <td class="text-center">{{ item.average_rank|floatformat:1 }}</td>
                                                 <td class="text-center">{{ item.num_rankings }}</td>
+                                                <td class="text-center"><strong>{{ item.borda_count }}</strong></td>
                                             </tr>
                                         {% endfor %}
                                     </tbody>
