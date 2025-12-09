@@ -599,6 +599,21 @@ def team_detail_view(request, team_secret):
     # Get all players assigned to this team
     players = team.players.all().order_by('last_name', 'first_name')
 
+    # Check if draft portal is open
+    try:
+        portal_setting = GeneralSetting.objects.get(key='open_draft_portal_to_managers')
+        portal_open = portal_setting.value == 'true'
+    except GeneralSetting.DoesNotExist:
+        portal_open = False
+
+    # Get available players (not yet drafted) if portal is open
+    available_players = []
+    if portal_open:
+        # Get all player IDs that have been drafted
+        drafted_player_ids = DraftPick.objects.filter(player__isnull=False).values_list('player_id', flat=True)
+        # Get players not in that list
+        available_players = Player.objects.exclude(id__in=drafted_player_ids).order_by('last_name', 'first_name')
+
     # Calculate checklist status for this manager
     checklist_items = []
 
@@ -683,7 +698,9 @@ def team_detail_view(request, team_secret):
     context = {
         'team': team,
         'players': players,
-        'checklist_items': checklist_items
+        'checklist_items': checklist_items,
+        'portal_open': portal_open,
+        'available_players': available_players
     }
     return render(request, 'players/team_detail.html', context)
 
