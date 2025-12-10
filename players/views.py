@@ -57,6 +57,19 @@ def division_setup_checklist_view(request):
     team_preferences_complete = (manager_count > 0 and
                                   complete_team_preferences == manager_count)
 
+    # Check manager assignments for fifth checklist item
+    # Count teams without managers
+    teams_without_managers = Team.objects.filter(manager__isnull=True).count()
+
+    # Check if all managers are assigned to teams
+    managers_with_teams = Team.objects.filter(manager__isnull=False).count()
+
+    # Status is complete if every manager has been assigned to a team
+    # (which means teams_without_managers should be 0 and managers_with_teams should equal manager_count)
+    managers_assigned_complete = (manager_count > 0 and
+                                   teams_without_managers == 0 and
+                                   managers_with_teams == manager_count)
+
     # Build checklist items
     checklist_items = [
         {
@@ -95,6 +108,15 @@ def division_setup_checklist_view(request):
             'status': 'complete' if team_preferences_complete else 'incomplete',
             'count': complete_team_preferences,
             'count_label': 'submission(s)'
+        },
+        {
+            'title': 'Assign Managers to Team',
+            'description': 'Analyze the manager\'s team preference and assign managers to teams accordingly.',
+            'link': '/team_preferences/analyze/',
+            'link_text': 'Go to Analysis',
+            'status': 'complete' if managers_assigned_complete else 'incomplete',
+            'count': teams_without_managers,
+            'count_label': 'team(s) without manager(s)'
         }
     ]
 
