@@ -201,7 +201,7 @@ def division_setup_checklist_view(request):
         },
         {
             'title': 'Assign Practice Slots',
-            'description': 'Review the practice slot preferences submitted by managers, then assignment one slot to each team',
+            'description': 'Review the practice slot preferences submitted by managers, then assignment one slot to each team.',
             'link': '/practice_slots/analyze/',
             'link_text': 'Go to Analysis',
             'link_note': 'Click "Assign Practice Slots to Teams"',
@@ -211,7 +211,7 @@ def division_setup_checklist_view(request):
         },
         {
             'title': 'Setup Draft',
-            'description': 'Determine the Draft Order',
+            'description': 'Set the order of the draft.',
             'link': '/draft/edit/',
             'link_text': 'Go to Draft Setup',
             'status': 'complete' if draft_order_complete else 'incomplete',
