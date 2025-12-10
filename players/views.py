@@ -89,7 +89,7 @@ def division_setup_checklist_view(request):
         {
             'title': 'Get Manager Team Preferences',
             'description': 'Email managers the submission form that asks them to stack rank which teams they want to manage.',
-            'link': '/emails/',
+            'link': '/settings/#emails',
             'link_text': 'Go to Emails',
             'link_note': 'Click the "Send Team Preferences Email" button',
             'status': 'complete' if team_preferences_complete else 'incomplete',
