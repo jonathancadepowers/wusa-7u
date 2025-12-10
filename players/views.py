@@ -39,6 +39,10 @@ def division_setup_checklist_view(request):
     team_count = Team.objects.count()
     teams_complete = team_count >= 5
 
+    # Check manager count for third checklist item
+    manager_count = Manager.objects.count()
+    managers_complete = manager_count == team_count and manager_count > 0
+
     # Build checklist items
     checklist_items = [
         {
@@ -58,6 +62,15 @@ def division_setup_checklist_view(request):
             'status': 'complete' if teams_complete else 'incomplete',
             'count': team_count,
             'count_label': 'team(s)'
+        },
+        {
+            'title': 'Create Managers',
+            'description': 'Create all managers/head coaches. Don\'t assign managers to teams just yet.',
+            'link': '/managers/',
+            'link_text': 'Go to Managers',
+            'status': 'complete' if managers_complete else 'incomplete',
+            'count': manager_count,
+            'count_label': 'manager(s)'
         }
     ]
 
