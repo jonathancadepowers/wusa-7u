@@ -474,10 +474,20 @@ def import_players_view(request):
         full_path = default_storage.path(file_path)
 
         # Read Excel file with appropriate engine
-        if excel_file.name.endswith('.xls'):
-            df = pd.read_excel(full_path, engine='xlrd')
-        else:
-            df = pd.read_excel(full_path, engine='openpyxl')
+        # Try to read as Excel first, but fall back to TSV if it's actually a text file
+        try:
+            if excel_file.name.endswith('.xls'):
+                df = pd.read_excel(full_path, engine='xlrd')
+            else:
+                df = pd.read_excel(full_path, engine='openpyxl')
+        except Exception as excel_error:
+            # If reading as Excel fails, try reading as tab-delimited text
+            # This handles cases where .xls files are actually TSV exports
+            try:
+                df = pd.read_csv(full_path, sep='\t', encoding='utf-8')
+            except Exception as csv_error:
+                # If both fail, raise the original Excel error
+                raise excel_error
 
         # Validate required columns
         required_columns = [
