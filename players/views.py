@@ -128,6 +128,15 @@ def division_setup_checklist_view(request):
             'link_note': 'Click "View All Team Secrets"',
             'status': 'na',
             'status_note': 'Status cannot be determined, since this task is performed outside of the website.'
+        },
+        {
+            'title': 'Collect Manager Rankings',
+            'description': 'Once each manager has their "team secret" (see above) then email all managers a link to their team\'s dashboard. At the top of this dashboard will be list of tasks for them to complete, to submit various rankings needed to build the draft. A email has been drafted for you to send.',
+            'link': '/settings/#emails',
+            'link_text': 'Go to Emails',
+            'link_note': 'Click "Send Team Pages to Managers"',
+            'status': 'na',
+            'status_note': 'Status cannot be determined, since this task is performed outside of the website.'
         }
     ]
 
