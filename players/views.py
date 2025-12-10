@@ -115,6 +115,10 @@ def division_setup_checklist_view(request):
             teams_in_draft_order = 0
             draft_order_complete = False
 
+    # Check if all players have been assigned to teams (draft complete)
+    players_without_team = Player.objects.filter(team__isnull=True).count()
+    draft_assignment_complete = (player_count > 0 and players_without_team == 0)
+
     # Build checklist items
     checklist_items = [
         {
@@ -217,6 +221,15 @@ def division_setup_checklist_view(request):
             'status': 'complete' if draft_order_complete else 'incomplete',
             'count': teams_in_draft_order,
             'count_label': 'teams slotted into draft order'
+        },
+        {
+            'title': 'Run the Draft',
+            'description': 'Complete every round of the draft. Once all players have been selected, click the button on the draft board page that assigns drafted players to their teams.',
+            'link': '/draft/run/',
+            'link_text': 'Go to Draft Board',
+            'status': 'complete' if draft_assignment_complete else 'incomplete',
+            'count': players_without_team,
+            'count_label': 'players not assigned to a team'
         }
     ]
 
