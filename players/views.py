@@ -83,6 +83,13 @@ def edit_draft_view(request):
             unassigned_names = [f"{m.first_name} {m.last_name}" for m in unassigned_managers]
             validation_errors.append(f"All managers must be assigned to a team. Unassigned managers: {', '.join(unassigned_names)}")
 
+    # Check 5: Number of managers must equal number of teams
+    if manager_count > 0 and team_count > 0 and manager_count != team_count:
+        if manager_count > team_count:
+            validation_errors.append(f"The number of managers ({manager_count}) must equal the number of teams ({team_count}). You have {manager_count - team_count} more manager(s) than teams.")
+        else:
+            validation_errors.append(f"The number of managers ({manager_count}) must equal the number of teams ({team_count}). You have {team_count - manager_count} more team(s) than managers.")
+
     if request.method == 'POST':
         # Don't allow POST if there are validation errors
         if validation_errors:
