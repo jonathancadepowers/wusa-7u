@@ -81,6 +81,15 @@ def division_setup_checklist_view(request):
     managers_with_daughter_rankings = ManagerDaughterRanking.objects.filter(manager__isnull=False).values_list('manager_id', flat=True).distinct()
     managers_without_daughter_rankings = all_managers.exclude(id__in=managers_with_daughter_rankings)
 
+    # Check practice slot rankings - find teams/managers who haven't submitted practice slot rankings
+    from .models import PracticeSlotRanking
+    all_teams = Team.objects.all()
+    teams_with_practice_rankings = PracticeSlotRanking.objects.filter(team__isnull=False).values_list('team_id', flat=True).distinct()
+    teams_without_practice_rankings = all_teams.exclude(id__in=teams_with_practice_rankings)
+
+    # Check if all teams have been assigned practice slots
+    teams_without_slots = all_teams.filter(practice_slot__isnull=True)
+
     # Build checklist items
     checklist_items = [
         {
@@ -163,7 +172,17 @@ def division_setup_checklist_view(request):
             'link_text': 'Go to Analysis',
             'status': 'complete' if managers_without_daughter_rankings.count() == 0 else 'incomplete',
             'count': managers_without_daughter_rankings.count(),
-            'count_label': 'manager(s) haven\'t submitted manager_daughter_ranking'
+            'count_label': 'manager(s) haven\'t submitted their ranking'
+        },
+        {
+            'title': 'Assign Practice Slots',
+            'description': 'Review the practice slot preferences submitted by managers, then assignment one slot to each team',
+            'link': '/practice_slots/analyze/',
+            'link_text': 'Go to Analysis',
+            'link_note': 'Click "Assign Practice Slots to Teams"',
+            'status': 'complete' if teams_without_slots.count() == 0 else 'incomplete',
+            'count': teams_without_practice_rankings.count(),
+            'count_label': 'manager(s) haven\'t submitted practice slot rankings'
         }
     ]
 
