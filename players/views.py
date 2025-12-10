@@ -119,11 +119,20 @@ def division_setup_checklist_view(request):
             'status': 'complete' if managers_assigned_complete else 'incomplete',
             'count': teams_without_managers,
             'count_label': 'team(s) without manager(s)'
+        },
+        {
+            'title': 'Send Managers "Team Secrets"',
+            'description': 'Each manager will have a dashboard to manage their team. To view this page, they must use their unique "team secret." Managers should not know eachother\'s secrets. Outside of this website, you\'ll need to email or text each manager their team\'s secret.',
+            'link': '/teams/',
+            'link_text': 'Go to Teams',
+            'link_note': 'Click "View All Team Secrets"',
+            'status': 'na',
+            'status_note': 'Status cannot be determined, since this task is performed outside of the website.'
         }
     ]
 
-    # Check if all checklist items are complete
-    all_complete = all(item['status'] == 'complete' for item in checklist_items)
+    # Check if all checklist items are complete (ignoring N/A items)
+    all_complete = all(item['status'] in ['complete', 'na'] for item in checklist_items)
 
     # Update or create season_validated setting
     season_validated_setting, created = GeneralSetting.objects.get_or_create(

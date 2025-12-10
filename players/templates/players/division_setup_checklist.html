@@ -37,6 +37,10 @@
                                                     <span class="badge bg-success">
                                                         <i class="bi bi-check-circle me-1"></i>Complete
                                                     </span>
+                                                {% elif item.status == 'na' %}
+                                                    <span class="badge bg-secondary">
+                                                        <i class="bi bi-dash-circle me-1"></i>N/A
+                                                    </span>
                                                 {% else %}
                                                     <span class="badge bg-warning text-dark">
                                                         <i class="bi bi-clock me-1"></i>Incomplete
@@ -44,6 +48,9 @@
                                                 {% endif %}
                                                 {% if item.count is not None %}
                                                     <br><small class="text-muted"><strong>Current count:</strong> {{ item.count }} {{ item.count_label }}</small>
+                                                {% endif %}
+                                                {% if item.status_note %}
+                                                    <br><small class="text-muted">{{ item.status_note }}</small>
                                                 {% endif %}
                                             </td>
                                             <td class="text-nowrap">
