@@ -90,6 +90,13 @@ def edit_draft_view(request):
         else:
             validation_errors.append(f"The number of managers ({manager_count}) must equal the number of teams ({team_count}). You have {team_count - manager_count} more team(s) than managers.")
 
+    # Check 6: All managers must have a daughter assigned
+    if manager_count > 0:
+        managers_without_daughter = Manager.objects.filter(daughter__isnull=True)
+        if managers_without_daughter.exists():
+            manager_names = [f"{m.first_name} {m.last_name}" for m in managers_without_daughter]
+            validation_errors.append(f"All managers must have a daughter assigned. Managers without a daughter: {', '.join(manager_names)}")
+
     if request.method == 'POST':
         # Don't allow POST if there are validation errors
         if validation_errors:
