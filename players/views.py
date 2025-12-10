@@ -91,6 +91,30 @@ def division_setup_checklist_view(request):
     teams_without_slots = all_teams.filter(practice_slot__isnull=True)
     teams_with_slots = all_teams.filter(practice_slot__isnull=False)
 
+    # Check draft order - see if draft exists and has all teams in order
+    from .models import Draft
+    import json as json_module
+    draft = Draft.objects.first()
+    teams_in_draft_order = 0
+    draft_order_complete = False
+
+    if draft and draft.order:
+        try:
+            order_data = draft.order.strip()
+            if order_data.startswith('['):
+                # JSON format
+                team_ids = json_module.loads(order_data)
+            else:
+                # Comma-separated format
+                team_ids = [int(tid.strip()) for tid in order_data.split(',') if tid.strip()]
+
+            teams_in_draft_order = len(team_ids)
+            # Complete if all teams are in the order
+            draft_order_complete = teams_in_draft_order == team_count and team_count > 0
+        except (json_module.JSONDecodeError, ValueError):
+            teams_in_draft_order = 0
+            draft_order_complete = False
+
     # Build checklist items
     checklist_items = [
         {
@@ -184,6 +208,15 @@ def division_setup_checklist_view(request):
             'status': 'complete' if teams_without_slots.count() == 0 else 'incomplete',
             'count': teams_with_slots.count(),
             'count_label': 'teams assigned to practice slots'
+        },
+        {
+            'title': 'Setup Draft',
+            'description': 'Determine the Draft Order',
+            'link': '/draft/edit/',
+            'link_text': 'Go to Draft Setup',
+            'status': 'complete' if draft_order_complete else 'incomplete',
+            'count': teams_in_draft_order,
+            'count_label': 'teams slotted into draft order'
         }
     ]
 
