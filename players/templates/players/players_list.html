@@ -19,7 +19,7 @@
             <div class="card-body">
                 <!-- Search Bar and Add Button -->
                 <div class="row mb-4 align-items-end">
-                    <div class="col-md-9">
+                    <div class="col-md-5">
                         <form method="get">
                             <div class="input-group">
                                 <input type="text" name="search" class="form-control" placeholder="Search by player name or details..." value="{{ search_query }}">
@@ -35,15 +35,15 @@
                             <input type="hidden" name="order" value="{{ order }}">
                         </form>
                     </div>
-                    <div class="col-md-3 text-end">
-                        <div class="d-flex gap-2 flex-wrap">
-                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#resetTeamsModal" style="flex: 1 1 45%;">
+                    <div class="col-md-7 text-end">
+                        <div class="d-flex gap-2 justify-content-end">
+                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#resetTeamsModal">
                                 Reset Teams
                             </button>
-                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteAllPlayersModal" style="flex: 1 1 45%;">
+                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteAllPlayersModal">
                                 Delete All Players
                             </button>
-                            <a href="{% url 'players:create' %}" class="btn btn-success" style="flex: 1 1 100%;">
+                            <a href="{% url 'players:create' %}" class="btn btn-success">
                                 <i class="bi bi-plus-circle me-1"></i>Add New Player
                             </a>
                         </div>
