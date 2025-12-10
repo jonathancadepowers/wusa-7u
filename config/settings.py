@@ -144,26 +144,29 @@ from urllib.parse import urlparse
 redis_url = os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379')
 
 if redis_url.startswith('rediss://'):
-    # Parse the Redis URL to extract components
-    parsed = urlparse(redis_url)
+    # For Heroku Redis with SSL, use connection pool with SSL params
+    import redis
 
     # Create SSL context that doesn't verify certificates
     ssl_context = ssl.create_default_context()
     ssl_context.check_hostname = False
     ssl_context.verify_mode = ssl.CERT_NONE
 
-    # Build connection params for channels-redis
-    connection_kwargs = {
-        'password': parsed.password,
-        'ssl': ssl_context,
-    }
+    # Parse the Redis URL
+    parsed = urlparse(redis_url)
 
     CHANNEL_LAYERS = {
         'default': {
             'BACKEND': 'channels_redis.core.RedisChannelLayer',
             'CONFIG': {
                 "hosts": [
-                    (parsed.hostname, parsed.port or 6379, connection_kwargs)
+                    {
+                        'host': parsed.hostname,
+                        'port': parsed.port or 6379,
+                        'password': parsed.password,
+                        'ssl': True,
+                        'ssl_cert_reqs': None,
+                    }
                 ],
             },
         },
