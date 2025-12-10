@@ -30,7 +30,26 @@ def settings_view(request):
 
 def division_setup_checklist_view(request):
     """Division setup checklist page"""
-    context = {}
+
+    # Check player count for first checklist item
+    player_count = Player.objects.count()
+    players_complete = player_count >= 10
+
+    # Build checklist items
+    checklist_items = [
+        {
+            'title': 'Create Players',
+            'description': 'Export all players for this division from TeamSideline (as an .xlsx file) and then upload them.',
+            'link': '/settings/#player-data-import',
+            'link_text': 'Go to Player Data Import',
+            'status': 'complete' if players_complete else 'incomplete',
+            'count': player_count
+        }
+    ]
+
+    context = {
+        'checklist_items': checklist_items
+    }
     return render(request, 'players/division_setup_checklist.html', context)
 
 

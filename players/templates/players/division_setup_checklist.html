@@ -13,7 +13,39 @@
                         <h4 class="mb-0"><i class="bi bi-list-check me-2"></i>Division Setup Checklist</h4>
                     </div>
                     <div class="card-body">
-                        <p class="lead">This page is under construction. Content will be added soon.</p>
+                        <p class="lead mb-4">Complete all the steps below to prepare your division for the season.</p>
+
+                        <div class="list-group">
+                            {% for item in checklist_items %}
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex align-items-center mb-2">
+                                                {% if item.status == 'complete' %}
+                                                    <span class="badge bg-success me-2">
+                                                        <i class="bi bi-check-circle me-1"></i>Complete
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge bg-warning text-dark me-2">
+                                                        <i class="bi bi-clock me-1"></i>Incomplete
+                                                    </span>
+                                                {% endif %}
+                                                <h5 class="mb-0">{{ item.title }}</h5>
+                                            </div>
+                                            <p class="text-muted mb-2">{{ item.description }}</p>
+                                            {% if item.count is not None %}
+                                                <p class="text-muted mb-2">
+                                                    <small><strong>Current count:</strong> {{ item.count }} player(s)</small>
+                                                </p>
+                                            {% endif %}
+                                            <a href="{{ item.link }}" class="btn btn-sm btn-primary">
+                                                <i class="bi bi-arrow-right me-1"></i>{{ item.link_text }}
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
 
                         <div class="mt-4">
                             <a href="{% url 'players:settings' %}" class="btn btn-secondary">
