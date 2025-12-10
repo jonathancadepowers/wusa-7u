@@ -47,7 +47,8 @@ def division_setup_checklist_view(request):
             'link': '/settings/#player-data-import',
             'link_text': 'Go to Player Data Import',
             'status': 'complete' if players_complete else 'incomplete',
-            'count': player_count
+            'count': player_count,
+            'count_label': 'player(s)'
         },
         {
             'title': 'Create Teams',
@@ -55,7 +56,8 @@ def division_setup_checklist_view(request):
             'link': '/teams/',
             'link_text': 'Go to Teams',
             'status': 'complete' if teams_complete else 'incomplete',
-            'count': team_count
+            'count': team_count,
+            'count_label': 'team(s)'
         }
     ]
 
