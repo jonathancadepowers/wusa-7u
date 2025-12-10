@@ -47,6 +47,22 @@ def division_setup_checklist_view(request):
         }
     ]
 
+    # Check if all checklist items are complete
+    all_complete = all(item['status'] == 'complete' for item in checklist_items)
+
+    # Update or create season_validated setting
+    season_validated_setting, created = GeneralSetting.objects.get_or_create(
+        key='season_validated',
+        defaults={'value': 'true' if all_complete else 'false'}
+    )
+
+    # Update the value if it already existed
+    if not created:
+        new_value = 'true' if all_complete else 'false'
+        if season_validated_setting.value != new_value:
+            season_validated_setting.value = new_value
+            season_validated_setting.save()
+
     context = {
         'checklist_items': checklist_items
     }
