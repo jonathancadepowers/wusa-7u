@@ -134,6 +134,14 @@ def edit_draft_view(request):
     # Get all teams for draft order
     all_teams = Team.objects.all().order_by('name')
 
+    # Calculate max players per team (ceiling of total players / number of teams)
+    team_count = all_teams.count()
+    if team_count > 0:
+        import math
+        max_players_per_team = math.ceil(player_count / team_count)
+    else:
+        max_players_per_team = 0
+
     # Parse existing draft order if it exists
     ordered_team_ids = []
     if draft and draft.order:
@@ -170,6 +178,7 @@ def edit_draft_view(request):
         'all_teams': all_teams,
         'ordered_team_ids': ordered_team_ids,
         'player_count': player_count,
+        'max_players_per_team': max_players_per_team,
         'needs_extra_round': needs_extra_round,
         'total_regular_picks': total_regular_picks,
         'extra_picks_needed': extra_picks_needed,

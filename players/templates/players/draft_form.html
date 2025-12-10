@@ -104,23 +104,27 @@
                         <div class="card mb-4 bg-light">
                             <div class="card-body">
                                 <div class="row">
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <label class="form-label text-muted">Total Players</label>
                                         <p class="fs-5 mb-0">{{ player_count }}</p>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <label class="form-label text-muted">Number of Rounds</label>
                                         <p class="fs-5 mb-0">{% if draft %}{{ draft.rounds }}{% else %}{{ suggested_rounds }}{% endif %}</p>
                                         {% if is_create %}
                                             <small class="text-muted">Calculated as: Total Players / Number of Teams</small>
                                         {% endif %}
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <label class="form-label text-muted">Picks Per Round</label>
                                         <p class="fs-5 mb-0">{% if draft %}{{ draft.picks_per_round }}{% else %}{{ suggested_picks_per_round }}{% endif %}</p>
                                         {% if is_create %}
                                             <small class="text-muted">Equal to the number of teams in the database</small>
                                         {% endif %}
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label text-muted">Max Players Per Team</label>
+                                        <p class="fs-5 mb-0">{{ max_players_per_team }}</p>
                                     </div>
                                 </div>
                             </div>
