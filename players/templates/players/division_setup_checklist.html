@@ -19,15 +19,17 @@
                             <table class="table table-hover">
                                 <thead class="table-light">
                                     <tr>
+                                        <th style="width: 8%;">Task #</th>
                                         <th style="width: 15%;">Title</th>
-                                        <th style="width: 35%;">Description</th>
-                                        <th style="width: 25%;">Status</th>
-                                        <th style="width: 25%;">Link</th>
+                                        <th style="width: 32%;">Description</th>
+                                        <th style="width: 23%;">Status</th>
+                                        <th style="width: 22%;">Link</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for item in checklist_items %}
                                         <tr>
+                                            <td><strong>{{ forloop.counter }}</strong></td>
                                             <td><strong>{{ item.title }}</strong></td>
                                             <td>{{ item.description }}</td>
                                             <td>
