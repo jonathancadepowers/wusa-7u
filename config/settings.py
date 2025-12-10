@@ -146,17 +146,13 @@ redis_url = os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379')
 if redis_url.startswith('rediss://'):
     # For Heroku Redis with SSL, disable certificate verification
     # Heroku uses self-signed certificates which require ssl_cert_reqs: None
-    parsed = urlparse(redis_url)
-
     CHANNEL_LAYERS = {
         'default': {
             'BACKEND': 'channels_redis.core.RedisChannelLayer',
             'CONFIG': {
                 "hosts": [
                     {
-                        'address': (parsed.hostname, parsed.port or 6379),
-                        'password': parsed.password,
-                        'ssl': True,
+                        'address': redis_url,
                         'ssl_cert_reqs': None,
                     }
                 ],
