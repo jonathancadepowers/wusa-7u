@@ -43,6 +43,20 @@ def division_setup_checklist_view(request):
     manager_count = Manager.objects.count()
     managers_complete = manager_count == team_count and manager_count > 0
 
+    # Check team preferences for fourth checklist item
+    # Count complete submissions (where manager has ranked ALL teams)
+    complete_team_preferences = 0
+    for manager in Manager.objects.all():
+        team_pref = TeamPreference.objects.filter(manager=manager).first()
+        if team_pref and team_pref.preferences:
+            # Check if all teams are ranked
+            if len(team_pref.preferences) == team_count:
+                complete_team_preferences += 1
+
+    # Status is complete if every manager has submitted preferences
+    team_preferences_complete = (manager_count > 0 and
+                                  complete_team_preferences == manager_count)
+
     # Build checklist items
     checklist_items = [
         {
@@ -71,6 +85,16 @@ def division_setup_checklist_view(request):
             'status': 'complete' if managers_complete else 'incomplete',
             'count': manager_count,
             'count_label': 'manager(s)'
+        },
+        {
+            'title': 'Get Manager Team Preferences',
+            'description': 'Email managers the submission form that asks them to stack rank which teams they want to manage.',
+            'link': '/emails/',
+            'link_text': 'Go to Emails',
+            'link_note': 'Click the "Send Team Preferences Email" button',
+            'status': 'complete' if team_preferences_complete else 'incomplete',
+            'count': complete_team_preferences,
+            'count_label': 'submission(s)'
         }
     ]
 
