@@ -106,7 +106,7 @@ def division_setup_checklist_view(request):
             'description': 'Email managers the submission form that asks them to stack rank which teams they want to manage.',
             'link': '/settings/#emails',
             'link_text': 'Go to Emails',
-            'link_note': 'Click the "Send Team Preferences Email" button',
+            'link_note': 'Click "Send Team Preferences Email"',
             'status': 'complete' if team_preferences_complete else 'incomplete',
             'count': complete_team_preferences,
             'count_label': 'submission(s)'
