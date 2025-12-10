@@ -1094,13 +1094,17 @@ def teams_list_view(request):
     # Get unassigned managers
     unassigned_managers = Manager.objects.filter(teams__isnull=True).order_by('last_name', 'first_name')
 
+    # Get all teams with manager info for the secrets modal
+    all_teams = Team.objects.select_related('manager').filter(manager__isnull=False).order_by('name')
+
     context = {
         'page_obj': page_obj,
         'search_query': search_query,
         'sort_by': sort_by,
         'order': order,
         'total_teams': Team.objects.count(),
-        'unassigned_managers': unassigned_managers
+        'unassigned_managers': unassigned_managers,
+        'all_teams': all_teams
     }
     return render(request, 'players/teams_list.html', context)
 
