@@ -163,7 +163,7 @@ def division_setup_checklist_view(request):
             'link_text': 'Go to Analysis',
             'status': 'complete' if managers_without_rankings.count() == 0 else 'incomplete',
             'count': managers_without_rankings.count(),
-            'count_label': 'manager(s) haven\'t submitted rankings'
+            'count_label': 'Missing ranking from managers'
         },
         {
             'title': 'Analyze Manager\'s Daughters Rankings',
@@ -172,7 +172,7 @@ def division_setup_checklist_view(request):
             'link_text': 'Go to Analysis',
             'status': 'complete' if managers_without_daughter_rankings.count() == 0 else 'incomplete',
             'count': managers_without_daughter_rankings.count(),
-            'count_label': 'manager(s) haven\'t submitted their ranking'
+            'count_label': 'Missing ranking from managers'
         },
         {
             'title': 'Assign Practice Slots',
@@ -182,7 +182,7 @@ def division_setup_checklist_view(request):
             'link_note': 'Click "Assign Practice Slots to Teams"',
             'status': 'complete' if teams_without_slots.count() == 0 else 'incomplete',
             'count': teams_without_practice_rankings.count(),
-            'count_label': 'manager(s) haven\'t submitted practice slot rankings'
+            'count_label': 'Missing submission from managers'
         }
     ]
 
