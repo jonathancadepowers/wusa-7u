@@ -15,34 +15,46 @@
                     <div class="card-body">
                         <p class="lead mb-4">Complete all the steps below to prepare your division for the season.</p>
 
-                        <div class="row g-3">
-                            {% for item in checklist_items %}
-                                <div class="col-md-6">
-                                    <div class="card h-100 {% if item.status == 'complete' %}border-success{% else %}border-warning{% endif %}">
-                                        <div class="card-header {% if item.status == 'complete' %}bg-success text-white{% else %}bg-warning text-dark{% endif %}">
-                                            <h5 class="mb-0">
-                                                {% if item.status == 'complete' %}
-                                                    <i class="bi bi-check-circle me-2"></i>
-                                                {% else %}
-                                                    <i class="bi bi-clock me-2"></i>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Description</th>
+                                        <th>Status</th>
+                                        <th>Link</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in checklist_items %}
+                                        <tr>
+                                            <td><strong>{{ item.title }}</strong></td>
+                                            <td>
+                                                {{ item.description }}
+                                                {% if item.count is not None %}
+                                                    <br><small class="text-muted"><strong>Current count:</strong> {{ item.count }} player(s)</small>
                                                 {% endif %}
-                                                {{ item.title }}
-                                            </h5>
-                                        </div>
-                                        <div class="card-body">
-                                            <p class="card-text">{{ item.description }}</p>
-                                            {% if item.count is not None %}
-                                                <p class="text-muted mb-3">
-                                                    <small><strong>Current count:</strong> {{ item.count }} player(s)</small>
-                                                </p>
-                                            {% endif %}
-                                            <a href="{{ item.link }}" class="btn btn-primary">
-                                                <i class="bi bi-arrow-right me-1"></i>{{ item.link_text }}
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            {% endfor %}
+                                            </td>
+                                            <td>
+                                                {% if item.status == 'complete' %}
+                                                    <span class="badge bg-success">
+                                                        <i class="bi bi-check-circle me-1"></i>Complete
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge bg-warning text-dark">
+                                                        <i class="bi bi-clock me-1"></i>Incomplete
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <a href="{{ item.link }}" class="btn btn-sm btn-primary">
+                                                    <i class="bi bi-arrow-right me-1"></i>{{ item.link_text }}
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
                         </div>
 
                         <div class="mt-4">
