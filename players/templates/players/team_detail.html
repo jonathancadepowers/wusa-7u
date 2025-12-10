@@ -165,30 +165,24 @@
                                             Name <i class="bi"></i>
                                         </th>
                                         <th style="cursor: pointer;" onclick="sortDraftedPlayersTable(1)">
-                                            History <i class="bi"></i>
+                                            Birthday <i class="bi"></i>
                                         </th>
                                         <th style="cursor: pointer;" onclick="sortDraftedPlayersTable(2)">
-                                            Conflict <i class="bi"></i>
+                                            School <i class="bi"></i>
                                         </th>
                                         <th style="cursor: pointer;" onclick="sortDraftedPlayersTable(3)">
-                                            Draftable <i class="bi"></i>
+                                            History <i class="bi"></i>
                                         </th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for player in drafted_players %}
-                                    <tr data-player-id="{{ player.id }}">
+                                    <tr data-player-id="{{ player.id }}" data-player-pk="{{ player.pk }}">
                                         <td><strong>{{ player.first_name }} {{ player.last_name }}</strong></td>
+                                        <td>{{ player.birthday|default:"-" }}</td>
+                                        <td>{{ player.school|default:"-" }}</td>
                                         <td>{{ player.history|default:"-" }}</td>
-                                        <td>{{ player.conflict|default:"-" }}</td>
-                                        <td>
-                                            {% if player.draftable %}
-                                                <span class="badge bg-success">Yes</span>
-                                            {% else %}
-                                                <span class="badge bg-danger">No</span>
-                                            {% endif %}
-                                        </td>
                                         <td>
                                             <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#draftedPlayerModal{{ player.pk }}" title="View Details">
                                                 <i class="bi bi-eye"></i>
@@ -639,13 +633,13 @@
                 if (aValue === '-') return 1;
                 if (bValue === '-') return -1;
 
-                // Handle "Yes"/"No" for Draftable column (index 3)
-                if (columnIndex === 3) {
-                    const aVal = aValue.toLowerCase();
-                    const bVal = bValue.toLowerCase();
-                    if (aVal === bVal) return 0;
-                    if (aVal === 'yes') return isAscending ? -1 : 1;
-                    if (bVal === 'yes') return isAscending ? 1 : -1;
+                // Try to parse as date for birthday column (index 1)
+                if (columnIndex === 1) {
+                    const aDate = new Date(aValue);
+                    const bDate = new Date(bValue);
+                    if (!isNaN(aDate) && !isNaN(bDate)) {
+                        return isAscending ? aDate - bDate : bDate - aDate;
+                    }
                 }
 
                 // Default string comparison
@@ -924,16 +918,13 @@
                 const tbody = draftedTable.querySelector('tbody');
                 const newRow = document.createElement('tr');
                 newRow.setAttribute('data-player-id', data.player_id);
-
-                const draftableBadge = data.player_draftable ?
-                    '<span class="badge bg-success">Yes</span>' :
-                    '<span class="badge bg-danger">No</span>';
+                newRow.setAttribute('data-player-pk', data.player_id);
 
                 newRow.innerHTML = `
                     <td><strong>${data.player_name}</strong></td>
+                    <td>${data.player_birthday || '-'}</td>
+                    <td>${data.player_school || '-'}</td>
                     <td>${data.player_history || '-'}</td>
-                    <td>${data.player_conflict || '-'}</td>
-                    <td>${draftableBadge}</td>
                     <td>
                         <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#draftedPlayerModal${data.player_id}" title="View Details">
                             <i class="bi bi-eye"></i>

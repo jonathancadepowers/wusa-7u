@@ -1604,6 +1604,8 @@ def make_pick_view(request):
                 'type': 'draft_update',
                 'player_id': player.id,
                 'player_name': f"{player.first_name} {player.last_name}",
+                'player_birthday': str(player.birthday) if player.birthday else None,
+                'player_school': player.school,
                 'player_history': player.history,
                 'player_conflict': player.conflict,
                 'player_draftable': player.draftable,
@@ -1654,6 +1656,8 @@ def undraft_pick_view(request):
             player = draft_pick.player
             player_id = player.id if player else None
             player_name = f"{player.first_name} {player.last_name}" if player else None
+            player_birthday = str(player.birthday) if (player and player.birthday) else None
+            player_school = player.school if player else None
             player_history = player.history if player else None
             player_conflict = player.conflict if player else None
             player_draftable = player.draftable if player else None
@@ -1672,6 +1676,8 @@ def undraft_pick_view(request):
                         'type': 'undraft_update',
                         'player_id': player_id,
                         'player_name': player_name,
+                        'player_birthday': player_birthday,
+                        'player_school': player_school,
                         'player_history': player_history,
                         'player_conflict': player_conflict,
                         'player_draftable': player_draftable,
