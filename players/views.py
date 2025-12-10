@@ -1793,6 +1793,28 @@ def reset_teams_view(request):
 
 
 @csrf_exempt
+def delete_all_players_view(request):
+    """Delete all players from the database (DANGEROUS - for testing only)"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+    try:
+        # Count players to be deleted
+        count = Player.objects.count()
+
+        # Delete all players (this will cascade delete related records)
+        Player.objects.all().delete()
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Successfully deleted {count} players and all related data.'
+        })
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+@csrf_exempt
 def assign_players_to_teams_view(request):
     """Assign all drafted players to their teams based on draft picks"""
     if request.method != 'POST':
