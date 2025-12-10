@@ -473,8 +473,11 @@ def import_players_view(request):
         file_path = default_storage.save(f'tmp/{excel_file.name}', ContentFile(excel_file.read()))
         full_path = default_storage.path(file_path)
 
-        # Read Excel file
-        df = pd.read_excel(full_path)
+        # Read Excel file with appropriate engine
+        if excel_file.name.endswith('.xls'):
+            df = pd.read_excel(full_path, engine='xlrd')
+        else:
+            df = pd.read_excel(full_path, engine='openpyxl')
 
         # Validate required columns
         required_columns = [
