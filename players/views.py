@@ -78,7 +78,7 @@ def edit_draft_view(request):
 
     # Check 4: All managers must be assigned to exactly one team
     if manager_count > 0:
-        unassigned_managers = Manager.objects.filter(team__isnull=True)
+        unassigned_managers = Manager.objects.filter(teams__isnull=True)
         if unassigned_managers.exists():
             unassigned_names = [f"{m.first_name} {m.last_name}" for m in unassigned_managers]
             validation_errors.append(f"All managers must be assigned to a team. Unassigned managers: {', '.join(unassigned_names)}")
