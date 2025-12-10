@@ -221,6 +221,78 @@
                     </div>
                 </div>
                 {% endif %}
+
+                <!-- Drafted Players Section -->
+                {% if portal_open %}
+                <div class="card bg-light border-success mb-4">
+                    <div class="card-header bg-success text-white" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#draftedPlayersCollapse">
+                        <h5 class="mb-0">
+                            <i class="bi bi-check-circle me-2"></i>Drafted Players
+                            <i class="bi bi-chevron-down float-end"></i>
+                        </h5>
+                    </div>
+                    <div class="collapse show" id="draftedPlayersCollapse">
+                        <div class="card-body">
+                        {% if drafted_players %}
+                        <!-- Search Box -->
+                        <div class="mb-3">
+                            <input type="text" id="draftedPlayersSearch" class="form-control" placeholder="Search by player name...">
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="draftedPlayersTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="cursor: pointer;" onclick="sortDraftedPlayersTable(0)">
+                                            Name <i class="bi"></i>
+                                        </th>
+                                        <th style="cursor: pointer;" onclick="sortDraftedPlayersTable(1)">
+                                            History <i class="bi"></i>
+                                        </th>
+                                        <th style="cursor: pointer;" onclick="sortDraftedPlayersTable(2)">
+                                            Conflict <i class="bi"></i>
+                                        </th>
+                                        <th style="cursor: pointer;" onclick="sortDraftedPlayersTable(3)">
+                                            Draftable <i class="bi"></i>
+                                        </th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for player in drafted_players %}
+                                    <tr data-player-id="{{ player.id }}">
+                                        <td><strong>{{ player.first_name }} {{ player.last_name }}</strong></td>
+                                        <td>{{ player.history|default:"-" }}</td>
+                                        <td>{{ player.conflict|default:"-" }}</td>
+                                        <td>
+                                            {% if player.draftable %}
+                                                <span class="badge bg-success">Yes</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">No</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#draftedPlayerModal{{ player.pk }}" title="View Details">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="text-muted mt-3">
+                            <strong>Total Drafted Players:</strong> <span id="draftedPlayersCount">{{ drafted_players|length }}</span>
+                        </p>
+                        {% else %}
+                        <div class="alert alert-info mb-0">
+                            <i class="bi bi-info-circle me-2"></i>
+                            No players drafted yet.
+                        </div>
+                        {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -382,6 +454,77 @@
     </div>
     {% endfor %}
     {% endif %}
+
+    <!-- Drafted Player Detail Modals -->
+    {% if portal_open %}
+    {% for player in drafted_players %}
+    <div class="modal fade" id="draftedPlayerModal{{ player.pk }}" tabindex="-1" aria-labelledby="draftedPlayerModalLabel{{ player.pk }}" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="draftedPlayerModalLabel{{ player.pk }}">
+                        <i class="bi bi-person-circle me-2"></i>{{ player.first_name }} {{ player.last_name }}
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted border-bottom pb-2 mb-3">Personal Information</h6>
+                            <p><strong>First Name:</strong> {{ player.first_name }}</p>
+                            <p><strong>Last Name:</strong> {{ player.last_name }}</p>
+                            <p><strong>Birthday:</strong> {{ player.birthday|default:"-" }}</p>
+                            <p><strong>School:</strong> {{ player.school|default:"-" }}</p>
+                            <p><strong>Jersey Size:</strong> {{ player.jersey_size|default:"-" }}</p>
+                            <p><strong>History:</strong> {{ player.history|default:"-" }}</p>
+                            <p><strong>Conflict:</strong> {{ player.conflict|default:"-" }}</p>
+                            <p><strong>Draftable:</strong>
+                                {% if player.draftable %}
+                                    <span class="badge bg-success">Yes</span>
+                                {% else %}
+                                    <span class="badge bg-danger">No</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted border-bottom pb-2 mb-3">Contact Information</h6>
+                            <p><strong>Parent 1 Name:</strong> {{ player.parent_name_1|default:"-" }}</p>
+                            <p><strong>Parent 1 Email:</strong> {{ player.parent_email_1|default:"-" }}</p>
+                            <p><strong>Parent 1 Phone:</strong> {{ player.parent_phone_1|default:"-" }}</p>
+                            <p class="mt-3"><strong>Parent 2 Name:</strong> {{ player.parent_name_2|default:"-" }}</p>
+                            <p><strong>Parent 2 Email:</strong> {{ player.parent_email_2|default:"-" }}</p>
+                            <p><strong>Parent 2 Phone:</strong> {{ player.parent_phone_2|default:"-" }}</p>
+                        </div>
+                    </div>
+                    {% if player.manager_volunteer_name or player.manager_volunteer_email or player.manager_volunteer_phone %}
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6 class="text-muted border-bottom pb-2 mb-3">Manager Volunteer Information</h6>
+                            <p><strong>Name:</strong> {{ player.manager_volunteer_name|default:"-" }}</p>
+                            <p><strong>Email:</strong> {{ player.manager_volunteer_email|default:"-" }}</p>
+                            <p><strong>Phone:</strong> {{ player.manager_volunteer_phone|default:"-" }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if player.coach_volunteer_name or player.coach_volunteer_email or player.coach_volunteer_phone %}
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6 class="text-muted border-bottom pb-2 mb-3">Coach Volunteer Information</h6>
+                            <p><strong>Name:</strong> {{ player.coach_volunteer_name|default:"-" }}</p>
+                            <p><strong>Email:</strong> {{ player.coach_volunteer_email|default:"-" }}</p>
+                            <p><strong>Phone:</strong> {{ player.coach_volunteer_phone|default:"-" }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    {% endif %}
 {% endblock %}
 
 {% block extra_js %}
@@ -443,6 +586,66 @@
                     if (!isNaN(aDate) && !isNaN(bDate)) {
                         return isAscending ? aDate - bDate : bDate - aDate;
                     }
+                }
+
+                // Default string comparison
+                const comparison = aValue.localeCompare(bValue);
+                return isAscending ? comparison : -comparison;
+            });
+
+            // Clear tbody and re-append sorted rows
+            tbody.innerHTML = '';
+            rows.forEach(row => tbody.appendChild(row));
+
+            // Update sort indicators
+            const headers = table.querySelectorAll('th');
+            headers.forEach((header, index) => {
+                const icon = header.querySelector('i');
+                if (icon) {
+                    if (index === columnIndex) {
+                        icon.className = isAscending ? 'bi bi-arrow-up' : 'bi bi-arrow-down';
+                    } else {
+                        icon.className = 'bi';
+                    }
+                }
+            });
+        }
+
+        // Drafted Players Table sorting function
+        let draftedPlayersSortDirection = {};
+
+        function sortDraftedPlayersTable(columnIndex) {
+            const table = document.getElementById('draftedPlayersTable');
+            if (!table) return;
+
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+
+            // Initialize sort direction for this column if not set
+            if (draftedPlayersSortDirection[columnIndex] === undefined) {
+                draftedPlayersSortDirection[columnIndex] = true; // true = ascending
+            } else {
+                draftedPlayersSortDirection[columnIndex] = !draftedPlayersSortDirection[columnIndex];
+            }
+
+            const isAscending = draftedPlayersSortDirection[columnIndex];
+
+            rows.sort((a, b) => {
+                const aValue = a.cells[columnIndex].textContent.trim();
+                const bValue = b.cells[columnIndex].textContent.trim();
+
+                // Handle empty values (represented as "-")
+                if (aValue === '-' && bValue === '-') return 0;
+                if (aValue === '-') return 1;
+                if (bValue === '-') return -1;
+
+                // Handle "Yes"/"No" for Draftable column (index 3)
+                if (columnIndex === 3) {
+                    const aVal = aValue.toLowerCase();
+                    const bVal = bValue.toLowerCase();
+                    if (aVal === bVal) return 0;
+                    if (aVal === 'yes') return isAscending ? -1 : 1;
+                    if (bVal === 'yes') return isAscending ? 1 : -1;
                 }
 
                 // Default string comparison
@@ -586,6 +789,28 @@
                 });
             }
 
+            // Drafted Players Search function
+            const draftedSearchInput = document.getElementById('draftedPlayersSearch');
+            if (draftedSearchInput) {
+                draftedSearchInput.addEventListener('keyup', function() {
+                    const searchValue = this.value.toLowerCase();
+                    const table = document.getElementById('draftedPlayersTable');
+                    if (!table) return;
+                    const rows = table.querySelectorAll('tbody tr');
+
+                    rows.forEach(row => {
+                        const nameCell = row.cells[0]; // First column is Name
+                        const nameText = nameCell.textContent.toLowerCase();
+
+                        if (nameText.includes(searchValue)) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    });
+                });
+            }
+
             // Handle star clicks
             const starIcons = document.querySelectorAll('.star-icon');
             starIcons.forEach(icon => {
@@ -639,12 +864,13 @@
 
             draftSocket.onmessage = function(e) {
                 const data = JSON.parse(e.data);
+                const currentTeamId = {{ team.id }};
 
                 if (data.type === 'draft_update') {
                     // Remove the drafted player from the available players table
-                    const table = document.getElementById('availablePlayersTable');
-                    if (table) {
-                        const rows = table.querySelectorAll('tbody tr');
+                    const availableTable = document.getElementById('availablePlayersTable');
+                    if (availableTable) {
+                        const rows = availableTable.querySelectorAll('tbody tr');
                         rows.forEach(row => {
                             const viewButton = row.querySelector('button[data-bs-target]');
                             if (viewButton) {
@@ -658,8 +884,24 @@
                         });
                     }
 
+                    // If this team drafted the player, add to drafted players table
+                    if (data.team_id === currentTeamId) {
+                        addPlayerToDraftedTable(data);
+                    }
+
                     // Show flash message
                     showDraftNotification(data.team_name, data.player_name, data.round, data.pick);
+                } else if (data.type === 'undraft_update') {
+                    // If this team's player was undrafted, remove from drafted table
+                    if (data.team_id === currentTeamId) {
+                        removePlayerFromDraftedTable(data.player_id);
+                    }
+
+                    // Add player back to available players table
+                    addPlayerToAvailableTable(data);
+
+                    // Show undraft flash message
+                    showUndraftNotification(data.team_name, data.player_name, data.round, data.pick);
                 }
             };
 
@@ -671,6 +913,95 @@
                 console.error('WebSocket error:', e);
             };
 
+            function addPlayerToDraftedTable(data) {
+                const draftedTable = document.getElementById('draftedPlayersTable');
+                if (!draftedTable) {
+                    // Table doesn't exist yet (no drafted players), need to reload page
+                    location.reload();
+                    return;
+                }
+
+                const tbody = draftedTable.querySelector('tbody');
+                const newRow = document.createElement('tr');
+                newRow.setAttribute('data-player-id', data.player_id);
+
+                const draftableBadge = data.player_draftable ?
+                    '<span class="badge bg-success">Yes</span>' :
+                    '<span class="badge bg-danger">No</span>';
+
+                newRow.innerHTML = `
+                    <td><strong>${data.player_name}</strong></td>
+                    <td>${data.player_history || '-'}</td>
+                    <td>${data.player_conflict || '-'}</td>
+                    <td>${draftableBadge}</td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#draftedPlayerModal${data.player_id}" title="View Details">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </td>
+                `;
+
+                tbody.appendChild(newRow);
+
+                // Update count
+                const countSpan = document.getElementById('draftedPlayersCount');
+                if (countSpan) {
+                    const currentCount = parseInt(countSpan.textContent) || 0;
+                    countSpan.textContent = currentCount + 1;
+                }
+            }
+
+            function removePlayerFromDraftedTable(playerId) {
+                const draftedTable = document.getElementById('draftedPlayersTable');
+                if (!draftedTable) return;
+
+                const rows = draftedTable.querySelectorAll('tbody tr');
+                rows.forEach(row => {
+                    if (row.getAttribute('data-player-id') == playerId) {
+                        row.remove();
+
+                        // Update count
+                        const countSpan = document.getElementById('draftedPlayersCount');
+                        if (countSpan) {
+                            const currentCount = parseInt(countSpan.textContent) || 0;
+                            countSpan.textContent = Math.max(0, currentCount - 1);
+                        }
+                    }
+                });
+            }
+
+            function addPlayerToAvailableTable(data) {
+                const availableTable = document.getElementById('availablePlayersTable');
+                if (!availableTable) return;
+
+                const tbody = availableTable.querySelector('tbody');
+                const newRow = document.createElement('tr');
+
+                const draftableBadge = data.player_draftable ?
+                    '<span class="badge bg-success">Yes</span>' :
+                    '<span class="badge bg-danger">No</span>';
+
+                newRow.innerHTML = `
+                    <td><strong>${data.player_name}</strong></td>
+                    <td>${data.player_history || '-'}</td>
+                    <td>${data.player_conflict || '-'}</td>
+                    <td>${draftableBadge}</td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#availablePlayerModal${data.player_id}" title="View Details">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </td>
+                    <td class="text-center">
+                        <i class="bi bi-star star-icon"
+                           data-player-id="${data.player_id}"
+                           style="cursor: pointer; color: #ddd; font-size: 1.2rem;"
+                           title="Star player"></i>
+                    </td>
+                `;
+
+                tbody.appendChild(newRow);
+            }
+
             function showDraftNotification(teamName, playerName, round, pick) {
                 // Create flash message element
                 const alertDiv = document.createElement('div');
@@ -680,6 +1011,29 @@
                 alertDiv.innerHTML = `
                     <strong>Draft Update!</strong><br>
                     <strong>${teamName}</strong> drafted <strong>${playerName}</strong> (Round ${round}, Pick ${pick})
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                `;
+
+                document.body.appendChild(alertDiv);
+
+                // Auto-dismiss after 5 seconds
+                setTimeout(() => {
+                    alertDiv.classList.remove('show');
+                    setTimeout(() => {
+                        alertDiv.remove();
+                    }, 150);
+                }, 5000);
+            }
+
+            function showUndraftNotification(teamName, playerName, round, pick) {
+                // Create flash message element
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-warning alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+                alertDiv.style.zIndex = '9999';
+                alertDiv.style.minWidth = '400px';
+                alertDiv.innerHTML = `
+                    <strong>Undraft Update!</strong><br>
+                    <strong>${teamName}</strong> undrafted <strong>${playerName}</strong> (Round ${round}, Pick ${pick})
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 `;
 

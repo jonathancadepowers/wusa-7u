@@ -606,14 +606,18 @@ def team_detail_view(request, team_secret):
     except GeneralSetting.DoesNotExist:
         portal_open = False
 
-    # Get available players (not yet drafted) if portal is open
+    # Get available players (not yet drafted) and drafted players if portal is open
     available_players = []
+    drafted_players = []
     starred_player_ids = set()
     if portal_open:
         # Get all player IDs that have been drafted
         drafted_player_ids = DraftPick.objects.filter(player__isnull=False).values_list('player_id', flat=True)
         # Get players not in that list
         available_players = Player.objects.exclude(id__in=drafted_player_ids).order_by('last_name', 'first_name')
+        # Get players drafted by this team
+        drafted_picks = DraftPick.objects.filter(team=team, player__isnull=False).select_related('player').order_by('round', 'pick')
+        drafted_players = [pick.player for pick in drafted_picks]
         # Get starred player IDs for this team
         starred_player_ids = set(StarredDraftPick.objects.filter(team=team).values_list('player_id', flat=True))
 
@@ -704,6 +708,7 @@ def team_detail_view(request, team_secret):
         'checklist_items': checklist_items,
         'portal_open': portal_open,
         'available_players': available_players,
+        'drafted_players': drafted_players,
         'starred_player_ids': starred_player_ids
     }
     return render(request, 'players/team_detail.html', context)
@@ -1599,7 +1604,11 @@ def make_pick_view(request):
                 'type': 'draft_update',
                 'player_id': player.id,
                 'player_name': f"{player.first_name} {player.last_name}",
+                'player_history': player.history,
+                'player_conflict': player.conflict,
+                'player_draftable': player.draftable,
                 'team_name': team.name,
+                'team_id': team.id,
                 'round': round_num,
                 'pick': pick_num
             }
@@ -1641,7 +1650,37 @@ def undraft_pick_view(request):
         ).first()
 
         if draft_pick:
+            # Save player info before deleting
+            player = draft_pick.player
+            player_id = player.id if player else None
+            player_name = f"{player.first_name} {player.last_name}" if player else None
+            player_history = player.history if player else None
+            player_conflict = player.conflict if player else None
+            player_draftable = player.draftable if player else None
+
             draft_pick.delete()
+
+            # Broadcast the undraft to all connected WebSocket clients
+            if player:
+                from asgiref.sync import async_to_sync
+                from channels.layers import get_channel_layer
+
+                channel_layer = get_channel_layer()
+                async_to_sync(channel_layer.group_send)(
+                    'draft_updates',
+                    {
+                        'type': 'undraft_update',
+                        'player_id': player_id,
+                        'player_name': player_name,
+                        'player_history': player_history,
+                        'player_conflict': player_conflict,
+                        'player_draftable': player_draftable,
+                        'team_name': team.name,
+                        'team_id': team.id,
+                        'round': round_num,
+                        'pick': pick_num
+                    }
+                )
 
         return JsonResponse({
             'success': True

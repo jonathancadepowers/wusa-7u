@@ -32,7 +32,26 @@ class DraftConsumer(AsyncWebsocketConsumer):
             'type': 'draft_update',
             'player_id': event['player_id'],
             'player_name': event['player_name'],
+            'player_history': event.get('player_history'),
+            'player_conflict': event.get('player_conflict'),
+            'player_draftable': event.get('player_draftable'),
             'team_name': event['team_name'],
+            'team_id': event.get('team_id'),
+            'round': event['round'],
+            'pick': event['pick']
+        }))
+
+    async def undraft_update(self, event):
+        # Send undraft message to WebSocket
+        await self.send(text_data=json.dumps({
+            'type': 'undraft_update',
+            'player_id': event['player_id'],
+            'player_name': event['player_name'],
+            'player_history': event.get('player_history'),
+            'player_conflict': event.get('player_conflict'),
+            'player_draftable': event.get('player_draftable'),
+            'team_name': event['team_name'],
+            'team_id': event.get('team_id'),
             'round': event['round'],
             'pick': event['pick']
         }))
