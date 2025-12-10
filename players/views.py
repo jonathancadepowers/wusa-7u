@@ -77,6 +77,10 @@ def division_setup_checklist_view(request):
     managers_with_rankings = PlayerRanking.objects.filter(manager__isnull=False).values_list('manager_id', flat=True).distinct()
     managers_without_rankings = all_managers.exclude(id__in=managers_with_rankings)
 
+    # Check manager daughter rankings - find managers who haven't submitted manager daughter rankings
+    managers_with_daughter_rankings = ManagerDaughterRanking.objects.filter(manager__isnull=False).values_list('manager_id', flat=True).distinct()
+    managers_without_daughter_rankings = all_managers.exclude(id__in=managers_with_daughter_rankings)
+
     # Build checklist items
     checklist_items = [
         {
@@ -151,6 +155,15 @@ def division_setup_checklist_view(request):
             'status': 'complete' if managers_without_rankings.count() == 0 else 'incomplete',
             'count': managers_without_rankings.count(),
             'count_label': 'manager(s) haven\'t submitted rankings'
+        },
+        {
+            'title': 'Analyze Manager\'s Daughters Rankings',
+            'description': 'Once all managers have submitted their rankings of manager\'s daughters, review them. These rankings will NOT be released to managers. Rather, you will use these rankings to set draft positions for all manager\'s daughter.',
+            'link': '/manager_daughter_rankings/analyze/',
+            'link_text': 'Go to Analysis',
+            'status': 'complete' if managers_without_daughter_rankings.count() == 0 else 'incomplete',
+            'count': managers_without_daughter_rankings.count(),
+            'count_label': 'manager(s) haven\'t submitted manager_daughter_ranking'
         }
     ]
 
