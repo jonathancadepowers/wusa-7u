@@ -122,7 +122,7 @@ def division_setup_checklist_view(request):
         },
         {
             'title': 'Send Managers "Team Secrets"',
-            'description': 'Each manager will have a dashboard to manage their team. To view this page, they must use their unique "team secret." Managers should not know eachother\'s secrets. Outside of this website, you\'ll need to email or text each manager their team\'s secret.',
+            'description': 'Each manager will have a dashboard to manage their team. To view this page, they must use their unique "team secret." Managers should not know eachother\'s secrets. Outside of this website, email/text each manager their secret.',
             'link': '/teams/',
             'link_text': 'Go to Teams',
             'link_note': 'Click "View All Team Secrets"',
