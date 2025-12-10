@@ -105,8 +105,8 @@
                             {% csrf_token %}
                             <div class="mb-3">
                                 <label for="excelFile" class="form-label">Select Excel File</label>
-                                <input class="form-control" type="file" id="excelFile" name="excel_file" accept=".xlsx" required>
-                                <div class="form-text">Only .xlsx files are supported</div>
+                                <input class="form-control" type="file" id="excelFile" name="excel_file" accept=".xlsx,.xls" required>
+                                <div class="form-text">Both .xlsx and .xls files are supported</div>
                             </div>
 
                             <div class="mb-3">

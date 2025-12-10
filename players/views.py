@@ -462,10 +462,10 @@ def import_players_view(request):
     excel_file = request.FILES['excel_file']
 
     # Validate file extension
-    if not excel_file.name.endswith('.xlsx'):
+    if not (excel_file.name.endswith('.xlsx') or excel_file.name.endswith('.xls')):
         return JsonResponse({
             'success': False,
-            'error': 'Invalid file type. Please upload an Excel file (.xlsx)'
+            'error': 'Invalid file type. Please upload an Excel file (.xlsx or .xls)'
         }, status=400)
 
     try:
