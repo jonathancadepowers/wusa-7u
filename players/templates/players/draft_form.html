@@ -93,6 +93,18 @@
                         </h4>
                     </div>
                     <div class="card-body">
+                        <!-- Validation Errors -->
+                        {% if validation_errors %}
+                        <div class="alert alert-danger mb-4">
+                            <strong><i class="bi bi-exclamation-triangle me-2"></i>Cannot Set Up Draft:</strong>
+                            <ul class="mb-0 mt-2">
+                                {% for error in validation_errors %}
+                                <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+
                         <!-- Draft In Progress Warning -->
                         {% if has_draft_picks %}
                         <div class="alert alert-danger mb-4">
@@ -230,7 +242,7 @@
                                 <a href="{% url 'players:settings' %}" class="btn btn-secondary">
                                     <i class="bi bi-arrow-left me-1"></i>Cancel
                                 </a>
-                                <button type="submit" class="btn btn-primary" {% if has_draft_picks %}disabled{% endif %}>
+                                <button type="submit" class="btn btn-primary" {% if has_draft_picks or validation_errors %}disabled{% endif %}>
                                     <i class="bi bi-save me-1"></i>{% if is_create %}Create Draft{% else %}Save Changes{% endif %}
                                 </button>
                             </div>
@@ -429,9 +441,10 @@
         // Initialize existing draft order if editing
         document.addEventListener('DOMContentLoaded', function() {
             const hasDraftPicks = {{ has_draft_picks|yesno:"true,false" }};
+            const hasValidationErrors = {{ validation_errors|length }} > 0;
 
-            // Only initialize drag and drop if there are no draft picks
-            if (!hasDraftPicks) {
+            // Only initialize drag and drop if there are no draft picks and no validation errors
+            if (!hasDraftPicks && !hasValidationErrors) {
                 initializeDragAndDrop();
             }
 

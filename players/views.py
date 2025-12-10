@@ -50,7 +50,7 @@ def create_draft_view(request):
 
 def edit_draft_view(request):
     """Edit existing draft or create new one"""
-    from .models import Draft
+    from .models import Draft, Manager
     import string
     import random
     import json
@@ -58,7 +58,38 @@ def edit_draft_view(request):
     # Get the first (and should be only) draft
     draft = Draft.objects.first()
 
+    # Validation checks
+    validation_errors = []
+
+    # Check 1: At least one player exists
+    player_count = Player.objects.count()
+    if player_count == 0:
+        validation_errors.append("There are no players in the database. Please add players before setting up a draft.")
+
+    # Check 2: At least one team exists
+    team_count = Team.objects.count()
+    if team_count == 0:
+        validation_errors.append("There are no teams in the database. Please create teams before setting up a draft.")
+
+    # Check 3: At least one manager exists
+    manager_count = Manager.objects.count()
+    if manager_count == 0:
+        validation_errors.append("There are no managers in the database. Please add managers before setting up a draft.")
+
+    # Check 4: All managers must be assigned to exactly one team
+    if manager_count > 0:
+        unassigned_managers = Manager.objects.filter(team__isnull=True)
+        if unassigned_managers.exists():
+            unassigned_names = [f"{m.first_name} {m.last_name}" for m in unassigned_managers]
+            validation_errors.append(f"All managers must be assigned to a team. Unassigned managers: {', '.join(unassigned_names)}")
+
     if request.method == 'POST':
+        # Don't allow POST if there are validation errors
+        if validation_errors:
+            for error in validation_errors:
+                messages.error(request, error)
+            return redirect('players:edit_draft')
+
         rounds = int(request.POST.get('rounds'))
         picks_per_round = int(request.POST.get('picks_per_round'))
         order = request.POST.get('order', '')
@@ -186,6 +217,7 @@ def edit_draft_view(request):
         'final_round_team_names': final_round_team_names,
         'has_draft_picks': has_draft_picks,
         'no_show_players': no_show_players,
+        'validation_errors': validation_errors,
     }
     return render(request, 'players/draft_form.html', context)
 
