@@ -89,6 +89,7 @@ def division_setup_checklist_view(request):
 
     # Check if all teams have been assigned practice slots
     teams_without_slots = all_teams.filter(practice_slot__isnull=True)
+    teams_with_slots = all_teams.filter(practice_slot__isnull=False)
 
     # Build checklist items
     checklist_items = [
@@ -181,8 +182,8 @@ def division_setup_checklist_view(request):
             'link_text': 'Go to Analysis',
             'link_note': 'Click "Assign Practice Slots to Teams"',
             'status': 'complete' if teams_without_slots.count() == 0 else 'incomplete',
-            'count': teams_without_practice_rankings.count(),
-            'count_label': 'Missing submission from managers'
+            'count': teams_with_slots.count(),
+            'count_label': 'teams assigned to practice slots'
         }
     ]
 
