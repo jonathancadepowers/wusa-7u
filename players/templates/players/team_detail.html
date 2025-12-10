@@ -141,6 +141,78 @@
                     {% endif %}
                 {% endif %}
 
+                <!-- Drafted Players Section -->
+                {% if portal_open %}
+                <div class="card bg-light border-success mb-4">
+                    <div class="card-header bg-success text-white" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#draftedPlayersCollapse">
+                        <h5 class="mb-0">
+                            <i class="bi bi-check-circle me-2"></i>Drafted Players
+                            <i class="bi bi-chevron-down float-end"></i>
+                        </h5>
+                    </div>
+                    <div class="collapse show" id="draftedPlayersCollapse">
+                        <div class="card-body">
+                        {% if drafted_players %}
+                        <!-- Search Box -->
+                        <div class="mb-3">
+                            <input type="text" id="draftedPlayersSearch" class="form-control" placeholder="Search by player name...">
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="draftedPlayersTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="cursor: pointer;" onclick="sortDraftedPlayersTable(0)">
+                                            Name <i class="bi"></i>
+                                        </th>
+                                        <th style="cursor: pointer;" onclick="sortDraftedPlayersTable(1)">
+                                            History <i class="bi"></i>
+                                        </th>
+                                        <th style="cursor: pointer;" onclick="sortDraftedPlayersTable(2)">
+                                            Conflict <i class="bi"></i>
+                                        </th>
+                                        <th style="cursor: pointer;" onclick="sortDraftedPlayersTable(3)">
+                                            Draftable <i class="bi"></i>
+                                        </th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for player in drafted_players %}
+                                    <tr data-player-id="{{ player.id }}">
+                                        <td><strong>{{ player.first_name }} {{ player.last_name }}</strong></td>
+                                        <td>{{ player.history|default:"-" }}</td>
+                                        <td>{{ player.conflict|default:"-" }}</td>
+                                        <td>
+                                            {% if player.draftable %}
+                                                <span class="badge bg-success">Yes</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">No</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#draftedPlayerModal{{ player.pk }}" title="View Details">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="text-muted mt-3">
+                            <strong>Total Drafted Players:</strong> <span id="draftedPlayersCount">{{ drafted_players|length }}</span>
+                        </p>
+                        {% else %}
+                        <div class="alert alert-info mb-0">
+                            <i class="bi bi-info-circle me-2"></i>
+                            No players drafted yet.
+                        </div>
+                        {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
                 <!-- Draft Pool / Available Players Section -->
                 {% if portal_open %}
                 <div class="card bg-light border-info mb-4">
@@ -215,78 +287,6 @@
                         <div class="alert alert-info mb-0">
                             <i class="bi bi-info-circle me-2"></i>
                             No players available in the draft pool.
-                        </div>
-                        {% endif %}
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
-
-                <!-- Drafted Players Section -->
-                {% if portal_open %}
-                <div class="card bg-light border-success mb-4">
-                    <div class="card-header bg-success text-white" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#draftedPlayersCollapse">
-                        <h5 class="mb-0">
-                            <i class="bi bi-check-circle me-2"></i>Drafted Players
-                            <i class="bi bi-chevron-down float-end"></i>
-                        </h5>
-                    </div>
-                    <div class="collapse show" id="draftedPlayersCollapse">
-                        <div class="card-body">
-                        {% if drafted_players %}
-                        <!-- Search Box -->
-                        <div class="mb-3">
-                            <input type="text" id="draftedPlayersSearch" class="form-control" placeholder="Search by player name...">
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table table-hover" id="draftedPlayersTable">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th style="cursor: pointer;" onclick="sortDraftedPlayersTable(0)">
-                                            Name <i class="bi"></i>
-                                        </th>
-                                        <th style="cursor: pointer;" onclick="sortDraftedPlayersTable(1)">
-                                            History <i class="bi"></i>
-                                        </th>
-                                        <th style="cursor: pointer;" onclick="sortDraftedPlayersTable(2)">
-                                            Conflict <i class="bi"></i>
-                                        </th>
-                                        <th style="cursor: pointer;" onclick="sortDraftedPlayersTable(3)">
-                                            Draftable <i class="bi"></i>
-                                        </th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for player in drafted_players %}
-                                    <tr data-player-id="{{ player.id }}">
-                                        <td><strong>{{ player.first_name }} {{ player.last_name }}</strong></td>
-                                        <td>{{ player.history|default:"-" }}</td>
-                                        <td>{{ player.conflict|default:"-" }}</td>
-                                        <td>
-                                            {% if player.draftable %}
-                                                <span class="badge bg-success">Yes</span>
-                                            {% else %}
-                                                <span class="badge bg-danger">No</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#draftedPlayerModal{{ player.pk }}" title="View Details">
-                                                <i class="bi bi-eye"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                        <p class="text-muted mt-3">
-                            <strong>Total Drafted Players:</strong> <span id="draftedPlayersCount">{{ drafted_players|length }}</span>
-                        </p>
-                        {% else %}
-                        <div class="alert alert-info mb-0">
-                            <i class="bi bi-info-circle me-2"></i>
-                            No players drafted yet.
                         </div>
                         {% endif %}
                         </div>
