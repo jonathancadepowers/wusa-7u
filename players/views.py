@@ -102,8 +102,8 @@ def division_setup_checklist_view(request):
             'count_label': 'manager(s)'
         },
         {
-            'title': 'Get Manager Team Preferences',
-            'description': 'Email managers the submission form that asks them to stack rank which teams they want to manage.',
+            'title': 'Collect Manager Team Preferences',
+            'description': 'Email managers the submission form that asks them to stack rank which teams they want to manage. A email has been drafted for you to send.',
             'link': '/settings/#emails',
             'link_text': 'Go to Emails',
             'link_note': 'Click "Send Team Preferences Email"',
