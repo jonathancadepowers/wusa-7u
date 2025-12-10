@@ -10,6 +10,13 @@
             <div class="col-lg-10 offset-lg-1">
                 <div class="card shadow">
                     <div class="card-body">
+                        <!-- No Players Error -->
+                        {% if no_players %}
+                            <div class="alert alert-danger">
+                                <h5 class="alert-heading"><i class="bi bi-exclamation-triangle-fill me-2"></i>No Players Found</h5>
+                                <p class="mb-0">There are no players in the database. Please import players before viewing player rankings analysis.</p>
+                            </div>
+                        {% else %}
                         <!-- Rankings Released Status -->
                         {% if rankings_released %}
                             <div class="alert alert-danger mb-4">
@@ -88,6 +95,7 @@
                                 </button>
                             {% endif %}
                         </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>

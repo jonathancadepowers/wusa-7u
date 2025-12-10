@@ -2261,6 +2261,13 @@ def player_rankings_analyze_view(request):
     from .models import PlayerRanking, Manager, Player, GeneralSetting
     from collections import defaultdict
 
+    # Check if there are any players in the database
+    if Player.objects.count() == 0:
+        context = {
+            'no_players': True,
+        }
+        return render(request, 'players/player_rankings_analyze.html', context)
+
     # Check if rankings have been released
     rankings_released = False
     try:
