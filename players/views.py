@@ -379,7 +379,8 @@ def edit_draft_view(request):
         player_count = Player.objects.count()
         team_count = Team.objects.count()
 
-        # Calculate suggested rounds (players / teams)
+        # Calculate suggested rounds (players / teams) - round down to get base rounds
+        # The system will automatically handle extra players in a final round
         if team_count > 0:
             suggested_rounds = int(player_count / team_count)
             suggested_picks_per_round = team_count
