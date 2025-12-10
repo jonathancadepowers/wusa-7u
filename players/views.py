@@ -149,7 +149,7 @@ def division_setup_checklist_view(request):
             'status_note': 'Status cannot be determined, since this task is performed outside of the website.'
         },
         {
-            'title': 'Collect Manager Rankings',
+            'title': 'Request Manager Rankings',
             'description': 'Once each manager has their "team secret" (see above) then email all managers a link to their team\'s dashboard. At the top of this dashboard will be list of tasks for them to complete, to submit various rankings needed to build the draft. A email has been drafted for you to send.\n\nManagers must submit rankings for (1) all players, (2) manager\'s daughters, (3) their preferences for practice slots.',
             'link': '/settings/#emails',
             'link_text': 'Go to Emails',
