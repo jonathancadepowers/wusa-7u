@@ -53,10 +53,6 @@ def division_setup_checklist_view(request):
             if len(team_pref.preferences) == team_count:
                 complete_team_preferences += 1
 
-    # Status is complete if every manager has submitted preferences
-    team_preferences_complete = (manager_count > 0 and
-                                  complete_team_preferences == manager_count)
-
     # Check manager assignments for fifth checklist item
     # Count teams without managers
     teams_without_managers = Team.objects.filter(manager__isnull=True).count()
@@ -69,6 +65,12 @@ def division_setup_checklist_view(request):
     managers_assigned_complete = (manager_count > 0 and
                                    teams_without_managers == 0 and
                                    managers_with_teams == manager_count)
+
+    # Team preferences status: complete if every manager has submitted preferences
+    # OR if all managers have been assigned (teams_without_managers == 0)
+    team_preferences_complete = ((manager_count > 0 and
+                                   complete_team_preferences == manager_count) or
+                                  teams_without_managers == 0)
 
     # Build checklist items
     checklist_items = [
