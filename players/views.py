@@ -72,6 +72,11 @@ def division_setup_checklist_view(request):
                                    complete_team_preferences == manager_count) or
                                   teams_without_managers == 0)
 
+    # Check player rankings - find managers who haven't submitted rankings
+    all_managers = Manager.objects.all()
+    managers_with_rankings = PlayerRanking.objects.filter(manager__isnull=False).values_list('manager_id', flat=True).distinct()
+    managers_without_rankings = all_managers.exclude(id__in=managers_with_rankings)
+
     # Build checklist items
     checklist_items = [
         {
@@ -137,6 +142,15 @@ def division_setup_checklist_view(request):
             'link_note': 'Click "Send Team Pages to Managers"',
             'status': 'na',
             'status_note': 'Status cannot be determined, since this task is performed outside of the website.'
+        },
+        {
+            'title': 'Analyze & Release Player Rankings',
+            'description': 'Once all managers have submitted their top 20 player rankings, review them and then release them to managers to review.',
+            'link': '/player_rankings/analyze/',
+            'link_text': 'Go to Analysis',
+            'status': 'complete' if managers_without_rankings.count() == 0 else 'incomplete',
+            'count': managers_without_rankings.count(),
+            'count_label': 'manager(s) haven\'t submitted rankings'
         }
     ]
 

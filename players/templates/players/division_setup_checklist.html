@@ -31,7 +31,7 @@
                                         <tr>
                                             <td><strong>{{ forloop.counter }}</strong></td>
                                             <td><strong>{{ item.title }}</strong></td>
-                                            <td>{{ item.description }}</td>
+                                            <td>{{ item.description|linebreaks }}</td>
                                             <td>
                                                 {% if item.status == 'complete' %}
                                                     <span class="badge bg-success">
