@@ -843,12 +843,19 @@ def managers_list_view(request):
     # Get unassigned teams (teams with no manager)
     unassigned_teams = Team.objects.filter(manager__isnull=True).order_by('name')
 
+    # Check if manager count equals team count
+    total_managers = Manager.objects.count()
+    total_teams = Team.objects.count()
+    manager_team_mismatch = total_managers != total_teams
+
     context = {
         'page_obj': page_obj,
         'search_query': search_query,
         'sort_by': sort_by,
         'order': order,
-        'total_managers': Manager.objects.count(),
+        'total_managers': total_managers,
+        'total_teams': total_teams,
+        'manager_team_mismatch': manager_team_mismatch,
         'unassigned_teams': unassigned_teams
     }
     return render(request, 'players/managers_list.html', context)
@@ -2628,6 +2635,65 @@ def unassign_all_managers_view(request):
         return JsonResponse({
             'success': True,
             'message': f'Successfully removed {teams_updated} manager assignments from teams.'
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
+@require_http_methods(["POST"])
+@csrf_exempt
+def randomly_assign_managers_view(request):
+    """Randomly assign unassigned managers to available teams (testing feature)"""
+    import random
+
+    try:
+        # Get all unassigned managers
+        unassigned_managers = list(Manager.objects.filter(teams__isnull=True))
+
+        if not unassigned_managers:
+            return JsonResponse({
+                'success': False,
+                'error': 'No unassigned managers found. All managers are already assigned to teams.'
+            })
+
+        # Get all teams without a manager
+        available_teams = list(Team.objects.filter(manager__isnull=True))
+
+        if not available_teams:
+            return JsonResponse({
+                'success': False,
+                'error': 'No available teams found. All teams already have a manager assigned.'
+            })
+
+        # Shuffle both lists for randomness
+        random.shuffle(unassigned_managers)
+        random.shuffle(available_teams)
+
+        # Assign managers to teams (as many as possible)
+        assignments_made = 0
+        for manager, team in zip(unassigned_managers, available_teams):
+            team.manager = manager
+            team.save()
+            assignments_made += 1
+
+        # Determine how many managers or teams are left over
+        managers_left = len(unassigned_managers) - assignments_made
+        teams_left = len(available_teams) - assignments_made
+
+        message = f'Successfully assigned {assignments_made} manager(s) to teams.'
+
+        if managers_left > 0:
+            message += f' {managers_left} manager(s) remain unassigned (no available teams).'
+        elif teams_left > 0:
+            message += f' {teams_left} team(s) remain without managers (no available managers).'
+
+        return JsonResponse({
+            'success': True,
+            'message': message
         })
 
     except Exception as e:
