@@ -35,6 +35,10 @@ def division_setup_checklist_view(request):
     player_count = Player.objects.count()
     players_complete = player_count >= 10
 
+    # Check team count for second checklist item
+    team_count = Team.objects.count()
+    teams_complete = team_count >= 5
+
     # Build checklist items
     checklist_items = [
         {
@@ -44,6 +48,14 @@ def division_setup_checklist_view(request):
             'link_text': 'Go to Player Data Import',
             'status': 'complete' if players_complete else 'incomplete',
             'count': player_count
+        },
+        {
+            'title': 'Create Teams',
+            'description': 'Create each of the teams for your division, one by one. Don\'t assign managers just yet.',
+            'link': '/teams/',
+            'link_text': 'Go to Teams',
+            'status': 'complete' if teams_complete else 'incomplete',
+            'count': team_count
         }
     ]
 
