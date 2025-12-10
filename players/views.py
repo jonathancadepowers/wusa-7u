@@ -1069,29 +1069,31 @@ def team_edit_view(request, pk):
 
 def team_create_view(request):
     """Create a new team"""
+    import string
+    import random as rand
+
+    def generate_unique_secret():
+        """Generate a unique 7-character alphanumeric secret"""
+        characters = string.ascii_letters + string.digits
+        while True:
+            secret = ''.join(rand.choice(characters) for _ in range(7))
+            # Check if this secret already exists
+            if not Team.objects.filter(manager_secret=secret).exists():
+                return secret
+
     if request.method == 'POST':
         team = Team(
             name=request.POST.get('name'),
             manager_secret=request.POST.get('manager_secret'),
         )
-
-        # Handle manager assignment
-        manager_id = request.POST.get('manager_id')
-        if manager_id:
-            try:
-                manager = Manager.objects.get(pk=manager_id)
-                team.manager = manager
-            except Manager.DoesNotExist:
-                pass
-
         team.save()
         messages.success(request, f'Team {team.name} created successfully!')
         return redirect('players:teams_list')
 
-    # Get all managers for dropdown
-    all_managers = Manager.objects.all().order_by('last_name', 'first_name')
+    # Generate a unique secret for the form
+    unique_secret = generate_unique_secret()
 
-    context = {'all_managers': all_managers}
+    context = {'generated_secret': unique_secret}
     return render(request, 'players/team_create.html', context)
 
 

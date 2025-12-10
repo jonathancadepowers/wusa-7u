@@ -23,20 +23,8 @@
 
                             <div class="mb-3">
                                 <label for="manager_secret" class="form-label">Manager Secret *</label>
-                                <input type="text" class="form-control" id="manager_secret" name="manager_secret" required>
-                                <div class="form-text">This secret code will be used in the team roster URL</div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="manager_id" class="form-label">Manager (Optional)</label>
-                                <select class="form-select" id="manager_id" name="manager_id">
-                                    <option value="">-- No Manager --</option>
-                                    {% for manager in all_managers %}
-                                        <option value="{{ manager.pk }}">
-                                            {{ manager.first_name }} {{ manager.last_name }}
-                                        </option>
-                                    {% endfor %}
-                                </select>
+                                <input type="text" class="form-control" id="manager_secret" name="manager_secret" value="{{ generated_secret }}" required readonly>
+                                <div class="form-text">This secret code will be used in the team roster URL (auto-generated)</div>
                             </div>
 
                             <div class="mt-4 d-flex justify-content-between">
