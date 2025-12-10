@@ -2717,6 +2717,60 @@ def randomly_assign_managers_view(request):
         }, status=500)
 
 
+@require_http_methods(["POST"])
+@csrf_exempt
+def randomly_assign_daughters_view(request):
+    """Randomly assign all managers to daughters (players) - FOR TESTING ONLY"""
+    import random
+
+    try:
+        # Get all managers and all players
+        managers = list(Manager.objects.all())
+        players = list(Player.objects.all())
+
+        if not managers:
+            return JsonResponse({
+                'success': False,
+                'error': 'No managers found in database.'
+            })
+
+        if not players:
+            return JsonResponse({
+                'success': False,
+                'error': 'No players found in database.'
+            })
+
+        # Shuffle players for randomness
+        random.shuffle(players)
+
+        # Assign each manager to a random player
+        # If more managers than players, some players will be assigned to multiple managers
+        assignments_made = 0
+        for i, manager in enumerate(managers):
+            # Use modulo to cycle through players if we run out
+            player = players[i % len(players)]
+            manager.daughter = player
+            manager.save()
+            assignments_made += 1
+
+        message = f'Successfully assigned {assignments_made} manager(s) to daughters.'
+        message += f' Managers: {len(managers)}, Players: {len(players)}.'
+
+        if len(managers) > len(players):
+            message += f' Note: Some players were assigned to multiple managers because there are more managers than players.'
+
+        return JsonResponse({
+            'success': True,
+            'message': message
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
 @require_http_methods(["GET"])
 def get_manager_emails_view(request):
     """Get all manager email addresses"""

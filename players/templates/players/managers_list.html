@@ -50,6 +50,9 @@
                             <button type="button" class="btn btn-info text-nowrap" data-bs-toggle="modal" data-bs-target="#randomAssignModal">
                                 <i class="bi bi-shuffle me-1"></i>Randomly Assign Managers
                             </button>
+                            <button type="button" class="btn btn-info text-nowrap" data-bs-toggle="modal" data-bs-target="#randomAssignDaughtersModal">
+                                <i class="bi bi-shuffle me-1"></i>Randomly Assign Daughters
+                            </button>
                             <button type="button" class="btn btn-warning text-nowrap" data-bs-toggle="modal" data-bs-target="#unassignAllModal">
                                 <i class="bi bi-exclamation-triangle me-1"></i>Unassign All Managers
                             </button>
@@ -227,6 +230,34 @@
         </div>
     </div>
 
+    <!-- Random Assign Daughters Modal -->
+    <div class="modal fade" id="randomAssignDaughtersModal" tabindex="-1" aria-labelledby="randomAssignDaughtersModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title" id="randomAssignDaughtersModalLabel">
+                        <i class="bi bi-shuffle me-2"></i>Randomly Assign Daughters
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info mb-3">
+                        <strong><i class="bi bi-info-circle me-2"></i>Testing Feature:</strong> This feature is intended for testing purposes only.
+                    </div>
+                    <p>This action will randomly assign all managers to daughters (players). Each manager will be assigned to one daughter.</p>
+                    <p><strong>Note:</strong> If there are more managers than players, some players will be assigned to multiple managers.</p>
+                    <div id="random-assign-daughters-alert" class="alert d-none"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-info" onclick="randomlyAssignDaughters()">
+                        <i class="bi bi-shuffle me-1"></i>Proceed
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Unassign All Managers Modal -->
     <div class="modal fade" id="unassignAllModal" tabindex="-1" aria-labelledby="unassignAllModalLabel" aria-hidden="true">
         <div class="modal-dialog">
@@ -385,6 +416,51 @@
             })
             .catch(error => {
                 const alertDiv = document.getElementById('random-assign-alert');
+                alertDiv.className = 'alert alert-danger';
+                alertDiv.textContent = 'Network error. Please try again.';
+                alertDiv.classList.remove('d-none');
+                console.error('Error:', error);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-shuffle me-1"></i>Proceed';
+            });
+        }
+
+        function randomlyAssignDaughters() {
+            const csrfToken = getCookie('csrftoken');
+            const btn = event.target;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Processing...';
+
+            fetch('{% url "players:randomly_assign_daughters" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': csrfToken
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const alertDiv = document.getElementById('random-assign-daughters-alert');
+                    alertDiv.className = 'alert alert-success';
+                    alertDiv.textContent = data.message;
+                    alertDiv.classList.remove('d-none');
+
+                    // Reload page after 1.5 seconds
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    const alertDiv = document.getElementById('random-assign-daughters-alert');
+                    alertDiv.className = 'alert alert-danger';
+                    alertDiv.textContent = data.error || 'An error occurred';
+                    alertDiv.classList.remove('d-none');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-shuffle me-1"></i>Proceed';
+                }
+            })
+            .catch(error => {
+                const alertDiv = document.getElementById('random-assign-daughters-alert');
                 alertDiv.className = 'alert alert-danger';
                 alertDiv.textContent = 'Network error. Please try again.';
                 alertDiv.classList.remove('d-none');
