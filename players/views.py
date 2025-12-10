@@ -28,6 +28,12 @@ def settings_view(request):
     return render(request, 'players/settings.html', context)
 
 
+def division_setup_checklist_view(request):
+    """Division setup checklist page"""
+    context = {}
+    return render(request, 'players/division_setup_checklist.html', context)
+
+
 def create_draft_view(request):
     """Create a new draft"""
     from .models import Draft

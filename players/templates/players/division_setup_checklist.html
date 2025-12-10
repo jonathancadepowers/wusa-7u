@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Division Setup Checklist - WUSA 7U{% endblock %}
+
+{% block page_title %}Division Setup Checklist{% endblock %}
+
+{% block content %}
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-10">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0"><i class="bi bi-list-check me-2"></i>Division Setup Checklist</h4>
+                    </div>
+                    <div class="card-body">
+                        <p class="lead">This page is under construction. Content will be added soon.</p>
+
+                        <div class="mt-4">
+                            <a href="{% url 'players:settings' %}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>Back to Settings
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -8,6 +8,7 @@ urlpatterns = [
     path('api/validate-team-secret/', views.validate_team_secret_view, name='validate_team_secret'),
     path('admin_dashboard/', views.admin_dashboard_view, name='admin_dashboard'),
     path('settings/', views.settings_view, name='settings'),
+    path('division_setup_checklist/', views.division_setup_checklist_view, name='division_setup_checklist'),
     path('draft/create/', views.create_draft_view, name='create_draft'),
     path('draft/edit/', views.edit_draft_view, name='edit_draft'),
     path('draft/run/', views.run_draft_view, name='run_draft'),
