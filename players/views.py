@@ -1467,10 +1467,12 @@ def run_draft_view(request):
     for draft_pick in existing_picks:
         if draft_pick.round not in draft_picks_map:
             draft_picks_map[draft_pick.round] = {}
-        draft_picks_map[draft_pick.round][draft_pick.pick] = {
-            'player_name': f"{draft_pick.player.first_name} {draft_pick.player.last_name}",
-            'player_id': draft_pick.player.id
-        }
+        # Only add pick to map if player is assigned
+        if draft_pick.player:
+            draft_picks_map[draft_pick.round][draft_pick.pick] = {
+                'player_name': f"{draft_pick.player.first_name} {draft_pick.player.last_name}",
+                'player_id': draft_pick.player.id
+            }
 
     # Check if there's a final round with partial picks
     has_final_round = False
