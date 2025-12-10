@@ -19,22 +19,17 @@
                             <table class="table table-hover">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>Title</th>
-                                        <th>Description</th>
-                                        <th>Status</th>
-                                        <th>Link</th>
+                                        <th style="width: 15%;">Title</th>
+                                        <th style="width: 35%;">Description</th>
+                                        <th style="width: 25%;">Status</th>
+                                        <th style="width: 25%;">Link</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for item in checklist_items %}
                                         <tr>
                                             <td><strong>{{ item.title }}</strong></td>
-                                            <td>
-                                                {{ item.description }}
-                                                {% if item.count is not None %}
-                                                    <br><small class="text-muted"><strong>Current count:</strong> {{ item.count }} player(s)</small>
-                                                {% endif %}
-                                            </td>
+                                            <td>{{ item.description }}</td>
                                             <td>
                                                 {% if item.status == 'complete' %}
                                                     <span class="badge bg-success">
@@ -45,8 +40,11 @@
                                                         <i class="bi bi-clock me-1"></i>Incomplete
                                                     </span>
                                                 {% endif %}
+                                                {% if item.count is not None %}
+                                                    <br><small class="text-muted"><strong>Current count:</strong> {{ item.count }} player(s)</small>
+                                                {% endif %}
                                             </td>
-                                            <td>
+                                            <td class="text-nowrap">
                                                 <a href="{{ item.link }}" class="btn btn-sm btn-primary">
                                                     <i class="bi bi-arrow-right me-1"></i>{{ item.link_text }}
                                                 </a>
