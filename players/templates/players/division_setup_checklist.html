@@ -35,15 +35,30 @@
                                             <td>{{ item.description|linebreaks }}</td>
                                             <td>
                                                 {% if item.status == 'complete' %}
-                                                    <span class="badge bg-success">
+                                                    <span class="badge bg-success"
+                                                        data-bs-toggle="tooltip"
+                                                        data-bs-placement="right"
+                                                        data-bs-html="true"
+                                                        title="<strong>Requirements:</strong><br>{{ item.validation_description|escape }}"
+                                                        style="cursor: help;">
                                                         <i class="bi bi-check-circle me-1"></i>Complete
                                                     </span>
                                                 {% elif item.status == 'na' %}
-                                                    <span class="badge bg-secondary">
+                                                    <span class="badge bg-secondary"
+                                                        data-bs-toggle="tooltip"
+                                                        data-bs-placement="right"
+                                                        data-bs-html="true"
+                                                        title="<strong>Requirements:</strong><br>{{ item.validation_description|escape }}"
+                                                        style="cursor: help;">
                                                         <i class="bi bi-dash-circle me-1"></i>N/A
                                                     </span>
                                                 {% else %}
-                                                    <span class="badge bg-warning text-dark">
+                                                    <span class="badge bg-warning text-dark"
+                                                        data-bs-toggle="tooltip"
+                                                        data-bs-placement="right"
+                                                        data-bs-html="true"
+                                                        title="<strong>Requirements:</strong><br>{{ item.validation_description|escape }}"
+                                                        style="cursor: help;">
                                                         <i class="bi bi-clock me-1"></i>Incomplete
                                                     </span>
                                                 {% endif %}
