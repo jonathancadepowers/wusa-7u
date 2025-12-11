@@ -289,50 +289,22 @@ def edit_draft_view(request):
     # Get the first (and should be only) draft
     draft = Draft.objects.first()
 
-    # Validation checks
-    validation_errors = []
+    # Check if division setup is complete via season_validated flag
+    season_validated = False
+    try:
+        season_validated_setting = GeneralSetting.objects.get(key='season_validated')
+        season_validated = season_validated_setting.value == 'true'
+    except GeneralSetting.DoesNotExist:
+        season_validated = False
 
-    # Check 1: At least one player exists
+    # Get counts for template context
     player_count = Player.objects.count()
-    if player_count == 0:
-        validation_errors.append("There are no players in the database. Please add players before setting up a draft.")
-
-    # Check 2: At least one team exists
     team_count = Team.objects.count()
-    if team_count == 0:
-        validation_errors.append("There are no teams in the database. Please create teams before setting up a draft.")
-
-    # Check 3: At least one manager exists
-    manager_count = Manager.objects.count()
-    if manager_count == 0:
-        validation_errors.append("There are no managers in the database. Please add managers before setting up a draft.")
-
-    # Check 4: All managers must be assigned to exactly one team
-    if manager_count > 0:
-        unassigned_managers = Manager.objects.filter(teams__isnull=True)
-        if unassigned_managers.exists():
-            unassigned_names = [f"{m.first_name} {m.last_name}" for m in unassigned_managers]
-            validation_errors.append(f"All managers must be assigned to a team. Unassigned managers: {', '.join(unassigned_names)}")
-
-    # Check 5: Number of managers must equal number of teams
-    if manager_count > 0 and team_count > 0 and manager_count != team_count:
-        if manager_count > team_count:
-            validation_errors.append(f"The number of managers ({manager_count}) must equal the number of teams ({team_count}). You have {manager_count - team_count} more manager(s) than teams.")
-        else:
-            validation_errors.append(f"The number of managers ({manager_count}) must equal the number of teams ({team_count}). You have {team_count - manager_count} more team(s) than managers.")
-
-    # Check 6: All managers must have a daughter assigned
-    if manager_count > 0:
-        managers_without_daughter = Manager.objects.filter(daughter__isnull=True)
-        if managers_without_daughter.exists():
-            manager_names = [f"{m.first_name} {m.last_name}" for m in managers_without_daughter]
-            validation_errors.append(f"All managers must have a daughter assigned. Managers without a daughter: {', '.join(manager_names)}")
 
     if request.method == 'POST':
-        # Don't allow POST if there are validation errors
-        if validation_errors:
-            for error in validation_errors:
-                messages.error(request, error)
+        # Don't allow POST if division setup is not complete
+        if not season_validated:
+            messages.error(request, 'Division setup is not complete. Please complete all tasks in the Division Setup Checklist before setting up the draft.')
             return redirect('players:edit_draft')
 
         rounds = int(request.POST.get('rounds'))
@@ -463,7 +435,7 @@ def edit_draft_view(request):
         'final_round_team_names': final_round_team_names,
         'has_draft_picks': has_draft_picks,
         'no_show_players': no_show_players,
-        'validation_errors': validation_errors,
+        'season_validated': season_validated,
     }
     return render(request, 'players/draft_form.html', context)
 
