@@ -61,9 +61,15 @@
                                                 {% endif %}
                                             </td>
                                             <td class="validation-column" style="display: none;">
-                                                <small class="text-muted">{{ item.validation_logic }}</small>
-                                                <br>
-                                                <small class="text-danger"><code>{{ item.validation_code }}</code></small>
+                                                <code
+                                                    class="text-danger"
+                                                    data-bs-toggle="tooltip"
+                                                    data-bs-placement="right"
+                                                    data-bs-html="true"
+                                                    title="<pre style='text-align: left; margin: 0; font-size: 11px;'>{{ item.validation_source|escape }}</pre>"
+                                                    style="cursor: help;">
+                                                    {{ item.validation_code }}
+                                                </code>
                                             </td>
                                             <td class="text-nowrap">
                                                 <a href="{{ item.link }}" class="btn btn-sm btn-primary" target="_blank">
@@ -87,6 +93,17 @@
 
 {% block extra_js %}
     <script>
+        // Initialize Bootstrap tooltips
+        document.addEventListener('DOMContentLoaded', function() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl, {
+                    boundary: 'window',
+                    customClass: 'code-tooltip'
+                });
+            });
+        });
+
         document.getElementById('toggleValidationColumn').addEventListener('click', function() {
             const validationColumns = document.querySelectorAll('.validation-column');
             const button = this;
@@ -103,4 +120,12 @@
             }
         });
     </script>
+
+    <style>
+        .code-tooltip .tooltip-inner {
+            max-width: 600px;
+            text-align: left;
+            background-color: #2d2d2d;
+        }
+    </style>
 {% endblock %}
