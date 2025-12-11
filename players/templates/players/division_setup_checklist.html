@@ -123,9 +123,16 @@
 
     <style>
         .code-tooltip .tooltip-inner {
-            max-width: 600px;
+            max-width: 90vw;
             text-align: left;
             background-color: #2d2d2d;
+            overflow-x: auto;
+        }
+
+        .code-tooltip pre {
+            white-space: pre;
+            margin: 0;
+            max-width: none;
         }
     </style>
 {% endblock %}
