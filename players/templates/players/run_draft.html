@@ -230,24 +230,6 @@
                             </tbody>
                         </table>
                     </div>
-                {% else %}
-                    <div class="alert alert-danger">
-                        <h5><i class="bi bi-exclamation-triangle me-2"></i>Draft Configuration Incomplete</h5>
-                        <p class="mb-0">The draft cannot be run because of the following issues:</p>
-                        <ul class="mt-2 mb-0">
-                            {% for error in errors %}
-                                <li>{{ error }}</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                {% endif %}
-
-                {% if not show_grid %}
-                    <div class="mt-4">
-                        <a href="{% url 'players:edit_draft' %}" class="btn btn-primary">
-                            <i class="bi bi-pencil me-1"></i>Configure Draft
-                        </a>
-                    </div>
                 {% endif %}
             </div>
         </div>
