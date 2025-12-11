@@ -2328,10 +2328,17 @@ def player_rankings_analyze_view(request):
     from .models import PlayerRanking, Manager, Player, GeneralSetting
     from collections import defaultdict
 
-    # Check if there are any players in the database
-    if Player.objects.count() == 0:
+    # Check if division setup is complete via season_validated flag
+    season_validated = False
+    try:
+        season_validated_setting = GeneralSetting.objects.get(key='season_validated')
+        season_validated = season_validated_setting.value == 'true'
+    except GeneralSetting.DoesNotExist:
+        season_validated = False
+
+    if not season_validated:
         context = {
-            'no_players': True,
+            'season_validated': False,
         }
         return render(request, 'players/player_rankings_analyze.html', context)
 
