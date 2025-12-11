@@ -2633,11 +2633,16 @@ def toggle_try_out_attendance_view(request):
 
 def team_preferences_analyze_view(request):
     """Analyze team preferences and assign managers to teams"""
-    # Check if any managers already have teams assigned
-    managers_with_teams = Manager.objects.filter(teams__isnull=False).count()
+    # Check if division setup is complete via season_validated flag
+    season_validated = False
+    try:
+        season_validated_setting = GeneralSetting.objects.get(key='season_validated')
+        season_validated = season_validated_setting.value == 'true'
+    except GeneralSetting.DoesNotExist:
+        season_validated = False
 
     context = {
-        'managers_with_teams': managers_with_teams
+        'season_validated': season_validated
     }
     return render(request, 'players/team_preferences_analyze.html', context)
 
