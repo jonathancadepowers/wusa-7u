@@ -194,85 +194,72 @@ def validation_code_run_the_draft():
 def division_validation_registry_view(request):
     """Division validation registry visualization page"""
 
-    # Define all validation codes with their titles and current mock dependencies
+    # Define all validation codes available
+    all_validation_codes = [
+        {'code': 'validation_code_create_players', 'title': 'Create Players'},
+        {'code': 'validation_code_create_teams', 'title': 'Create Teams'},
+        {'code': 'validation_code_create_managers', 'title': 'Create Managers'},
+        {'code': 'validation_code_collect_manager_team_preferences', 'title': 'Collect Manager Team Preferences'},
+        {'code': 'validation_code_assign_managers_to_teams', 'title': 'Assign Managers to Teams'},
+        {'code': 'validation_code_send_managers_team_secrets', 'title': 'Send Managers Team Secrets'},
+        {'code': 'validation_code_request_manager_rankings', 'title': 'Request Manager Rankings'},
+        {'code': 'validation_code_analyze_and_release_player_rankings', 'title': 'Analyze and Release Player Rankings'},
+        {'code': 'validation_code_analyze_manager_daughter_rankings', 'title': 'Analyze Manager Daughter Rankings'},
+        {'code': 'validation_code_assign_practice_slots', 'title': 'Assign Practice Slots'},
+        {'code': 'validation_code_setup_draft', 'title': 'Setup Draft'},
+        {'code': 'validation_code_run_the_draft', 'title': 'Run the Draft'},
+    ]
+
+    # Define all pages/views and which validations they should require
     # This is front-end only for now - no backend logic
-    validation_codes = [
+    pages = [
         {
-            'code': 'validation_code_create_players',
-            'title': 'Create Players',
-            'display_order': 1,
-            'dependencies': []  # Empty for now - will be set via UI
+            'url': '/draft/edit/',
+            'view_name': 'edit_draft_view',
+            'title': 'Draft Edit Page',
+            'description': 'Create or edit draft configuration',
+            'required_validations': []  # Empty for now - will be set via UI
         },
         {
-            'code': 'validation_code_create_teams',
-            'title': 'Create Teams',
-            'display_order': 2,
-            'dependencies': []
+            'url': '/draft/run/',
+            'view_name': 'run_draft_view',
+            'title': 'Run Draft Page',
+            'description': 'Execute the draft and make picks',
+            'required_validations': []
         },
         {
-            'code': 'validation_code_create_managers',
-            'title': 'Create Managers',
-            'display_order': 3,
-            'dependencies': []
+            'url': '/player_rankings/analyze/',
+            'view_name': 'player_rankings_analyze_view',
+            'title': 'Player Rankings Analysis',
+            'description': 'Analyze and release player rankings',
+            'required_validations': []
         },
         {
-            'code': 'validation_code_collect_manager_team_preferences',
-            'title': 'Collect Manager Team Preferences',
-            'display_order': 4,
-            'dependencies': []
+            'url': '/team_preferences/analyze/',
+            'view_name': 'team_preferences_analyze_view',
+            'title': 'Team Preferences Analysis',
+            'description': 'Analyze manager team preferences',
+            'required_validations': []
         },
         {
-            'code': 'validation_code_assign_managers_to_teams',
-            'title': 'Assign Managers to Teams',
-            'display_order': 5,
-            'dependencies': []
+            'url': '/practice_slots/analyze/',
+            'view_name': 'practice_slots_analyze_view',
+            'title': 'Practice Slots Analysis',
+            'description': 'Analyze and assign practice slots',
+            'required_validations': []
         },
         {
-            'code': 'validation_code_send_managers_team_secrets',
-            'title': 'Send Managers Team Secrets',
-            'display_order': 6,
-            'dependencies': []
-        },
-        {
-            'code': 'validation_code_request_manager_rankings',
-            'title': 'Request Manager Rankings',
-            'display_order': 7,
-            'dependencies': []
-        },
-        {
-            'code': 'validation_code_analyze_and_release_player_rankings',
-            'title': 'Analyze and Release Player Rankings',
-            'display_order': 8,
-            'dependencies': []
-        },
-        {
-            'code': 'validation_code_analyze_manager_daughter_rankings',
-            'title': 'Analyze Manager Daughter Rankings',
-            'display_order': 9,
-            'dependencies': []
-        },
-        {
-            'code': 'validation_code_assign_practice_slots',
-            'title': 'Assign Practice Slots',
-            'display_order': 10,
-            'dependencies': []
-        },
-        {
-            'code': 'validation_code_setup_draft',
-            'title': 'Setup Draft',
-            'display_order': 11,
-            'dependencies': []
-        },
-        {
-            'code': 'validation_code_run_the_draft',
-            'title': 'Run the Draft',
-            'display_order': 12,
-            'dependencies': []
+            'url': '/manager_daughter_rankings/analyze/',
+            'view_name': 'manager_daughter_rankings_analyze_view',
+            'title': 'Manager Daughter Rankings Analysis',
+            'description': 'Analyze manager daughter rankings',
+            'required_validations': []
         },
     ]
 
     context = {
-        'validation_codes': validation_codes,
+        'pages': pages,
+        'all_validation_codes': all_validation_codes,
     }
 
     return render(request, 'players/division_validation_registry.html', context)

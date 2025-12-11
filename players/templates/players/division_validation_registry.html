@@ -14,8 +14,8 @@
                     </div>
                     <div class="card-body">
                         <p class="lead mb-4">
-                            This page allows you to visualize and configure dependencies between validation codes.
-                            Each validation can depend on one or more other validations being complete first.
+                            Configure which validation codes are required for each page to load.
+                            When a page has required validations, it will only be accessible if all those validations pass.
                         </p>
 
                         <div class="alert alert-info mb-4">
@@ -25,57 +25,56 @@
                         </div>
 
                         <div class="mb-4">
-                            <h5>Legend:</h5>
-                            <ul>
-                                <li><strong>Validation Code:</strong> The unique identifier for each validation function</li>
-                                <li><strong>Title:</strong> Human-readable name for the validation</li>
-                                <li><strong>Display Order:</strong> The order in which validations appear in the checklist</li>
-                                <li><strong>Dependencies:</strong> Other validations that must be complete before this one can pass</li>
-                            </ul>
+                            <h5>How it works:</h5>
+                            <ol>
+                                <li><strong>Select validations</strong> for each page that must pass before the page can be accessed</li>
+                                <li><strong>Multiple selections allowed</strong> - hold Ctrl/Cmd to select multiple validation codes</li>
+                                <li><strong>No selection</strong> means the page has no validation requirements (always accessible)</li>
+                            </ol>
                         </div>
 
                         <div class="table-responsive">
                             <table class="table table-hover table-bordered">
                                 <thead class="table-dark">
                                     <tr>
-                                        <th style="width: 8%;">Order</th>
-                                        <th style="width: 20%;">Title</th>
-                                        <th style="width: 28%;">Validation Code</th>
-                                        <th style="width: 44%;">Dependencies</th>
+                                        <th style="width: 18%;">Page URL</th>
+                                        <th style="width: 18%;">Page Title</th>
+                                        <th style="width: 20%;">View Function</th>
+                                        <th style="width: 44%;">Required Validations</th>
                                     </tr>
                                 </thead>
                                 <tbody id="registryTableBody">
-                                    {% for validation in validation_codes %}
-                                        <tr data-code="{{ validation.code }}">
-                                            <td class="text-center">
-                                                <strong>{{ validation.display_order }}</strong>
+                                    {% for page in pages %}
+                                        <tr data-url="{{ page.url }}">
+                                            <td>
+                                                <code>{{ page.url }}</code>
                                             </td>
                                             <td>
-                                                <strong>{{ validation.title }}</strong>
+                                                <strong>{{ page.title }}</strong>
+                                                <br>
+                                                <small class="text-muted">{{ page.description }}</small>
                                             </td>
                                             <td>
-                                                <code class="text-danger">{{ validation.code }}</code>
+                                                <code class="text-danger">{{ page.view_name }}</code>
                                             </td>
                                             <td>
                                                 <select
-                                                    class="form-select form-select-sm dependency-select"
+                                                    class="form-select form-select-sm validation-select"
                                                     multiple
-                                                    data-validation-code="{{ validation.code }}"
-                                                    style="height: 120px;">
-                                                    {% for option in validation_codes %}
-                                                        {% if option.code != validation.code %}
-                                                            <option value="{{ option.code }}">
-                                                                {{ option.title }} ({{ option.display_order }})
-                                                            </option>
-                                                        {% endif %}
+                                                    data-page-url="{{ page.url }}"
+                                                    style="height: 180px;">
+                                                    {% for validation in all_validation_codes %}
+                                                        <option value="{{ validation.code }}">
+                                                            {{ validation.title }}
+                                                        </option>
                                                     {% endfor %}
                                                 </select>
                                                 <small class="text-muted d-block mt-1">
-                                                    <i class="bi bi-info-circle me-1"></i>Hold Ctrl/Cmd to select multiple dependencies
+                                                    <i class="bi bi-info-circle me-1"></i>Hold Ctrl/Cmd to select multiple
                                                 </small>
                                                 <div class="mt-2">
-                                                    <span class="badge bg-secondary dependency-count" data-code="{{ validation.code }}">
-                                                        0 dependencies selected
+                                                    <span class="badge bg-secondary validation-count" data-url="{{ page.url }}">
+                                                        0 validations required
                                                     </span>
                                                 </div>
                                             </td>
@@ -86,17 +85,17 @@
                         </div>
 
                         <div class="mt-4">
-                            <h5>Dependency Visualization</h5>
+                            <h5>Configuration Summary</h5>
                             <div class="alert alert-light">
-                                <div id="dependencyTree" style="font-family: monospace; white-space: pre;">
-Select a validation above to see its dependency tree here...
+                                <div id="configSummary" style="font-family: monospace; white-space: pre;">
+Select a page above to see its configuration summary here...
                                 </div>
                             </div>
                         </div>
 
                         <div class="mt-4 text-end">
                             <button type="button" class="btn btn-secondary" id="resetBtn">
-                                <i class="bi bi-arrow-counterclockwise me-2"></i>Reset All Dependencies
+                                <i class="bi bi-arrow-counterclockwise me-2"></i>Reset All
                             </button>
                             <button type="button" class="btn btn-primary disabled" id="saveBtn" disabled>
                                 <i class="bi bi-save me-2"></i>Save Configuration (Coming Soon)
@@ -111,32 +110,32 @@ Select a validation above to see its dependency tree here...
 
 {% block extra_js %}
     <script>
-        // Store current state of dependencies
-        let dependencyState = {};
+        // Store current state of page validation requirements
+        let pageValidationState = {};
 
-        // Initialize dependency state
+        // Initialize page validation state
         document.addEventListener('DOMContentLoaded', function() {
-            const selects = document.querySelectorAll('.dependency-select');
+            const selects = document.querySelectorAll('.validation-select');
 
             selects.forEach(function(select) {
-                const code = select.getAttribute('data-validation-code');
-                dependencyState[code] = [];
+                const pageUrl = select.getAttribute('data-page-url');
+                pageValidationState[pageUrl] = [];
 
                 // Update count badge
-                updateDependencyCount(code);
+                updateValidationCount(pageUrl);
 
                 // Add change listener
                 select.addEventListener('change', function() {
                     const selectedOptions = Array.from(this.selectedOptions).map(opt => opt.value);
-                    dependencyState[code] = selectedOptions;
-                    updateDependencyCount(code);
-                    updateDependencyVisualization(code);
+                    pageValidationState[pageUrl] = selectedOptions;
+                    updateValidationCount(pageUrl);
+                    updateConfigSummary(pageUrl);
 
                     // Log to console (for development)
-                    console.log('Updated dependencies for', code, ':', selectedOptions);
+                    console.log('Updated validations for', pageUrl, ':', selectedOptions);
                 });
 
-                // Add click listener to highlight row and show dependency tree
+                // Add click listener to highlight row and show summary
                 select.addEventListener('focus', function() {
                     // Remove highlight from all rows
                     document.querySelectorAll('#registryTableBody tr').forEach(row => {
@@ -147,95 +146,106 @@ Select a validation above to see its dependency tree here...
                     const row = this.closest('tr');
                     row.classList.add('table-active');
 
-                    // Update visualization
-                    updateDependencyVisualization(code);
+                    // Update summary
+                    updateConfigSummary(pageUrl);
                 });
             });
         });
 
-        function updateDependencyCount(validationCode) {
-            const badge = document.querySelector(`.dependency-count[data-code="${validationCode}"]`);
-            const count = dependencyState[validationCode].length;
+        function updateValidationCount(pageUrl) {
+            const badge = document.querySelector(`.validation-count[data-url="${pageUrl}"]`);
+            const count = pageValidationState[pageUrl].length;
 
             if (count === 0) {
-                badge.className = 'badge bg-secondary dependency-count';
-                badge.textContent = '0 dependencies selected';
+                badge.className = 'badge bg-secondary validation-count';
+                badge.textContent = '0 validations required';
             } else if (count === 1) {
-                badge.className = 'badge bg-info dependency-count';
-                badge.textContent = '1 dependency selected';
+                badge.className = 'badge bg-warning text-dark validation-count';
+                badge.textContent = '1 validation required';
             } else {
-                badge.className = 'badge bg-primary dependency-count';
-                badge.textContent = `${count} dependencies selected`;
+                badge.className = 'badge bg-danger validation-count';
+                badge.textContent = `${count} validations required`;
             }
         }
 
-        function updateDependencyVisualization(validationCode) {
-            const treeDiv = document.getElementById('dependencyTree');
-            const validationTitle = getValidationTitle(validationCode);
+        function updateConfigSummary(pageUrl) {
+            const summaryDiv = document.getElementById('configSummary');
+            const pageTitle = getPageTitle(pageUrl);
+            const viewName = getViewName(pageUrl);
 
-            let tree = `Dependency Tree for: ${validationTitle}\n`;
-            tree += `Validation Code: ${validationCode}\n`;
-            tree += `${'='.repeat(60)}\n\n`;
+            let summary = `Configuration for: ${pageTitle}\n`;
+            summary += `URL: ${pageUrl}\n`;
+            summary += `View: ${viewName}\n`;
+            summary += `${'='.repeat(60)}\n\n`;
 
-            const dependencies = dependencyState[validationCode];
+            const validations = pageValidationState[pageUrl];
 
-            if (dependencies.length === 0) {
-                tree += '└─ No dependencies (standalone validation)\n';
+            if (validations.length === 0) {
+                summary += 'Required Validations: NONE\n';
+                summary += '└─ This page is always accessible (no validation checks)\n';
             } else {
-                tree += 'Direct Dependencies:\n';
-                dependencies.forEach((depCode, index) => {
-                    const isLast = index === dependencies.length - 1;
+                summary += `Required Validations: ${validations.length}\n\n`;
+                validations.forEach((validationCode, index) => {
+                    const isLast = index === validations.length - 1;
                     const prefix = isLast ? '└─' : '├─';
-                    const depTitle = getValidationTitle(depCode);
-                    tree += `${prefix} ${depTitle}\n`;
-                    tree += `   Code: ${depCode}\n`;
-
-                    // Show nested dependencies (one level deep for now)
-                    const nestedDeps = dependencyState[depCode] || [];
-                    if (nestedDeps.length > 0) {
-                        const connector = isLast ? '   ' : '│  ';
-                        tree += `${connector}└─ (Has ${nestedDeps.length} sub-dependencies)\n`;
-                    }
+                    const validationTitle = getValidationTitle(validationCode);
+                    summary += `${prefix} ${validationTitle}\n`;
+                    summary += `   Code: ${validationCode}\n`;
                 });
+
+                summary += `\nBehavior:\n`;
+                summary += `└─ Page will only load if ALL ${validations.length} validation(s) pass\n`;
+                summary += `   If any validation fails, show warning and block access\n`;
             }
 
-            treeDiv.textContent = tree;
+            summaryDiv.textContent = summary;
         }
 
-        function getValidationTitle(code) {
-            const select = document.querySelector(`.dependency-select[data-validation-code="${code}"]`);
+        function getPageTitle(url) {
+            const select = document.querySelector(`.validation-select[data-page-url="${url}"]`);
             if (select) {
                 const row = select.closest('tr');
                 const titleCell = row.querySelector('td:nth-child(2) strong');
-                return titleCell ? titleCell.textContent : code;
+                return titleCell ? titleCell.textContent.trim() : url;
             }
+            return url;
+        }
 
-            // Fallback: search in option values
+        function getViewName(url) {
+            const select = document.querySelector(`.validation-select[data-page-url="${url}"]`);
+            if (select) {
+                const row = select.closest('tr');
+                const viewCell = row.querySelector('td:nth-child(3) code');
+                return viewCell ? viewCell.textContent : 'unknown';
+            }
+            return 'unknown';
+        }
+
+        function getValidationTitle(code) {
             const option = document.querySelector(`option[value="${code}"]`);
             if (option) {
-                return option.textContent.split(' (')[0];
+                return option.textContent.trim();
             }
-
             return code;
         }
 
         // Reset button
         document.getElementById('resetBtn').addEventListener('click', function() {
-            if (!confirm('Are you sure you want to reset all dependencies? This will clear all selected dependencies.')) {
+            if (!confirm('Are you sure you want to reset all page validation requirements? This will clear all selections.')) {
                 return;
             }
 
-            const selects = document.querySelectorAll('.dependency-select');
+            const selects = document.querySelectorAll('.validation-select');
             selects.forEach(function(select) {
                 select.selectedIndex = -1;
-                const code = select.getAttribute('data-validation-code');
-                dependencyState[code] = [];
-                updateDependencyCount(code);
+                const pageUrl = select.getAttribute('data-page-url');
+                pageValidationState[pageUrl] = [];
+                updateValidationCount(pageUrl);
             });
 
-            document.getElementById('dependencyTree').textContent = 'Select a validation above to see its dependency tree here...';
+            document.getElementById('configSummary').textContent = 'Select a page above to see its configuration summary here...';
 
-            console.log('All dependencies reset');
+            console.log('All page validation requirements reset');
         });
 
         // Add hover effects to table rows
