@@ -30,6 +30,17 @@
                         <h4 class="mb-0"><i class="bi bi-gear-fill me-2"></i>Application Settings</h4>
                     </div>
                     <div class="card-body">
+                        <h5 class="card-title">Division Setup</h5>
+                        <p class="text-muted">Complete the division setup steps to prepare for the season.</p>
+
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'players:division_setup_checklist' %}" class="btn btn-primary">
+                                <i class="bi bi-list-check me-2"></i>Checklist
+                            </a>
+                        </div>
+
+                        <hr class="my-4">
+
                         <h5 class="card-title" id="player-data-import">Player Data Import</h5>
                         <p class="text-muted">Upload the player registration Excel file exported out of TeamSideline to import player data.</p>
 
@@ -122,17 +133,6 @@
                             </a>
                             <a href="{% url 'players:try_out_check_in' %}" class="btn btn-secondary">
                                 <i class="bi bi-clipboard-check me-2"></i>Try Out Check In Form
-                            </a>
-                        </div>
-
-                        <hr class="my-4">
-
-                        <h5 class="card-title">Division Setup</h5>
-                        <p class="text-muted">Complete the division setup steps to prepare for the season.</p>
-
-                        <div class="d-flex gap-2">
-                            <a href="{% url 'players:division_setup_checklist' %}" class="btn btn-primary">
-                                <i class="bi bi-list-check me-2"></i>Checklist
                             </a>
                         </div>
                     </div>
