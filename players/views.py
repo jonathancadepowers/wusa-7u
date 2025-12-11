@@ -82,8 +82,8 @@ def validation_code_assign_managers_to_teams():
 
     return {
         'complete': (manager_count > 0 and teams_without_managers == 0 and managers_with_teams == manager_count),
-        'count': teams_without_managers,
-        'count_label': 'teams without managers'
+        'count': managers_with_teams,
+        'count_label': 'managers assigned to teams'
     }
 
 def validation_code_send_managers_team_secrets():
