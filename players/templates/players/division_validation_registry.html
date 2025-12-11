@@ -28,15 +28,13 @@
                             <table class="table table-hover table-bordered">
                                 <thead class="table-dark">
                                     <tr>
-                                        <th style="width: 15%;">Page</th>
-                                        <th style="width: 25%;">URL</th>
-                                        <th style="width: 60%;">Required Validations</th>
+                                        <th style="width: 30%;">URL</th>
+                                        <th style="width: 70%;">Required Validations</th>
                                     </tr>
                                 </thead>
                                 <tbody id="registryTableBody">
                                     {% for page in pages %}
                                         <tr data-page-url="{{ page.url }}">
-                                            <td><strong>{{ page.title }}</strong></td>
                                             <td><code>{{ page.url }}</code></td>
                                             <td>
                                                 <select
@@ -56,10 +54,6 @@
                                                         </option>
                                                     {% endfor %}
                                                 </select>
-                                                <small class="text-muted">
-                                                    <i class="bi bi-info-circle me-1"></i>
-                                                    Hold Ctrl/Cmd to select multiple. Hover over options to see code.
-                                                </small>
                                             </td>
                                         </tr>
                                     {% endfor %}
