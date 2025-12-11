@@ -41,7 +41,10 @@ def division_setup_checklist_view(request):
 
     # Check manager count for third checklist item
     manager_count = Manager.objects.count()
-    managers_complete = manager_count == team_count and manager_count > 0
+    managers_without_daughters = Manager.objects.filter(daughter__isnull=True).count()
+    managers_complete = (manager_count == team_count and
+                        manager_count > 0 and
+                        managers_without_daughters == 0)
 
     # Check team preferences for fourth checklist item
     # Count complete submissions (where manager has ranked ALL teams)
@@ -141,7 +144,7 @@ def division_setup_checklist_view(request):
         },
         {
             'title': 'Create Managers',
-            'description': 'Create all managers/head coaches. Don\'t assign managers to teams just yet.',
+            'description': 'Create all managers/head coaches. Don\'t assign managers to teams just yet. You must also assign a daughter (player) to each manager.',
             'link': '/managers/',
             'link_text': 'Go to Managers',
             'status': 'complete' if managers_complete else 'incomplete',
@@ -1144,17 +1147,26 @@ def manager_detail_view(request, pk):
 def manager_create_view(request):
     """Create a new manager"""
     if request.method == 'POST':
+        daughter_id = request.POST.get('daughter')
+        daughter = None
+        if daughter_id:
+            daughter = Player.objects.filter(id=daughter_id).first()
+
         manager = Manager(
             first_name=request.POST.get('first_name'),
             last_name=request.POST.get('last_name'),
             email=request.POST.get('email'),
             phone=request.POST.get('phone'),
+            daughter=daughter
         )
         manager.save()
         messages.success(request, f'Manager {manager.first_name} {manager.last_name} created successfully!')
         return redirect('players:managers_list')
 
-    return render(request, 'players/manager_create.html')
+    # Get all players for the daughter dropdown
+    players = Player.objects.all().order_by('first_name', 'last_name')
+    context = {'players': players}
+    return render(request, 'players/manager_create.html', context)
 
 
 def manager_delete_view(request, pk):
