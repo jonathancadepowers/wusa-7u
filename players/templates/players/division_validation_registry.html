@@ -28,45 +28,39 @@
                             <table class="table table-hover table-bordered">
                                 <thead class="table-dark">
                                     <tr>
-                                        <th style="width: 25%;">Validation Code</th>
-                                        {% for page in pages %}
-                                            <th class="text-center">
-                                                <div><strong>{{ page.title }}</strong></div>
-                                                <div><small>{{ page.url }}</small></div>
-                                            </th>
-                                        {% endfor %}
+                                        <th style="width: 15%;">Page</th>
+                                        <th style="width: 25%;">URL</th>
+                                        <th style="width: 60%;">Required Validations</th>
                                     </tr>
                                 </thead>
                                 <tbody id="registryTableBody">
-                                    {% for validation in all_validation_codes %}
-                                        <tr data-validation-code="{{ validation.code }}">
+                                    {% for page in pages %}
+                                        <tr data-page-url="{{ page.url }}">
+                                            <td><strong>{{ page.title }}</strong></td>
+                                            <td><code>{{ page.url }}</code></td>
                                             <td>
-                                                <div
-                                                    class="validation-code-cell"
-                                                    data-bs-toggle="tooltip"
-                                                    data-bs-placement="right"
-                                                    data-bs-html="true"
-                                                    title="<pre style='text-align: left; margin: 0; font-size: 11px;'>{{ validation.source|escape }}</pre>"
-                                                    style="cursor: help;">
-                                                    <code class="text-danger">{{ validation.code }}</code>
-                                                    <br>
-                                                    <small class="text-muted">{{ validation.title }}</small>
-                                                    <br>
-                                                    <small class="text-info">
-                                                        <i class="bi bi-code-square"></i> Hover for code
-                                                    </small>
-                                                </div>
+                                                <select
+                                                    class="form-select validation-multiselect"
+                                                    multiple
+                                                    data-page-url="{{ page.url }}"
+                                                    size="8"
+                                                    style="width: 100%;">
+                                                    {% for validation in all_validation_codes %}
+                                                        <option
+                                                            value="{{ validation.code }}"
+                                                            data-bs-toggle="tooltip"
+                                                            data-bs-placement="right"
+                                                            data-bs-html="true"
+                                                            title="<pre style='text-align: left; margin: 0; font-size: 11px;'>{{ validation.source|escape }}</pre>">
+                                                            {{ validation.title }} ({{ validation.code }})
+                                                        </option>
+                                                    {% endfor %}
+                                                </select>
+                                                <small class="text-muted">
+                                                    <i class="bi bi-info-circle me-1"></i>
+                                                    Hold Ctrl/Cmd to select multiple. Hover over options to see code.
+                                                </small>
                                             </td>
-                                            {% for page in pages %}
-                                                <td class="text-center">
-                                                    <input
-                                                        type="checkbox"
-                                                        class="form-check-input validation-checkbox"
-                                                        data-validation-code="{{ validation.code }}"
-                                                        data-page-url="{{ page.url }}"
-                                                        style="transform: scale(1.5);">
-                                                </td>
-                                            {% endfor %}
                                         </tr>
                                     {% endfor %}
                                 </tbody>
@@ -104,7 +98,7 @@ Select checkboxes above to configure validation requirements for each page...
 
         // Initialize tooltips
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize Bootstrap tooltips
+            // Initialize Bootstrap tooltips on select options
             var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
             var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
                 return new bootstrap.Tooltip(tooltipTriggerEl, {
@@ -118,10 +112,10 @@ Select checkboxes above to configure validation requirements for each page...
                 pageValidationState['{{ page.url }}'] = [];
             {% endfor %}
 
-            // Add change listeners to all checkboxes
-            const checkboxes = document.querySelectorAll('.validation-checkbox');
-            checkboxes.forEach(function(checkbox) {
-                checkbox.addEventListener('change', function() {
+            // Add change listeners to all multi-selects
+            const multiselects = document.querySelectorAll('.validation-multiselect');
+            multiselects.forEach(function(select) {
+                select.addEventListener('change', function() {
                     updateValidationState();
                     updateConfigSummary();
                 });
@@ -136,12 +130,14 @@ Select checkboxes above to configure validation requirements for each page...
                 pageValidationState['{{ page.url }}'] = [];
             {% endfor %}
 
-            // Read all checkboxes
-            const checkboxes = document.querySelectorAll('.validation-checkbox:checked');
-            checkboxes.forEach(function(checkbox) {
-                const pageUrl = checkbox.getAttribute('data-page-url');
-                const validationCode = checkbox.getAttribute('data-validation-code');
-                pageValidationState[pageUrl].push(validationCode);
+            // Read all multi-selects
+            const multiselects = document.querySelectorAll('.validation-multiselect');
+            multiselects.forEach(function(select) {
+                const pageUrl = select.getAttribute('data-page-url');
+                const selectedOptions = Array.from(select.selectedOptions);
+                selectedOptions.forEach(function(option) {
+                    pageValidationState[pageUrl].push(option.value);
+                });
             });
 
             // Log to console (for development)
@@ -190,13 +186,13 @@ Select checkboxes above to configure validation requirements for each page...
 
         // Reset button
         document.getElementById('resetBtn').addEventListener('click', function() {
-            if (!confirm('Are you sure you want to reset all validation requirements? This will uncheck all boxes.')) {
+            if (!confirm('Are you sure you want to reset all validation requirements? This will clear all selections.')) {
                 return;
             }
 
-            const checkboxes = document.querySelectorAll('.validation-checkbox');
-            checkboxes.forEach(function(checkbox) {
-                checkbox.checked = false;
+            const multiselects = document.querySelectorAll('.validation-multiselect');
+            multiselects.forEach(function(select) {
+                select.selectedIndex = -1;
             });
 
             updateValidationState();
@@ -213,18 +209,18 @@ Select checkboxes above to configure validation requirements for each page...
             background-color: #2d2d2d;
         }
 
-        .validation-code-cell {
-            padding: 5px;
-            border-radius: 4px;
-            transition: background-color 0.2s;
-        }
-
-        .validation-code-cell:hover {
-            background-color: #f8f9fa;
-        }
-
-        .validation-checkbox {
+        .validation-multiselect {
             cursor: pointer;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        .validation-multiselect option {
+            padding: 8px;
+        }
+
+        .validation-multiselect option:hover {
+            background-color: #e9ecef;
         }
 
         tbody tr:hover {
