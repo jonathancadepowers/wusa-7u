@@ -16,13 +16,13 @@
                         <p class="lead mb-4">Complete all the steps below to prepare your division for the season. It is recommend you complete the tasks in order, but you can go out of order if needed.</p>
 
                         <div class="table-responsive">
-                            <table class="table table-hover">
+                            <table class="table table-hover table-padded">
                                 <thead class="table-light">
                                     <tr>
-                                        <th style="width: 6%;">Task #</th>
-                                        <th style="width: 15%;">Title</th>
-                                        <th style="width: 30%;">Description</th>
-                                        <th style="width: 15%;">
+                                        <th style="width: 6%; padding-right: 20px;">Task #</th>
+                                        <th style="width: 14%; padding-right: 20px;">Title</th>
+                                        <th style="width: 26%; padding-right: 20px;">Description</th>
+                                        <th style="width: 16%; padding-right: 20px;">
                                             Status
                                             <i class="bi bi-info-circle ms-1"
                                                data-bs-toggle="tooltip"
@@ -31,8 +31,8 @@
                                                title="Shows whether this task has been completed. Hover over any status badge to see the specific requirements needed to mark it as Complete."
                                                style="cursor: help; font-size: 0.9em;"></i>
                                         </th>
-                                        <th class="validation-column" style="width: 18%; display: none;">Validation Logic</th>
-                                        <th style="width: 16%;">
+                                        <th class="validation-column" style="width: 18%; display: none; padding-right: 20px;">Validation Logic</th>
+                                        <th style="width: 20%;">
                                             Link
                                             <i class="bi bi-info-circle ms-1"
                                                data-bs-toggle="tooltip"
@@ -158,6 +158,14 @@
             white-space: pre;
             margin: 0;
             max-width: none;
+        }
+
+        .table-padded td {
+            padding-right: 20px !important;
+        }
+
+        .table-padded td:last-child {
+            padding-right: 0.75rem !important;
         }
     </style>
 {% endblock %}
