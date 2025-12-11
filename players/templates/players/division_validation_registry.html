@@ -15,7 +15,6 @@
                     <div class="card-body">
                         <p class="lead mb-4">
                             Configure which validation codes are required for each page to load.
-                            Hover over validation codes to see their Python implementation.
                         </p>
 
                         <div class="alert alert-info mb-4">
@@ -61,15 +60,6 @@
                             </table>
                         </div>
 
-                        <div class="mt-4">
-                            <h5>Configuration Summary</h5>
-                            <div class="alert alert-light">
-                                <div id="configSummary" style="font-family: monospace; white-space: pre;">
-Select checkboxes above to configure validation requirements for each page...
-                                </div>
-                            </div>
-                        </div>
-
                         <div class="mt-4 text-end">
                             <button type="button" class="btn btn-secondary" id="resetBtn">
                                 <i class="bi bi-arrow-counterclockwise me-2"></i>Reset All
@@ -111,11 +101,8 @@ Select checkboxes above to configure validation requirements for each page...
             multiselects.forEach(function(select) {
                 select.addEventListener('change', function() {
                     updateValidationState();
-                    updateConfigSummary();
                 });
             });
-
-            updateConfigSummary();
         });
 
         function updateValidationState() {
@@ -138,46 +125,6 @@ Select checkboxes above to configure validation requirements for each page...
             console.log('Updated validation state:', pageValidationState);
         }
 
-        function updateConfigSummary() {
-            const summaryDiv = document.getElementById('configSummary');
-            let summary = 'Page Validation Requirements\n';
-            summary += '='.repeat(60) + '\n\n';
-
-            let hasAnyConfig = false;
-
-            {% for page in pages %}
-                const validations_{{ forloop.counter }} = pageValidationState['{{ page.url }}'];
-                if (validations_{{ forloop.counter }}.length > 0) {
-                    hasAnyConfig = true;
-                    summary += '{{ page.title }} ({{ page.url }})\n';
-                    summary += '├─ Required Validations: ' + validations_{{ forloop.counter }}.length + '\n';
-                    validations_{{ forloop.counter }}.forEach((code, index) => {
-                        const isLast = index === validations_{{ forloop.counter }}.length - 1;
-                        const prefix = isLast ? '└─' : '├─';
-                        const title = getValidationTitle(code);
-                        summary += '│  ' + prefix + ' ' + title + '\n';
-                    });
-                    summary += '\n';
-                }
-            {% endfor %}
-
-            if (!hasAnyConfig) {
-                summary += 'No validation requirements configured yet.\n';
-                summary += 'Check boxes above to require validations for specific pages.\n';
-            }
-
-            summaryDiv.textContent = summary;
-        }
-
-        function getValidationTitle(code) {
-            const validationTitles = {
-                {% for validation in all_validation_codes %}
-                    '{{ validation.code }}': '{{ validation.title }}',
-                {% endfor %}
-            };
-            return validationTitles[code] || code;
-        }
-
         // Reset button
         document.getElementById('resetBtn').addEventListener('click', function() {
             if (!confirm('Are you sure you want to reset all validation requirements? This will clear all selections.')) {
@@ -190,7 +137,6 @@ Select checkboxes above to configure validation requirements for each page...
             });
 
             updateValidationState();
-            updateConfigSummary();
 
             console.log('All validation requirements reset');
         });
