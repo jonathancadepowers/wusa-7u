@@ -94,29 +94,38 @@ def division_setup_checklist_view(request):
     teams_without_slots = all_teams.filter(practice_slot__isnull=True)
     teams_with_slots = all_teams.filter(practice_slot__isnull=False)
 
-    # Check draft order - see if draft exists and has all teams in order
+    # Check if draft exists and is fully configured
     from .models import Draft
     import json as json_module
     draft = Draft.objects.first()
     teams_in_draft_order = 0
-    draft_order_complete = False
+    draft_setup_complete = False
 
-    if draft and draft.order:
-        try:
-            order_data = draft.order.strip()
-            if order_data.startswith('['):
-                # JSON format
-                team_ids = json_module.loads(order_data)
-            else:
-                # Comma-separated format
-                team_ids = [int(tid.strip()) for tid in order_data.split(',') if tid.strip()]
+    if draft:
+        # Check all draft requirements
+        draft_valid = (
+            draft.rounds and draft.rounds > 0 and
+            draft.picks_per_round and draft.picks_per_round > 0 and
+            draft.order and draft.order.strip() != ''
+        )
 
-            teams_in_draft_order = len(team_ids)
-            # Complete if all teams are in the order
-            draft_order_complete = teams_in_draft_order == team_count and team_count > 0
-        except (json_module.JSONDecodeError, ValueError):
-            teams_in_draft_order = 0
-            draft_order_complete = False
+        if draft_valid:
+            # Validate draft order format and completeness
+            try:
+                order_data = draft.order.strip()
+                if order_data.startswith('['):
+                    # JSON format
+                    team_ids = json_module.loads(order_data)
+                else:
+                    # Comma-separated format
+                    team_ids = [int(tid.strip()) for tid in order_data.split(',') if tid.strip()]
+
+                teams_in_draft_order = len(team_ids)
+                # Draft is complete if order has correct number of teams
+                draft_setup_complete = (len(team_ids) == draft.picks_per_round and len(team_ids) > 0)
+            except (json_module.JSONDecodeError, ValueError):
+                teams_in_draft_order = 0
+                draft_setup_complete = False
 
     # Check if all players have been assigned to teams (draft complete)
     players_without_team = Player.objects.filter(team__isnull=True).count()
@@ -218,12 +227,12 @@ def division_setup_checklist_view(request):
         },
         {
             'title': 'Setup Draft',
-            'description': 'Set the order of the draft.',
+            'description': 'Configure all draft settings including the number of rounds, teams participating, and the order in which teams will draft players.',
             'link': '/draft/edit/',
             'link_text': 'Go to Draft Setup',
-            'status': 'complete' if draft_order_complete else 'incomplete',
+            'status': 'complete' if draft_setup_complete else 'incomplete',
             'count': teams_in_draft_order,
-            'count_label': 'teams slotted into draft order'
+            'count_label': 'teams configured in draft order'
         },
         {
             'title': 'Run the Draft',
@@ -1673,12 +1682,14 @@ def assign_practice_slots_to_teams_view(request):
 
 def run_draft_view(request):
     """Run the draft - display grid of rounds and picks"""
-    # Get the most recent draft
+
+    # Check if division setup is complete via season_validated flag
+    season_validated = False
     try:
-        draft = Draft.objects.latest('created_at')
-    except Draft.DoesNotExist:
-        messages.error(request, 'No draft found. Please create a draft first.')
-        return redirect('players:create_draft')
+        season_validated_setting = GeneralSetting.objects.get(key='season_validated')
+        season_validated = season_validated_setting.value == 'true'
+    except GeneralSetting.DoesNotExist:
+        season_validated = False
 
     # Get the draft portal status
     try:
@@ -1687,45 +1698,21 @@ def run_draft_view(request):
     except GeneralSetting.DoesNotExist:
         portal_open = False
 
-    # Validate draft has all required fields
-    errors = []
-
-    if not draft.rounds or draft.rounds <= 0:
-        errors.append('Draft must have a valid number of rounds.')
-
-    if not draft.picks_per_round or draft.picks_per_round <= 0:
-        errors.append('Draft must have a valid number of picks per round.')
-
-    # Check if order field has team assignments
-    if not draft.order or draft.order.strip() == '':
-        errors.append('Draft order has not been set. Please configure the draft order.')
-    else:
-        # Try to parse the order field (should be comma-separated team IDs or JSON)
-        try:
-            order_data = draft.order.strip()
-            if order_data.startswith('['):
-                # JSON format
-                team_order = json.loads(order_data)
-            else:
-                # Comma-separated format
-                team_order = [tid.strip() for tid in order_data.split(',') if tid.strip()]
-
-            if not team_order or len(team_order) == 0:
-                errors.append('No teams have been assigned to the draft order.')
-            elif len(team_order) != draft.picks_per_round:
-                errors.append(f'Draft order is incomplete. Expected {draft.picks_per_round} teams but only {len(team_order)} are assigned.')
-        except (json.JSONDecodeError, ValueError):
-            errors.append('Draft order data is invalid.')
-
-    # If there are validation errors, show error page
-    if errors:
+    # If division setup is not complete, show warning
+    if not season_validated:
         context = {
-            'draft': draft,
-            'errors': errors,
-            'show_grid': False,
+            'season_validated': False,
             'portal_open': portal_open,
         }
         return render(request, 'players/run_draft.html', context)
+
+    # Get the most recent draft
+    try:
+        draft = Draft.objects.latest('created_at')
+    except Draft.DoesNotExist:
+        # This shouldn't happen if season_validated is true, but handle it anyway
+        messages.error(request, 'No draft found. Please create a draft first.')
+        return redirect('players:edit_draft')
 
     # Create ranges for rounds and picks
     rounds = list(range(1, draft.rounds + 1))
@@ -1797,6 +1784,7 @@ def run_draft_view(request):
         'has_final_round': has_final_round,
         'final_round_number': final_round_number,
         'portal_open': portal_open,
+        'season_validated': True,
     }
     return render(request, 'players/run_draft.html', context)
 
