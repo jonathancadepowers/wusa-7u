@@ -191,6 +191,93 @@ def validation_code_run_the_draft():
     }
 
 
+def division_validation_registry_view(request):
+    """Division validation registry visualization page"""
+
+    # Define all validation codes with their titles and current mock dependencies
+    # This is front-end only for now - no backend logic
+    validation_codes = [
+        {
+            'code': 'validation_code_create_players',
+            'title': 'Create Players',
+            'display_order': 1,
+            'dependencies': []  # Empty for now - will be set via UI
+        },
+        {
+            'code': 'validation_code_create_teams',
+            'title': 'Create Teams',
+            'display_order': 2,
+            'dependencies': []
+        },
+        {
+            'code': 'validation_code_create_managers',
+            'title': 'Create Managers',
+            'display_order': 3,
+            'dependencies': []
+        },
+        {
+            'code': 'validation_code_collect_manager_team_preferences',
+            'title': 'Collect Manager Team Preferences',
+            'display_order': 4,
+            'dependencies': []
+        },
+        {
+            'code': 'validation_code_assign_managers_to_teams',
+            'title': 'Assign Managers to Teams',
+            'display_order': 5,
+            'dependencies': []
+        },
+        {
+            'code': 'validation_code_send_managers_team_secrets',
+            'title': 'Send Managers Team Secrets',
+            'display_order': 6,
+            'dependencies': []
+        },
+        {
+            'code': 'validation_code_request_manager_rankings',
+            'title': 'Request Manager Rankings',
+            'display_order': 7,
+            'dependencies': []
+        },
+        {
+            'code': 'validation_code_analyze_and_release_player_rankings',
+            'title': 'Analyze and Release Player Rankings',
+            'display_order': 8,
+            'dependencies': []
+        },
+        {
+            'code': 'validation_code_analyze_manager_daughter_rankings',
+            'title': 'Analyze Manager Daughter Rankings',
+            'display_order': 9,
+            'dependencies': []
+        },
+        {
+            'code': 'validation_code_assign_practice_slots',
+            'title': 'Assign Practice Slots',
+            'display_order': 10,
+            'dependencies': []
+        },
+        {
+            'code': 'validation_code_setup_draft',
+            'title': 'Setup Draft',
+            'display_order': 11,
+            'dependencies': []
+        },
+        {
+            'code': 'validation_code_run_the_draft',
+            'title': 'Run the Draft',
+            'display_order': 12,
+            'dependencies': []
+        },
+    ]
+
+    context = {
+        'validation_codes': validation_codes,
+    }
+
+    return render(request, 'players/division_validation_registry.html', context)
+
+
 def division_setup_checklist_view(request):
     """Division setup checklist page"""
 
