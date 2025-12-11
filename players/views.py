@@ -136,6 +136,7 @@ def division_setup_checklist_view(request):
         {
             'title': 'Create Players',
             'description': 'Export all players for this division from TeamSideline (as an .xlsx file) and then upload them.',
+            'validation_logic': 'At least 10 players exist in the database',
             'link': '/settings/#player-data-import',
             'link_text': 'Go to Player Data Import',
             'status': 'complete' if players_complete else 'incomplete',
@@ -145,6 +146,7 @@ def division_setup_checklist_view(request):
         {
             'title': 'Create Teams',
             'description': 'Create each of the teams for your division, one by one. Don\'t assign managers just yet.',
+            'validation_logic': 'At least 5 teams exist in the database',
             'link': '/teams/',
             'link_text': 'Go to Teams',
             'status': 'complete' if teams_complete else 'incomplete',
@@ -154,6 +156,7 @@ def division_setup_checklist_view(request):
         {
             'title': 'Create Managers',
             'description': 'Create all managers/head coaches. Don\'t assign managers to teams just yet. You must also assign a daughter (player) to each manager.',
+            'validation_logic': 'Manager count equals team count AND all managers have a daughter assigned',
             'link': '/managers/',
             'link_text': 'Go to Managers',
             'status': 'complete' if managers_complete else 'incomplete',
@@ -163,6 +166,7 @@ def division_setup_checklist_view(request):
         {
             'title': 'Collect Manager Team Preferences',
             'description': 'Email managers the submission form that asks them to stack rank which teams they want to manage. A email has been drafted for you to send.',
+            'validation_logic': 'Every manager has submitted team preferences (ranking all teams) OR all managers have been assigned to teams',
             'link': '/settings/#emails',
             'link_text': 'Go to Emails',
             'link_note': 'Click "Send Team Preferences Email"',
@@ -173,6 +177,7 @@ def division_setup_checklist_view(request):
         {
             'title': 'Assign Managers to Team',
             'description': 'Analyze the manager\'s team preference and assign managers to teams accordingly.',
+            'validation_logic': 'All teams have a manager assigned AND manager count equals teams with managers',
             'link': '/team_preferences/analyze/',
             'link_text': 'Go to Analysis',
             'status': 'complete' if managers_assigned_complete else 'incomplete',
@@ -182,6 +187,7 @@ def division_setup_checklist_view(request):
         {
             'title': 'Send Managers "Team Secrets"',
             'description': 'Each manager will have a dashboard to manage their team. To view this page, they must use their unique "team secret." Managers should not know eachother\'s secrets. Outside of this website, email/text each manager their secret.',
+            'validation_logic': 'N/A - Manual task performed outside the website',
             'link': '/teams/',
             'link_text': 'Go to Teams',
             'link_note': 'Click "View All Team Secrets"',
@@ -191,6 +197,7 @@ def division_setup_checklist_view(request):
         {
             'title': 'Request Manager Rankings',
             'description': 'Once each manager has their "team secret" (see above) then email all managers a link to their team\'s dashboard. At the top of this dashboard will be list of tasks for them to complete, to submit various rankings needed to build the draft. A email has been drafted for you to send.\n\nManagers must submit rankings for (1) all players, (2) manager\'s daughters, (3) their preferences for practice slots.',
+            'validation_logic': 'N/A - Manual task performed outside the website',
             'link': '/settings/#emails',
             'link_text': 'Go to Emails',
             'link_note': 'Click "Send Team Pages to Managers"',
@@ -200,6 +207,7 @@ def division_setup_checklist_view(request):
         {
             'title': 'Analyze & Release Player Rankings',
             'description': 'Once all managers have submitted their top 20 player rankings, review them and then release them to managers to review.',
+            'validation_logic': 'All managers have submitted player rankings (PlayerRanking record exists for each manager)',
             'link': '/player_rankings/analyze/',
             'link_text': 'Go to Analysis',
             'status': 'complete' if managers_without_rankings.count() == 0 else 'incomplete',
@@ -209,6 +217,7 @@ def division_setup_checklist_view(request):
         {
             'title': 'Analyze Manager\'s Daughters Rankings',
             'description': 'Once all managers have submitted their rankings of manager\'s daughters, review them. These rankings will NOT be released to managers. Rather, you will use these rankings to set draft positions for all manager\'s daughter.',
+            'validation_logic': 'All managers have submitted manager daughter rankings (ManagerDaughterRanking record exists for each manager)',
             'link': '/manager_daughter_rankings/analyze/',
             'link_text': 'Go to Analysis',
             'status': 'complete' if managers_without_daughter_rankings.count() == 0 else 'incomplete',
@@ -218,6 +227,7 @@ def division_setup_checklist_view(request):
         {
             'title': 'Assign Practice Slots',
             'description': 'Review the practice slot preferences submitted by managers, then assignment one slot to each team.',
+            'validation_logic': 'All teams have been assigned a practice slot (practice_slot field is not null)',
             'link': '/practice_slots/analyze/',
             'link_text': 'Go to Analysis',
             'link_note': 'Click "Assign Practice Slots to Teams"',
@@ -228,6 +238,7 @@ def division_setup_checklist_view(request):
         {
             'title': 'Setup Draft',
             'description': 'Configure all draft settings including the number of rounds, teams participating, and the order in which teams will draft players.',
+            'validation_logic': 'Draft exists with rounds > 0, picks_per_round > 0, valid draft order format, and number of teams in draft order equals picks_per_round',
             'link': '/draft/edit/',
             'link_text': 'Go to Draft Setup',
             'status': 'complete' if draft_setup_complete else 'incomplete',
@@ -237,6 +248,7 @@ def division_setup_checklist_view(request):
         {
             'title': 'Run the Draft',
             'description': 'Complete every round of the draft. Once all players have been selected, assign players to the team that drafting them.',
+            'validation_logic': 'At least one player exists AND all players have been assigned to a team (team field is not null)',
             'link': '/draft/run/',
             'link_text': 'Go to Draft Board',
             'link_note': 'Click "Draft Complete" to Assign Players to Teams',

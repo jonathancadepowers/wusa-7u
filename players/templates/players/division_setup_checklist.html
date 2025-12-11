@@ -19,11 +19,12 @@
                             <table class="table table-hover">
                                 <thead class="table-light">
                                     <tr>
-                                        <th style="width: 8%;">Task #</th>
-                                        <th style="width: 15%;">Title</th>
-                                        <th style="width: 32%;">Description</th>
-                                        <th style="width: 23%;">Status</th>
-                                        <th style="width: 22%;">Link</th>
+                                        <th style="width: 6%;">Task #</th>
+                                        <th style="width: 12%;">Title</th>
+                                        <th style="width: 22%;">Description</th>
+                                        <th style="width: 18%;">Status</th>
+                                        <th style="width: 24%;">Validation Logic</th>
+                                        <th style="width: 18%;">Link</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -53,6 +54,7 @@
                                                     <br><small class="text-muted">{{ item.status_note }}</small>
                                                 {% endif %}
                                             </td>
+                                            <td><small class="text-muted">{{ item.validation_logic }}</small></td>
                                             <td class="text-nowrap">
                                                 <a href="{{ item.link }}" class="btn btn-sm btn-primary" target="_blank">
                                                     <i class="bi bi-arrow-right me-1"></i>{{ item.link_text }}
