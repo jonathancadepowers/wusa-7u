@@ -30,14 +30,72 @@
                         <h4 class="mb-0"><i class="bi bi-gear-fill me-2"></i>Application Settings</h4>
                     </div>
                     <div class="card-body">
-                        <h5 class="card-title">Division Setup</h5>
-                        <p class="text-muted">Complete the division setup steps to prepare for the season.</p>
+                        <h5 class="card-title" id="player-data-import">Player Data Import</h5>
+                        <p class="text-muted">Upload the player registration Excel file exported out of TeamSideline to import player data.</p>
+
+                        <form id="importForm" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="excelFile" class="form-label">Select Excel File</label>
+                                <input class="form-control" type="file" id="excelFile" name="excel_file" accept=".xlsx,.xls" required>
+                                <div class="form-text">Both .xlsx and .xls files are supported</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <div id="fileInfo" class="alert alert-info d-none">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    <span id="fileName"></span>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary" id="importBtn">
+                                <i class="bi bi-upload me-2"></i>Upload and Import Players
+                            </button>
+                            <button type="button" class="btn btn-secondary d-none" id="loadingBtn" disabled>
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                Processing...
+                            </button>
+                        </form>
+
+                        <hr class="my-4">
+
+                        <h5 class="card-title">Team Preferences</h5>
+                        <p class="text-muted">Analyze manager team preferences and assign managers to teams.</p>
 
                         <div class="d-flex gap-2">
-                            <a href="{% url 'players:division_setup_checklist' %}" class="btn btn-primary">
-                                <i class="bi bi-list-check me-2"></i>Checklist
+                            <a href="{% url 'players:team_preferences' %}" class="btn btn-primary">
+                                <i class="bi bi-card-checklist me-2"></i>Submission Form
+                            </a>
+                            <a href="{% url 'players:team_preferences_analyze' %}" class="btn btn-info">
+                                <i class="bi bi-bar-chart-fill me-2"></i>Analyze Data
                             </a>
                         </div>
+
+                        <hr class="my-4">
+
+                        <h5 class="card-title" id="emails">Emails</h5>
+                        <p class="text-muted">Send emails to managers for various purposes.</p>
+
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#teamPreferencesEmailModal">
+                                <i class="bi bi-envelope me-2"></i>Send Team Preferences Email
+                            </button>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#teamPagesEmailModal">
+                                <i class="bi bi-envelope me-2"></i>Send Team Pages to Managers
+                            </button>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <h5 class="card-title">Practice Slots</h5>
+                        <p class="text-muted">Manage available practice slot times.</p>
+
+                        <a href="{% url 'players:manage_practice_slots' %}" class="btn btn-primary">
+                            <i class="bi bi-calendar-week me-2"></i>Manage Slots
+                        </a>
+                        <a href="{% url 'players:practice_slots_analyze' %}" class="btn btn-info ms-2">
+                            <i class="bi bi-graph-up me-2"></i>Analyze Data
+                        </a>
 
                         <hr class="my-4">
 
@@ -69,72 +127,14 @@
 
                         <hr class="my-4">
 
-                        <h5 class="card-title">Team Preferences</h5>
-                        <p class="text-muted">Analyze manager team preferences and assign managers to teams.</p>
+                        <h5 class="card-title">Division Setup</h5>
+                        <p class="text-muted">Complete the division setup steps to prepare for the season.</p>
 
                         <div class="d-flex gap-2">
-                            <a href="{% url 'players:team_preferences' %}" class="btn btn-primary">
-                                <i class="bi bi-card-checklist me-2"></i>Submission Form
-                            </a>
-                            <a href="{% url 'players:team_preferences_analyze' %}" class="btn btn-info">
-                                <i class="bi bi-bar-chart-fill me-2"></i>Analyze Data
+                            <a href="{% url 'players:division_setup_checklist' %}" class="btn btn-primary">
+                                <i class="bi bi-list-check me-2"></i>Checklist
                             </a>
                         </div>
-
-                        <hr class="my-4">
-
-                        <h5 class="card-title">Emails</h5>
-                        <p class="text-muted">Send emails to managers for various purposes.</p>
-
-                        <div class="d-flex gap-2">
-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#teamPreferencesEmailModal">
-                                <i class="bi bi-envelope me-2"></i>Send Team Preferences Email
-                            </button>
-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#teamPagesEmailModal">
-                                <i class="bi bi-envelope me-2"></i>Send Team Pages to Managers
-                            </button>
-                        </div>
-
-                        <hr class="my-4">
-
-                        <h5 class="card-title">Practice Slots</h5>
-                        <p class="text-muted">Manage available practice slot times.</p>
-
-                        <a href="{% url 'players:manage_practice_slots' %}" class="btn btn-primary">
-                            <i class="bi bi-calendar-week me-2"></i>Manage Slots
-                        </a>
-                        <a href="{% url 'players:practice_slots_analyze' %}" class="btn btn-info ms-2">
-                            <i class="bi bi-graph-up me-2"></i>Analyze Data
-                        </a>
-
-                        <hr class="my-4">
-
-                        <h5 class="card-title" id="player-data-import">Player Data Import</h5>
-                        <p class="text-muted">Upload the player registration Excel file exported out of TeamSideline to import player data.</p>
-
-                        <form id="importForm" enctype="multipart/form-data">
-                            {% csrf_token %}
-                            <div class="mb-3">
-                                <label for="excelFile" class="form-label">Select Excel File</label>
-                                <input class="form-control" type="file" id="excelFile" name="excel_file" accept=".xlsx,.xls" required>
-                                <div class="form-text">Both .xlsx and .xls files are supported</div>
-                            </div>
-
-                            <div class="mb-3">
-                                <div id="fileInfo" class="alert alert-info d-none">
-                                    <i class="bi bi-info-circle me-2"></i>
-                                    <span id="fileName"></span>
-                                </div>
-                            </div>
-
-                            <button type="submit" class="btn btn-primary" id="importBtn">
-                                <i class="bi bi-upload me-2"></i>Upload and Import Players
-                            </button>
-                            <button type="button" class="btn btn-secondary d-none" id="loadingBtn" disabled>
-                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                Processing...
-                            </button>
-                        </form>
                     </div>
                 </div>
             </div>
