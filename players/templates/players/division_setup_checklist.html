@@ -20,12 +20,11 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th style="width: 6%;">Task #</th>
-                                        <th style="width: 12%;">Title</th>
-                                        <th style="width: 22%;">Description</th>
-                                        <th style="width: 12%;">Status</th>
-                                        <th style="width: 12%;">Current Count</th>
+                                        <th style="width: 15%;">Title</th>
+                                        <th style="width: 30%;">Description</th>
+                                        <th style="width: 15%;">Status</th>
                                         <th class="validation-column" style="width: 18%; display: none;">Validation Logic</th>
-                                        <th style="width: 18%;">Link</th>
+                                        <th style="width: 16%;">Link</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -50,11 +49,6 @@
                                                 {% endif %}
                                                 {% if item.status_note %}
                                                     <br><small class="text-muted">{{ item.status_note }}</small>
-                                                {% endif %}
-                                            </td>
-                                            <td>
-                                                {% if item.count is not None %}
-                                                    {{ item.count }} {{ item.count_label }}
                                                 {% endif %}
                                             </td>
                                             <td class="validation-column" style="display: none;">
