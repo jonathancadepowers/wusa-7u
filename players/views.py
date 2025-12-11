@@ -249,20 +249,14 @@ def division_validation_registry_view(request):
 
     # Define all pages/views and which validations they should require
     # This is front-end only for now - no backend logic
+    # Order matches the division_setup_checklist page
     pages = [
         {
-            'url': '/draft/edit/',
-            'view_name': 'edit_draft_view',
-            'title': 'Draft Edit Page',
-            'description': 'Create or edit draft configuration',
+            'url': '/team_preferences/analyze/',
+            'view_name': 'team_preferences_analyze_view',
+            'title': 'Team Preferences Analysis',
+            'description': 'Analyze manager team preferences',
             'required_validations': []  # Empty for now - will be set via UI
-        },
-        {
-            'url': '/draft/run/',
-            'view_name': 'run_draft_view',
-            'title': 'Run Draft Page',
-            'description': 'Execute the draft and make picks',
-            'required_validations': []
         },
         {
             'url': '/player_rankings/analyze/',
@@ -272,10 +266,10 @@ def division_validation_registry_view(request):
             'required_validations': []
         },
         {
-            'url': '/team_preferences/analyze/',
-            'view_name': 'team_preferences_analyze_view',
-            'title': 'Team Preferences Analysis',
-            'description': 'Analyze manager team preferences',
+            'url': '/manager_daughter_rankings/analyze/',
+            'view_name': 'manager_daughter_rankings_analyze_view',
+            'title': 'Manager Daughter Rankings Analysis',
+            'description': 'Analyze manager daughter rankings',
             'required_validations': []
         },
         {
@@ -286,10 +280,17 @@ def division_validation_registry_view(request):
             'required_validations': []
         },
         {
-            'url': '/manager_daughter_rankings/analyze/',
-            'view_name': 'manager_daughter_rankings_analyze_view',
-            'title': 'Manager Daughter Rankings Analysis',
-            'description': 'Analyze manager daughter rankings',
+            'url': '/draft/edit/',
+            'view_name': 'edit_draft_view',
+            'title': 'Draft Edit Page',
+            'description': 'Create or edit draft configuration',
+            'required_validations': []
+        },
+        {
+            'url': '/draft/run/',
+            'view_name': 'run_draft_view',
+            'title': 'Run Draft Page',
+            'description': 'Execute the draft and make picks',
             'required_validations': []
         },
     ]
