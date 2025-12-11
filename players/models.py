@@ -203,3 +203,19 @@ class StarredDraftPick(models.Model):
 
     def __str__(self):
         return f"{self.team} starred {self.player}"
+
+
+class DivisionValidationRegistry(models.Model):
+    page = models.TextField()
+    required_validations = models.TextField()  # Stores JSON as text
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'division_validation_registry'
+        verbose_name = 'Division Validation Registry'
+        verbose_name_plural = 'Division Validation Registry'
+
+    def __str__(self):
+        return f"Validation Registry for {self.page}"
