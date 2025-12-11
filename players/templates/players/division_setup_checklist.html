@@ -17,7 +17,7 @@
 
                         <div class="mb-3">
                             <button type="button" class="btn btn-sm btn-outline-secondary" id="toggleValidationColumn">
-                                <i class="bi bi-code-square me-1"></i>Show Validation Code
+                                <i class="bi bi-code-square me-1"></i>Show Validation Logic
                             </button>
                         </div>
 
@@ -29,7 +29,7 @@
                                         <th style="width: 12%;">Title</th>
                                         <th style="width: 22%;">Description</th>
                                         <th style="width: 18%;">Status</th>
-                                        <th class="validation-column" style="width: 24%; display: none;">Validation Code</th>
+                                        <th class="validation-column" style="width: 24%; display: none;">Validation Logic</th>
                                         <th style="width: 18%;">Link</th>
                                     </tr>
                                 </thead>
@@ -60,7 +60,11 @@
                                                     <br><small class="text-muted">{{ item.status_note }}</small>
                                                 {% endif %}
                                             </td>
-                                            <td class="validation-column" style="display: none;"><small class="text-danger"><code>{{ item.validation_code }}</code></small></td>
+                                            <td class="validation-column" style="display: none;">
+                                                <small class="text-muted">{{ item.validation_logic }}</small>
+                                                <br>
+                                                <small class="text-danger"><code>{{ item.validation_code }}</code></small>
+                                            </td>
                                             <td class="text-nowrap">
                                                 <a href="{{ item.link }}" class="btn btn-sm btn-primary" target="_blank">
                                                     <i class="bi bi-arrow-right me-1"></i>{{ item.link_text }}
@@ -93,9 +97,9 @@
             });
 
             if (isHidden) {
-                button.innerHTML = '<i class="bi bi-code-square me-1"></i>Hide Validation Code';
+                button.innerHTML = '<i class="bi bi-code-square me-1"></i>Hide Validation Logic';
             } else {
-                button.innerHTML = '<i class="bi bi-code-square me-1"></i>Show Validation Code';
+                button.innerHTML = '<i class="bi bi-code-square me-1"></i>Show Validation Logic';
             }
         });
     </script>
