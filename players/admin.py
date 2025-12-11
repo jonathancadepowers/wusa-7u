@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Player, Team, Manager, Draft, PlayerRanking, ManagerDaughterRanking, DraftPick, TeamPreference, PracticeSlot, PracticeSlotRanking, GeneralSetting, StarredDraftPick
+from .models import Player, Team, Manager, Draft, PlayerRanking, ManagerDaughterRanking, DraftPick, TeamPreference, PracticeSlot, PracticeSlotRanking, GeneralSetting, StarredDraftPick, DivisionValidationRegistry
 
 
 @admin.register(Draft)
@@ -185,6 +185,23 @@ class StarredDraftPickAdmin(admin.ModelAdmin):
     fieldsets = (
         ('Starred Pick', {
             'fields': ('team', 'player')
+        }),
+        ('Metadata', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(DivisionValidationRegistry)
+class DivisionValidationRegistryAdmin(admin.ModelAdmin):
+    list_display = ['id', 'page', 'required_validations', 'created_at', 'updated_at']
+    search_fields = ['page', 'required_validations']
+    readonly_fields = ['created_at', 'updated_at']
+
+    fieldsets = (
+        ('Validation Registry', {
+            'fields': ('page', 'required_validations')
         }),
         ('Metadata', {
             'fields': ('created_at', 'updated_at'),
