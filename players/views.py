@@ -34,7 +34,7 @@ def validation_code_create_players():
     return {
         'complete': player_count >= 10,
         'count': player_count,
-        'count_label': 'player(s)'
+        'count_label': 'players'
     }
 
 def validation_code_create_teams():
@@ -43,7 +43,7 @@ def validation_code_create_teams():
     return {
         'complete': team_count >= 5,
         'count': team_count,
-        'count_label': 'team(s)'
+        'count_label': 'teams'
     }
 
 def validation_code_create_managers():
@@ -54,7 +54,7 @@ def validation_code_create_managers():
     return {
         'complete': (manager_count == team_count and manager_count > 0 and managers_without_daughters == 0),
         'count': manager_count,
-        'count_label': 'manager(s)'
+        'count_label': 'managers'
     }
 
 def validation_code_collect_manager_team_preferences():
@@ -71,7 +71,7 @@ def validation_code_collect_manager_team_preferences():
     return {
         'complete': team_preferences_complete,
         'count': team_preferences_count,
-        'count_label': 'team preference(s) submitted'
+        'count_label': 'team preferences submitted'
     }
 
 def validation_code_assign_managers_to_teams():
@@ -83,7 +83,7 @@ def validation_code_assign_managers_to_teams():
     return {
         'complete': (manager_count > 0 and teams_without_managers == 0 and managers_with_teams == manager_count),
         'count': teams_without_managers,
-        'count_label': 'team(s) without manager(s)'
+        'count_label': 'teams without managers'
     }
 
 def validation_code_send_managers_team_secrets():
@@ -1884,7 +1884,7 @@ def assign_practice_slots_to_teams_view(request):
 
         return JsonResponse({
             'success': True,
-            'message': f'Successfully assigned practice slots to {assigned_count} team(s)!'
+            'message': f'Successfully assigned practice slots to {assigned_count} teams!'
         })
 
     except Team.DoesNotExist:
@@ -3148,12 +3148,12 @@ def randomly_assign_managers_view(request):
         managers_left = len(unassigned_managers) - assignments_made
         teams_left = len(available_teams) - assignments_made
 
-        message = f'Successfully assigned {assignments_made} manager(s) to teams.'
+        message = f'Successfully assigned {assignments_made} managers to teams.'
 
         if managers_left > 0:
-            message += f' {managers_left} manager(s) remain unassigned (no available teams).'
+            message += f' {managers_left} managers remain unassigned (no available teams).'
         elif teams_left > 0:
-            message += f' {teams_left} team(s) remain without managers (no available managers).'
+            message += f' {teams_left} teams remain without managers (no available managers).'
 
         return JsonResponse({
             'success': True,
@@ -3203,7 +3203,7 @@ def randomly_assign_daughters_view(request):
             manager.save()
             assignments_made += 1
 
-        message = f'Successfully assigned {assignments_made} manager(s) to daughters.'
+        message = f'Successfully assigned {assignments_made} managers to daughters.'
         message += f' Managers: {len(managers)}, Players: {len(players)}.'
 
         if len(managers) > len(players):
