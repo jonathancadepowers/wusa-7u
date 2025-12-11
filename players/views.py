@@ -193,21 +193,70 @@ def validation_code_run_the_draft():
 
 def division_validation_registry_view(request):
     """Division validation registry visualization page"""
+    import inspect
 
-    # Define all validation codes available
+    # Define all validation codes with their actual Python source code
     all_validation_codes = [
-        {'code': 'validation_code_create_players', 'title': 'Create Players'},
-        {'code': 'validation_code_create_teams', 'title': 'Create Teams'},
-        {'code': 'validation_code_create_managers', 'title': 'Create Managers'},
-        {'code': 'validation_code_collect_manager_team_preferences', 'title': 'Collect Manager Team Preferences'},
-        {'code': 'validation_code_assign_managers_to_teams', 'title': 'Assign Managers to Teams'},
-        {'code': 'validation_code_send_managers_team_secrets', 'title': 'Send Managers Team Secrets'},
-        {'code': 'validation_code_request_manager_rankings', 'title': 'Request Manager Rankings'},
-        {'code': 'validation_code_analyze_and_release_player_rankings', 'title': 'Analyze and Release Player Rankings'},
-        {'code': 'validation_code_analyze_manager_daughter_rankings', 'title': 'Analyze Manager Daughter Rankings'},
-        {'code': 'validation_code_assign_practice_slots', 'title': 'Assign Practice Slots'},
-        {'code': 'validation_code_setup_draft', 'title': 'Setup Draft'},
-        {'code': 'validation_code_run_the_draft', 'title': 'Run the Draft'},
+        {
+            'code': 'validation_code_create_players',
+            'title': 'Create Players',
+            'source': inspect.getsource(validation_code_create_players)
+        },
+        {
+            'code': 'validation_code_create_teams',
+            'title': 'Create Teams',
+            'source': inspect.getsource(validation_code_create_teams)
+        },
+        {
+            'code': 'validation_code_create_managers',
+            'title': 'Create Managers',
+            'source': inspect.getsource(validation_code_create_managers)
+        },
+        {
+            'code': 'validation_code_collect_manager_team_preferences',
+            'title': 'Collect Manager Team Preferences',
+            'source': inspect.getsource(validation_code_collect_manager_team_preferences)
+        },
+        {
+            'code': 'validation_code_assign_managers_to_teams',
+            'title': 'Assign Managers to Teams',
+            'source': inspect.getsource(validation_code_assign_managers_to_teams)
+        },
+        {
+            'code': 'validation_code_send_managers_team_secrets',
+            'title': 'Send Managers Team Secrets',
+            'source': inspect.getsource(validation_code_send_managers_team_secrets)
+        },
+        {
+            'code': 'validation_code_request_manager_rankings',
+            'title': 'Request Manager Rankings',
+            'source': inspect.getsource(validation_code_request_manager_rankings)
+        },
+        {
+            'code': 'validation_code_analyze_and_release_player_rankings',
+            'title': 'Analyze and Release Player Rankings',
+            'source': inspect.getsource(validation_code_analyze_and_release_player_rankings)
+        },
+        {
+            'code': 'validation_code_analyze_manager_daughter_rankings',
+            'title': 'Analyze Manager Daughter Rankings',
+            'source': inspect.getsource(validation_code_analyze_manager_daughter_rankings)
+        },
+        {
+            'code': 'validation_code_assign_practice_slots',
+            'title': 'Assign Practice Slots',
+            'source': inspect.getsource(validation_code_assign_practice_slots)
+        },
+        {
+            'code': 'validation_code_setup_draft',
+            'title': 'Setup Draft',
+            'source': inspect.getsource(validation_code_setup_draft)
+        },
+        {
+            'code': 'validation_code_run_the_draft',
+            'title': 'Run the Draft',
+            'source': inspect.getsource(validation_code_run_the_draft)
+        },
     ]
 
     # Define all pages/views and which validations they should require

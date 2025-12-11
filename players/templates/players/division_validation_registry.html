@@ -15,7 +15,7 @@
                     <div class="card-body">
                         <p class="lead mb-4">
                             Configure which validation codes are required for each page to load.
-                            When a page has required validations, it will only be accessible if all those validations pass.
+                            Hover over validation codes to see their Python implementation.
                         </p>
 
                         <div class="alert alert-info mb-4">
@@ -24,60 +24,49 @@
                             Changes made here are not saved to the backend yet.
                         </div>
 
-                        <div class="mb-4">
-                            <h5>How it works:</h5>
-                            <ol>
-                                <li><strong>Select validations</strong> for each page that must pass before the page can be accessed</li>
-                                <li><strong>Multiple selections allowed</strong> - hold Ctrl/Cmd to select multiple validation codes</li>
-                                <li><strong>No selection</strong> means the page has no validation requirements (always accessible)</li>
-                            </ol>
-                        </div>
-
                         <div class="table-responsive">
                             <table class="table table-hover table-bordered">
                                 <thead class="table-dark">
                                     <tr>
-                                        <th style="width: 18%;">Page URL</th>
-                                        <th style="width: 18%;">Page Title</th>
-                                        <th style="width: 20%;">View Function</th>
-                                        <th style="width: 44%;">Required Validations</th>
+                                        <th style="width: 25%;">Validation Code</th>
+                                        {% for page in pages %}
+                                            <th style="width: {{ 75|divisibleby:pages|length }}%;" class="text-center">
+                                                <div><strong>{{ page.title }}</strong></div>
+                                                <div><small>{{ page.url }}</small></div>
+                                            </th>
+                                        {% endfor %}
                                     </tr>
                                 </thead>
                                 <tbody id="registryTableBody">
-                                    {% for page in pages %}
-                                        <tr data-url="{{ page.url }}">
+                                    {% for validation in all_validation_codes %}
+                                        <tr data-validation-code="{{ validation.code }}">
                                             <td>
-                                                <code>{{ page.url }}</code>
-                                            </td>
-                                            <td>
-                                                <strong>{{ page.title }}</strong>
-                                                <br>
-                                                <small class="text-muted">{{ page.description }}</small>
-                                            </td>
-                                            <td>
-                                                <code class="text-danger">{{ page.view_name }}</code>
-                                            </td>
-                                            <td>
-                                                <select
-                                                    class="form-select form-select-sm validation-select"
-                                                    multiple
-                                                    data-page-url="{{ page.url }}"
-                                                    style="height: 180px;">
-                                                    {% for validation in all_validation_codes %}
-                                                        <option value="{{ validation.code }}">
-                                                            {{ validation.title }}
-                                                        </option>
-                                                    {% endfor %}
-                                                </select>
-                                                <small class="text-muted d-block mt-1">
-                                                    <i class="bi bi-info-circle me-1"></i>Hold Ctrl/Cmd to select multiple
-                                                </small>
-                                                <div class="mt-2">
-                                                    <span class="badge bg-secondary validation-count" data-url="{{ page.url }}">
-                                                        0 validations required
-                                                    </span>
+                                                <div
+                                                    class="validation-code-cell"
+                                                    data-bs-toggle="tooltip"
+                                                    data-bs-placement="right"
+                                                    data-bs-html="true"
+                                                    title="<pre style='text-align: left; margin: 0; font-size: 11px;'>{{ validation.source|escape }}</pre>"
+                                                    style="cursor: help;">
+                                                    <code class="text-danger">{{ validation.code }}</code>
+                                                    <br>
+                                                    <small class="text-muted">{{ validation.title }}</small>
+                                                    <br>
+                                                    <small class="text-info">
+                                                        <i class="bi bi-code-square"></i> Hover for code
+                                                    </small>
                                                 </div>
                                             </td>
+                                            {% for page in pages %}
+                                                <td class="text-center">
+                                                    <input
+                                                        type="checkbox"
+                                                        class="form-check-input validation-checkbox"
+                                                        data-validation-code="{{ validation.code }}"
+                                                        data-page-url="{{ page.url }}"
+                                                        style="transform: scale(1.5);">
+                                                </td>
+                                            {% endfor %}
                                         </tr>
                                     {% endfor %}
                                 </tbody>
@@ -88,7 +77,7 @@
                             <h5>Configuration Summary</h5>
                             <div class="alert alert-light">
                                 <div id="configSummary" style="font-family: monospace; white-space: pre;">
-Select a page above to see its configuration summary here...
+Select checkboxes above to configure validation requirements for each page...
                                 </div>
                             </div>
                         </div>
@@ -113,149 +102,133 @@ Select a page above to see its configuration summary here...
         // Store current state of page validation requirements
         let pageValidationState = {};
 
-        // Initialize page validation state
+        // Initialize tooltips
         document.addEventListener('DOMContentLoaded', function() {
-            const selects = document.querySelectorAll('.validation-select');
-
-            selects.forEach(function(select) {
-                const pageUrl = select.getAttribute('data-page-url');
-                pageValidationState[pageUrl] = [];
-
-                // Update count badge
-                updateValidationCount(pageUrl);
-
-                // Add change listener
-                select.addEventListener('change', function() {
-                    const selectedOptions = Array.from(this.selectedOptions).map(opt => opt.value);
-                    pageValidationState[pageUrl] = selectedOptions;
-                    updateValidationCount(pageUrl);
-                    updateConfigSummary(pageUrl);
-
-                    // Log to console (for development)
-                    console.log('Updated validations for', pageUrl, ':', selectedOptions);
-                });
-
-                // Add click listener to highlight row and show summary
-                select.addEventListener('focus', function() {
-                    // Remove highlight from all rows
-                    document.querySelectorAll('#registryTableBody tr').forEach(row => {
-                        row.classList.remove('table-active');
-                    });
-
-                    // Highlight current row
-                    const row = this.closest('tr');
-                    row.classList.add('table-active');
-
-                    // Update summary
-                    updateConfigSummary(pageUrl);
+            // Initialize Bootstrap tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl, {
+                    boundary: 'window',
+                    customClass: 'code-tooltip'
                 });
             });
+
+            // Initialize page validation state
+            {% for page in pages %}
+                pageValidationState['{{ page.url }}'] = [];
+            {% endfor %}
+
+            // Add change listeners to all checkboxes
+            const checkboxes = document.querySelectorAll('.validation-checkbox');
+            checkboxes.forEach(function(checkbox) {
+                checkbox.addEventListener('change', function() {
+                    updateValidationState();
+                    updateConfigSummary();
+                });
+            });
+
+            updateConfigSummary();
         });
 
-        function updateValidationCount(pageUrl) {
-            const badge = document.querySelector(`.validation-count[data-url="${pageUrl}"]`);
-            const count = pageValidationState[pageUrl].length;
+        function updateValidationState() {
+            // Reset state
+            {% for page in pages %}
+                pageValidationState['{{ page.url }}'] = [];
+            {% endfor %}
 
-            if (count === 0) {
-                badge.className = 'badge bg-secondary validation-count';
-                badge.textContent = '0 validations required';
-            } else if (count === 1) {
-                badge.className = 'badge bg-warning text-dark validation-count';
-                badge.textContent = '1 validation required';
-            } else {
-                badge.className = 'badge bg-danger validation-count';
-                badge.textContent = `${count} validations required`;
-            }
+            // Read all checkboxes
+            const checkboxes = document.querySelectorAll('.validation-checkbox:checked');
+            checkboxes.forEach(function(checkbox) {
+                const pageUrl = checkbox.getAttribute('data-page-url');
+                const validationCode = checkbox.getAttribute('data-validation-code');
+                pageValidationState[pageUrl].push(validationCode);
+            });
+
+            // Log to console (for development)
+            console.log('Updated validation state:', pageValidationState);
         }
 
-        function updateConfigSummary(pageUrl) {
+        function updateConfigSummary() {
             const summaryDiv = document.getElementById('configSummary');
-            const pageTitle = getPageTitle(pageUrl);
-            const viewName = getViewName(pageUrl);
+            let summary = 'Page Validation Requirements\n';
+            summary += '='.repeat(60) + '\n\n';
 
-            let summary = `Configuration for: ${pageTitle}\n`;
-            summary += `URL: ${pageUrl}\n`;
-            summary += `View: ${viewName}\n`;
-            summary += `${'='.repeat(60)}\n\n`;
+            let hasAnyConfig = false;
 
-            const validations = pageValidationState[pageUrl];
+            {% for page in pages %}
+                const validations_{{ forloop.counter }} = pageValidationState['{{ page.url }}'];
+                if (validations_{{ forloop.counter }}.length > 0) {
+                    hasAnyConfig = true;
+                    summary += '{{ page.title }} ({{ page.url }})\n';
+                    summary += '├─ Required Validations: ' + validations_{{ forloop.counter }}.length + '\n';
+                    validations_{{ forloop.counter }}.forEach((code, index) => {
+                        const isLast = index === validations_{{ forloop.counter }}.length - 1;
+                        const prefix = isLast ? '└─' : '├─';
+                        const title = getValidationTitle(code);
+                        summary += '│  ' + prefix + ' ' + title + '\n';
+                    });
+                    summary += '\n';
+                }
+            {% endfor %}
 
-            if (validations.length === 0) {
-                summary += 'Required Validations: NONE\n';
-                summary += '└─ This page is always accessible (no validation checks)\n';
-            } else {
-                summary += `Required Validations: ${validations.length}\n\n`;
-                validations.forEach((validationCode, index) => {
-                    const isLast = index === validations.length - 1;
-                    const prefix = isLast ? '└─' : '├─';
-                    const validationTitle = getValidationTitle(validationCode);
-                    summary += `${prefix} ${validationTitle}\n`;
-                    summary += `   Code: ${validationCode}\n`;
-                });
-
-                summary += `\nBehavior:\n`;
-                summary += `└─ Page will only load if ALL ${validations.length} validation(s) pass\n`;
-                summary += `   If any validation fails, show warning and block access\n`;
+            if (!hasAnyConfig) {
+                summary += 'No validation requirements configured yet.\n';
+                summary += 'Check boxes above to require validations for specific pages.\n';
             }
 
             summaryDiv.textContent = summary;
         }
 
-        function getPageTitle(url) {
-            const select = document.querySelector(`.validation-select[data-page-url="${url}"]`);
-            if (select) {
-                const row = select.closest('tr');
-                const titleCell = row.querySelector('td:nth-child(2) strong');
-                return titleCell ? titleCell.textContent.trim() : url;
-            }
-            return url;
-        }
-
-        function getViewName(url) {
-            const select = document.querySelector(`.validation-select[data-page-url="${url}"]`);
-            if (select) {
-                const row = select.closest('tr');
-                const viewCell = row.querySelector('td:nth-child(3) code');
-                return viewCell ? viewCell.textContent : 'unknown';
-            }
-            return 'unknown';
-        }
-
         function getValidationTitle(code) {
-            const option = document.querySelector(`option[value="${code}"]`);
-            if (option) {
-                return option.textContent.trim();
-            }
-            return code;
+            const validationTitles = {
+                {% for validation in all_validation_codes %}
+                    '{{ validation.code }}': '{{ validation.title }}',
+                {% endfor %}
+            };
+            return validationTitles[code] || code;
         }
 
         // Reset button
         document.getElementById('resetBtn').addEventListener('click', function() {
-            if (!confirm('Are you sure you want to reset all page validation requirements? This will clear all selections.')) {
+            if (!confirm('Are you sure you want to reset all validation requirements? This will uncheck all boxes.')) {
                 return;
             }
 
-            const selects = document.querySelectorAll('.validation-select');
-            selects.forEach(function(select) {
-                select.selectedIndex = -1;
-                const pageUrl = select.getAttribute('data-page-url');
-                pageValidationState[pageUrl] = [];
-                updateValidationCount(pageUrl);
+            const checkboxes = document.querySelectorAll('.validation-checkbox');
+            checkboxes.forEach(function(checkbox) {
+                checkbox.checked = false;
             });
 
-            document.getElementById('configSummary').textContent = 'Select a page above to see its configuration summary here...';
+            updateValidationState();
+            updateConfigSummary();
 
-            console.log('All page validation requirements reset');
-        });
-
-        // Add hover effects to table rows
-        document.addEventListener('DOMContentLoaded', function() {
-            const rows = document.querySelectorAll('#registryTableBody tr');
-            rows.forEach(function(row) {
-                row.addEventListener('mouseenter', function() {
-                    this.style.cursor = 'pointer';
-                });
-            });
+            console.log('All validation requirements reset');
         });
     </script>
+
+    <style>
+        .code-tooltip .tooltip-inner {
+            max-width: 600px;
+            text-align: left;
+            background-color: #2d2d2d;
+        }
+
+        .validation-code-cell {
+            padding: 5px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .validation-code-cell:hover {
+            background-color: #f8f9fa;
+        }
+
+        .validation-checkbox {
+            cursor: pointer;
+        }
+
+        tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+    </style>
 {% endblock %}
