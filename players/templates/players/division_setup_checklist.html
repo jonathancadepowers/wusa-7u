@@ -28,8 +28,9 @@
                                         <th style="width: 6%;">Task #</th>
                                         <th style="width: 12%;">Title</th>
                                         <th style="width: 22%;">Description</th>
-                                        <th style="width: 18%;">Status</th>
-                                        <th class="validation-column" style="width: 24%; display: none;">Validation Logic</th>
+                                        <th style="width: 12%;">Status</th>
+                                        <th style="width: 12%;">Current Count</th>
+                                        <th class="validation-column" style="width: 18%; display: none;">Validation Logic</th>
                                         <th style="width: 18%;">Link</th>
                                     </tr>
                                 </thead>
@@ -53,11 +54,13 @@
                                                         <i class="bi bi-clock me-1"></i>Incomplete
                                                     </span>
                                                 {% endif %}
-                                                {% if item.count is not None %}
-                                                    <br><small class="text-muted"><strong>Current count:</strong> {{ item.count }} {{ item.count_label }}</small>
-                                                {% endif %}
                                                 {% if item.status_note %}
                                                     <br><small class="text-muted">{{ item.status_note }}</small>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if item.count is not None %}
+                                                    {{ item.count }} {{ item.count_label }}
                                                 {% endif %}
                                             </td>
                                             <td class="validation-column" style="display: none;">
