@@ -58,26 +58,20 @@ def validation_code_create_managers():
     }
 
 def validation_code_collect_manager_team_preferences():
-    """Validate that all managers have submitted team preferences or have been assigned"""
-    manager_count = Manager.objects.count()
+    """Validate that at least one team preference has been submitted OR all teams have managers assigned"""
     team_count = Team.objects.count()
     teams_without_managers = Team.objects.filter(manager__isnull=True).count()
 
-    # Count complete submissions (where manager has ranked ALL teams)
-    complete_team_preferences = 0
-    for manager in Manager.objects.all():
-        team_pref = TeamPreference.objects.filter(manager=manager).first()
-        if team_pref and team_pref.preferences:
-            if len(team_pref.preferences) == team_count:
-                complete_team_preferences += 1
+    # Count team preference submissions
+    team_preferences_count = TeamPreference.objects.count()
 
-    # Complete if every manager has submitted preferences OR all managers have been assigned
-    team_preferences_complete = ((manager_count > 0 and complete_team_preferences == manager_count) or teams_without_managers == 0)
+    # Complete if at least one team preference submitted OR all teams have been assigned managers
+    team_preferences_complete = (team_preferences_count >= 1 or teams_without_managers == 0)
 
     return {
         'complete': team_preferences_complete,
-        'count': complete_team_preferences,
-        'count_label': 'submission(s)'
+        'count': team_preferences_count,
+        'count_label': 'team preference(s) submitted'
     }
 
 def validation_code_assign_managers_to_teams():
