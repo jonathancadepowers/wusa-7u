@@ -89,15 +89,13 @@ def validation_code_assign_managers_to_teams():
 def validation_code_send_managers_team_secrets():
     """N/A - Manual task performed outside the website"""
     return {
-        'complete': 'na',
-        'status_note': 'Status cannot be determined, since this task is performed outside of the website.'
+        'complete': 'na'
     }
 
 def validation_code_request_manager_rankings():
     """N/A - Manual task performed outside the website"""
     return {
-        'complete': 'na',
-        'status_note': 'Status cannot be determined, since this task is performed outside of the website.'
+        'complete': 'na'
     }
 
 def validation_code_analyze_and_release_player_rankings():
