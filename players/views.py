@@ -107,27 +107,23 @@ def validation_code_request_manager_rankings():
     }
 
 def validation_code_analyze_and_release_player_rankings():
-    """Validate that all managers have submitted player rankings"""
-    all_managers = Manager.objects.all()
-    managers_with_rankings = PlayerRanking.objects.filter(manager__isnull=False).values_list('manager_id', flat=True).distinct()
-    managers_without_rankings = all_managers.exclude(id__in=managers_with_rankings)
+    """Validate that at least one player ranking has been submitted"""
+    player_rankings_count = PlayerRanking.objects.count()
 
     return {
-        'complete': managers_without_rankings.count() == 0,
-        'count': managers_without_rankings.count(),
-        'count_label': 'Missing ranking from managers'
+        'complete': player_rankings_count >= 1,
+        'count': player_rankings_count,
+        'count_label': 'Player rankings submitted'
     }
 
 def validation_code_analyze_manager_daughter_rankings():
-    """Validate that all managers have submitted manager daughter rankings"""
-    all_managers = Manager.objects.all()
-    managers_with_daughter_rankings = ManagerDaughterRanking.objects.filter(manager__isnull=False).values_list('manager_id', flat=True).distinct()
-    managers_without_daughter_rankings = all_managers.exclude(id__in=managers_with_daughter_rankings)
+    """Validate that at least one manager daughter ranking has been submitted"""
+    manager_daughter_rankings_count = ManagerDaughterRanking.objects.count()
 
     return {
-        'complete': managers_without_daughter_rankings.count() == 0,
-        'count': managers_without_daughter_rankings.count(),
-        'count_label': 'Missing ranking from managers'
+        'complete': manager_daughter_rankings_count >= 1,
+        'count': manager_daughter_rankings_count,
+        'count_label': 'Manager daughter rankings submitted'
     }
 
 def validation_code_assign_practice_slots():
