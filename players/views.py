@@ -224,9 +224,10 @@ def division_setup_checklist_view(request):
         },
         {
             'title': 'Run the Draft',
-            'description': 'Complete every round of the draft. Once all players have been selected, click the button on the draft board page that assigns drafted players to their teams.',
+            'description': 'Complete every round of the draft. Once all players have been selected, assign players to the team that drafting them.',
             'link': '/draft/run/',
             'link_text': 'Go to Draft Board',
+            'link_note': 'Click "Draft Complete" to Assign Players to Teams',
             'status': 'complete' if draft_assignment_complete else 'incomplete',
             'count': players_without_team,
             'count_label': 'players not assigned to a team'
