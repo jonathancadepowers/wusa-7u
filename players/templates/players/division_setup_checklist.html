@@ -15,6 +15,12 @@
                     <div class="card-body">
                         <p class="lead mb-4">Complete all the steps below to prepare your division for the season. It is recommend you complete the tasks in order, but you can go out of order if needed.</p>
 
+                        <div class="mb-3">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="toggleValidationColumn">
+                                <i class="bi bi-code-square me-1"></i>Show Validation Code
+                            </button>
+                        </div>
+
                         <div class="table-responsive">
                             <table class="table table-hover">
                                 <thead class="table-light">
@@ -23,7 +29,7 @@
                                         <th style="width: 12%;">Title</th>
                                         <th style="width: 22%;">Description</th>
                                         <th style="width: 18%;">Status</th>
-                                        <th style="width: 24%;">Validation Logic</th>
+                                        <th class="validation-column" style="width: 24%; display: none;">Validation Code</th>
                                         <th style="width: 18%;">Link</th>
                                     </tr>
                                 </thead>
@@ -54,7 +60,7 @@
                                                     <br><small class="text-muted">{{ item.status_note }}</small>
                                                 {% endif %}
                                             </td>
-                                            <td><small class="text-muted">{{ item.validation_logic }}</small></td>
+                                            <td class="validation-column" style="display: none;"><small class="text-danger"><code>{{ item.validation_code }}</code></small></td>
                                             <td class="text-nowrap">
                                                 <a href="{{ item.link }}" class="btn btn-sm btn-primary" target="_blank">
                                                     <i class="bi bi-arrow-right me-1"></i>{{ item.link_text }}
@@ -73,4 +79,24 @@
             </div>
         </div>
     </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        document.getElementById('toggleValidationColumn').addEventListener('click', function() {
+            const validationColumns = document.querySelectorAll('.validation-column');
+            const button = this;
+            const isHidden = validationColumns[0].style.display === 'none';
+
+            validationColumns.forEach(function(column) {
+                column.style.display = isHidden ? 'table-cell' : 'none';
+            });
+
+            if (isHidden) {
+                button.innerHTML = '<i class="bi bi-code-square me-1"></i>Hide Validation Code';
+            } else {
+                button.innerHTML = '<i class="bi bi-code-square me-1"></i>Show Validation Code';
+            }
+        });
+    </script>
 {% endblock %}

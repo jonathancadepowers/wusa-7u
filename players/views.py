@@ -27,82 +27,132 @@ def settings_view(request):
     }
     return render(request, 'players/settings.html', context)
 
-
-def division_setup_checklist_view(request):
-    """Division setup checklist page"""
-
-    # Check player count for first checklist item
+# Validation functions for division setup checklist
+def validation_code_create_players():
+    """Validate that at least 10 players exist"""
     player_count = Player.objects.count()
-    players_complete = player_count >= 10
+    return {
+        'complete': player_count >= 10,
+        'count': player_count,
+        'count_label': 'player(s)'
+    }
 
-    # Check team count for second checklist item
+def validation_code_create_teams():
+    """Validate that at least 5 teams exist"""
     team_count = Team.objects.count()
-    teams_complete = team_count >= 5
+    return {
+        'complete': team_count >= 5,
+        'count': team_count,
+        'count_label': 'team(s)'
+    }
 
-    # Check manager count for third checklist item
+def validation_code_create_managers():
+    """Validate that manager count equals team count and all managers have daughters"""
     manager_count = Manager.objects.count()
+    team_count = Team.objects.count()
     managers_without_daughters = Manager.objects.filter(daughter__isnull=True).count()
-    managers_complete = (manager_count == team_count and
-                        manager_count > 0 and
-                        managers_without_daughters == 0)
+    return {
+        'complete': (manager_count == team_count and manager_count > 0 and managers_without_daughters == 0),
+        'count': manager_count,
+        'count_label': 'manager(s)'
+    }
 
-    # Check team preferences for fourth checklist item
+def validation_code_collect_manager_team_preferences():
+    """Validate that all managers have submitted team preferences or have been assigned"""
+    manager_count = Manager.objects.count()
+    team_count = Team.objects.count()
+    teams_without_managers = Team.objects.filter(manager__isnull=True).count()
+
     # Count complete submissions (where manager has ranked ALL teams)
     complete_team_preferences = 0
     for manager in Manager.objects.all():
         team_pref = TeamPreference.objects.filter(manager=manager).first()
         if team_pref and team_pref.preferences:
-            # Check if all teams are ranked
             if len(team_pref.preferences) == team_count:
                 complete_team_preferences += 1
 
-    # Check manager assignments for fifth checklist item
-    # Count teams without managers
-    teams_without_managers = Team.objects.filter(manager__isnull=True).count()
+    # Complete if every manager has submitted preferences OR all managers have been assigned
+    team_preferences_complete = ((manager_count > 0 and complete_team_preferences == manager_count) or teams_without_managers == 0)
 
-    # Check if all managers are assigned to teams
+    return {
+        'complete': team_preferences_complete,
+        'count': complete_team_preferences,
+        'count_label': 'submission(s)'
+    }
+
+def validation_code_assign_managers_to_teams():
+    """Validate that all teams have managers assigned"""
+    manager_count = Manager.objects.count()
+    teams_without_managers = Team.objects.filter(manager__isnull=True).count()
     managers_with_teams = Team.objects.filter(manager__isnull=False).count()
 
-    # Status is complete if every manager has been assigned to a team
-    # (which means teams_without_managers should be 0 and managers_with_teams should equal manager_count)
-    managers_assigned_complete = (manager_count > 0 and
-                                   teams_without_managers == 0 and
-                                   managers_with_teams == manager_count)
+    return {
+        'complete': (manager_count > 0 and teams_without_managers == 0 and managers_with_teams == manager_count),
+        'count': teams_without_managers,
+        'count_label': 'team(s) without manager(s)'
+    }
 
-    # Team preferences status: complete if every manager has submitted preferences
-    # OR if all managers have been assigned (teams_without_managers == 0)
-    team_preferences_complete = ((manager_count > 0 and
-                                   complete_team_preferences == manager_count) or
-                                  teams_without_managers == 0)
+def validation_code_send_managers_team_secrets():
+    """N/A - Manual task performed outside the website"""
+    return {
+        'complete': 'na',
+        'status_note': 'Status cannot be determined, since this task is performed outside of the website.'
+    }
 
-    # Check player rankings - find managers who haven't submitted rankings
+def validation_code_request_manager_rankings():
+    """N/A - Manual task performed outside the website"""
+    return {
+        'complete': 'na',
+        'status_note': 'Status cannot be determined, since this task is performed outside of the website.'
+    }
+
+def validation_code_analyze_and_release_player_rankings():
+    """Validate that all managers have submitted player rankings"""
     all_managers = Manager.objects.all()
     managers_with_rankings = PlayerRanking.objects.filter(manager__isnull=False).values_list('manager_id', flat=True).distinct()
     managers_without_rankings = all_managers.exclude(id__in=managers_with_rankings)
 
-    # Check manager daughter rankings - find managers who haven't submitted manager daughter rankings
+    return {
+        'complete': managers_without_rankings.count() == 0,
+        'count': managers_without_rankings.count(),
+        'count_label': 'Missing ranking from managers'
+    }
+
+def validation_code_analyze_manager_daughter_rankings():
+    """Validate that all managers have submitted manager daughter rankings"""
+    all_managers = Manager.objects.all()
     managers_with_daughter_rankings = ManagerDaughterRanking.objects.filter(manager__isnull=False).values_list('manager_id', flat=True).distinct()
     managers_without_daughter_rankings = all_managers.exclude(id__in=managers_with_daughter_rankings)
 
-    # Check practice slot rankings - find teams/managers who haven't submitted practice slot rankings
+    return {
+        'complete': managers_without_daughter_rankings.count() == 0,
+        'count': managers_without_daughter_rankings.count(),
+        'count_label': 'Missing ranking from managers'
+    }
+
+def validation_code_assign_practice_slots():
+    """Validate that all teams have been assigned practice slots"""
     from .models import PracticeSlotRanking
     all_teams = Team.objects.all()
-    teams_with_practice_rankings = PracticeSlotRanking.objects.filter(team__isnull=False).values_list('team_id', flat=True).distinct()
-    teams_without_practice_rankings = all_teams.exclude(id__in=teams_with_practice_rankings)
-
-    # Check if all teams have been assigned practice slots
     teams_without_slots = all_teams.filter(practice_slot__isnull=True)
     teams_with_slots = all_teams.filter(practice_slot__isnull=False)
 
-    # Check if draft exists and is fully configured
+    return {
+        'complete': teams_without_slots.count() == 0,
+        'count': teams_with_slots.count(),
+        'count_label': 'teams assigned to practice slots'
+    }
+
+def validation_code_setup_draft():
+    """Validate that draft is fully configured"""
     from .models import Draft
     import json as json_module
+
     draft = Draft.objects.first()
     teams_in_draft_order = 0
     draft_setup_complete = False
 
     if draft:
-        # Check all draft requirements
         draft_valid = (
             draft.rounds and draft.rounds > 0 and
             draft.picks_per_round and draft.picks_per_round > 0 and
@@ -110,151 +160,188 @@ def division_setup_checklist_view(request):
         )
 
         if draft_valid:
-            # Validate draft order format and completeness
             try:
                 order_data = draft.order.strip()
                 if order_data.startswith('['):
-                    # JSON format
                     team_ids = json_module.loads(order_data)
                 else:
-                    # Comma-separated format
                     team_ids = [int(tid.strip()) for tid in order_data.split(',') if tid.strip()]
 
                 teams_in_draft_order = len(team_ids)
-                # Draft is complete if order has correct number of teams
                 draft_setup_complete = (len(team_ids) == draft.picks_per_round and len(team_ids) > 0)
             except (json_module.JSONDecodeError, ValueError):
                 teams_in_draft_order = 0
                 draft_setup_complete = False
 
-    # Check if all players have been assigned to teams (draft complete)
+    return {
+        'complete': draft_setup_complete,
+        'count': teams_in_draft_order,
+        'count_label': 'teams configured in draft order'
+    }
+
+def validation_code_run_the_draft():
+    """Validate that all players have been assigned to teams"""
+    player_count = Player.objects.count()
     players_without_team = Player.objects.filter(team__isnull=True).count()
-    draft_assignment_complete = (player_count > 0 and players_without_team == 0)
+
+    return {
+        'complete': (player_count > 0 and players_without_team == 0),
+        'count': players_without_team,
+        'count_label': 'players not assigned to a team'
+    }
+
+
+def division_setup_checklist_view(request):
+    """Division setup checklist page"""
+
+    # Call validation functions
+    result_create_players = validation_code_create_players()
+    result_create_teams = validation_code_create_teams()
+    result_create_managers = validation_code_create_managers()
+    result_collect_preferences = validation_code_collect_manager_team_preferences()
+    result_assign_managers = validation_code_assign_managers_to_teams()
+    result_send_secrets = validation_code_send_managers_team_secrets()
+    result_request_rankings = validation_code_request_manager_rankings()
+    result_analyze_player_rankings = validation_code_analyze_and_release_player_rankings()
+    result_analyze_daughter_rankings = validation_code_analyze_manager_daughter_rankings()
+    result_assign_practice_slots = validation_code_assign_practice_slots()
+    result_setup_draft = validation_code_setup_draft()
+    result_run_draft = validation_code_run_the_draft()
 
     # Build checklist items
     checklist_items = [
         {
             'title': 'Create Players',
             'description': 'Export all players for this division from TeamSideline (as an .xlsx file) and then upload them.',
-            'validation_logic': 'At least 10 players exist in the database',
+            'validation_code': 'validation_code_create_players',
             'link': '/settings/#player-data-import',
             'link_text': 'Go to Player Data Import',
-            'status': 'complete' if players_complete else 'incomplete',
-            'count': player_count,
-            'count_label': 'player(s)'
+            'status': 'complete' if result_create_players['complete'] else 'incomplete',
+            'count': result_create_players.get('count'),
+            'count_label': result_create_players.get('count_label'),
+            'status_note': result_create_players.get('status_note')
         },
         {
             'title': 'Create Teams',
             'description': 'Create each of the teams for your division, one by one. Don\'t assign managers just yet.',
-            'validation_logic': 'At least 5 teams exist in the database',
+            'validation_code': 'validation_code_create_teams',
             'link': '/teams/',
             'link_text': 'Go to Teams',
-            'status': 'complete' if teams_complete else 'incomplete',
-            'count': team_count,
-            'count_label': 'team(s)'
+            'status': 'complete' if result_create_teams['complete'] else 'incomplete',
+            'count': result_create_teams.get('count'),
+            'count_label': result_create_teams.get('count_label'),
+            'status_note': result_create_teams.get('status_note')
         },
         {
             'title': 'Create Managers',
             'description': 'Create all managers/head coaches. Don\'t assign managers to teams just yet. You must also assign a daughter (player) to each manager.',
-            'validation_logic': 'Manager count equals team count AND all managers have a daughter assigned',
+            'validation_code': 'validation_code_create_managers',
             'link': '/managers/',
             'link_text': 'Go to Managers',
-            'status': 'complete' if managers_complete else 'incomplete',
-            'count': manager_count,
-            'count_label': 'manager(s)'
+            'status': 'complete' if result_create_managers['complete'] else 'incomplete',
+            'count': result_create_managers.get('count'),
+            'count_label': result_create_managers.get('count_label'),
+            'status_note': result_create_managers.get('status_note')
         },
         {
             'title': 'Collect Manager Team Preferences',
             'description': 'Email managers the submission form that asks them to stack rank which teams they want to manage. A email has been drafted for you to send.',
-            'validation_logic': 'Every manager has submitted team preferences (ranking all teams) OR all managers have been assigned to teams',
+            'validation_code': 'validation_code_collect_manager_team_preferences',
             'link': '/settings/#emails',
             'link_text': 'Go to Emails',
             'link_note': 'Click "Send Team Preferences Email"',
-            'status': 'complete' if team_preferences_complete else 'incomplete',
-            'count': complete_team_preferences,
-            'count_label': 'submission(s)'
+            'status': 'complete' if result_collect_preferences['complete'] else 'incomplete',
+            'count': result_collect_preferences.get('count'),
+            'count_label': result_collect_preferences.get('count_label'),
+            'status_note': result_collect_preferences.get('status_note')
         },
         {
             'title': 'Assign Managers to Team',
             'description': 'Analyze the manager\'s team preference and assign managers to teams accordingly.',
-            'validation_logic': 'All teams have a manager assigned AND manager count equals teams with managers',
+            'validation_code': 'validation_code_assign_managers_to_teams',
             'link': '/team_preferences/analyze/',
             'link_text': 'Go to Analysis',
-            'status': 'complete' if managers_assigned_complete else 'incomplete',
-            'count': teams_without_managers,
-            'count_label': 'team(s) without manager(s)'
+            'status': 'complete' if result_assign_managers['complete'] else 'incomplete',
+            'count': result_assign_managers.get('count'),
+            'count_label': result_assign_managers.get('count_label'),
+            'status_note': result_assign_managers.get('status_note')
         },
         {
             'title': 'Send Managers "Team Secrets"',
             'description': 'Each manager will have a dashboard to manage their team. To view this page, they must use their unique "team secret." Managers should not know eachother\'s secrets. Outside of this website, email/text each manager their secret.',
-            'validation_logic': 'N/A - Manual task performed outside the website',
+            'validation_code': 'validation_code_send_managers_team_secrets',
             'link': '/teams/',
             'link_text': 'Go to Teams',
             'link_note': 'Click "View All Team Secrets"',
             'status': 'na',
-            'status_note': 'Status cannot be determined, since this task is performed outside of the website.'
+            'status_note': result_send_secrets.get('status_note')
         },
         {
             'title': 'Request Manager Rankings',
             'description': 'Once each manager has their "team secret" (see above) then email all managers a link to their team\'s dashboard. At the top of this dashboard will be list of tasks for them to complete, to submit various rankings needed to build the draft. A email has been drafted for you to send.\n\nManagers must submit rankings for (1) all players, (2) manager\'s daughters, (3) their preferences for practice slots.',
-            'validation_logic': 'N/A - Manual task performed outside the website',
+            'validation_code': 'validation_code_request_manager_rankings',
             'link': '/settings/#emails',
             'link_text': 'Go to Emails',
             'link_note': 'Click "Send Team Pages to Managers"',
             'status': 'na',
-            'status_note': 'Status cannot be determined, since this task is performed outside of the website.'
+            'status_note': result_request_rankings.get('status_note')
         },
         {
             'title': 'Analyze & Release Player Rankings',
             'description': 'Once all managers have submitted their top 20 player rankings, review them and then release them to managers to review.',
-            'validation_logic': 'All managers have submitted player rankings (PlayerRanking record exists for each manager)',
+            'validation_code': 'validation_code_analyze_and_release_player_rankings',
             'link': '/player_rankings/analyze/',
             'link_text': 'Go to Analysis',
-            'status': 'complete' if managers_without_rankings.count() == 0 else 'incomplete',
-            'count': managers_without_rankings.count(),
-            'count_label': 'Missing ranking from managers'
+            'status': 'complete' if result_analyze_player_rankings['complete'] else 'incomplete',
+            'count': result_analyze_player_rankings.get('count'),
+            'count_label': result_analyze_player_rankings.get('count_label'),
+            'status_note': result_analyze_player_rankings.get('status_note')
         },
         {
             'title': 'Analyze Manager\'s Daughters Rankings',
             'description': 'Once all managers have submitted their rankings of manager\'s daughters, review them. These rankings will NOT be released to managers. Rather, you will use these rankings to set draft positions for all manager\'s daughter.',
-            'validation_logic': 'All managers have submitted manager daughter rankings (ManagerDaughterRanking record exists for each manager)',
+            'validation_code': 'validation_code_analyze_manager_daughter_rankings',
             'link': '/manager_daughter_rankings/analyze/',
             'link_text': 'Go to Analysis',
-            'status': 'complete' if managers_without_daughter_rankings.count() == 0 else 'incomplete',
-            'count': managers_without_daughter_rankings.count(),
-            'count_label': 'Missing ranking from managers'
+            'status': 'complete' if result_analyze_daughter_rankings['complete'] else 'incomplete',
+            'count': result_analyze_daughter_rankings.get('count'),
+            'count_label': result_analyze_daughter_rankings.get('count_label'),
+            'status_note': result_analyze_daughter_rankings.get('status_note')
         },
         {
             'title': 'Assign Practice Slots',
             'description': 'Review the practice slot preferences submitted by managers, then assignment one slot to each team.',
-            'validation_logic': 'All teams have been assigned a practice slot (practice_slot field is not null)',
+            'validation_code': 'validation_code_assign_practice_slots',
             'link': '/practice_slots/analyze/',
             'link_text': 'Go to Analysis',
             'link_note': 'Click "Assign Practice Slots to Teams"',
-            'status': 'complete' if teams_without_slots.count() == 0 else 'incomplete',
-            'count': teams_with_slots.count(),
-            'count_label': 'teams assigned to practice slots'
+            'status': 'complete' if result_assign_practice_slots['complete'] else 'incomplete',
+            'count': result_assign_practice_slots.get('count'),
+            'count_label': result_assign_practice_slots.get('count_label'),
+            'status_note': result_assign_practice_slots.get('status_note')
         },
         {
             'title': 'Setup Draft',
             'description': 'Configure all draft settings including the number of rounds, teams participating, and the order in which teams will draft players.',
-            'validation_logic': 'Draft exists with rounds > 0, picks_per_round > 0, valid draft order format, and number of teams in draft order equals picks_per_round',
+            'validation_code': 'validation_code_setup_draft',
             'link': '/draft/edit/',
             'link_text': 'Go to Draft Setup',
-            'status': 'complete' if draft_setup_complete else 'incomplete',
-            'count': teams_in_draft_order,
-            'count_label': 'teams configured in draft order'
+            'status': 'complete' if result_setup_draft['complete'] else 'incomplete',
+            'count': result_setup_draft.get('count'),
+            'count_label': result_setup_draft.get('count_label'),
+            'status_note': result_setup_draft.get('status_note')
         },
         {
             'title': 'Run the Draft',
             'description': 'Complete every round of the draft. Once all players have been selected, assign players to the team that drafting them.',
-            'validation_logic': 'At least one player exists AND all players have been assigned to a team (team field is not null)',
+            'validation_code': 'validation_code_run_the_draft',
             'link': '/draft/run/',
             'link_text': 'Go to Draft Board',
             'link_note': 'Click "Draft Complete" to Assign Players to Teams',
-            'status': 'complete' if draft_assignment_complete else 'incomplete',
-            'count': players_without_team,
-            'count_label': 'players not assigned to a team'
+            'status': 'complete' if result_run_draft['complete'] else 'incomplete',
+            'count': result_run_draft.get('count'),
+            'count_label': result_run_draft.get('count_label'),
+            'status_note': result_run_draft.get('status_note')
         }
     ]
 
