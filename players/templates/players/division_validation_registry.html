@@ -14,7 +14,7 @@
                     </div>
                     <div class="card-body">
                         <p class="lead mb-4">
-                            Configure which validation codes are required for each page to load.
+                            Configure which validation codes are required for each page to load, and which validations should be triggered when CRUD actions occur on each page.
                         </p>
 
                         <div class="alert alert-info mb-4">
@@ -27,8 +27,23 @@
                             <table class="table table-hover table-bordered">
                                 <thead class="table-dark">
                                     <tr>
-                                        <th style="width: 30%;">URL</th>
-                                        <th style="width: 70%;">Required Validations</th>
+                                        <th style="width: 25%;">URL</th>
+                                        <th style="width: 37.5%;">
+                                            Validations to Run on Page Load
+                                            <i class="bi bi-info-circle ms-1"
+                                               data-bs-toggle="tooltip"
+                                               data-bs-placement="top"
+                                               title="These validations must pass before the page can load"
+                                               style="cursor: help; font-size: 0.9em;"></i>
+                                        </th>
+                                        <th style="width: 37.5%;">
+                                            Validation Code Triggers
+                                            <i class="bi bi-info-circle ms-1"
+                                               data-bs-toggle="tooltip"
+                                               data-bs-placement="top"
+                                               title="These validations will be re-evaluated after any CRUD action on this page"
+                                               style="cursor: help; font-size: 0.9em;"></i>
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody id="registryTableBody">
@@ -37,7 +52,26 @@
                                             <td><code>{{ page.url }}</code></td>
                                             <td>
                                                 <select
-                                                    class="form-select validation-multiselect"
+                                                    class="form-select validation-multiselect-load"
+                                                    multiple
+                                                    data-page-url="{{ page.url }}"
+                                                    size="8"
+                                                    style="width: 100%;">
+                                                    {% for validation in all_validation_codes %}
+                                                        <option
+                                                            value="{{ validation.code }}"
+                                                            data-bs-toggle="tooltip"
+                                                            data-bs-placement="right"
+                                                            data-bs-html="true"
+                                                            title="<pre style='text-align: left; margin: 0; font-size: 11px; white-space: pre; max-width: none;'>{{ validation.source|escape }}</pre>">
+                                                            {{ validation.title }} ({{ validation.code }})
+                                                        </option>
+                                                    {% endfor %}
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <select
+                                                    class="form-select validation-multiselect-trigger"
                                                     multiple
                                                     data-page-url="{{ page.url }}"
                                                     size="8"
@@ -93,12 +127,22 @@
 
             // Initialize page validation state
             {% for page in pages %}
-                pageValidationState['{{ page.url }}'] = [];
+                pageValidationState['{{ page.url }}'] = {
+                    validations_to_run_on_page_load: [],
+                    validation_code_triggers: []
+                };
             {% endfor %}
 
             // Add change listeners to all multi-selects
-            const multiselects = document.querySelectorAll('.validation-multiselect');
-            multiselects.forEach(function(select) {
+            const loadSelects = document.querySelectorAll('.validation-multiselect-load');
+            loadSelects.forEach(function(select) {
+                select.addEventListener('change', function() {
+                    updateValidationState();
+                });
+            });
+
+            const triggerSelects = document.querySelectorAll('.validation-multiselect-trigger');
+            triggerSelects.forEach(function(select) {
                 select.addEventListener('change', function() {
                     updateValidationState();
                 });
@@ -108,16 +152,29 @@
         function updateValidationState() {
             // Reset state
             {% for page in pages %}
-                pageValidationState['{{ page.url }}'] = [];
+                pageValidationState['{{ page.url }}'] = {
+                    validations_to_run_on_page_load: [],
+                    validation_code_triggers: []
+                };
             {% endfor %}
 
-            // Read all multi-selects
-            const multiselects = document.querySelectorAll('.validation-multiselect');
-            multiselects.forEach(function(select) {
+            // Read all "load" multi-selects
+            const loadSelects = document.querySelectorAll('.validation-multiselect-load');
+            loadSelects.forEach(function(select) {
                 const pageUrl = select.getAttribute('data-page-url');
                 const selectedOptions = Array.from(select.selectedOptions);
                 selectedOptions.forEach(function(option) {
-                    pageValidationState[pageUrl].push(option.value);
+                    pageValidationState[pageUrl].validations_to_run_on_page_load.push(option.value);
+                });
+            });
+
+            // Read all "trigger" multi-selects
+            const triggerSelects = document.querySelectorAll('.validation-multiselect-trigger');
+            triggerSelects.forEach(function(select) {
+                const pageUrl = select.getAttribute('data-page-url');
+                const selectedOptions = Array.from(select.selectedOptions);
+                selectedOptions.forEach(function(option) {
+                    pageValidationState[pageUrl].validation_code_triggers.push(option.value);
                 });
             });
 
@@ -131,8 +188,13 @@
                 return;
             }
 
-            const multiselects = document.querySelectorAll('.validation-multiselect');
-            multiselects.forEach(function(select) {
+            const loadSelects = document.querySelectorAll('.validation-multiselect-load');
+            loadSelects.forEach(function(select) {
+                select.selectedIndex = -1;
+            });
+
+            const triggerSelects = document.querySelectorAll('.validation-multiselect-trigger');
+            triggerSelects.forEach(function(select) {
                 select.selectedIndex = -1;
             });
 
@@ -156,17 +218,20 @@
             max-width: none;
         }
 
-        .validation-multiselect {
+        .validation-multiselect-load,
+        .validation-multiselect-trigger {
             cursor: pointer;
             font-family: monospace;
             font-size: 0.9em;
         }
 
-        .validation-multiselect option {
+        .validation-multiselect-load option,
+        .validation-multiselect-trigger option {
             padding: 8px;
         }
 
-        .validation-multiselect option:hover {
+        .validation-multiselect-load option:hover,
+        .validation-multiselect-trigger option:hover {
             background-color: #e9ecef;
         }
 

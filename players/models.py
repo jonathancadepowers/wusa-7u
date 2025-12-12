@@ -207,7 +207,8 @@ class StarredDraftPick(models.Model):
 
 class DivisionValidationRegistry(models.Model):
     page = models.TextField()
-    required_validations = models.TextField()  # Stores JSON as text
+    validations_to_run_on_page_load = models.JSONField(default=list)  # Renamed from required_validations
+    validation_code_triggers = models.JSONField(default=list)  # New field
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

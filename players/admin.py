@@ -195,13 +195,13 @@ class StarredDraftPickAdmin(admin.ModelAdmin):
 
 @admin.register(DivisionValidationRegistry)
 class DivisionValidationRegistryAdmin(admin.ModelAdmin):
-    list_display = ['id', 'page', 'required_validations', 'created_at', 'updated_at']
-    search_fields = ['page', 'required_validations']
+    list_display = ['id', 'page', 'validations_to_run_on_page_load', 'validation_code_triggers', 'created_at', 'updated_at']
+    search_fields = ['page']
     readonly_fields = ['created_at', 'updated_at']
 
     fieldsets = (
         ('Validation Registry', {
-            'fields': ('page', 'required_validations')
+            'fields': ('page', 'validations_to_run_on_page_load', 'validation_code_triggers')
         }),
         ('Metadata', {
             'fields': ('created_at', 'updated_at'),
