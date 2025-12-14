@@ -306,8 +306,10 @@ def division_validation_registry_view(request):
         {'url': '/managers/', 'title': 'Managers List'},
         {'url': '/managers/create/', 'title': 'Create Manager'},
         {'url': '/managers/{id}/', 'title': 'Manager Detail'},
+        {'url': '/managers/{id}/delete/', 'title': 'Delete Manager'},
         {'url': '/managers/{id}/assign-team/', 'title': 'Assign Manager to Team'},
         {'url': '/managers/randomly-assign/', 'title': 'Randomly Assign Managers'},
+        {'url': '/managers/randomly-assign-daughters/', 'title': 'Randomly Assign Daughters'},
 
         # Rankings pages
         {'url': '/player_rankings/', 'title': 'Player Rankings'},
