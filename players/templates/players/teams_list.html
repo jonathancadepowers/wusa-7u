@@ -37,6 +37,9 @@
                     </div>
                     <div class="col-md-6">
                         <div class="d-flex gap-2 justify-content-end">
+                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#unassignPracticeSlotsModal">
+                                <i class="bi bi-x-circle me-1"></i>Unassign Practice Slots
+                            </button>
                             <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#teamSecretsModal">
                                 <i class="bi bi-key me-1"></i>View All Team Secrets
                             </button>
@@ -197,4 +200,103 @@
             </div>
         </div>
     </div>
+
+    <!-- Unassign Practice Slots Danger Zone Modal -->
+    <div class="modal fade" id="unassignPracticeSlotsModal" tabindex="-1" aria-labelledby="unassignPracticeSlotsModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content border-danger">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="unassignPracticeSlotsModalLabel">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>Danger Zone
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger" role="alert">
+                        <h6 class="alert-heading"><i class="bi bi-exclamation-octagon me-2"></i>Warning: Irreversible Action</h6>
+                        <p class="mb-0">This action is for <strong>testing purposes only</strong>. It will remove all practice slot assignments from all teams. There is no way to undo this operation.</p>
+                    </div>
+                    <p class="mb-3">Are you sure you want to proceed?</p>
+                    <div id="unassignPracticeSlotsStatus"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmUnassignPracticeSlots">
+                        <i class="bi bi-x-circle me-1"></i>Unassign All Practice Slots
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const confirmButton = document.getElementById('confirmUnassignPracticeSlots');
+            const statusDiv = document.getElementById('unassignPracticeSlotsStatus');
+            const modal = document.getElementById('unassignPracticeSlotsModal');
+
+            confirmButton.addEventListener('click', function() {
+                // Disable button and show loading state
+                confirmButton.disabled = true;
+                confirmButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Processing...';
+                statusDiv.innerHTML = '';
+
+                // Get CSRF token
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
+                                  document.querySelector('input[name=csrfmiddlewaretoken]')?.value ||
+                                  getCookie('csrftoken');
+
+                // Send AJAX request
+                fetch('{% url "players:unassign_practice_slots" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        statusDiv.innerHTML = `<div class="alert alert-success"><i class="bi bi-check-circle me-2"></i>${data.message}</div>`;
+                        // Reload page after 2 seconds
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 2000);
+                    } else {
+                        statusDiv.innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-circle me-2"></i>${data.error || 'An error occurred'}</div>`;
+                        confirmButton.disabled = false;
+                        confirmButton.innerHTML = '<i class="bi bi-x-circle me-1"></i>Unassign All Practice Slots';
+                    }
+                })
+                .catch(error => {
+                    statusDiv.innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-circle me-2"></i>Network error: ${error.message}</div>`;
+                    confirmButton.disabled = false;
+                    confirmButton.innerHTML = '<i class="bi bi-x-circle me-1"></i>Unassign All Practice Slots';
+                });
+            });
+
+            // Helper function to get CSRF cookie
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+
+            // Reset modal state when closed
+            modal.addEventListener('hidden.bs.modal', function() {
+                confirmButton.disabled = false;
+                confirmButton.innerHTML = '<i class="bi bi-x-circle me-1"></i>Unassign All Practice Slots';
+                statusDiv.innerHTML = '';
+            });
+        });
+    </script>
 {% endblock %}

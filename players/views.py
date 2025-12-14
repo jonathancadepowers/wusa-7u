@@ -1462,6 +1462,29 @@ def teams_list_view(request):
     return render(request, 'players/teams_list.html', context)
 
 
+def unassign_practice_slots(request):
+    """Unassign all practice slots from all teams (for testing purposes)"""
+    if request.method == 'POST':
+        try:
+            # Remove all practice slot assignments from teams
+            updated_count = Team.objects.filter(practice_slot__isnull=False).update(practice_slot=None)
+
+            return JsonResponse({
+                'success': True,
+                'message': f'Successfully unassigned practice slots from {updated_count} team(s).'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': f'Error unassigning practice slots: {str(e)}'
+            }, status=500)
+
+    return JsonResponse({
+        'success': False,
+        'error': 'Invalid request method'
+    }, status=400)
+
+
 def team_edit_view(request, pk):
     """View and edit a single team"""
     team = get_object_or_404(Team, pk=pk)

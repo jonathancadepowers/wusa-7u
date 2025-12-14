@@ -30,6 +30,7 @@ urlpatterns = [
     path('players/<int:pk>/delete/', views.player_delete_view, name='delete'),
     path('players/<int:pk>/assign-team/', views.assign_player_team_view, name='assign_team'),
     path('teams/', views.teams_list_view, name='teams_list'),
+    path('teams/unassign-practice-slots/', views.unassign_practice_slots, name='unassign_practice_slots'),
     path('teams/create/', views.team_create_view, name='team_create'),
     path('teams/<int:pk>/', views.team_edit_view, name='team_edit'),
     path('teams/<int:pk>/delete/', views.team_delete_view, name='team_delete'),
