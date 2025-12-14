@@ -189,6 +189,21 @@ class GeneralSetting(models.Model):
         return f"{self.key}: {self.value}"
 
 
+class ValidationCode(models.Model):
+    code = models.CharField(max_length=255, unique=True)
+    value = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'validation_codes'
+        verbose_name = 'Validation Code'
+        verbose_name_plural = 'Validation Codes'
+
+    def __str__(self):
+        return f"{self.code}: {self.value}"
+
+
 class StarredDraftPick(models.Model):
     player = models.ForeignKey('Player', on_delete=models.CASCADE, related_name='starred_by_teams')
     team = models.ForeignKey('Team', on_delete=models.CASCADE, related_name='starred_players')

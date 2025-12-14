@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Player, Team, Manager, Draft, PlayerRanking, ManagerDaughterRanking, DraftPick, TeamPreference, PracticeSlot, PracticeSlotRanking, GeneralSetting, StarredDraftPick, DivisionValidationRegistry
+from .models import Player, Team, Manager, Draft, PlayerRanking, ManagerDaughterRanking, DraftPick, TeamPreference, PracticeSlot, PracticeSlotRanking, GeneralSetting, ValidationCode, StarredDraftPick, DivisionValidationRegistry
 
 
 @admin.register(Draft)
@@ -167,6 +167,23 @@ class GeneralSettingAdmin(admin.ModelAdmin):
     fieldsets = (
         ('Setting', {
             'fields': ('key', 'value')
+        }),
+        ('Metadata', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(ValidationCode)
+class ValidationCodeAdmin(admin.ModelAdmin):
+    list_display = ['code', 'value', 'created_at', 'updated_at']
+    search_fields = ['code', 'value']
+    readonly_fields = ['created_at', 'updated_at']
+
+    fieldsets = (
+        ('Validation Code', {
+            'fields': ('code', 'value')
         }),
         ('Metadata', {
             'fields': ('created_at', 'updated_at'),
