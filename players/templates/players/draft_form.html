@@ -93,17 +93,6 @@
                         </h4>
                     </div>
                     <div class="card-body">
-                        <!-- Division Setup Warning -->
-                        {% if not season_validated %}
-                        <div class="alert alert-warning mb-4">
-                            <strong><i class="bi bi-exclamation-triangle me-2"></i>Division Setup Incomplete:</strong>
-                            <p class="mb-2 mt-2">The division has not been fully set up yet. Please complete all tasks in the Division Setup Checklist before setting up the draft.</p>
-                            <a href="{% url 'players:division_setup_checklist' %}" class="btn btn-sm btn-warning">
-                                <i class="bi bi-list-check me-1"></i>Go to Division Setup Checklist
-                            </a>
-                        </div>
-                        {% else %}
-
                         <!-- Draft In Progress Warning -->
                         {% if has_draft_picks %}
                         <div class="alert alert-danger mb-4">
@@ -235,8 +224,6 @@
                                 </button>
                             </div>
                         </form>
-
-                        {% endif %}
                     </div>
                 </div>
             </div>

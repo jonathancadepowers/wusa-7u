@@ -522,19 +522,6 @@ def division_setup_checklist_view(request):
     # Check if all checklist items are complete (ignoring N/A items)
     all_complete = all(item['status'] in ['complete', 'na'] for item in checklist_items)
 
-    # Update or create season_validated setting
-    season_validated_setting, created = GeneralSetting.objects.get_or_create(
-        key='season_validated',
-        defaults={'value': 'true' if all_complete else 'false'}
-    )
-
-    # Update the value if it already existed
-    if not created:
-        new_value = 'true' if all_complete else 'false'
-        if season_validated_setting.value != new_value:
-            season_validated_setting.value = new_value
-            season_validated_setting.save()
-
     context = {
         'checklist_items': checklist_items
     }
@@ -571,23 +558,11 @@ def edit_draft_view(request):
     # Get the first (and should be only) draft
     draft = Draft.objects.first()
 
-    # Check if division setup is complete via season_validated flag
-    season_validated = False
-    try:
-        season_validated_setting = GeneralSetting.objects.get(key='season_validated')
-        season_validated = season_validated_setting.value == 'true'
-    except GeneralSetting.DoesNotExist:
-        season_validated = False
-
     # Get counts for template context
     player_count = Player.objects.count()
     team_count = Team.objects.count()
 
     if request.method == 'POST':
-        # Don't allow POST if division setup is not complete
-        if not season_validated:
-            messages.error(request, 'Division setup is not complete. Please complete all tasks in the Division Setup Checklist before setting up the draft.')
-            return redirect('players:edit_draft')
 
         rounds = int(request.POST.get('rounds'))
         picks_per_round = int(request.POST.get('picks_per_round'))
@@ -717,7 +692,6 @@ def edit_draft_view(request):
         'final_round_team_names': final_round_team_names,
         'has_draft_picks': has_draft_picks,
         'no_show_players': no_show_players,
-        'season_validated': season_validated,
     }
     return render(request, 'players/draft_form.html', context)
 
@@ -1956,14 +1930,6 @@ def assign_practice_slots_to_teams_view(request):
 def run_draft_view(request):
     """Run the draft - display grid of rounds and picks"""
 
-    # Check if division setup is complete via season_validated flag
-    season_validated = False
-    try:
-        season_validated_setting = GeneralSetting.objects.get(key='season_validated')
-        season_validated = season_validated_setting.value == 'true'
-    except GeneralSetting.DoesNotExist:
-        season_validated = False
-
     # Get the draft portal status
     try:
         portal_setting = GeneralSetting.objects.get(key='open_draft_portal_to_managers')
@@ -1971,19 +1937,10 @@ def run_draft_view(request):
     except GeneralSetting.DoesNotExist:
         portal_open = False
 
-    # If division setup is not complete, show warning
-    if not season_validated:
-        context = {
-            'season_validated': False,
-            'portal_open': portal_open,
-        }
-        return render(request, 'players/run_draft.html', context)
-
     # Get the most recent draft
     try:
         draft = Draft.objects.latest('created_at')
     except Draft.DoesNotExist:
-        # This shouldn't happen if season_validated is true, but handle it anyway
         messages.error(request, 'No draft found. Please create a draft first.')
         return redirect('players:edit_draft')
 
@@ -2057,7 +2014,6 @@ def run_draft_view(request):
         'has_final_round': has_final_round,
         'final_round_number': final_round_number,
         'portal_open': portal_open,
-        'season_validated': True,
     }
     return render(request, 'players/run_draft.html', context)
 
@@ -2601,20 +2557,6 @@ def player_rankings_analyze_view(request):
     from .models import PlayerRanking, Manager, Player, GeneralSetting
     from collections import defaultdict
 
-    # Check if division setup is complete via season_validated flag
-    season_validated = False
-    try:
-        season_validated_setting = GeneralSetting.objects.get(key='season_validated')
-        season_validated = season_validated_setting.value == 'true'
-    except GeneralSetting.DoesNotExist:
-        season_validated = False
-
-    if not season_validated:
-        context = {
-            'season_validated': False,
-        }
-        return render(request, 'players/player_rankings_analyze.html', context)
-
     # Check if rankings have been released
     rankings_released = False
     try:
@@ -2913,17 +2855,7 @@ def toggle_try_out_attendance_view(request):
 
 def team_preferences_analyze_view(request):
     """Analyze team preferences and assign managers to teams"""
-    # Check if division setup is complete via season_validated flag
-    season_validated = False
-    try:
-        season_validated_setting = GeneralSetting.objects.get(key='season_validated')
-        season_validated = season_validated_setting.value == 'true'
-    except GeneralSetting.DoesNotExist:
-        season_validated = False
-
-    context = {
-        'season_validated': season_validated
-    }
+    context = {}
     return render(request, 'players/team_preferences_analyze.html', context)
 
 
