@@ -1117,12 +1117,31 @@ def import_players_view(request):
 def team_detail_view(request, team_secret):
     """Display team info and roster based on manager_secret (read-only)"""
     from .models import PlayerRanking, ManagerDaughterRanking, PracticeSlotRanking, PracticeSlot
+    from django.contrib import messages
     import json
 
     try:
         team = Team.objects.get(manager_secret=team_secret)
     except Team.DoesNotExist:
         raise Http404("Team not found")
+
+    # Handle practice slot assignment via POST
+    if request.method == 'POST' and 'practice_slot_id' in request.POST:
+        practice_slot_id = request.POST.get('practice_slot_id')
+        if practice_slot_id:
+            try:
+                practice_slot = PracticeSlot.objects.get(id=practice_slot_id)
+                team.practice_slot = practice_slot
+                team.save()
+                messages.success(request, f'Practice slot assigned: {practice_slot.practice_slot}')
+            except PracticeSlot.DoesNotExist:
+                messages.error(request, 'Invalid practice slot selected')
+        else:
+            # Remove practice slot assignment
+            team.practice_slot = None
+            team.save()
+            messages.success(request, 'Practice slot removed')
+        return redirect('players:team_detail', team_secret=team_secret)
 
     # Get all players assigned to this team
     players = team.players.all().order_by('last_name', 'first_name')
@@ -1230,6 +1249,9 @@ def team_detail_view(request, team_secret):
             logging.error(f"Error calculating checklist: {e}")
             checklist_items = []
 
+    # Get all practice slots for the dropdown
+    all_practice_slots = PracticeSlot.objects.all().order_by('practice_slot')
+
     context = {
         'team': team,
         'players': players,
@@ -1237,7 +1259,8 @@ def team_detail_view(request, team_secret):
         'portal_open': portal_open,
         'available_players': available_players,
         'drafted_players': drafted_players,
-        'starred_player_ids': starred_player_ids
+        'starred_player_ids': starred_player_ids,
+        'all_practice_slots': all_practice_slots
     }
     return render(request, 'players/team_detail.html', context)
 
