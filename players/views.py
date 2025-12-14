@@ -62,6 +62,7 @@ def validation_code_collect_manager_team_preferences():
     """Validate that at least one team preference has been submitted OR all teams have managers assigned"""
     team_count = Team.objects.count()
     teams_without_managers = Team.objects.filter(manager__isnull=True).count()
+    teams_with_managers = team_count - teams_without_managers
 
     # Count team preference submissions
     team_preferences_count = TeamPreference.objects.count()
@@ -72,7 +73,7 @@ def validation_code_collect_manager_team_preferences():
     return {
         'complete': team_preferences_complete,
         'count': team_preferences_count,
-        'count_label': 'team preferences submitted'
+        'count_label': f'team preferences submitted ({teams_with_managers} managers assigned to teams)'
     }
 
 def validation_code_assign_managers_to_teams():
