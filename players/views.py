@@ -299,12 +299,15 @@ def division_validation_registry_view(request):
         {'url': '/teams/', 'title': 'Teams List'},
         {'url': '/teams/create/', 'title': 'Create Team'},
         {'url': '/teams/{id}/', 'title': 'Edit Team'},
+        {'url': '/teams/{id}/delete/', 'title': 'Delete Team'},
         {'url': '/teams/{team_secret}/', 'title': 'Team Detail (Public)'},
 
         # Manager pages
         {'url': '/managers/', 'title': 'Managers List'},
         {'url': '/managers/create/', 'title': 'Create Manager'},
         {'url': '/managers/{id}/', 'title': 'Manager Detail'},
+        {'url': '/managers/{id}/assign-team/', 'title': 'Assign Manager to Team'},
+        {'url': '/managers/randomly-assign/', 'title': 'Randomly Assign Managers'},
 
         # Rankings pages
         {'url': '/player_rankings/', 'title': 'Player Rankings'},
@@ -318,8 +321,10 @@ def division_validation_registry_view(request):
         {'url': '/try_out_check_in/', 'title': 'Try-Out Check In'},
         {'url': '/team_preferences/', 'title': 'Team Preferences'},
         {'url': '/team_preferences/analyze/', 'title': 'Analyze Team Preferences'},
+        {'url': '/team_preferences/assign/', 'title': 'Assign Managers to Teams'},
         {'url': '/manage_practice_slots/', 'title': 'Manage Practice Slots'},
         {'url': '/practice_slots/analyze/', 'title': 'Analyze Practice Slots'},
+        {'url': '/practice_slots/assign/', 'title': 'Assign Practice Slots to Teams'},
     ]
 
     # Load existing configurations from database
