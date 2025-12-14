@@ -249,50 +249,50 @@ def division_validation_registry_view(request):
 
     # Define all pages/views and which validations they should require
     # This is front-end only for now - no backend logic
-    # Order matches the division_setup_checklist page
     pages = [
-        {
-            'url': '/team_preferences/analyze/',
-            'view_name': 'team_preferences_analyze_view',
-            'title': 'Team Preferences Analysis',
-            'description': 'Analyze manager team preferences',
-            'required_validations': []  # Empty for now - will be set via UI
-        },
-        {
-            'url': '/player_rankings/analyze/',
-            'view_name': 'player_rankings_analyze_view',
-            'title': 'Player Rankings Analysis',
-            'description': 'Analyze and release player rankings',
-            'required_validations': []
-        },
-        {
-            'url': '/manager_daughter_rankings/analyze/',
-            'view_name': 'manager_daughter_rankings_analyze_view',
-            'title': 'Manager Daughter Rankings Analysis',
-            'description': 'Analyze manager daughter rankings',
-            'required_validations': []
-        },
-        {
-            'url': '/practice_slots/analyze/',
-            'view_name': 'practice_slots_analyze_view',
-            'title': 'Practice Slots Analysis',
-            'description': 'Analyze and assign practice slots',
-            'required_validations': []
-        },
-        {
-            'url': '/draft/edit/',
-            'view_name': 'edit_draft_view',
-            'title': 'Draft Edit Page',
-            'description': 'Create or edit draft configuration',
-            'required_validations': []
-        },
-        {
-            'url': '/draft/run/',
-            'view_name': 'run_draft_view',
-            'title': 'Run Draft Page',
-            'description': 'Execute the draft and make picks',
-            'required_validations': []
-        },
+        # Main pages
+        {'url': '/public_portal/', 'title': 'Public Portal'},
+        {'url': '/admin_dashboard/', 'title': 'Admin Dashboard'},
+        {'url': '/settings/', 'title': 'Settings'},
+        {'url': '/division_setup_checklist/', 'title': 'Division Setup Checklist'},
+        {'url': '/division_validation_registry/', 'title': 'Division Validation Registry'},
+
+        # Draft pages
+        {'url': '/draft/create/', 'title': 'Create Draft'},
+        {'url': '/draft/edit/', 'title': 'Edit Draft'},
+        {'url': '/draft/run/', 'title': 'Run Draft'},
+        {'url': '/draft/available-players/', 'title': 'Available Players'},
+
+        # Player pages
+        {'url': '/players/', 'title': 'Players List'},
+        {'url': '/players/create/', 'title': 'Create Player'},
+        {'url': '/players/{id}/', 'title': 'Player Detail'},
+
+        # Team pages
+        {'url': '/teams/', 'title': 'Teams List'},
+        {'url': '/teams/create/', 'title': 'Create Team'},
+        {'url': '/teams/{id}/', 'title': 'Edit Team'},
+        {'url': '/teams/{team_secret}/', 'title': 'Team Detail (Public)'},
+
+        # Manager pages
+        {'url': '/managers/', 'title': 'Managers List'},
+        {'url': '/managers/create/', 'title': 'Create Manager'},
+        {'url': '/managers/{id}/', 'title': 'Manager Detail'},
+
+        # Rankings pages
+        {'url': '/player_rankings/', 'title': 'Player Rankings'},
+        {'url': '/player_rankings/analyze/', 'title': 'Analyze Player Rankings'},
+        {'url': '/player_rankings/analyze/public/', 'title': 'Player Rankings Analysis (Public)'},
+        {'url': '/manager_daughter_rankings/', 'title': 'Manager Daughter Rankings'},
+        {'url': '/manager_daughter_rankings/analyze/', 'title': 'Analyze Manager Daughter Rankings'},
+        {'url': '/practice_slot_rankings/', 'title': 'Practice Slot Rankings'},
+
+        # Other pages
+        {'url': '/try_out_check_in/', 'title': 'Try-Out Check In'},
+        {'url': '/team_preferences/', 'title': 'Team Preferences'},
+        {'url': '/team_preferences/analyze/', 'title': 'Analyze Team Preferences'},
+        {'url': '/manage_practice_slots/', 'title': 'Manage Practice Slots'},
+        {'url': '/practice_slots/analyze/', 'title': 'Analyze Practice Slots'},
     ]
 
     context = {
