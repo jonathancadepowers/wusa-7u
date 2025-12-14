@@ -210,12 +210,6 @@ class ValidationMiddleware:
                             <div class="alert alert-danger" role="alert">
                                 {error_message}
                             </div>
-                            <p class="text-muted mb-4">
-                                This page cannot be accessed until the required setup steps are completed.
-                            </p>
-                            <a href="/admin_dashboard/" class="btn btn-primary">
-                                <i class="bi bi-arrow-left me-2"></i>Return to Dashboard
-                            </a>
                         </div>
                     </div>
                 </div>
