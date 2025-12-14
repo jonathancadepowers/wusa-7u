@@ -1510,6 +1510,7 @@ def unassign_practice_slots(request):
 
 def team_edit_view(request, pk):
     """View and edit a single team"""
+    from .models import PracticeSlot
     team = get_object_or_404(Team, pk=pk)
 
     if request.method == 'POST':
@@ -1527,6 +1528,17 @@ def team_edit_view(request, pk):
             except Manager.DoesNotExist:
                 pass
 
+        # Handle practice slot assignment
+        practice_slot_id = request.POST.get('practice_slot_id')
+        if practice_slot_id == '':
+            team.practice_slot = None
+        else:
+            try:
+                practice_slot = PracticeSlot.objects.get(pk=practice_slot_id)
+                team.practice_slot = practice_slot
+            except PracticeSlot.DoesNotExist:
+                pass
+
         team.save()
         messages.success(request, f'Team {team.name} updated successfully!')
         return redirect('players:team_edit', pk=team.pk)
@@ -1534,12 +1546,16 @@ def team_edit_view(request, pk):
     # Get all managers for dropdown
     all_managers = Manager.objects.all().order_by('last_name', 'first_name')
 
+    # Get all practice slots for dropdown
+    all_practice_slots = PracticeSlot.objects.all().order_by('practice_slot')
+
     # Get all players assigned to this team
     team_players = Player.objects.filter(team=team).order_by('first_name', 'last_name')
 
     context = {
         'team': team,
         'all_managers': all_managers,
+        'all_practice_slots': all_practice_slots,
         'team_players': team_players
     }
     return render(request, 'players/team_edit.html', context)

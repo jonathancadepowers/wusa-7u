@@ -50,6 +50,18 @@
                                 </select>
                             </div>
 
+                            <div class="mb-3">
+                                <label for="practice_slot_id" class="form-label">Practice Slot</label>
+                                <select class="form-select" id="practice_slot_id" name="practice_slot_id">
+                                    <option value="">-- Not Assigned --</option>
+                                    {% for slot in all_practice_slots %}
+                                        <option value="{{ slot.pk }}" {% if team.practice_slot and team.practice_slot.pk == slot.pk %}selected{% endif %}>
+                                            {{ slot.practice_slot }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
                             <div class="mt-4 d-flex justify-content-between">
                                 <div>
                                     <button type="submit" class="btn btn-primary">
