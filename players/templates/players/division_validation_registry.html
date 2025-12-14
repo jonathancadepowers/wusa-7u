@@ -5,6 +5,7 @@
 {% block page_title %}Division Validation Registry{% endblock %}
 
 {% block content %}
+    {% csrf_token %}
     <div class="container mt-5">
         <div class="row justify-content-center">
             <div class="col-md-11">
@@ -19,8 +20,7 @@
 
                         <div class="alert alert-info mb-4">
                             <i class="bi bi-info-circle me-2"></i>
-                            <strong>Frontend Only:</strong> This page is currently for visualization purposes only.
-                            Changes made here are not saved to the backend yet.
+                            <strong>Configuration Mode:</strong> Select validations for each page and click "Save Configuration" to persist your changes to the database.
                         </div>
 
                         <div class="table-responsive">
@@ -98,8 +98,8 @@
                             <button type="button" class="btn btn-secondary" id="resetBtn">
                                 <i class="bi bi-arrow-counterclockwise me-2"></i>Reset All
                             </button>
-                            <button type="button" class="btn btn-primary disabled" id="saveBtn" disabled>
-                                <i class="bi bi-save me-2"></i>Save Configuration (Coming Soon)
+                            <button type="button" class="btn btn-primary" id="saveBtn">
+                                <i class="bi bi-save me-2"></i>Save Configuration
                             </button>
                         </div>
                     </div>
@@ -182,6 +182,44 @@
             console.log('Updated validation state:', pageValidationState);
         }
 
+        // Load existing configurations from database
+        function loadExistingConfigs() {
+            const existingConfigs = JSON.parse('{{ existing_configs|safe }}');
+
+            // Pre-select options based on saved configurations
+            for (const pageUrl in existingConfigs) {
+                const config = existingConfigs[pageUrl];
+
+                // Load "validations_to_run_on_page_load"
+                const loadSelect = document.querySelector(`.validation-multiselect-load[data-page-url="${pageUrl}"]`);
+                if (loadSelect && config.validations_to_run_on_page_load) {
+                    Array.from(loadSelect.options).forEach(option => {
+                        if (config.validations_to_run_on_page_load.includes(option.value)) {
+                            option.selected = true;
+                        }
+                    });
+                }
+
+                // Load "validation_code_triggers"
+                const triggerSelect = document.querySelector(`.validation-multiselect-trigger[data-page-url="${pageUrl}"]`);
+                if (triggerSelect && config.validation_code_triggers) {
+                    Array.from(triggerSelect.options).forEach(option => {
+                        if (config.validation_code_triggers.includes(option.value)) {
+                            option.selected = true;
+                        }
+                    });
+                }
+            }
+
+            // Update the state after loading
+            updateValidationState();
+        }
+
+        // Load configurations on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadExistingConfigs();
+        });
+
         // Reset button
         document.getElementById('resetBtn').addEventListener('click', function() {
             if (!confirm('Are you sure you want to reset all validation requirements? This will clear all selections.')) {
@@ -202,6 +240,65 @@
 
             console.log('All validation requirements reset');
         });
+
+        // Save button
+        document.getElementById('saveBtn').addEventListener('click', function() {
+            // Update state before saving
+            updateValidationState();
+
+            // Get CSRF token
+            const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]') ?
+                             document.querySelector('[name=csrfmiddlewaretoken]').value :
+                             getCookie('csrftoken');
+
+            // Disable save button during request
+            const saveBtn = document.getElementById('saveBtn');
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+
+            // Send AJAX request to save configuration
+            fetch(window.location.href, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify(pageValidationState)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Configuration saved successfully!');
+                } else {
+                    alert('Error saving configuration: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error saving configuration: ' + error);
+            })
+            .finally(() => {
+                // Re-enable save button
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="bi bi-save me-2"></i>Save Configuration';
+            });
+        });
+
+        // Helper function to get CSRF token from cookie
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
     </script>
 
     <style>

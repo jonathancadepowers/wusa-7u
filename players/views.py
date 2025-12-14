@@ -182,6 +182,34 @@ def validation_code_run_the_draft():
 def division_validation_registry_view(request):
     """Division validation registry visualization page"""
     import inspect
+    import json
+    from django.http import JsonResponse
+
+    # Handle POST request to save validation configuration
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+
+            # Save each page's validation configuration
+            for page_url, validations in data.items():
+                # Get or create the registry entry for this page
+                registry, created = DivisionValidationRegistry.objects.get_or_create(
+                    page=page_url,
+                    defaults={
+                        'validations_to_run_on_page_load': validations.get('validations_to_run_on_page_load', []),
+                        'validation_code_triggers': validations.get('validation_code_triggers', [])
+                    }
+                )
+
+                # Update existing entry if it wasn't just created
+                if not created:
+                    registry.validations_to_run_on_page_load = validations.get('validations_to_run_on_page_load', [])
+                    registry.validation_code_triggers = validations.get('validation_code_triggers', [])
+                    registry.save()
+
+            return JsonResponse({'success': True, 'message': 'Configuration saved successfully'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=400)
 
     # Define all validation codes with their actual Python source code
     all_validation_codes = [
@@ -247,8 +275,7 @@ def division_validation_registry_view(request):
         },
     ]
 
-    # Define all pages/views and which validations they should require
-    # This is front-end only for now - no backend logic
+    # Define all pages/views
     pages = [
         # Main pages
         {'url': '/public_portal/', 'title': 'Public Portal'},
@@ -295,9 +322,18 @@ def division_validation_registry_view(request):
         {'url': '/practice_slots/analyze/', 'title': 'Analyze Practice Slots'},
     ]
 
+    # Load existing configurations from database
+    existing_configs = {}
+    for registry in DivisionValidationRegistry.objects.all():
+        existing_configs[registry.page] = {
+            'validations_to_run_on_page_load': registry.validations_to_run_on_page_load or [],
+            'validation_code_triggers': registry.validation_code_triggers or []
+        }
+
     context = {
         'pages': pages,
         'all_validation_codes': all_validation_codes,
+        'existing_configs': json.dumps(existing_configs),
     }
 
     return render(request, 'players/division_validation_registry.html', context)
