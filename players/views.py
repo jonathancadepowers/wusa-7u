@@ -349,20 +349,76 @@ def division_validation_registry_view(request):
 def division_setup_checklist_view(request):
     """Division setup checklist page"""
     import inspect
+    import logging
 
-    # Call validation functions
-    result_create_players = validation_code_create_players()
-    result_create_teams = validation_code_create_teams()
-    result_create_managers = validation_code_create_managers()
-    result_collect_preferences = validation_code_collect_manager_team_preferences()
-    result_assign_managers = validation_code_assign_managers_to_teams()
-    result_send_secrets = validation_code_send_managers_team_secrets()
-    result_request_rankings = validation_code_request_manager_rankings()
-    result_analyze_player_rankings = validation_code_analyze_and_release_player_rankings()
-    result_analyze_daughter_rankings = validation_code_analyze_manager_daughter_rankings()
-    result_assign_practice_slots = validation_code_assign_practice_slots()
-    result_setup_draft = validation_code_setup_draft()
-    result_run_draft = validation_code_run_the_draft()
+    logger = logging.getLogger(__name__)
+
+    # Helper function to execute validation code from database
+    def execute_validation_from_db(validation_code):
+        """
+        Execute validation logic from ValidationCode table.
+        Returns True/False based on validation result.
+        """
+        try:
+            from .models import ValidationCode
+
+            # Fetch validation from database
+            validation = ValidationCode.objects.filter(code=validation_code).first()
+
+            if not validation:
+                logger.warning(f"Validation code '{validation_code}' not found in database")
+                return False
+
+            # Import models that might be used in validations
+            from .models import Player, Team, Manager, Draft, DraftPick, GeneralSetting
+
+            # Create a safe context for evaluation
+            context = {
+                'Player': Player,
+                'Team': Team,
+                'Manager': Manager,
+                'Draft': Draft,
+                'DraftPick': DraftPick,
+                'GeneralSetting': GeneralSetting,
+            }
+
+            # Evaluate the validation code
+            result = eval(validation.value, {"__builtins__": {}}, context)
+
+            return bool(result)
+
+        except Exception as e:
+            logger.error(f"Error executing validation code '{validation_code}': {str(e)}")
+            # On error, assume validation fails
+            return False
+
+    # Execute ALL validation codes from database
+    result_create_players = execute_validation_from_db('validation_code_create_players')
+    result_create_teams = execute_validation_from_db('validation_code_create_teams')
+    result_create_managers = execute_validation_from_db('validation_code_create_managers')
+    result_collect_preferences = execute_validation_from_db('validation_code_collect_manager_team_preferences')
+    result_assign_managers = execute_validation_from_db('validation_code_assign_managers_to_teams')
+    result_send_secrets = execute_validation_from_db('validation_code_send_managers_team_secrets')
+    result_request_rankings = execute_validation_from_db('validation_code_request_manager_rankings')
+    result_analyze_player_rankings = execute_validation_from_db('validation_code_analyze_and_release_player_rankings')
+    result_analyze_daughter_rankings = execute_validation_from_db('validation_code_analyze_manager_daughter_rankings')
+    result_assign_practice_slots = execute_validation_from_db('validation_code_assign_practice_slots')
+    result_setup_draft = execute_validation_from_db('validation_code_setup_draft')
+    result_run_draft = execute_validation_from_db('validation_code_run_the_draft')
+
+    # Call legacy Python functions for rich metadata (count, count_label, etc.)
+    result_create_players_meta = validation_code_create_players()
+    result_create_teams_meta = validation_code_create_teams()
+    result_create_managers_meta = validation_code_create_managers()
+    result_collect_preferences_meta = validation_code_collect_manager_team_preferences()
+    result_assign_managers_meta = validation_code_assign_managers_to_teams()
+    result_send_secrets_meta = validation_code_send_managers_team_secrets()
+    result_request_rankings_meta = validation_code_request_manager_rankings()
+    result_analyze_player_rankings_meta = validation_code_analyze_and_release_player_rankings()
+    result_analyze_daughter_rankings_meta = validation_code_analyze_manager_daughter_rankings()
+    result_assign_practice_slots_meta = validation_code_assign_practice_slots()
+    result_setup_draft_meta = validation_code_setup_draft()
+    result_run_draft_meta = validation_code_run_the_draft()
 
     # Build checklist items
     checklist_items = [
@@ -375,10 +431,10 @@ def division_setup_checklist_view(request):
             'validation_source': inspect.getsource(validation_code_create_players),
             'link': '/settings/#player-data-import',
             'link_text': 'Go to Player Data Import',
-            'status': 'complete' if result_create_players['complete'] else 'incomplete',
-            'count': result_create_players.get('count'),
-            'count_label': result_create_players.get('count_label'),
-            'status_note': result_create_players.get('status_note')
+            'status': 'complete' if result_create_players else 'incomplete',
+            'count': result_create_players_meta.get('count'),
+            'count_label': result_create_players_meta.get('count_label'),
+            'status_note': result_create_players_meta.get('status_note')
         },
         {
             'title': 'Create Teams',
@@ -388,10 +444,10 @@ def division_setup_checklist_view(request):
             'validation_description': 'At least 5 teams have been created',
             'link': '/teams/',
             'link_text': 'Go to Teams',
-            'status': 'complete' if result_create_teams['complete'] else 'incomplete',
-            'count': result_create_teams.get('count'),
-            'count_label': result_create_teams.get('count_label'),
-            'status_note': result_create_teams.get('status_note')
+            'status': 'complete' if result_create_teams else 'incomplete',
+            'count': result_create_teams_meta.get('count'),
+            'count_label': result_create_teams_meta.get('count_label'),
+            'status_note': result_create_teams_meta.get('status_note')
         },
         {
             'title': 'Create Managers',
@@ -401,10 +457,10 @@ def division_setup_checklist_view(request):
             'validation_description': 'One manager per team and all managers have been assigned to their daughter',
             'link': '/managers/',
             'link_text': 'Go to Managers',
-            'status': 'complete' if result_create_managers['complete'] else 'incomplete',
-            'count': result_create_managers.get('count'),
-            'count_label': result_create_managers.get('count_label'),
-            'status_note': result_create_managers.get('status_note')
+            'status': 'complete' if result_create_managers else 'incomplete',
+            'count': result_create_managers_meta.get('count'),
+            'count_label': result_create_managers_meta.get('count_label'),
+            'status_note': result_create_managers_meta.get('status_note')
         },
         {
             'title': 'Collect Manager Team Preferences',
@@ -415,10 +471,10 @@ def division_setup_checklist_view(request):
             'link': '/settings/#emails',
             'link_text': 'Go to Emails',
             'link_note': 'Click "Send Team Preferences Email"',
-            'status': 'complete' if result_collect_preferences['complete'] else 'incomplete',
-            'count': result_collect_preferences.get('count'),
-            'count_label': result_collect_preferences.get('count_label'),
-            'status_note': result_collect_preferences.get('status_note')
+            'status': 'complete' if result_collect_preferences else 'incomplete',
+            'count': result_collect_preferences_meta.get('count'),
+            'count_label': result_collect_preferences_meta.get('count_label'),
+            'status_note': result_collect_preferences_meta.get('status_note')
         },
         {
             'title': 'Assign Managers to Team',
@@ -428,10 +484,10 @@ def division_setup_checklist_view(request):
             'validation_description': 'All teams have a manager assigned',
             'link': '/team_preferences/analyze/',
             'link_text': 'Go to Analysis',
-            'status': 'complete' if result_assign_managers['complete'] else 'incomplete',
-            'count': result_assign_managers.get('count'),
-            'count_label': result_assign_managers.get('count_label'),
-            'status_note': result_assign_managers.get('status_note')
+            'status': 'complete' if result_assign_managers else 'incomplete',
+            'count': result_assign_managers_meta.get('count'),
+            'count_label': result_assign_managers_meta.get('count_label'),
+            'status_note': result_assign_managers_meta.get('status_note')
         },
         {
             'title': 'Send Managers "Team Secrets"',
@@ -443,7 +499,7 @@ def division_setup_checklist_view(request):
             'link_text': 'Go to Teams',
             'link_note': 'Click "View All Team Secrets"',
             'status': 'na',
-            'status_note': result_send_secrets.get('status_note')
+            'status_note': result_send_secrets_meta.get('status_note')
         },
         {
             'title': 'Request Manager Rankings',
@@ -455,7 +511,7 @@ def division_setup_checklist_view(request):
             'link_text': 'Go to Emails',
             'link_note': 'Click "Send Team Pages to Managers"',
             'status': 'na',
-            'status_note': result_request_rankings.get('status_note')
+            'status_note': result_request_rankings_meta.get('status_note')
         },
         {
             'title': 'Analyze & Release Player Rankings',
@@ -465,10 +521,10 @@ def division_setup_checklist_view(request):
             'validation_description': 'All managers have submitted their player rankings',
             'link': '/player_rankings/analyze/',
             'link_text': 'Go to Analysis',
-            'status': 'complete' if result_analyze_player_rankings['complete'] else 'incomplete',
-            'count': result_analyze_player_rankings.get('count'),
-            'count_label': result_analyze_player_rankings.get('count_label'),
-            'status_note': result_analyze_player_rankings.get('status_note')
+            'status': 'complete' if result_analyze_player_rankings else 'incomplete',
+            'count': result_analyze_player_rankings_meta.get('count'),
+            'count_label': result_analyze_player_rankings_meta.get('count_label'),
+            'status_note': result_analyze_player_rankings_meta.get('status_note')
         },
         {
             'title': 'Analyze Manager\'s Daughters Rankings',
@@ -478,10 +534,10 @@ def division_setup_checklist_view(request):
             'validation_description': 'All managers have submitted their manager daughter rankings',
             'link': '/manager_daughter_rankings/analyze/',
             'link_text': 'Go to Analysis',
-            'status': 'complete' if result_analyze_daughter_rankings['complete'] else 'incomplete',
-            'count': result_analyze_daughter_rankings.get('count'),
-            'count_label': result_analyze_daughter_rankings.get('count_label'),
-            'status_note': result_analyze_daughter_rankings.get('status_note')
+            'status': 'complete' if result_analyze_daughter_rankings else 'incomplete',
+            'count': result_analyze_daughter_rankings_meta.get('count'),
+            'count_label': result_analyze_daughter_rankings_meta.get('count_label'),
+            'status_note': result_analyze_daughter_rankings_meta.get('status_note')
         },
         {
             'title': 'Assign Practice Slots',
@@ -492,10 +548,10 @@ def division_setup_checklist_view(request):
             'link': '/practice_slots/analyze/',
             'link_text': 'Go to Analysis',
             'link_note': 'Click "Assign Practice Slots to Teams"',
-            'status': 'complete' if result_assign_practice_slots['complete'] else 'incomplete',
-            'count': result_assign_practice_slots.get('count'),
-            'count_label': result_assign_practice_slots.get('count_label'),
-            'status_note': result_assign_practice_slots.get('status_note')
+            'status': 'complete' if result_assign_practice_slots else 'incomplete',
+            'count': result_assign_practice_slots_meta.get('count'),
+            'count_label': result_assign_practice_slots_meta.get('count_label'),
+            'status_note': result_assign_practice_slots_meta.get('status_note')
         },
         {
             'title': 'Setup Draft',
@@ -505,10 +561,10 @@ def division_setup_checklist_view(request):
             'validation_description': 'Draft has been configured with rounds, teams, and a valid draft order',
             'link': '/draft/edit/',
             'link_text': 'Go to Draft Setup',
-            'status': 'complete' if result_setup_draft['complete'] else 'incomplete',
-            'count': result_setup_draft.get('count'),
-            'count_label': result_setup_draft.get('count_label'),
-            'status_note': result_setup_draft.get('status_note')
+            'status': 'complete' if result_setup_draft else 'incomplete',
+            'count': result_setup_draft_meta.get('count'),
+            'count_label': result_setup_draft_meta.get('count_label'),
+            'status_note': result_setup_draft_meta.get('status_note')
         },
         {
             'title': 'Run the Draft',
@@ -519,10 +575,10 @@ def division_setup_checklist_view(request):
             'link': '/draft/run/',
             'link_text': 'Go to Draft Board',
             'link_note': 'Click "Draft Complete" to Assign Players to Teams',
-            'status': 'complete' if result_run_draft['complete'] else 'incomplete',
-            'count': result_run_draft.get('count'),
-            'count_label': result_run_draft.get('count_label'),
-            'status_note': result_run_draft.get('status_note')
+            'status': 'complete' if result_run_draft else 'incomplete',
+            'count': result_run_draft_meta.get('count'),
+            'count_label': result_run_draft_meta.get('count_label'),
+            'status_note': result_run_draft_meta.get('status_note')
         }
     ]
 
