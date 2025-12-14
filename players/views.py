@@ -55,7 +55,7 @@ def validation_code_create_managers():
     return {
         'complete': (manager_count == team_count and manager_count > 0 and managers_without_daughters == 0),
         'count': manager_count,
-        'count_label': f'{manager_count} managers ({managers_with_daughters} with daughters assigned)'
+        'count_label': f'managers ({managers_with_daughters} with daughters assigned)'
     }
 
 def validation_code_collect_manager_team_preferences():
