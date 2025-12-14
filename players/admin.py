@@ -177,13 +177,13 @@ class GeneralSettingAdmin(admin.ModelAdmin):
 
 @admin.register(ValidationCode)
 class ValidationCodeAdmin(admin.ModelAdmin):
-    list_display = ['code', 'value', 'created_at', 'updated_at']
-    search_fields = ['code', 'value']
+    list_display = ['code', 'value', 'error_message', 'created_at', 'updated_at']
+    search_fields = ['code', 'value', 'error_message']
     readonly_fields = ['created_at', 'updated_at']
 
     fieldsets = (
         ('Validation Code', {
-            'fields': ('code', 'value')
+            'fields': ('code', 'value', 'error_message')
         }),
         ('Metadata', {
             'fields': ('created_at', 'updated_at'),
