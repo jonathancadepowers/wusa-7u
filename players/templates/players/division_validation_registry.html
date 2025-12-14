@@ -49,7 +49,7 @@
                                 <tbody id="registryTableBody">
                                     {% for page in pages %}
                                         <tr data-page-url="{{ page.url }}">
-                                            <td><code>{{ page.url }}</code></td>
+                                            <td><code><a href="{{ page.url }}" target="_blank">{{ page.url }}</a></code></td>
                                             <td>
                                                 <select
                                                     class="form-select validation-multiselect-load"
