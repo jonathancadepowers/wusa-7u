@@ -372,7 +372,7 @@ def division_setup_checklist_view(request):
                 return False
 
             # Import models that might be used in validations
-            from .models import Player, Team, Manager, Draft, DraftPick, GeneralSetting
+            from .models import Player, Team, Manager, Draft, DraftPick, GeneralSetting, TeamPreference
 
             # Create a safe context for evaluation
             context = {
@@ -382,6 +382,7 @@ def division_setup_checklist_view(request):
                 'Draft': Draft,
                 'DraftPick': DraftPick,
                 'GeneralSetting': GeneralSetting,
+                'TeamPreference': TeamPreference,
             }
 
             # Evaluate the validation code
