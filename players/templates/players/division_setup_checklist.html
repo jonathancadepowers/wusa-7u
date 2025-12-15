@@ -236,6 +236,20 @@
     <script>
         // Call API to refresh all validations when page loads
         document.addEventListener('DOMContentLoaded', function() {
+            // Check if validations were just refreshed (prevents infinite reload loop)
+            const urlParams = new URLSearchParams(window.location.search);
+            const validationsRefreshed = urlParams.get('validations_refreshed');
+
+            if (validationsRefreshed === 'true') {
+                // Validations already refreshed - just show the content
+                document.getElementById('validationLoadingOverlay').style.display = 'none';
+                document.getElementById('checklistContent').style.display = 'block';
+
+                // Clean up URL parameter
+                window.history.replaceState({}, document.title, window.location.pathname);
+                return;
+            }
+
             // Get CSRF token
             const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
                               document.querySelector('input[name=csrfmiddlewaretoken]')?.value ||
@@ -258,7 +272,8 @@
                     // Ensure progress reaches 100% before reloading
                     finishProgress();
                     setTimeout(() => {
-                        window.location.reload();
+                        // Reload with parameter to prevent infinite loop
+                        window.location.href = window.location.pathname + '?validations_refreshed=true';
                     }, 500);
                 } else {
                     // Error occurred - hide loading overlay and show error
