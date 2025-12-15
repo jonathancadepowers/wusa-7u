@@ -5,6 +5,7 @@
 {% block page_title %}Division Setup Checklist{% endblock %}
 
 {% block content %}
+    {% if not validations_already_refreshed %}
     <!-- Loading Overlay -->
     <div id="validationLoadingOverlay" class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="background-color: rgba(255, 255, 255, 0.95); z-index: 9999;">
         <div class="container" style="max-width: 800px;">
@@ -119,9 +120,10 @@
             </div>
         </div>
     </div>
+    {% endif %}
 
     <!-- Main Content (hidden until validations complete) -->
-    <div id="checklistContent" class="container-fluid mt-5" style="display: none;">
+    <div id="checklistContent" class="container-fluid mt-5" style="{% if validations_already_refreshed %}display: block;{% else %}display: none;{% endif %}">
         <div class="row justify-content-center">
             <div class="col-12">
                 <div class="card shadow">

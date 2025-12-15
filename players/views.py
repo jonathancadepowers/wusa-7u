@@ -769,8 +769,12 @@ def division_setup_checklist_view(request):
     # Check if all checklist items are complete (ignoring N/A items)
     all_complete = all(item['status'] in ['complete', 'na'] for item in checklist_items)
 
+    # Check if validations were already refreshed (to prevent showing overlay)
+    validations_already_refreshed = request.GET.get('validations_refreshed') == 'true'
+
     context = {
-        'checklist_items': checklist_items
+        'checklist_items': checklist_items,
+        'validations_already_refreshed': validations_already_refreshed,
     }
     return render(request, 'players/division_setup_checklist.html', context)
 
