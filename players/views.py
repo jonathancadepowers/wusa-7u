@@ -687,7 +687,7 @@ def division_setup_checklist_view(request):
         },
         {
             'title': 'Request Manager Rankings',
-            'description': 'Once each manager has their "team secret" (see above) then email all managers a link to their team\'s dashboard. At the top of this dashboard will be list of tasks for them to complete, to submit various rankings needed to build the draft. A email has been drafted for you to send.\n\nManagers must submit rankings for (1) all players, (2) manager\'s daughters, (3) their preferences for practice slots.',
+            'description': 'Once each manager has their "team secret" (see above) then email all managers a link to their team\'s dashboard. At the top of this dashboard will be list of tasks for them to complete, to submit various rankings needed to build the draft. A email has been drafted for you to send.\n\nManagers must submit rankings for (1) all players, (2) manager\'s daughters, (3) their preferences for practice slots.\n\nTip: You can view any manager\'s team portal (to see exactly what they see) by going <a href="/public_portal/">here</a> and clicking a team (when prompted, enter the "master" password you were given).',
             'validation_code': 'validation_code_request_manager_rankings',
             'validation_source': inspect.getsource(validation_code_request_manager_rankings),            'validation_logic': 'N/A - Manual task performed outside the website',
             'validation_description': 'N/A - Manual task performed outside the website',
