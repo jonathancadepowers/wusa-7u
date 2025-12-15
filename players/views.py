@@ -99,15 +99,16 @@ def validation_code_create_managers():
     }
 
 def validation_code_collect_manager_team_preferences():
-    """Validate that at least one team preference has been submitted OR all teams have managers assigned"""
+    """Validate that all managers have submitted team preferences OR all teams have managers assigned"""
     from .models import ValidationCode
 
+    manager_count = Manager.objects.count()
     team_count = Team.objects.count()
     teams_without_managers = Team.objects.filter(manager__isnull=True).count()
     team_preferences_count = TeamPreference.objects.count()
 
-    # Complete if at least one team preference submitted OR (teams exist AND all teams have been assigned managers)
-    is_valid = (team_preferences_count >= 1 or (team_count > 0 and teams_without_managers == 0))
+    # Complete if all managers have submitted preferences OR (teams exist AND all teams have been assigned managers)
+    is_valid = (team_preferences_count >= manager_count or (team_count > 0 and teams_without_managers == 0))
 
     # Update ValidationCode.value field
     validation = ValidationCode.objects.get(code='validation_code_collect_manager_team_preferences')
