@@ -7,12 +7,116 @@
 {% block content %}
     <!-- Loading Overlay -->
     <div id="validationLoadingOverlay" class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="background-color: rgba(255, 255, 255, 0.95); z-index: 9999;">
-        <div class="text-center">
-            <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
-                <span class="visually-hidden">Loading...</span>
+        <div class="container" style="max-width: 800px;">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-arrow-repeat me-2"></i>Refreshing Validations</h4>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Progress Summary -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="mb-0" id="progressText">Initializing...</h5>
+                            <span class="badge bg-primary" id="progressBadge">0 of 12</span>
+                        </div>
+                        <div class="progress" style="height: 25px;">
+                            <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                <span id="progressPercent">0%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Validation Steps List -->
+                    <div class="validation-steps" style="max-height: 400px; overflow-y: auto;">
+                        <div class="list-group list-group-flush">
+                            <div class="list-group-item d-flex align-items-center validation-step" data-step="1">
+                                <i class="bi bi-circle step-icon text-secondary me-3" style="font-size: 1.2rem;"></i>
+                                <div class="flex-grow-1">
+                                    <strong>Create Players</strong>
+                                    <div class="text-muted small">Validating player records...</div>
+                                </div>
+                            </div>
+                            <div class="list-group-item d-flex align-items-center validation-step" data-step="2">
+                                <i class="bi bi-circle step-icon text-secondary me-3" style="font-size: 1.2rem;"></i>
+                                <div class="flex-grow-1">
+                                    <strong>Create Managers</strong>
+                                    <div class="text-muted small">Validating manager records...</div>
+                                </div>
+                            </div>
+                            <div class="list-group-item d-flex align-items-center validation-step" data-step="3">
+                                <i class="bi bi-circle step-icon text-secondary me-3" style="font-size: 1.2rem;"></i>
+                                <div class="flex-grow-1">
+                                    <strong>Create Teams</strong>
+                                    <div class="text-muted small">Validating team records...</div>
+                                </div>
+                            </div>
+                            <div class="list-group-item d-flex align-items-center validation-step" data-step="4">
+                                <i class="bi bi-circle step-icon text-secondary me-3" style="font-size: 1.2rem;"></i>
+                                <div class="flex-grow-1">
+                                    <strong>Collect Manager Team Preferences</strong>
+                                    <div class="text-muted small">Validating team preferences...</div>
+                                </div>
+                            </div>
+                            <div class="list-group-item d-flex align-items-center validation-step" data-step="5">
+                                <i class="bi bi-circle step-icon text-secondary me-3" style="font-size: 1.2rem;"></i>
+                                <div class="flex-grow-1">
+                                    <strong>Assign Managers to Teams</strong>
+                                    <div class="text-muted small">Validating manager assignments...</div>
+                                </div>
+                            </div>
+                            <div class="list-group-item d-flex align-items-center validation-step" data-step="6">
+                                <i class="bi bi-circle step-icon text-secondary me-3" style="font-size: 1.2rem;"></i>
+                                <div class="flex-grow-1">
+                                    <strong>Send Managers Team Secrets</strong>
+                                    <div class="text-muted small">Validating team secret distribution...</div>
+                                </div>
+                            </div>
+                            <div class="list-group-item d-flex align-items-center validation-step" data-step="7">
+                                <i class="bi bi-circle step-icon text-secondary me-3" style="font-size: 1.2rem;"></i>
+                                <div class="flex-grow-1">
+                                    <strong>Request Manager Rankings</strong>
+                                    <div class="text-muted small">Validating manager ranking requests...</div>
+                                </div>
+                            </div>
+                            <div class="list-group-item d-flex align-items-center validation-step" data-step="8">
+                                <i class="bi bi-circle step-icon text-secondary me-3" style="font-size: 1.2rem;"></i>
+                                <div class="flex-grow-1">
+                                    <strong>Analyze and Release Player Rankings</strong>
+                                    <div class="text-muted small">Validating player rankings...</div>
+                                </div>
+                            </div>
+                            <div class="list-group-item d-flex align-items-center validation-step" data-step="9">
+                                <i class="bi bi-circle step-icon text-secondary me-3" style="font-size: 1.2rem;"></i>
+                                <div class="flex-grow-1">
+                                    <strong>Analyze Manager Daughter Rankings</strong>
+                                    <div class="text-muted small">Validating daughter rankings...</div>
+                                </div>
+                            </div>
+                            <div class="list-group-item d-flex align-items-center validation-step" data-step="10">
+                                <i class="bi bi-circle step-icon text-secondary me-3" style="font-size: 1.2rem;"></i>
+                                <div class="flex-grow-1">
+                                    <strong>Assign Practice Slots</strong>
+                                    <div class="text-muted small">Validating practice slot assignments...</div>
+                                </div>
+                            </div>
+                            <div class="list-group-item d-flex align-items-center validation-step" data-step="11">
+                                <i class="bi bi-circle step-icon text-secondary me-3" style="font-size: 1.2rem;"></i>
+                                <div class="flex-grow-1">
+                                    <strong>Setup Draft</strong>
+                                    <div class="text-muted small">Validating draft configuration...</div>
+                                </div>
+                            </div>
+                            <div class="list-group-item d-flex align-items-center validation-step" data-step="12">
+                                <i class="bi bi-circle step-icon text-secondary me-3" style="font-size: 1.2rem;"></i>
+                                <div class="flex-grow-1">
+                                    <strong>Run the Draft</strong>
+                                    <div class="text-muted small">Validating draft completion...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <h4 class="text-primary">Refreshing Validations</h4>
-            <p class="text-muted">Please wait while we update all validation statuses...</p>
         </div>
     </div>
 
@@ -137,6 +241,9 @@
                               document.querySelector('input[name=csrfmiddlewaretoken]')?.value ||
                               getCookie('csrftoken');
 
+            // Start the progress simulation
+            simulateValidationProgress();
+
             // Call the API to refresh all validations
             fetch('{% url "players:refresh_all_validations_api" %}', {
                 method: 'POST',
@@ -148,8 +255,11 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Validations refreshed successfully - reload the page to show updated statuses
-                    window.location.reload();
+                    // Ensure progress reaches 100% before reloading
+                    finishProgress();
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 500);
                 } else {
                     // Error occurred - hide loading overlay and show error
                     document.getElementById('validationLoadingOverlay').style.display = 'none';
@@ -165,6 +275,94 @@
                 alert('Network error refreshing validations. Showing cached validation statuses.');
             });
         });
+
+        // Progress simulation
+        let currentStep = 0;
+        const totalSteps = 12;
+        let progressInterval;
+
+        function simulateValidationProgress() {
+            // Start at step 0
+            currentStep = 0;
+            updateProgress(0);
+
+            // Simulate progress through each validation step
+            // Total expected time: ~3-5 seconds for all 12 steps
+            progressInterval = setInterval(() => {
+                if (currentStep < totalSteps) {
+                    currentStep++;
+                    updateProgress(currentStep);
+                } else {
+                    clearInterval(progressInterval);
+                }
+            }, 300); // Update every 300ms (12 steps * 300ms = 3.6 seconds)
+        }
+
+        function updateProgress(step) {
+            const percentage = Math.round((step / totalSteps) * 100);
+
+            // Update progress bar
+            const progressBar = document.getElementById('progressBar');
+            const progressPercent = document.getElementById('progressPercent');
+            const progressText = document.getElementById('progressText');
+            const progressBadge = document.getElementById('progressBadge');
+
+            if (progressBar) {
+                progressBar.style.width = percentage + '%';
+                progressBar.setAttribute('aria-valuenow', percentage);
+            }
+
+            if (progressPercent) {
+                progressPercent.textContent = percentage + '%';
+            }
+
+            if (progressBadge) {
+                progressBadge.textContent = `${step} of ${totalSteps}`;
+            }
+
+            if (progressText) {
+                if (step === 0) {
+                    progressText.textContent = 'Initializing validation system...';
+                } else if (step === totalSteps) {
+                    progressText.textContent = 'Finalizing validation results...';
+                } else {
+                    progressText.textContent = 'Running validation checks...';
+                }
+            }
+
+            // Update validation step icons
+            const steps = document.querySelectorAll('.validation-step');
+            steps.forEach((stepElement, index) => {
+                const icon = stepElement.querySelector('.step-icon');
+                const stepNumber = index + 1;
+
+                if (stepNumber < step) {
+                    // Completed
+                    icon.className = 'bi bi-check-circle-fill step-icon text-success me-3';
+                    stepElement.classList.remove('bg-light');
+                } else if (stepNumber === step) {
+                    // Current/In Progress
+                    icon.className = 'bi bi-arrow-right-circle-fill step-icon text-primary me-3';
+                    stepElement.classList.add('bg-light');
+                    // Scroll to current step
+                    stepElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                } else {
+                    // Pending
+                    icon.className = 'bi bi-circle step-icon text-secondary me-3';
+                    stepElement.classList.remove('bg-light');
+                }
+            });
+        }
+
+        function finishProgress() {
+            // Clear any running intervals
+            if (progressInterval) {
+                clearInterval(progressInterval);
+            }
+
+            // Set progress to 100%
+            updateProgress(totalSteps);
+        }
 
         // Helper function to get CSRF cookie
         function getCookie(name) {
