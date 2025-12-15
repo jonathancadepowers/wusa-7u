@@ -241,10 +241,13 @@ def validation_code_setup_draft():
     from .models import ValidationCode, Draft
     import json as json_module
 
+    # Fetch the draft object from the database
     draft = Draft.objects.first()
     draft_setup_complete = False
 
     if draft:
+        # Check that all required draft configuration fields are populated
+        # (rounds > 0, picks_per_round > 0, and order is not empty)
         draft_valid = (
             draft.rounds and draft.rounds > 0 and
             draft.picks_per_round and draft.picks_per_round > 0 and
@@ -253,17 +256,19 @@ def validation_code_setup_draft():
 
         if draft_valid:
             try:
+                # Parse the order field (can be JSON array or comma-separated team IDs)
                 order_data = draft.order.strip()
                 if order_data.startswith('['):
                     team_ids = json_module.loads(order_data)
                 else:
                     team_ids = [int(tid.strip()) for tid in order_data.split(',') if tid.strip()]
 
+                # Verify that the number of teams in order matches picks_per_round
                 draft_setup_complete = (len(team_ids) == draft.picks_per_round and len(team_ids) > 0)
             except (json_module.JSONDecodeError, ValueError):
                 draft_setup_complete = False
 
-    # Update ValidationCode.value field
+    # Update the ValidationCode in the database with the result
     validation = ValidationCode.objects.get(code='validation_code_setup_draft')
     validation.value = "true" if draft_setup_complete else "false"
     validation.save()
