@@ -121,9 +121,12 @@ def validation_code_collect_manager_team_preferences():
     else:
         status_note = f'{team_preferences_count} preferences submitted'
 
+    # Calculate teams with managers assigned
+    teams_with_managers = team_count - teams_without_managers
+
     return {
         'count': team_preferences_count,
-        'count_label': 'preferences',
+        'count_label': f'Preferences Submitted, {teams_with_managers} Managers Assigned to Teams',
         'status_note': status_note
     }
 
