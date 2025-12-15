@@ -24,6 +24,7 @@ urlpatterns = [
     path('reset-teams/', views.reset_teams_view, name='reset_teams'),
     path('delete-all-players/', views.delete_all_players_view, name='delete_all'),
     path('api/import-players/', views.import_players_view, name='import_players'),
+    path('api/refresh-validations/', views.refresh_all_validations_api, name='refresh_all_validations_api'),
     path('players/', views.players_list_view, name='list'),
     path('players/create/', views.player_create_view, name='create'),
     path('players/<int:pk>/', views.player_detail_view, name='detail'),

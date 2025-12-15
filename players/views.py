@@ -30,116 +30,135 @@ def settings_view(request):
 # Validation functions for division setup checklist
 def validation_code_create_players():
     """Validate that at least 10 players exist"""
+    from .models import ValidationCode
+
     player_count = Player.objects.count()
-    return {
-        'complete': player_count >= 10,
-        'count': player_count,
-        'count_label': 'players'
-    }
+    is_valid = (player_count >= 10)
+
+    # Update ValidationCode.value field
+    validation = ValidationCode.objects.get(code='validation_code_create_players')
+    validation.value = "true" if is_valid else "false"
+    validation.save()
 
 def validation_code_create_teams():
     """Validate that at least 5 teams exist"""
+    from .models import ValidationCode
+
     team_count = Team.objects.count()
-    return {
-        'complete': team_count >= 5,
-        'count': team_count,
-        'count_label': 'teams'
-    }
+    is_valid = (team_count >= 5)
+
+    # Update ValidationCode.value field
+    validation = ValidationCode.objects.get(code='validation_code_create_teams')
+    validation.value = "true" if is_valid else "false"
+    validation.save()
 
 def validation_code_create_managers():
     """Validate that manager count equals team count and all managers have daughters"""
+    from .models import ValidationCode
+
     manager_count = Manager.objects.count()
     team_count = Team.objects.count()
     managers_without_daughters = Manager.objects.filter(daughter__isnull=True).count()
-    managers_with_daughters = manager_count - managers_without_daughters
-    return {
-        'complete': (manager_count == team_count and manager_count > 0 and managers_without_daughters == 0),
-        'count': manager_count,
-        'count_label': f'managers ({managers_with_daughters} with daughters assigned)'
-    }
+
+    is_valid = (manager_count == team_count and manager_count > 0 and managers_without_daughters == 0)
+
+    # Update ValidationCode.value field
+    validation = ValidationCode.objects.get(code='validation_code_create_managers')
+    validation.value = "true" if is_valid else "false"
+    validation.save()
 
 def validation_code_collect_manager_team_preferences():
     """Validate that at least one team preference has been submitted OR all teams have managers assigned"""
-    team_count = Team.objects.count()
-    teams_without_managers = Team.objects.filter(manager__isnull=True).count()
-    teams_with_managers = team_count - teams_without_managers
+    from .models import ValidationCode
 
-    # Count team preference submissions
+    teams_without_managers = Team.objects.filter(manager__isnull=True).count()
     team_preferences_count = TeamPreference.objects.count()
 
     # Complete if at least one team preference submitted OR all teams have been assigned managers
-    team_preferences_complete = (team_preferences_count >= 1 or teams_without_managers == 0)
+    is_valid = (team_preferences_count >= 1 or teams_without_managers == 0)
 
-    return {
-        'complete': team_preferences_complete,
-        'count': team_preferences_count,
-        'count_label': f'team preferences submitted ({teams_with_managers} managers assigned to teams)'
-    }
+    # Update ValidationCode.value field
+    validation = ValidationCode.objects.get(code='validation_code_collect_manager_team_preferences')
+    validation.value = "true" if is_valid else "false"
+    validation.save()
 
 def validation_code_assign_managers_to_teams():
     """Validate that all teams have managers assigned"""
+    from .models import ValidationCode
+
     manager_count = Manager.objects.count()
     teams_without_managers = Team.objects.filter(manager__isnull=True).count()
     managers_with_teams = Team.objects.filter(manager__isnull=False).count()
 
-    return {
-        'complete': (manager_count > 0 and teams_without_managers == 0 and managers_with_teams == manager_count),
-        'count': managers_with_teams,
-        'count_label': 'managers assigned to teams'
-    }
+    is_valid = (manager_count > 0 and teams_without_managers == 0 and managers_with_teams == manager_count)
+
+    # Update ValidationCode.value field
+    validation = ValidationCode.objects.get(code='validation_code_assign_managers_to_teams')
+    validation.value = "true" if is_valid else "false"
+    validation.save()
 
 def validation_code_send_managers_team_secrets():
     """N/A - Manual task performed outside the website"""
-    return {
-        'complete': 'na'
-    }
+    from .models import ValidationCode
+
+    # This is a manual task, so we just mark it as "na" (not applicable)
+    validation = ValidationCode.objects.get(code='validation_code_send_managers_team_secrets')
+    validation.value = "na"
+    validation.save()
 
 def validation_code_request_manager_rankings():
     """N/A - Manual task performed outside the website"""
-    return {
-        'complete': 'na'
-    }
+    from .models import ValidationCode
+
+    # This is a manual task, so we just mark it as "na" (not applicable)
+    validation = ValidationCode.objects.get(code='validation_code_request_manager_rankings')
+    validation.value = "na"
+    validation.save()
 
 def validation_code_analyze_and_release_player_rankings():
     """Validate that at least one player ranking has been submitted"""
-    player_rankings_count = PlayerRanking.objects.count()
+    from .models import ValidationCode
 
-    return {
-        'complete': player_rankings_count >= 1,
-        'count': player_rankings_count,
-        'count_label': 'Player rankings submitted'
-    }
+    player_rankings_count = PlayerRanking.objects.count()
+    is_valid = (player_rankings_count >= 1)
+
+    # Update ValidationCode.value field
+    validation = ValidationCode.objects.get(code='validation_code_analyze_and_release_player_rankings')
+    validation.value = "true" if is_valid else "false"
+    validation.save()
 
 def validation_code_analyze_manager_daughter_rankings():
     """Validate that at least one manager daughter ranking has been submitted"""
-    manager_daughter_rankings_count = ManagerDaughterRanking.objects.count()
+    from .models import ValidationCode
 
-    return {
-        'complete': manager_daughter_rankings_count >= 1,
-        'count': manager_daughter_rankings_count,
-        'count_label': 'Manager daughter rankings submitted'
-    }
+    manager_daughter_rankings_count = ManagerDaughterRanking.objects.count()
+    is_valid = (manager_daughter_rankings_count >= 1)
+
+    # Update ValidationCode.value field
+    validation = ValidationCode.objects.get(code='validation_code_analyze_manager_daughter_rankings')
+    validation.value = "true" if is_valid else "false"
+    validation.save()
 
 def validation_code_assign_practice_slots():
     """Validate that all teams have been assigned practice slots"""
-    from .models import PracticeSlotRanking
+    from .models import ValidationCode, PracticeSlotRanking
+
     all_teams = Team.objects.all()
     teams_without_slots = all_teams.filter(practice_slot__isnull=True)
-    teams_with_slots = all_teams.filter(practice_slot__isnull=False)
 
-    return {
-        'complete': teams_without_slots.count() == 0,
-        'count': teams_with_slots.count(),
-        'count_label': 'teams assigned to practice slots'
-    }
+    is_valid = (teams_without_slots.count() == 0)
+
+    # Update ValidationCode.value field
+    validation = ValidationCode.objects.get(code='validation_code_assign_practice_slots')
+    validation.value = "true" if is_valid else "false"
+    validation.save()
 
 def validation_code_setup_draft():
     """Validate that draft is fully configured"""
-    from .models import Draft
+    from .models import ValidationCode, Draft
     import json as json_module
 
     draft = Draft.objects.first()
-    teams_in_draft_order = 0
     draft_setup_complete = False
 
     if draft:
@@ -157,28 +176,84 @@ def validation_code_setup_draft():
                 else:
                     team_ids = [int(tid.strip()) for tid in order_data.split(',') if tid.strip()]
 
-                teams_in_draft_order = len(team_ids)
                 draft_setup_complete = (len(team_ids) == draft.picks_per_round and len(team_ids) > 0)
             except (json_module.JSONDecodeError, ValueError):
-                teams_in_draft_order = 0
                 draft_setup_complete = False
 
-    return {
-        'complete': draft_setup_complete,
-        'count': teams_in_draft_order,
-        'count_label': 'teams configured in draft order'
-    }
+    # Update ValidationCode.value field
+    validation = ValidationCode.objects.get(code='validation_code_setup_draft')
+    validation.value = "true" if draft_setup_complete else "false"
+    validation.save()
 
 def validation_code_run_the_draft():
     """Validate that all players have been assigned to teams"""
+    from .models import ValidationCode
+
     player_count = Player.objects.count()
     players_without_team = Player.objects.filter(team__isnull=True).count()
 
-    return {
-        'complete': (player_count > 0 and players_without_team == 0),
-        'count': players_without_team,
-        'count_label': 'players not assigned to a team'
-    }
+    is_valid = (player_count > 0 and players_without_team == 0)
+
+    # Update ValidationCode.value field
+    validation = ValidationCode.objects.get(code='validation_code_run_the_draft')
+    validation.value = "true" if is_valid else "false"
+    validation.save()
+
+
+def run_all_validations():
+    """
+    Master function that runs all 12 validation functions.
+
+    This function is called by the division_setup_checklist page to refresh
+    all validation statuses in the database.
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+
+    logger.info("Running all validation functions...")
+
+    # Call all 12 validation functions in order
+    validation_code_create_players()
+    validation_code_create_teams()
+    validation_code_create_managers()
+    validation_code_collect_manager_team_preferences()
+    validation_code_assign_managers_to_teams()
+    validation_code_send_managers_team_secrets()
+    validation_code_request_manager_rankings()
+    validation_code_analyze_and_release_player_rankings()
+    validation_code_analyze_manager_daughter_rankings()
+    validation_code_assign_practice_slots()
+    validation_code_setup_draft()
+    validation_code_run_the_draft()
+
+    logger.info("All validation functions completed successfully")
+
+
+@require_http_methods(["POST"])
+def refresh_all_validations_api(request):
+    """
+    API endpoint to trigger all validation functions.
+
+    Called by division_setup_checklist page on load to refresh all validations.
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+
+    try:
+        logger.info("API: Starting validation refresh...")
+        run_all_validations()
+        logger.info("API: Validation refresh completed")
+
+        return JsonResponse({
+            'success': True,
+            'message': 'All validations refreshed successfully'
+        })
+    except Exception as e:
+        logger.error(f"API: Error refreshing validations: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
 
 
 def division_validation_registry_view(request):

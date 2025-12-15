@@ -5,7 +5,19 @@
 {% block page_title %}Division Setup Checklist{% endblock %}
 
 {% block content %}
-    <div class="container-fluid mt-5">
+    <!-- Loading Overlay -->
+    <div id="validationLoadingOverlay" class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="background-color: rgba(255, 255, 255, 0.95); z-index: 9999;">
+        <div class="text-center">
+            <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <h4 class="text-primary">Refreshing Validations</h4>
+            <p class="text-muted">Please wait while we update all validation statuses...</p>
+        </div>
+    </div>
+
+    <!-- Main Content (hidden until validations complete) -->
+    <div id="checklistContent" class="container-fluid mt-5" style="display: none;">
         <div class="row justify-content-center">
             <div class="col-12">
                 <div class="card shadow">
@@ -118,7 +130,59 @@
 
 {% block extra_js %}
     <script>
-        // Initialize Bootstrap tooltips
+        // Call API to refresh all validations when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get CSRF token
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
+                              document.querySelector('input[name=csrfmiddlewaretoken]')?.value ||
+                              getCookie('csrftoken');
+
+            // Call the API to refresh all validations
+            fetch('{% url "players:refresh_all_validations_api" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Validations refreshed successfully - reload the page to show updated statuses
+                    window.location.reload();
+                } else {
+                    // Error occurred - hide loading overlay and show error
+                    document.getElementById('validationLoadingOverlay').style.display = 'none';
+                    document.getElementById('checklistContent').style.display = 'block';
+                    alert('Error refreshing validations: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                // Network error - hide loading overlay and show content anyway
+                document.getElementById('validationLoadingOverlay').style.display = 'none';
+                document.getElementById('checklistContent').style.display = 'block';
+                console.error('Error calling validation API:', error);
+                alert('Network error refreshing validations. Showing cached validation statuses.');
+            });
+        });
+
+        // Helper function to get CSRF cookie
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Initialize Bootstrap tooltips (after page reloads)
         document.addEventListener('DOMContentLoaded', function() {
             var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
             var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
