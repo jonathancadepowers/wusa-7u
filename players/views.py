@@ -552,6 +552,15 @@ def division_setup_checklist_view(request):
                 logger.warning(f"Validation code '{validation_code}' not found in database")
                 return False
 
+            # Check if value is a simple string "true", "false", or "na"
+            # (These are set by the validation trigger functions)
+            value_lower = validation.value.lower().strip()
+            if value_lower == "true":
+                return True
+            elif value_lower == "false" or value_lower == "na":
+                return False
+
+            # Otherwise, try to evaluate as Python code
             # Import models that might be used in validations
             from .models import Player, Team, Manager, Draft, DraftPick, GeneralSetting, TeamPreference
 
