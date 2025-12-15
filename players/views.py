@@ -89,9 +89,12 @@ def validation_code_create_managers():
     else:
         status_note = f'{manager_count} managers created and all have daughters assigned'
 
+    # Calculate managers with daughters assigned
+    managers_with_daughters = manager_count - managers_without_daughters
+
     return {
         'count': manager_count,
-        'count_label': 'managers',
+        'count_label': f'Managers ({managers_with_daughters} Assigned to Daughters)',
         'status_note': status_note
     }
 
