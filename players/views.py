@@ -220,10 +220,12 @@ def validation_code_assign_practice_slots():
     from .models import ValidationCode, PracticeSlotRanking
 
     all_teams = Team.objects.all()
+    team_count = all_teams.count()
     teams_without_slots = all_teams.filter(practice_slot__isnull=True)
     teams_with_slots = all_teams.filter(practice_slot__isnull=False)
 
-    is_valid = (teams_without_slots.count() == 0)
+    # Complete if teams exist AND all teams have practice slots assigned
+    is_valid = (team_count > 0 and teams_without_slots.count() == 0)
 
     # Update ValidationCode.value field
     validation = ValidationCode.objects.get(code='validation_code_assign_practice_slots')
