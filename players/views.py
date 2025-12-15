@@ -675,7 +675,7 @@ def division_setup_checklist_view(request):
         },
         {
             'title': 'Send Managers "Team Secrets"',
-            'description': 'Each manager will have a dashboard to manage their team. To view this page, they must use their unique "team secret." Managers should not know eachother\'s secrets. Outside of this website, email/text each manager their secret.',
+            'description': 'Each manager will have a dashboard to manage their team. To view this page, they must use their unique "team secret." Managers should not know each other\'s secrets. Outside of this website, email/text each manager their both (1) their team name (see above) and (2) their secret. On the Teams page, click the button at the top to view all secrets on one screen.',
             'validation_code': 'validation_code_send_managers_team_secrets',
             'validation_source': inspect.getsource(validation_code_send_managers_team_secrets),            'validation_logic': 'N/A - Manual task performed outside the website',
             'validation_description': 'N/A - Manual task performed outside the website',
