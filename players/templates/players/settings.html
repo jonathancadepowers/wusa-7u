@@ -425,7 +425,7 @@
                 // Set default email body
                 if (teamPagesQuillEditor && teamPagesQuillEditor.root.innerHTML === '<p><br></p>') {
                     const currentDomain = window.location.origin;
-                    const defaultHtml = `<p>Hello WUSA Managers-</p><p>As mentioned, we've created a basic website where you can view your team roster and perform other tasks. To access it, go here: <a href="${currentDomain}/public_portal/" target="_blank">${currentDomain}/public_portal/</a></p><p>Select your team and, when prompted, enter the "Team Secret" that was provided to you by your Division Manager. (If you don't have, reply to this email, just to me. Don't share this secret with anyone.)</p><p>Once you view your dashboard, complete the tasks listed at the top.</p><p>Thanks,</p><p>-Your Division Managers</p>`;
+                    const defaultHtml = `<p>Hello WUSA Managers-</p><p>As mentioned, we've created a basic website where you can view your team roster and perform other tasks. To access it, go here: <a href="${currentDomain}/public_portal/" target="_blank">${currentDomain}/public_portal/</a></p><p>Select your team and, when prompted, enter the "Team Secret" that was provided to you by your Division Manager.</p><p>Once you view your dashboard, complete the tasks listed at the top.</p><p>Thanks,</p><p>-Your Division Managers</p>`;
                     teamPagesQuillEditor.root.innerHTML = defaultHtml;
                 }
 
