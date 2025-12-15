@@ -20,7 +20,7 @@
                             <span id="successMessage"></span>
                         </div>
 
-                        <div class="alert alert-info">
+                        <div id="infoAlert" class="alert alert-info" style="display: none;">
                             <i class="bi bi-info-circle me-2"></i>
                             <strong>How This Works:</strong> Below is a proposed distribution of teams to managers. It was comprised by building a random ranking of all managers, and then attempting to best satisfy each manager's submitted preferences, starting from the first randomly ranked manager. You can change any assignment you like. Once you click the button at the bottom of this page, the assignments defined will be set.
                         </div>
@@ -105,6 +105,9 @@
         function displayResults(assignments) {
             const tableBody = document.getElementById('assignmentsTable');
             tableBody.innerHTML = '';
+
+            // Show the info box when results are displayed
+            document.getElementById('infoAlert').style.display = 'block';
 
             assignments.forEach((assignment, index) => {
                 const row = document.createElement('tr');
