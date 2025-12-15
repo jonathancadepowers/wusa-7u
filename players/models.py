@@ -191,7 +191,7 @@ class GeneralSetting(models.Model):
 
 class ValidationCode(models.Model):
     code = models.CharField(max_length=255, unique=True)
-    value = models.TextField()
+    value = models.BooleanField(default=False)
     error_message = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

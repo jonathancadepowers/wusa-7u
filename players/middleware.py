@@ -81,8 +81,9 @@ class ValidationMiddleware:
                     logger.warning(f"Validation code '{validation_code}' not found in database")
                     continue
 
-                # Check if validation value is "true" (validation passed)
-                validation_passed = (validation.value.lower() == "true")
+                # Check if validation value is True (validation passed)
+                # (ValidationCode.value is now a BooleanField)
+                validation_passed = validation.value
 
                 if not validation_passed:
                     # Validation failed - return the error message

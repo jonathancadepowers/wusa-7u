@@ -37,7 +37,7 @@ def validation_code_create_players():
 
     # Update ValidationCode.value field
     validation = ValidationCode.objects.get(code='validation_code_create_players')
-    validation.value = "true" if is_valid else "false"
+    validation.value = is_valid
     validation.save()
 
     # Return metadata for display
@@ -56,7 +56,7 @@ def validation_code_create_teams():
 
     # Update ValidationCode.value field
     validation = ValidationCode.objects.get(code='validation_code_create_teams')
-    validation.value = "true" if is_valid else "false"
+    validation.value = is_valid
     validation.save()
 
     # Return metadata for display
@@ -78,7 +78,7 @@ def validation_code_create_managers():
 
     # Update ValidationCode.value field
     validation = ValidationCode.objects.get(code='validation_code_create_managers')
-    validation.value = "true" if is_valid else "false"
+    validation.value = is_valid
     validation.save()
 
     # Return metadata for display
@@ -107,7 +107,7 @@ def validation_code_collect_manager_team_preferences():
 
     # Update ValidationCode.value field
     validation = ValidationCode.objects.get(code='validation_code_collect_manager_team_preferences')
-    validation.value = "true" if is_valid else "false"
+    validation.value = is_valid
     validation.save()
 
     # Return metadata for display
@@ -134,7 +134,7 @@ def validation_code_assign_managers_to_teams():
 
     # Update ValidationCode.value field
     validation = ValidationCode.objects.get(code='validation_code_assign_managers_to_teams')
-    validation.value = "true" if is_valid else "false"
+    validation.value = is_valid
     validation.save()
 
     # Return metadata for display
@@ -148,9 +148,9 @@ def validation_code_send_managers_team_secrets():
     """N/A - Manual task performed outside the website"""
     from .models import ValidationCode
 
-    # This is a manual task, so we just mark it as "na" (not applicable)
+    # This is a manual task, so we mark it as False (incomplete)
     validation = ValidationCode.objects.get(code='validation_code_send_managers_team_secrets')
-    validation.value = "na"
+    validation.value = False
     validation.save()
 
     # Return metadata for display
@@ -164,9 +164,9 @@ def validation_code_request_manager_rankings():
     """N/A - Manual task performed outside the website"""
     from .models import ValidationCode
 
-    # This is a manual task, so we just mark it as "na" (not applicable)
+    # This is a manual task, so we mark it as False (incomplete)
     validation = ValidationCode.objects.get(code='validation_code_request_manager_rankings')
-    validation.value = "na"
+    validation.value = False
     validation.save()
 
     # Return metadata for display
@@ -185,7 +185,7 @@ def validation_code_analyze_and_release_player_rankings():
 
     # Update ValidationCode.value field
     validation = ValidationCode.objects.get(code='validation_code_analyze_and_release_player_rankings')
-    validation.value = "true" if is_valid else "false"
+    validation.value = is_valid
     validation.save()
 
     # Return metadata for display
@@ -204,7 +204,7 @@ def validation_code_analyze_manager_daughter_rankings():
 
     # Update ValidationCode.value field
     validation = ValidationCode.objects.get(code='validation_code_analyze_manager_daughter_rankings')
-    validation.value = "true" if is_valid else "false"
+    validation.value = is_valid
     validation.save()
 
     # Return metadata for display
@@ -226,7 +226,7 @@ def validation_code_assign_practice_slots():
 
     # Update ValidationCode.value field
     validation = ValidationCode.objects.get(code='validation_code_assign_practice_slots')
-    validation.value = "true" if is_valid else "false"
+    validation.value = is_valid
     validation.save()
 
     # Return metadata for display
@@ -270,7 +270,7 @@ def validation_code_setup_draft():
 
     # Update the ValidationCode in the database with the result
     validation = ValidationCode.objects.get(code='validation_code_setup_draft')
-    validation.value = "true" if draft_setup_complete else "false"
+    validation.value = draft_setup_complete
     validation.save()
 
     # Return metadata for display
@@ -300,7 +300,7 @@ def validation_code_run_the_draft():
 
     # Update ValidationCode.value field
     validation = ValidationCode.objects.get(code='validation_code_run_the_draft')
-    validation.value = "true" if is_valid else "false"
+    validation.value = is_valid
     validation.save()
 
     # Return metadata for display
@@ -557,33 +557,9 @@ def division_setup_checklist_view(request):
                 logger.warning(f"Validation code '{validation_code}' not found in database")
                 return False
 
-            # Check if value is a simple string "true", "false", or "na"
-            # (These are set by the validation trigger functions)
-            value_lower = validation.value.lower().strip()
-            if value_lower == "true":
-                return True
-            elif value_lower == "false" or value_lower == "na":
-                return False
-
-            # Otherwise, try to evaluate as Python code
-            # Import models that might be used in validations
-            from .models import Player, Team, Manager, Draft, DraftPick, GeneralSetting, TeamPreference
-
-            # Create a safe context for evaluation
-            context = {
-                'Player': Player,
-                'Team': Team,
-                'Manager': Manager,
-                'Draft': Draft,
-                'DraftPick': DraftPick,
-                'GeneralSetting': GeneralSetting,
-                'TeamPreference': TeamPreference,
-            }
-
-            # Evaluate the validation code
-            result = eval(validation.value, {"__builtins__": {}}, context)
-
-            return bool(result)
+            # Simply return the boolean value directly
+            # (ValidationCode.value is now a BooleanField)
+            return validation.value
 
         except Exception as e:
             logger.error(f"Error executing validation code '{validation_code}': {str(e)}")
