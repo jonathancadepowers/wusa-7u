@@ -40,6 +40,13 @@ def validation_code_create_players():
     validation.value = "true" if is_valid else "false"
     validation.save()
 
+    # Return metadata for display
+    return {
+        'count': player_count,
+        'count_label': 'players',
+        'status_note': f'{player_count} players created (need at least 10)'
+    }
+
 def validation_code_create_teams():
     """Validate that at least 5 teams exist"""
     from .models import ValidationCode
@@ -51,6 +58,13 @@ def validation_code_create_teams():
     validation = ValidationCode.objects.get(code='validation_code_create_teams')
     validation.value = "true" if is_valid else "false"
     validation.save()
+
+    # Return metadata for display
+    return {
+        'count': team_count,
+        'count_label': 'teams',
+        'status_note': f'{team_count} teams created (need at least 5)'
+    }
 
 def validation_code_create_managers():
     """Validate that manager count equals team count and all managers have daughters"""
@@ -67,6 +81,20 @@ def validation_code_create_managers():
     validation.value = "true" if is_valid else "false"
     validation.save()
 
+    # Return metadata for display
+    if managers_without_daughters > 0:
+        status_note = f'{manager_count} managers created, but {managers_without_daughters} missing daughter assignments'
+    elif manager_count != team_count:
+        status_note = f'{manager_count} managers, {team_count} teams (must be equal)'
+    else:
+        status_note = f'{manager_count} managers created and all have daughters assigned'
+
+    return {
+        'count': manager_count,
+        'count_label': 'managers',
+        'status_note': status_note
+    }
+
 def validation_code_collect_manager_team_preferences():
     """Validate that at least one team preference has been submitted OR all teams have managers assigned"""
     from .models import ValidationCode
@@ -81,6 +109,18 @@ def validation_code_collect_manager_team_preferences():
     validation = ValidationCode.objects.get(code='validation_code_collect_manager_team_preferences')
     validation.value = "true" if is_valid else "false"
     validation.save()
+
+    # Return metadata for display
+    if teams_without_managers == 0:
+        status_note = 'All teams have managers assigned'
+    else:
+        status_note = f'{team_preferences_count} preferences submitted'
+
+    return {
+        'count': team_preferences_count,
+        'count_label': 'preferences',
+        'status_note': status_note
+    }
 
 def validation_code_assign_managers_to_teams():
     """Validate that all teams have managers assigned"""
@@ -97,6 +137,13 @@ def validation_code_assign_managers_to_teams():
     validation.value = "true" if is_valid else "false"
     validation.save()
 
+    # Return metadata for display
+    return {
+        'count': managers_with_teams,
+        'count_label': 'teams with managers',
+        'status_note': f'{managers_with_teams}/{manager_count} teams have managers assigned'
+    }
+
 def validation_code_send_managers_team_secrets():
     """N/A - Manual task performed outside the website"""
     from .models import ValidationCode
@@ -106,6 +153,13 @@ def validation_code_send_managers_team_secrets():
     validation.value = "na"
     validation.save()
 
+    # Return metadata for display
+    return {
+        'count': 0,
+        'count_label': 'manual task',
+        'status_note': 'Manual task - send secrets via email/text'
+    }
+
 def validation_code_request_manager_rankings():
     """N/A - Manual task performed outside the website"""
     from .models import ValidationCode
@@ -114,6 +168,13 @@ def validation_code_request_manager_rankings():
     validation = ValidationCode.objects.get(code='validation_code_request_manager_rankings')
     validation.value = "na"
     validation.save()
+
+    # Return metadata for display
+    return {
+        'count': 0,
+        'count_label': 'manual task',
+        'status_note': 'Manual task - request rankings via email/text'
+    }
 
 def validation_code_analyze_and_release_player_rankings():
     """Validate that at least one player ranking has been submitted"""
@@ -127,6 +188,13 @@ def validation_code_analyze_and_release_player_rankings():
     validation.value = "true" if is_valid else "false"
     validation.save()
 
+    # Return metadata for display
+    return {
+        'count': player_rankings_count,
+        'count_label': 'player rankings',
+        'status_note': f'{player_rankings_count} player rankings submitted (need at least 1)'
+    }
+
 def validation_code_analyze_manager_daughter_rankings():
     """Validate that at least one manager daughter ranking has been submitted"""
     from .models import ValidationCode
@@ -139,12 +207,20 @@ def validation_code_analyze_manager_daughter_rankings():
     validation.value = "true" if is_valid else "false"
     validation.save()
 
+    # Return metadata for display
+    return {
+        'count': manager_daughter_rankings_count,
+        'count_label': 'daughter rankings',
+        'status_note': f'{manager_daughter_rankings_count} manager daughter rankings submitted (need at least 1)'
+    }
+
 def validation_code_assign_practice_slots():
     """Validate that all teams have been assigned practice slots"""
     from .models import ValidationCode, PracticeSlotRanking
 
     all_teams = Team.objects.all()
     teams_without_slots = all_teams.filter(practice_slot__isnull=True)
+    teams_with_slots = all_teams.filter(practice_slot__isnull=False)
 
     is_valid = (teams_without_slots.count() == 0)
 
@@ -152,6 +228,13 @@ def validation_code_assign_practice_slots():
     validation = ValidationCode.objects.get(code='validation_code_assign_practice_slots')
     validation.value = "true" if is_valid else "false"
     validation.save()
+
+    # Return metadata for display
+    return {
+        'count': teams_with_slots.count(),
+        'count_label': 'teams with practice slots',
+        'status_note': f'{teams_with_slots.count()}/{all_teams.count()} teams have practice slots assigned'
+    }
 
 def validation_code_setup_draft():
     """Validate that draft is fully configured"""
@@ -185,12 +268,28 @@ def validation_code_setup_draft():
     validation.value = "true" if draft_setup_complete else "false"
     validation.save()
 
+    # Return metadata for display
+    if draft:
+        if draft_setup_complete:
+            status_note = f'Draft configured: {draft.rounds} rounds, {draft.picks_per_round} teams'
+        else:
+            status_note = 'Draft exists but not fully configured'
+    else:
+        status_note = 'No draft created yet'
+
+    return {
+        'count': 1 if draft_setup_complete else 0,
+        'count_label': 'draft configured',
+        'status_note': status_note
+    }
+
 def validation_code_run_the_draft():
     """Validate that all players have been assigned to teams"""
     from .models import ValidationCode
 
     player_count = Player.objects.count()
     players_without_team = Player.objects.filter(team__isnull=True).count()
+    players_with_team = player_count - players_without_team
 
     is_valid = (player_count > 0 and players_without_team == 0)
 
@@ -198,6 +297,13 @@ def validation_code_run_the_draft():
     validation = ValidationCode.objects.get(code='validation_code_run_the_draft')
     validation.value = "true" if is_valid else "false"
     validation.save()
+
+    # Return metadata for display
+    return {
+        'count': players_with_team,
+        'count_label': 'players assigned',
+        'status_note': f'{players_with_team}/{player_count} players assigned to teams'
+    }
 
 
 def run_all_validations():

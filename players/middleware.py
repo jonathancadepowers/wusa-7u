@@ -81,8 +81,8 @@ class ValidationMiddleware:
                     logger.warning(f"Validation code '{validation_code}' not found in database")
                     continue
 
-                # Execute the validation logic
-                validation_passed = self._execute_validation(validation.value)
+                # Check if validation value is "true" (validation passed)
+                validation_passed = (validation.value.lower() == "true")
 
                 if not validation_passed:
                     # Validation failed - return the error message
@@ -101,7 +101,7 @@ class ValidationMiddleware:
         """
         Run validation triggers after CRUD operations.
 
-        These validations are re-evaluated and the validation_codes table is updated.
+        These validations call Python validation functions which update the validation_codes table.
         """
         try:
             # Look up validation registry for this page (real-time, no cache)
@@ -116,59 +116,25 @@ class ValidationMiddleware:
             if not validation_triggers:
                 return
 
+            # Import views module to access validation functions
+            from . import views
+
             # Run each validation trigger
             for validation_code in validation_triggers:
-                # Fetch validation from database (real-time, no cache)
-                validation = ValidationCode.objects.filter(code=validation_code).first()
-
-                if not validation:
-                    logger.warning(f"Validation code '{validation_code}' not found in database")
+                # Check if Python validation function exists
+                if not hasattr(views, validation_code):
+                    logger.warning(f"Validation function '{validation_code}' not found in views")
                     continue
 
-                # Execute the validation logic
-                validation_result = self._execute_validation(validation.value)
+                # Call the Python validation function
+                # The function will update the ValidationCode.value field to "true" or "false"
+                validation_function = getattr(views, validation_code)
+                validation_function()
 
-                # Update the validation value in the database
-                validation.value = str(validation_result).lower()
-                validation.save()
-
-                logger.info(f"Validation trigger '{validation_code}' executed for {path}: {validation_result}")
+                logger.info(f"Validation trigger '{validation_code}' executed for {path}")
 
         except Exception as e:
             logger.error(f"Error running validation triggers for {path}: {str(e)}")
-
-    def _execute_validation(self, validation_code):
-        """
-        Execute validation logic.
-
-        The validation_code is expected to be a Python expression that evaluates to True/False.
-        For example: "Player.objects.count() > 0"
-
-        Returns: Boolean result of the validation
-        """
-        try:
-            # Import models that might be used in validations
-            from .models import Player, Team, Manager, Draft, DraftPick, GeneralSetting
-
-            # Create a safe context for evaluation
-            context = {
-                'Player': Player,
-                'Team': Team,
-                'Manager': Manager,
-                'Draft': Draft,
-                'DraftPick': DraftPick,
-                'GeneralSetting': GeneralSetting,
-            }
-
-            # Evaluate the validation code
-            result = eval(validation_code, {"__builtins__": {}}, context)
-
-            return bool(result)
-
-        except Exception as e:
-            logger.error(f"Error executing validation code '{validation_code}': {str(e)}")
-            # On error, assume validation passes to avoid blocking the app
-            return True
 
     def _render_validation_error(self, request, error_message):
         """
