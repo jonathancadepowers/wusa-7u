@@ -90,6 +90,97 @@ def export_division_configuration(request):
         }, status=500)
 
 
+@require_http_methods(["POST"])
+def import_division_configuration(request):
+    """
+    Import division configuration from a JSON file.
+    This will delete all existing records in validation_code, division_validation_registry,
+    and general_settings tables, then repopulate them with data from the uploaded file.
+    """
+    from django.http import HttpResponse
+    from django.db import transaction
+    from dateutil import parser as date_parser
+
+    try:
+        # Get the JSON data from the request
+        config_data_str = request.POST.get('config_data')
+
+        if not config_data_str:
+            return JsonResponse({
+                'success': False,
+                'message': 'No configuration data provided'
+            }, status=400)
+
+        # Parse the JSON data
+        config_data = json.loads(config_data_str)
+
+        # Validate the structure
+        required_keys = ['validation_codes', 'division_validation_registry', 'general_settings']
+        for key in required_keys:
+            if key not in config_data:
+                return JsonResponse({
+                    'success': False,
+                    'message': f'Missing required key: {key}'
+                }, status=400)
+
+        # Use a transaction to ensure all-or-nothing import
+        with transaction.atomic():
+            # Step 1: Delete all existing records
+            ValidationCode.objects.all().delete()
+            DivisionValidationRegistry.objects.all().delete()
+            GeneralSetting.objects.all().delete()
+
+            # Step 2: Import validation codes
+            validation_codes_imported = 0
+            for vc_data in config_data['validation_codes']:
+                ValidationCode.objects.create(
+                    code=vc_data['code'],
+                    value=vc_data.get('value', False),
+                    error_message=vc_data.get('error_message', '')
+                )
+                validation_codes_imported += 1
+
+            # Step 3: Import division validation registry
+            registry_imported = 0
+            for reg_data in config_data['division_validation_registry']:
+                DivisionValidationRegistry.objects.create(
+                    page=reg_data['page'],
+                    validations_to_run_on_page_load=reg_data.get('validations_to_run_on_page_load', []),
+                    validation_code_triggers=reg_data.get('validation_code_triggers', [])
+                )
+                registry_imported += 1
+
+            # Step 4: Import general settings
+            settings_imported = 0
+            for setting_data in config_data['general_settings']:
+                GeneralSetting.objects.create(
+                    key=setting_data['key'],
+                    value=setting_data['value']
+                )
+                settings_imported += 1
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Configuration imported successfully',
+            'imported_counts': {
+                'validation_codes': validation_codes_imported,
+                'division_validation_registry': registry_imported,
+                'general_settings': settings_imported
+            }
+        })
+
+    except json.JSONDecodeError as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Invalid JSON format: {str(e)}'
+        }, status=400)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Import failed: {str(e)}'
+        }, status=500)
+
+
 # Validation functions for division setup checklist
 def validation_code_create_players():
     """Validate that at least 10 players exist"""

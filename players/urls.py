@@ -9,6 +9,7 @@ urlpatterns = [
     path('admin_dashboard/', views.admin_dashboard_view, name='admin_dashboard'),
     path('settings/', views.settings_view, name='settings'),
     path('export-division-configuration/', views.export_division_configuration, name='export_division_configuration'),
+    path('import-division-configuration/', views.import_division_configuration, name='import_division_configuration'),
     path('division_setup_checklist/', views.division_setup_checklist_view, name='division_setup_checklist'),
     path('division_validation_registry/', views.division_validation_registry_view, name='division_validation_registry'),
     path('draft/create/', views.create_draft_view, name='create_draft'),
