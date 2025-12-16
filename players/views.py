@@ -1465,7 +1465,7 @@ def team_detail_view(request, team_secret):
                 'status': player_ranking_status
             })
 
-            # Task 2: Rank Manager's Daughters
+            # Task 2: Rank Managers' Daughters
             # Get total count of all manager's daughters in the division
             manager_daughter_ids = Manager.objects.filter(daughter__isnull=False).values_list('daughter_id', flat=True)
             total_daughters = len(manager_daughter_ids)
@@ -1483,7 +1483,7 @@ def team_detail_view(request, team_secret):
                 daughter_ranking_status = 'not_started'
 
             checklist_items.append({
-                'title': "Rank Manager's Daughters",
+                'title': "Rank Managers' Daughters",
                 'url': f"/manager_daughter_rankings/?team_secret={team.manager_secret}",
                 'status': daughter_ranking_status
             })
