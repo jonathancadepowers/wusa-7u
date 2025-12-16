@@ -146,6 +146,9 @@
                         <a href="{% url 'players:division_validation_registry' %}" class="btn btn-secondary">
                             <i class="bi bi-diagram-3 me-2"></i>Validation Registry
                         </a>
+                        <button id="exportDivisionConfigBtn" class="btn btn-primary ms-2">
+                            <i class="bi bi-download me-2"></i>Export Division Configuration
+                        </button>
                     </div>
                 </div>
             </div>
@@ -557,5 +560,55 @@
                 }
             }
         }
+
+        // Export Division Configuration button handler
+        document.getElementById('exportDivisionConfigBtn').addEventListener('click', async function() {
+            const btn = this;
+            const originalHTML = btn.innerHTML;
+
+            try {
+                // Show loading state
+                btn.disabled = true;
+                btn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Exporting...';
+
+                // Call the export API
+                const response = await fetch('{% url "players:export_division_configuration" %}', {
+                    method: 'GET',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Export failed');
+                }
+
+                // Get the JSON data and trigger download
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `division_configuration_${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+
+                // Show success state
+                btn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Exported!';
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHTML;
+                }, 2000);
+
+            } catch (error) {
+                console.error('Export error:', error);
+                btn.innerHTML = '<i class="bi bi-x-circle me-2"></i>Export Failed';
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHTML;
+                }, 2000);
+            }
+        });
     </script>
 {% endblock %}

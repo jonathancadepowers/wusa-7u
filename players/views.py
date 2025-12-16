@@ -27,6 +27,69 @@ def settings_view(request):
     }
     return render(request, 'players/settings.html', context)
 
+
+def export_division_configuration(request):
+    """
+    Export complete data from validation_code, division_validation_registry,
+    and general_settings tables as a JSON file for import into other instances.
+    """
+    from django.http import HttpResponse
+    from django.core.serializers import serialize
+
+    try:
+        # Fetch all records from the three tables
+        validation_codes = list(ValidationCode.objects.all().values(
+            'code', 'value', 'error_message', 'created_at', 'updated_at'
+        ))
+
+        division_validation_registry = list(DivisionValidationRegistry.objects.all().values(
+            'page', 'validations_to_run_on_page_load', 'validation_code_triggers',
+            'created_at', 'updated_at'
+        ))
+
+        general_settings = list(GeneralSetting.objects.all().values(
+            'key', 'value', 'created_at', 'updated_at'
+        ))
+
+        # Convert datetime objects to ISO format strings for JSON serialization
+        def convert_dates(obj):
+            for key, value in obj.items():
+                if hasattr(value, 'isoformat'):
+                    obj[key] = value.isoformat()
+            return obj
+
+        validation_codes = [convert_dates(obj) for obj in validation_codes]
+        division_validation_registry = [convert_dates(obj) for obj in division_validation_registry]
+        general_settings = [convert_dates(obj) for obj in general_settings]
+
+        # Build the export structure
+        export_data = {
+            'export_metadata': {
+                'export_date': datetime.now().isoformat(),
+                'version': '1.0',
+                'description': 'Division configuration export containing validation codes, division validation registry, and general settings'
+            },
+            'validation_codes': validation_codes,
+            'division_validation_registry': division_validation_registry,
+            'general_settings': general_settings
+        }
+
+        # Create the HTTP response with JSON content
+        response = HttpResponse(
+            json.dumps(export_data, indent=2),
+            content_type='application/json'
+        )
+        response['Content-Disposition'] = f'attachment; filename="division_configuration_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json"'
+
+        return response
+
+    except Exception as e:
+        return JsonResponse({
+            'error': str(e),
+            'message': 'Failed to export division configuration'
+        }, status=500)
+
+
 # Validation functions for division setup checklist
 def validation_code_create_players():
     """Validate that at least 10 players exist"""
