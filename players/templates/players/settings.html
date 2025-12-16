@@ -164,6 +164,11 @@
                                     <i class="bi bi-key me-2"></i>Master Password
                                 </button>
                             </div>
+                            <div class="col-auto">
+                                <button id="removeCookieBtn" class="btn btn-danger">
+                                    <i class="bi bi-trash me-2"></i>Remove Cookie
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1039,6 +1044,46 @@
             document.getElementById('currentMasterPasswordDisplay').type = 'password';
             document.getElementById('togglePasswordIcon').classList.remove('bi-eye-slash');
             document.getElementById('togglePasswordIcon').classList.add('bi-eye');
+        });
+
+        // Remove Cookie button handler
+        document.getElementById('removeCookieBtn').addEventListener('click', function() {
+            const btn = this;
+            const originalHTML = btn.innerHTML;
+
+            // Delete the master_password cookie
+            document.cookie = 'master_password=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+
+            // Show success state
+            btn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Cookie Removed!';
+            btn.disabled = true;
+
+            // Show a temporary alert
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-success alert-dismissible fade show mt-3';
+            alertDiv.role = 'alert';
+            alertDiv.innerHTML = `
+                <i class="bi bi-check-circle-fill me-2"></i>
+                <strong>Cookie removed successfully!</strong> You will be challenged for the master password on your next page visit.
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+
+            // Insert alert after the Developer Settings buttons
+            const devSettingsCard = btn.closest('.card-body');
+            devSettingsCard.appendChild(alertDiv);
+
+            // Reset button after 3 seconds
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+            }, 3000);
+
+            // Auto-dismiss alert after 5 seconds
+            setTimeout(() => {
+                if (alertDiv.parentElement) {
+                    alertDiv.remove();
+                }
+            }, 5000);
         });
     </script>
 {% endblock %}
