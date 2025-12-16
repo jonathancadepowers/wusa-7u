@@ -152,7 +152,54 @@
                         <button id="importDivisionConfigBtn" class="btn btn-warning ms-2" data-bs-toggle="modal" data-bs-target="#importConfigModal">
                             <i class="bi bi-upload me-2"></i>Import Division Configuration
                         </button>
+                        <button id="masterPasswordBtn" class="btn btn-info ms-2" data-bs-toggle="modal" data-bs-target="#masterPasswordModal">
+                            <i class="bi bi-key me-2"></i>Master Password
+                        </button>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Master Password Modal -->
+    <div class="modal fade" id="masterPasswordModal" tabindex="-1" aria-labelledby="masterPasswordModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="masterPasswordModalLabel">Master Password Settings</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info" role="alert">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        The master password provides administrative access to various features of the application.
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="currentMasterPasswordDisplay" class="form-label">Current Master Password</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="currentMasterPasswordDisplay" readonly>
+                            <button class="btn btn-outline-secondary" type="button" id="togglePasswordBtn">
+                                <i class="bi bi-eye" id="togglePasswordIcon"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="newMasterPassword" class="form-label">New Master Password</label>
+                        <input type="text" class="form-control" id="newMasterPassword" placeholder="Enter new master password">
+                        <div class="form-text">Leave blank to keep current password unchanged.</div>
+                    </div>
+
+                    <div id="masterPasswordStatusSection" style="display: none;">
+                        <!-- Status messages will be displayed here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveMasterPasswordBtn">
+                        <i class="bi bi-save me-2"></i>Save Password
+                    </button>
                 </div>
             </div>
         </div>
@@ -845,6 +892,143 @@
             document.getElementById('confirmImportBtn').disabled = true;
             selectedConfigFile = null;
             validatedConfigData = null;
+        });
+
+        // Master Password modal handler
+        let currentMasterPassword = '';
+
+        // Load current master password when modal opens
+        document.getElementById('masterPasswordModal').addEventListener('show.bs.modal', async function() {
+            const statusSection = document.getElementById('masterPasswordStatusSection');
+            statusSection.style.display = 'none';
+
+            try {
+                const response = await fetch('{% url "players:get_master_password" %}', {
+                    method: 'GET',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    }
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    currentMasterPassword = result.password || '';
+                    document.getElementById('currentMasterPasswordDisplay').value = currentMasterPassword;
+                } else {
+                    currentMasterPassword = '';
+                    document.getElementById('currentMasterPasswordDisplay').value = 'Not set';
+                }
+            } catch (error) {
+                console.error('Error loading master password:', error);
+                currentMasterPassword = '';
+                document.getElementById('currentMasterPasswordDisplay').value = 'Error loading';
+            }
+
+            // Clear new password field
+            document.getElementById('newMasterPassword').value = '';
+        });
+
+        // Toggle password visibility
+        document.getElementById('togglePasswordBtn').addEventListener('click', function() {
+            const passwordInput = document.getElementById('currentMasterPasswordDisplay');
+            const icon = document.getElementById('togglePasswordIcon');
+
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+            }
+        });
+
+        // Save master password
+        document.getElementById('saveMasterPasswordBtn').addEventListener('click', async function() {
+            const btn = this;
+            const originalHTML = btn.innerHTML;
+            const statusSection = document.getElementById('masterPasswordStatusSection');
+            const newPassword = document.getElementById('newMasterPassword').value.trim();
+
+            if (!newPassword) {
+                statusSection.style.display = 'block';
+                statusSection.innerHTML = `
+                    <div class="alert alert-warning" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        Please enter a new master password.
+                    </div>
+                `;
+                return;
+            }
+
+            try {
+                // Show loading state
+                btn.disabled = true;
+                btn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Saving...';
+
+                const formData = new FormData();
+                formData.append('password', newPassword);
+
+                const response = await fetch('{% url "players:set_master_password" %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    statusSection.style.display = 'block';
+                    statusSection.innerHTML = `
+                        <div class="alert alert-success" role="alert">
+                            <i class="bi bi-check-circle-fill me-2"></i>
+                            Master password updated successfully!
+                        </div>
+                    `;
+
+                    // Update current password display
+                    currentMasterPassword = newPassword;
+                    document.getElementById('currentMasterPasswordDisplay').value = currentMasterPassword;
+                    document.getElementById('newMasterPassword').value = '';
+
+                    // Re-enable button
+                    btn.disabled = false;
+                    btn.innerHTML = originalHTML;
+
+                    // Close modal after 1.5 seconds
+                    setTimeout(() => {
+                        bootstrap.Modal.getInstance(document.getElementById('masterPasswordModal')).hide();
+                        statusSection.style.display = 'none';
+                    }, 1500);
+
+                } else {
+                    throw new Error(result.message || 'Failed to save password');
+                }
+
+            } catch (error) {
+                statusSection.style.display = 'block';
+                statusSection.innerHTML = `
+                    <div class="alert alert-danger" role="alert">
+                        <i class="bi bi-x-circle-fill me-2"></i>
+                        <strong>Error:</strong> ${error.message}
+                    </div>
+                `;
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+            }
+        });
+
+        // Reset modal when closed
+        document.getElementById('masterPasswordModal').addEventListener('hidden.bs.modal', function() {
+            document.getElementById('newMasterPassword').value = '';
+            document.getElementById('masterPasswordStatusSection').style.display = 'none';
+            document.getElementById('currentMasterPasswordDisplay').type = 'password';
+            document.getElementById('togglePasswordIcon').classList.remove('bi-eye-slash');
+            document.getElementById('togglePasswordIcon').classList.add('bi-eye');
         });
     </script>
 {% endblock %}

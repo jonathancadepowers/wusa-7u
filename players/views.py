@@ -181,6 +181,78 @@ def import_division_configuration(request):
         }, status=500)
 
 
+def get_master_password(request):
+    """
+    Get the current master password from general_settings table.
+    """
+    try:
+        setting = GeneralSetting.objects.filter(key='master_password').first()
+
+        if setting:
+            return JsonResponse({
+                'success': True,
+                'password': setting.value
+            })
+        else:
+            # Return default password if not set in database
+            return JsonResponse({
+                'success': True,
+                'password': 'wusarocks'  # Default fallback
+            })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Error retrieving master password: {str(e)}'
+        }, status=500)
+
+
+@require_http_methods(["POST"])
+def set_master_password(request):
+    """
+    Set the master password in general_settings table.
+    """
+    try:
+        password = request.POST.get('password', '').strip()
+
+        if not password:
+            return JsonResponse({
+                'success': False,
+                'message': 'Password cannot be empty'
+            }, status=400)
+
+        # Update or create the master password setting
+        setting, created = GeneralSetting.objects.update_or_create(
+            key='master_password',
+            defaults={'value': password}
+        )
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Master password updated successfully',
+            'created': created
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Error saving master password: {str(e)}'
+        }, status=500)
+
+
+def get_master_password_from_db():
+    """
+    Helper function to retrieve master password from database.
+    Returns the password from general_settings, or default 'wusarocks' if not set.
+    """
+    try:
+        setting = GeneralSetting.objects.filter(key='master_password').first()
+        if setting:
+            return setting.value
+        else:
+            return 'wusarocks'  # Default fallback
+    except:
+        return 'wusarocks'  # Default fallback on error
+
+
 # Validation functions for division setup checklist
 def validation_code_create_players():
     """Validate that at least 10 players exist"""
@@ -1158,7 +1230,7 @@ def public_portal_view(request):
 def validate_team_secret_view(request):
     """Validate team secret and return team URL if valid"""
     team_secret = request.POST.get('team_secret', '').strip()
-    MASTER_PASSWORD = 'wusarocks'
+    MASTER_PASSWORD = get_master_password_from_db()
 
     if not team_secret:
         return JsonResponse({
