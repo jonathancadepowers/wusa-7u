@@ -426,6 +426,26 @@ def validation_code_assign_managers_to_teams():
         'status_note': f'{managers_with_teams}/{manager_count} teams have managers assigned'
     }
 
+def validation_code_create_practice_slots():
+    """Validate that practice slots count equals team count"""
+    from .models import ValidationCode
+
+    team_count = Team.objects.count()
+    practice_slot_count = PracticeSlot.objects.count()
+    is_valid = (team_count > 0 and practice_slot_count == team_count)
+
+    # Update ValidationCode.value field
+    validation = ValidationCode.objects.get(code='validation_code_create_practice_slots')
+    validation.value = is_valid
+    validation.save()
+
+    # Return metadata for display
+    return {
+        'count': practice_slot_count,
+        'count_label': 'practice slots',
+        'status_note': f'{practice_slot_count} practice slots created (need {team_count} to match teams)'
+    }
+
 def validation_code_send_managers_team_secrets():
     """N/A - Manual task performed outside the website"""
     from .models import ValidationCode
@@ -895,6 +915,7 @@ def division_setup_checklist_view(request):
     result_create_managers = execute_validation_from_db('validation_code_create_managers')
     result_collect_preferences = execute_validation_from_db('validation_code_collect_manager_team_preferences')
     result_assign_managers = execute_validation_from_db('validation_code_assign_managers_to_teams')
+    result_create_practice_slots = execute_validation_from_db('validation_code_create_practice_slots')
     result_send_secrets = execute_validation_from_db('validation_code_send_managers_team_secrets')
     result_request_rankings = execute_validation_from_db('validation_code_request_manager_rankings')
     result_analyze_player_rankings = execute_validation_from_db('validation_code_analyze_and_release_player_rankings')
@@ -909,6 +930,7 @@ def division_setup_checklist_view(request):
     result_create_managers_meta = validation_code_create_managers()
     result_collect_preferences_meta = validation_code_collect_manager_team_preferences()
     result_assign_managers_meta = validation_code_assign_managers_to_teams()
+    result_create_practice_slots_meta = validation_code_create_practice_slots()
     result_send_secrets_meta = validation_code_send_managers_team_secrets()
     result_request_rankings_meta = validation_code_request_manager_rankings()
     result_analyze_player_rankings_meta = validation_code_analyze_and_release_player_rankings()
@@ -985,6 +1007,20 @@ def division_setup_checklist_view(request):
             'count': result_assign_managers_meta.get('count'),
             'count_label': result_assign_managers_meta.get('count_label'),
             'status_note': result_assign_managers_meta.get('status_note')
+        },
+        {
+            'title': 'Create Practice Slots',
+            'description': 'Create each of the practice slots this division has available to use. Don\'t assign them to managers/teams yet.',
+            'validation_code': 'validation_code_create_practice_slots',
+            'validation_source': inspect.getsource(validation_code_create_practice_slots),
+            'validation_logic': 'Practice slot count equals team count',
+            'validation_description': 'Practice slots created equal to the number of teams',
+            'link': '/practice_slots/',
+            'link_text': 'Go to Practice Slots',
+            'status': 'complete' if result_create_practice_slots else 'incomplete',
+            'count': result_create_practice_slots_meta.get('count'),
+            'count_label': result_create_practice_slots_meta.get('count_label'),
+            'status_note': result_create_practice_slots_meta.get('status_note')
         },
         {
             'title': 'Send Managers "Team Secrets"',

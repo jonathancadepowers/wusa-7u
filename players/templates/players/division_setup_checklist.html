@@ -18,7 +18,7 @@
                     <div class="mb-4">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <h5 class="mb-0" id="progressText">Initializing...</h5>
-                            <span class="badge bg-primary" id="progressBadge">0 of 12</span>
+                            <span class="badge bg-primary" id="progressBadge">0 of 13</span>
                         </div>
                         <div class="progress" style="height: 25px;">
                             <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
@@ -68,46 +68,53 @@
                             <div class="list-group-item d-flex align-items-center validation-step" data-step="6">
                                 <i class="bi bi-circle step-icon text-secondary me-3" style="font-size: 1.2rem;"></i>
                                 <div class="flex-grow-1">
+                                    <strong>Create Practice Slots</strong>
+                                    <div class="text-muted small">Validating practice slot creation...</div>
+                                </div>
+                            </div>
+                            <div class="list-group-item d-flex align-items-center validation-step" data-step="7">
+                                <i class="bi bi-circle step-icon text-secondary me-3" style="font-size: 1.2rem;"></i>
+                                <div class="flex-grow-1">
                                     <strong>Send Managers Team Secrets</strong>
                                     <div class="text-muted small">Validating team secret distribution...</div>
                                 </div>
                             </div>
-                            <div class="list-group-item d-flex align-items-center validation-step" data-step="7">
+                            <div class="list-group-item d-flex align-items-center validation-step" data-step="8">
                                 <i class="bi bi-circle step-icon text-secondary me-3" style="font-size: 1.2rem;"></i>
                                 <div class="flex-grow-1">
                                     <strong>Request Manager Rankings</strong>
                                     <div class="text-muted small">Validating manager ranking requests...</div>
                                 </div>
                             </div>
-                            <div class="list-group-item d-flex align-items-center validation-step" data-step="8">
+                            <div class="list-group-item d-flex align-items-center validation-step" data-step="9">
                                 <i class="bi bi-circle step-icon text-secondary me-3" style="font-size: 1.2rem;"></i>
                                 <div class="flex-grow-1">
                                     <strong>Analyze and Release Player Rankings</strong>
                                     <div class="text-muted small">Validating player rankings...</div>
                                 </div>
                             </div>
-                            <div class="list-group-item d-flex align-items-center validation-step" data-step="9">
+                            <div class="list-group-item d-flex align-items-center validation-step" data-step="10">
                                 <i class="bi bi-circle step-icon text-secondary me-3" style="font-size: 1.2rem;"></i>
                                 <div class="flex-grow-1">
                                     <strong>Analyze Manager Daughter Rankings</strong>
                                     <div class="text-muted small">Validating daughter rankings...</div>
                                 </div>
                             </div>
-                            <div class="list-group-item d-flex align-items-center validation-step" data-step="10">
+                            <div class="list-group-item d-flex align-items-center validation-step" data-step="11">
                                 <i class="bi bi-circle step-icon text-secondary me-3" style="font-size: 1.2rem;"></i>
                                 <div class="flex-grow-1">
                                     <strong>Assign Practice Slots</strong>
                                     <div class="text-muted small">Validating practice slot assignments...</div>
                                 </div>
                             </div>
-                            <div class="list-group-item d-flex align-items-center validation-step" data-step="11">
+                            <div class="list-group-item d-flex align-items-center validation-step" data-step="12">
                                 <i class="bi bi-circle step-icon text-secondary me-3" style="font-size: 1.2rem;"></i>
                                 <div class="flex-grow-1">
                                     <strong>Setup Draft</strong>
                                     <div class="text-muted small">Validating draft configuration...</div>
                                 </div>
                             </div>
-                            <div class="list-group-item d-flex align-items-center validation-step" data-step="12">
+                            <div class="list-group-item d-flex align-items-center validation-step" data-step="13">
                                 <i class="bi bi-circle step-icon text-secondary me-3" style="font-size: 1.2rem;"></i>
                                 <div class="flex-grow-1">
                                     <strong>Run the Draft</strong>
@@ -294,7 +301,7 @@
 
         // Progress simulation
         let currentStep = 0;
-        const totalSteps = 12;
+        const totalSteps = 13;
         let progressInterval;
 
         function simulateValidationProgress() {
@@ -303,7 +310,7 @@
             updateProgress(0);
 
             // Simulate progress through each validation step
-            // Total expected time: ~3-5 seconds for all 12 steps
+            // Total expected time: ~3-5 seconds for all 13 steps
             progressInterval = setInterval(() => {
                 if (currentStep < totalSteps) {
                     currentStep++;
@@ -311,7 +318,7 @@
                 } else {
                     clearInterval(progressInterval);
                 }
-            }, 300); // Update every 300ms (12 steps * 300ms = 3.6 seconds)
+            }, 300); // Update every 300ms (13 steps * 300ms = 3.9 seconds)
         }
 
         function updateProgress(step) {
