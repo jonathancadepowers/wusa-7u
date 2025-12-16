@@ -218,7 +218,7 @@ def validation_code_analyze_and_release_player_rankings():
     return {
         'count': complete_rankings_count,
         'count_label': 'player rankings submitted',
-        'status_note': f'Current: {complete_rankings_count} player rankings submitted, portal {portal_status}'
+        'status_note': f'{complete_rankings_count} player rankings submitted, portal {portal_status}'
     }
 
 def validation_code_analyze_manager_daughter_rankings():
@@ -258,7 +258,7 @@ def validation_code_analyze_manager_daughter_rankings():
     return {
         'count': ranked_count,
         'count_label': f'manager daughters ranked (need {total_manager_daughters})',
-        'status_note': f'{ranked_count}/{total_manager_daughters} manager daughters ranked'
+        'status_note': f'{ranked_count} managers\' daughters ranked'
     }
 
 def validation_code_assign_practice_slots():
@@ -282,7 +282,7 @@ def validation_code_assign_practice_slots():
     return {
         'count': teams_with_slots.count(),
         'count_label': 'teams with practice slots',
-        'status_note': f'{teams_with_slots.count()}/{all_teams.count()} teams have practice slots assigned'
+        'status_note': f'{teams_with_slots.count()} teams have practice slots assigned'
     }
 
 def validation_code_setup_draft():
