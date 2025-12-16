@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.views.decorators.csrf import csrf_exempt
 from django.db import models
-from .models import Player, Team, Manager, PlayerRanking, ManagerDaughterRanking, Draft, DraftPick, TeamPreference, GeneralSetting, StarredDraftPick, DivisionValidationRegistry, ValidationCode
+from .models import Player, Team, Manager, PlayerRanking, ManagerDaughterRanking, Draft, DraftPick, TeamPreference, GeneralSetting, StarredDraftPick, DivisionValidationRegistry, ValidationCode, PracticeSlot
 import pandas as pd
 import json
 import os
