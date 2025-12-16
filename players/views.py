@@ -185,7 +185,7 @@ def validation_code_request_manager_rankings():
     }
 
 def validation_code_analyze_and_release_player_rankings():
-    """Validate that at least one player ranking has been submitted and rankings are not public"""
+    """Validate that at least one player ranking has been submitted and rankings are public"""
     from .models import ValidationCode
     import json
 
@@ -200,13 +200,13 @@ def validation_code_analyze_and_release_player_rankings():
             # Skip invalid JSON
             pass
 
-    # Check that player_rankings_public is set to "false"
-    player_rankings_public_is_false = GeneralSetting.objects.filter(
+    # Check that player_rankings_public is set to "true"
+    player_rankings_public_is_true = GeneralSetting.objects.filter(
         key="player_rankings_public",
-        value="false"
+        value="true"
     ).exists()
 
-    is_valid = (complete_rankings_count >= 1) and player_rankings_public_is_false
+    is_valid = (complete_rankings_count >= 1) and player_rankings_public_is_true
 
     # Update ValidationCode.value field
     validation = ValidationCode.objects.get(code='validation_code_analyze_and_release_player_rankings')
@@ -217,7 +217,7 @@ def validation_code_analyze_and_release_player_rankings():
     return {
         'count': complete_rankings_count,
         'count_label': 'player rankings submitted',
-        'status_note': f'{complete_rankings_count} complete player rankings submitted (need at least 1 with exactly 20 players) and player_rankings_public={"false" if player_rankings_public_is_false else "NOT false"}'
+        'status_note': f'{complete_rankings_count} complete player rankings submitted (need at least 1 with exactly 20 players) and player_rankings_public={"true" if player_rankings_public_is_true else "NOT true"}'
     }
 
 def validation_code_analyze_manager_daughter_rankings():
@@ -1393,24 +1393,6 @@ def team_detail_view(request, team_secret):
     except Team.DoesNotExist:
         raise Http404("Team not found")
 
-    # Handle practice slot assignment via POST
-    if request.method == 'POST' and 'practice_slot_id' in request.POST:
-        practice_slot_id = request.POST.get('practice_slot_id')
-        if practice_slot_id:
-            try:
-                practice_slot = PracticeSlot.objects.get(id=practice_slot_id)
-                team.practice_slot = practice_slot
-                team.save()
-                messages.success(request, f'Practice slot assigned: {practice_slot.practice_slot}')
-            except PracticeSlot.DoesNotExist:
-                messages.error(request, 'Invalid practice slot selected')
-        else:
-            # Remove practice slot assignment
-            team.practice_slot = None
-            team.save()
-            messages.success(request, 'Practice slot removed')
-        return redirect('players:team_detail', team_secret=team_secret)
-
     # Get all players assigned to this team
     players = team.players.all().order_by('last_name', 'first_name')
 
@@ -1517,11 +1499,6 @@ def team_detail_view(request, team_secret):
             logging.error(f"Error calculating checklist: {e}")
             checklist_items = []
 
-    # Get practice slots that are not assigned to other teams
-    # Exclude slots that are assigned, but include this team's current slot
-    assigned_slot_ids = Team.objects.filter(practice_slot__isnull=False).exclude(pk=team.pk).values_list('practice_slot_id', flat=True)
-    all_practice_slots = PracticeSlot.objects.exclude(id__in=assigned_slot_ids).order_by('practice_slot')
-
     context = {
         'team': team,
         'players': players,
@@ -1529,8 +1506,7 @@ def team_detail_view(request, team_secret):
         'portal_open': portal_open,
         'available_players': available_players,
         'drafted_players': drafted_players,
-        'starred_player_ids': starred_player_ids,
-        'all_practice_slots': all_practice_slots
+        'starred_player_ids': starred_player_ids
     }
     return render(request, 'players/team_detail.html', context)
 
