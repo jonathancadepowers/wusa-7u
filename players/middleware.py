@@ -197,7 +197,8 @@ class MasterPasswordMiddleware:
     - manager_daughter_rankings/
     - practice_slot_rankings
     - player_rankings/analyze/public/
-    - /teams/<team_secret>/ (has its own authentication logic)
+
+    Note: /teams/<team_secret>/ requires master password AND has its own team secret validation
     """
 
     # Define exempt URL patterns
@@ -226,10 +227,6 @@ class MasterPasswordMiddleware:
 
         # Check if this path is exempt
         if self._is_exempt_path(path):
-            return self.get_response(request)
-
-        # Special handling for /teams/<team_secret>/ - it has its own auth logic
-        if path.startswith('/teams/'):
             return self.get_response(request)
 
         # Check if user has valid master password cookie
