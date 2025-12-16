@@ -73,10 +73,26 @@
         </div>
     </div>
 
-    {% block content %}{% endblock %}
+    <div id="pageContent" {% if needs_master_password_challenge %}style="filter: blur(10px); pointer-events: none;"{% endif %}>
+        {% block content %}{% endblock %}
+    </div>
 
     <!-- Master Password Challenge Modal -->
     {% if needs_master_password_challenge %}
+    <style>
+        /* Additional blur for modal backdrop to ensure content is not readable */
+        body.modal-open::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1040;
+            backdrop-filter: blur(5px);
+        }
+    </style>
     <div class="modal fade" id="masterPasswordChallengeModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="masterPasswordChallengeLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
