@@ -175,7 +175,7 @@
                                                         data-bs-toggle="tooltip"
                                                         data-bs-placement="right"
                                                         data-bs-html="true"
-                                                        title="<strong>Requirements:</strong><br>{{ item.validation_description|escape }}<br><br><strong>Current:</strong><br>{{ item.count }} {{ item.count_label }}"
+                                                        title="<strong>Requirements:</strong><br>{{ item.validation_description|escape }}<br><br><strong>Current:</strong><br>{% if item.status_note %}{{ item.status_note|escape }}{% else %}{{ item.count }} {{ item.count_label }}{% endif %}"
                                                         style="cursor: help;">
                                                         <i class="bi bi-check-circle me-1"></i>Complete
                                                     </span>
@@ -184,7 +184,7 @@
                                                         data-bs-toggle="tooltip"
                                                         data-bs-placement="right"
                                                         data-bs-html="true"
-                                                        title="<strong>Requirements:</strong><br>{{ item.validation_description|escape }}<br><br><strong>Current:</strong><br>{{ item.count }} {{ item.count_label }}"
+                                                        title="<strong>Requirements:</strong><br>{{ item.validation_description|escape }}<br><br><strong>Current:</strong><br>{% if item.status_note %}{{ item.status_note|escape }}{% else %}{{ item.count }} {{ item.count_label }}{% endif %}"
                                                         style="cursor: help;">
                                                         <i class="bi bi-dash-circle me-1"></i>N/A
                                                     </span>
@@ -193,7 +193,7 @@
                                                         data-bs-toggle="tooltip"
                                                         data-bs-placement="right"
                                                         data-bs-html="true"
-                                                        title="<strong>Requirements:</strong><br>{{ item.validation_description|escape }}<br><br><strong>Current:</strong><br>{{ item.count }} {{ item.count_label }}"
+                                                        title="<strong>Requirements:</strong><br>{{ item.validation_description|escape }}<br><br><strong>Current:</strong><br>{% if item.status_note %}{{ item.status_note|escape }}{% else %}{{ item.count }} {{ item.count_label }}{% endif %}"
                                                         style="cursor: help;">
                                                         <i class="bi bi-clock me-1"></i>Incomplete
                                                     </span>
