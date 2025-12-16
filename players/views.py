@@ -185,11 +185,18 @@ def validation_code_request_manager_rankings():
     }
 
 def validation_code_analyze_and_release_player_rankings():
-    """Validate that at least one player ranking has been submitted"""
+    """Validate that at least one player ranking has been submitted and rankings are not public"""
     from .models import ValidationCode
 
     player_rankings_count = PlayerRanking.objects.count()
-    is_valid = (player_rankings_count >= 1)
+
+    # Check that player_rankings_public is set to "false"
+    player_rankings_public_is_false = GeneralSetting.objects.filter(
+        key="player_rankings_public",
+        value="false"
+    ).exists()
+
+    is_valid = (player_rankings_count >= 1) and player_rankings_public_is_false
 
     # Update ValidationCode.value field
     validation = ValidationCode.objects.get(code='validation_code_analyze_and_release_player_rankings')
@@ -200,7 +207,7 @@ def validation_code_analyze_and_release_player_rankings():
     return {
         'count': player_rankings_count,
         'count_label': 'player rankings',
-        'status_note': f'{player_rankings_count} player rankings submitted (need at least 1)'
+        'status_note': f'{player_rankings_count} player rankings submitted (need at least 1) and player_rankings_public={"false" if player_rankings_public_is_false else "NOT false"}'
     }
 
 def validation_code_analyze_manager_daughter_rankings():
@@ -702,7 +709,7 @@ def division_setup_checklist_view(request):
             'description': 'Once all managers have submitted their top 20 player rankings, review them and then release them to managers to review.',
             'validation_code': 'validation_code_analyze_and_release_player_rankings',
             'validation_source': inspect.getsource(validation_code_analyze_and_release_player_rankings),            'validation_logic': 'All managers have submitted player rankings (PlayerRanking record exists for each manager)',
-            'validation_description': 'At least one player ranking has been submitted',
+            'validation_description': 'At least one player ranking has been submitted AND player_rankings_public is set to false',
             'link': '/player_rankings/analyze/',
             'link_text': 'Go to Analysis',
             'status': 'complete' if result_analyze_player_rankings else 'incomplete',
