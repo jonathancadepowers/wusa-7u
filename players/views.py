@@ -222,11 +222,32 @@ def validation_code_analyze_and_release_player_rankings():
     }
 
 def validation_code_analyze_manager_daughter_rankings():
-    """Validate that at least one manager daughter ranking has been submitted"""
+    """Validate that a complete manager daughter ranking has been submitted with ALL manager daughters ranked"""
     from .models import ValidationCode
+    import json
 
-    manager_daughter_rankings_count = ManagerDaughterRanking.objects.count()
-    is_valid = (manager_daughter_rankings_count >= 1)
+    # Count total manager daughters (players who are daughters of managers)
+    total_manager_daughters = Manager.objects.filter(daughter__isnull=False).count()
+
+    # Get any existing manager daughter rankings
+    manager_daughter_rankings = ManagerDaughterRanking.objects.all()
+
+    # Check if any ranking contains ALL manager daughters
+    is_valid = False
+    ranked_count = 0
+
+    if manager_daughter_rankings.exists() and total_manager_daughters > 0:
+        for ranking in manager_daughter_rankings:
+            try:
+                rankings_data = json.loads(ranking.ranking)
+                ranked_count = len(rankings_data)
+
+                # Check if this ranking includes ALL manager daughters
+                if ranked_count == total_manager_daughters:
+                    is_valid = True
+                    break
+            except (json.JSONDecodeError, TypeError):
+                pass
 
     # Update ValidationCode.value field
     validation = ValidationCode.objects.get(code='validation_code_analyze_manager_daughter_rankings')
@@ -235,9 +256,9 @@ def validation_code_analyze_manager_daughter_rankings():
 
     # Return metadata for display
     return {
-        'count': manager_daughter_rankings_count,
-        'count_label': 'daughter rankings',
-        'status_note': f'{manager_daughter_rankings_count} manager daughter rankings submitted (need at least 1)'
+        'count': ranked_count,
+        'count_label': f'manager daughters ranked (need {total_manager_daughters})',
+        'status_note': f'{ranked_count}/{total_manager_daughters} manager daughters ranked'
     }
 
 def validation_code_assign_practice_slots():
