@@ -214,10 +214,11 @@ def validation_code_analyze_and_release_player_rankings():
     validation.save()
 
     # Return metadata for display
+    portal_status = "is released to managers" if player_rankings_public_is_true else "is not released to managers"
     return {
         'count': complete_rankings_count,
         'count_label': 'player rankings submitted',
-        'status_note': f'{complete_rankings_count} complete player rankings submitted (need at least 1 with exactly 20 players) and player_rankings_public={"true" if player_rankings_public_is_true else "NOT true"}'
+        'status_note': f'Current: {complete_rankings_count} player rankings submitted, portal {portal_status}'
     }
 
 def validation_code_analyze_manager_daughter_rankings():
