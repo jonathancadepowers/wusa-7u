@@ -187,8 +187,18 @@ def validation_code_request_manager_rankings():
 def validation_code_analyze_and_release_player_rankings():
     """Validate that at least one player ranking has been submitted and rankings are not public"""
     from .models import ValidationCode
+    import json
 
-    player_rankings_count = PlayerRanking.objects.count()
+    # Count ONLY complete player rankings (those with exactly 20 players ranked)
+    complete_rankings_count = 0
+    for ranking in PlayerRanking.objects.all():
+        try:
+            ranking_data = json.loads(ranking.ranking)
+            if isinstance(ranking_data, list) and len(ranking_data) == 20:
+                complete_rankings_count += 1
+        except (json.JSONDecodeError, TypeError):
+            # Skip invalid JSON
+            pass
 
     # Check that player_rankings_public is set to "false"
     player_rankings_public_is_false = GeneralSetting.objects.filter(
@@ -196,7 +206,7 @@ def validation_code_analyze_and_release_player_rankings():
         value="false"
     ).exists()
 
-    is_valid = (player_rankings_count >= 1) and player_rankings_public_is_false
+    is_valid = (complete_rankings_count >= 1) and player_rankings_public_is_false
 
     # Update ValidationCode.value field
     validation = ValidationCode.objects.get(code='validation_code_analyze_and_release_player_rankings')
@@ -205,9 +215,9 @@ def validation_code_analyze_and_release_player_rankings():
 
     # Return metadata for display
     return {
-        'count': player_rankings_count,
-        'count_label': 'player rankings',
-        'status_note': f'{player_rankings_count} player rankings submitted (need at least 1) and player_rankings_public={"false" if player_rankings_public_is_false else "NOT false"}'
+        'count': complete_rankings_count,
+        'count_label': 'complete player rankings',
+        'status_note': f'{complete_rankings_count} complete player rankings submitted (need at least 1 with exactly 20 players) and player_rankings_public={"false" if player_rankings_public_is_false else "NOT false"}'
     }
 
 def validation_code_analyze_manager_daughter_rankings():
