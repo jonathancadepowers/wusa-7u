@@ -216,7 +216,7 @@ def validation_code_analyze_and_release_player_rankings():
     # Return metadata for display
     return {
         'count': complete_rankings_count,
-        'count_label': 'complete player rankings',
+        'count_label': 'player rankings submitted',
         'status_note': f'{complete_rankings_count} complete player rankings submitted (need at least 1 with exactly 20 players) and player_rankings_public={"false" if player_rankings_public_is_false else "NOT false"}'
     }
 
