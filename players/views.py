@@ -709,7 +709,7 @@ def division_setup_checklist_view(request):
             'description': 'Once all managers have submitted their top 20 player rankings, review them and then release them to managers to review.',
             'validation_code': 'validation_code_analyze_and_release_player_rankings',
             'validation_source': inspect.getsource(validation_code_analyze_and_release_player_rankings),            'validation_logic': 'All managers have submitted player rankings (PlayerRanking record exists for each manager)',
-            'validation_description': 'At least one player ranking has been submitted AND player_rankings_public is set to false',
+            'validation_description': 'At least one player ranking has been submitted and the scored player rankings have been released to managers',
             'link': '/player_rankings/analyze/',
             'link_text': 'Go to Analysis',
             'status': 'complete' if result_analyze_player_rankings else 'incomplete',
