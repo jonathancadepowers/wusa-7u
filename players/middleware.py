@@ -1,7 +1,7 @@
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.urls import resolve
 from django.shortcuts import render
-from .models import DivisionValidationRegistry, ValidationCode
+from .models import DivisionValidationRegistry, ValidationCode, GeneralSetting
 import logging
 
 logger = logging.getLogger(__name__)
@@ -185,3 +185,80 @@ class ValidationMiddleware:
             """,
             status=403
         )
+
+
+class MasterPasswordMiddleware:
+    """
+    Middleware to enforce master password authentication on all pages except exempt ones.
+
+    Exempt pages:
+    - public_portal/
+    - player_rankings
+    - manager_daughter_rankings/
+    - practice_slot_rankings
+    - player_rankings/analyze/public/
+    - /teams/<team_secret>/ (has its own authentication logic)
+    """
+
+    # Define exempt URL patterns
+    EXEMPT_PATHS = [
+        '/public_portal/',
+        '/player_rankings/',
+        '/manager_daughter_rankings/',
+        '/practice_slot_rankings/',
+        '/player_rankings/analyze/public/',
+        '/admin/',
+        '/static/',
+        '/media/',
+    ]
+
+    # API endpoints that need to be exempt
+    EXEMPT_API_PATHS = [
+        '/api/verify-master-password/',
+        '/api/validate-team-secret/',
+    ]
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        path = request.path
+
+        # Check if this path is exempt
+        if self._is_exempt_path(path):
+            return self.get_response(request)
+
+        # Special handling for /teams/<team_secret>/ - it has its own auth logic
+        if path.startswith('/teams/'):
+            return self.get_response(request)
+
+        # Check if user has valid master password cookie
+        cookie_password = request.COOKIES.get('master_password')
+        db_password = self._get_master_password_from_db()
+
+        # If cookie exists and matches database password, allow access
+        if cookie_password and cookie_password == db_password:
+            return self.get_response(request)
+
+        # User needs to be challenged - inject password requirement flag
+        request.needs_master_password_challenge = True
+
+        return self.get_response(request)
+
+    def _is_exempt_path(self, path):
+        """Check if the given path is exempt from master password authentication."""
+        for exempt_path in self.EXEMPT_PATHS + self.EXEMPT_API_PATHS:
+            if path.startswith(exempt_path):
+                return True
+        return False
+
+    def _get_master_password_from_db(self):
+        """Retrieve master password from database."""
+        try:
+            setting = GeneralSetting.objects.filter(key='master_password').first()
+            if setting:
+                return setting.value
+            else:
+                return 'wusarocks'  # Default fallback
+        except:
+            return 'wusarocks'  # Default fallback on error

@@ -253,6 +253,54 @@ def get_master_password_from_db():
         return 'wusarocks'  # Default fallback on error
 
 
+@require_http_methods(["POST"])
+def verify_master_password_view(request):
+    """
+    Verify if the provided password matches the master password.
+    Sets a cookie if valid.
+    """
+    try:
+        password = request.POST.get('password', '').strip()
+
+        if not password:
+            return JsonResponse({
+                'success': False,
+                'error': 'Please enter a password.'
+            }, status=400)
+
+        # Get master password from database
+        master_password = get_master_password_from_db()
+
+        # Check if passwords match
+        if password == master_password:
+            response = JsonResponse({
+                'success': True,
+                'message': 'Password verified successfully'
+            })
+
+            # Set cookie that expires in 30 days
+            response.set_cookie(
+                'master_password',
+                password,
+                max_age=30*24*60*60,  # 30 days
+                httponly=False,  # Allow JavaScript to read it
+                samesite='Lax'
+            )
+
+            return response
+        else:
+            return JsonResponse({
+                'success': False,
+                'error': 'Incorrect password. Please try again.'
+            }, status=401)
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
 # Validation functions for division setup checklist
 def validation_code_create_players():
     """Validate that at least 10 players exist"""

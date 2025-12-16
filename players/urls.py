@@ -6,6 +6,7 @@ app_name = 'players'
 urlpatterns = [
     path('public_portal/', views.public_portal_view, name='public_portal'),
     path('api/validate-team-secret/', views.validate_team_secret_view, name='validate_team_secret'),
+    path('api/verify-master-password/', views.verify_master_password_view, name='verify_master_password'),
     path('admin_dashboard/', views.admin_dashboard_view, name='admin_dashboard'),
     path('settings/', views.settings_view, name='settings'),
     path('export-division-configuration/', views.export_division_configuration, name='export_division_configuration'),
