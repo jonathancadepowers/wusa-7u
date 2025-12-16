@@ -57,6 +57,8 @@ class ValidationMiddleware:
 
         Returns: Error message string if validation fails, None if all validations pass
         """
+        from django.db import connection
+
         try:
             # Look up validation registry for this page (real-time, no cache)
             registry = DivisionValidationRegistry.objects.filter(page=path).first()
@@ -72,10 +74,12 @@ class ValidationMiddleware:
                 # No validations configured
                 return None
 
+            # Fetch all validation codes in a single query to reduce DB hits
+            validation_codes = ValidationCode.objects.filter(code__in=validations_to_run).in_bulk(field_name='code')
+
             # Run each validation
             for validation_code in validations_to_run:
-                # Fetch validation from database (real-time, no cache)
-                validation = ValidationCode.objects.filter(code=validation_code).first()
+                validation = validation_codes.get(validation_code)
 
                 if not validation:
                     logger.warning(f"Validation code '{validation_code}' not found in database")
@@ -96,6 +100,11 @@ class ValidationMiddleware:
 
         except Exception as e:
             logger.error(f"Error running page load validations for {path}: {str(e)}")
+            # Close connection on error to prevent connection leaks
+            try:
+                connection.close()
+            except:
+                pass
             return None  # Don't block page on middleware errors
 
     def _run_validation_triggers(self, path, request):
@@ -104,6 +113,8 @@ class ValidationMiddleware:
 
         These validations call Python validation functions which update the validation_codes table.
         """
+        from django.db import connection
+
         try:
             # Look up validation registry for this page (real-time, no cache)
             registry = DivisionValidationRegistry.objects.filter(page=path).first()
@@ -136,6 +147,11 @@ class ValidationMiddleware:
 
         except Exception as e:
             logger.error(f"Error running validation triggers for {path}: {str(e)}")
+            # Close connection on error to prevent connection leaks
+            try:
+                connection.close()
+            except:
+                pass
 
     def _render_validation_error(self, request, error_message):
         """
