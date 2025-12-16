@@ -29,6 +29,13 @@
                     {% endif %}
                 </div>
 
+                <!-- Practice Slot Information -->
+                {% if team.practice_slot %}
+                    <div class="mb-4">
+                        <p class="mb-2"><strong>Practice Slot:</strong> {{ team.practice_slot }}</p>
+                    </div>
+                {% endif %}
+
                 <!-- Pre-Season Checklist -->
                 {% if checklist_items %}
                 <div class="card bg-light border-success mb-4">
