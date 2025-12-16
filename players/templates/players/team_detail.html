@@ -27,29 +27,6 @@
                     {% else %}
                         <p class="mb-2"><strong>Manager:</strong> Not assigned</p>
                     {% endif %}
-
-                    <!-- Practice Slot Assignment -->
-                    <div class="row align-items-center">
-                        <div class="col-md-3">
-                            <strong>Practice Slot:</strong>
-                        </div>
-                        <div class="col-md-9">
-                            <form method="post" class="d-inline-flex align-items-center gap-2">
-                                {% csrf_token %}
-                                <select name="practice_slot_id" class="form-select form-select-sm" style="width: auto; min-width: 300px;">
-                                    <option value="">-- Not Assigned --</option>
-                                    {% for slot in all_practice_slots %}
-                                        <option value="{{ slot.id }}" {% if team.practice_slot and team.practice_slot.id == slot.id %}selected{% endif %}>
-                                            {{ slot.practice_slot }}
-                                        </option>
-                                    {% endfor %}
-                                </select>
-                                <button type="submit" class="btn btn-sm btn-primary">
-                                    <i class="bi bi-check-circle me-1"></i>Assign
-                                </button>
-                            </form>
-                        </div>
-                    </div>
                 </div>
 
                 <!-- Pre-Season Checklist -->
