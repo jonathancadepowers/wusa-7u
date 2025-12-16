@@ -143,18 +143,28 @@
                         <h5 class="card-title">Developer Settings</h5>
                         <p class="text-muted">Advanced settings for developers and administrators.</p>
 
-                        <a href="{% url 'players:division_validation_registry' %}" class="btn btn-secondary">
-                            <i class="bi bi-diagram-3 me-2"></i>Validation Registry
-                        </a>
-                        <button id="exportDivisionConfigBtn" class="btn btn-primary ms-2">
-                            <i class="bi bi-download me-2"></i>Export Division Configuration
-                        </button>
-                        <button id="importDivisionConfigBtn" class="btn btn-warning ms-2" data-bs-toggle="modal" data-bs-target="#importConfigModal">
-                            <i class="bi bi-upload me-2"></i>Import Division Configuration
-                        </button>
-                        <button id="masterPasswordBtn" class="btn btn-info ms-2" data-bs-toggle="modal" data-bs-target="#masterPasswordModal">
-                            <i class="bi bi-key me-2"></i>Master Password
-                        </button>
+                        <div class="row g-2">
+                            <div class="col-auto">
+                                <a href="{% url 'players:division_validation_registry' %}" class="btn btn-secondary">
+                                    <i class="bi bi-diagram-3 me-2"></i>Validation Registry
+                                </a>
+                            </div>
+                            <div class="col-auto">
+                                <button id="exportDivisionConfigBtn" class="btn btn-primary">
+                                    <i class="bi bi-download me-2"></i>Export Division Configuration
+                                </button>
+                            </div>
+                            <div class="col-auto">
+                                <button id="importDivisionConfigBtn" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#importConfigModal">
+                                    <i class="bi bi-upload me-2"></i>Import Division Configuration
+                                </button>
+                            </div>
+                            <div class="col-auto">
+                                <button id="masterPasswordBtn" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#masterPasswordModal">
+                                    <i class="bi bi-key me-2"></i>Master Password
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
