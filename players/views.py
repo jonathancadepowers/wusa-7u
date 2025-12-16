@@ -774,6 +774,11 @@ def division_validation_registry_view(request):
             'source': inspect.getsource(validation_code_assign_managers_to_teams)
         },
         {
+            'code': 'validation_code_create_practice_slots',
+            'title': 'Create Practice Slots',
+            'source': inspect.getsource(validation_code_create_practice_slots)
+        },
+        {
             'code': 'validation_code_send_managers_team_secrets',
             'title': 'Send Managers Team Secrets',
             'source': inspect.getsource(validation_code_send_managers_team_secrets)
@@ -860,6 +865,7 @@ def division_validation_registry_view(request):
         {'url': '/team_preferences/analyze/', 'title': 'Analyze Team Preferences'},
         {'url': '/team_preferences/assign/', 'title': 'Assign Managers to Teams'},
         {'url': '/manage_practice_slots/', 'title': 'Manage Practice Slots'},
+        {'url': '/practice_slots/', 'title': 'Practice Slots'},
         {'url': '/practice_slots/analyze/', 'title': 'Analyze Practice Slots'},
         {'url': '/practice_slots/assign/', 'title': 'Assign Practice Slots to Teams'},
     ]
