@@ -1996,12 +1996,16 @@ def manager_daughter_rankings_view(request):
     manager_daughter_ids = Manager.objects.filter(daughter__isnull=False).values_list('daughter_id', flat=True)
     all_players = Player.objects.filter(id__in=manager_daughter_ids).order_by('last_name', 'first_name')
 
+    # Count the total number of manager daughter players (for dynamic requirement)
+    manager_daughter_count = len(manager_daughter_ids)
+
     context = {
         'all_players': all_players,
         'team_secret': team_secret,
         'manager': manager,
         'ranked_player_ids': json.dumps(ranked_player_ids),  # Pass as JSON for JavaScript
-        'manager_daughter_ids': json.dumps(list(manager_daughter_ids))  # Pass as JSON for JavaScript
+        'manager_daughter_ids': json.dumps(list(manager_daughter_ids)),  # Pass as JSON for JavaScript
+        'manager_daughter_count': manager_daughter_count  # Pass the count for dynamic requirements
     }
     return render(request, 'players/manager_daughter_rankings.html', context)
 
