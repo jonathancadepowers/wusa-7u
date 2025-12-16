@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Practice Slots - WUSA 7U{% endblock %}
+
+{% block page_title %}WUSA 7U - Practice Slots{% endblock %}
+
+{% block content %}
+    <div class="container mt-4">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="card shadow">
+            <div class="card-body">
+                <div class="mb-3">
+                    <span class="text-muted">Total practice slots: <strong>{{ total_slots }}</strong></span>
+                </div>
+
+                <!-- Search Bar and Add Button -->
+                <div class="row mb-4 align-items-end">
+                    <div class="col-md-6">
+                        <form method="get">
+                            <div class="input-group">
+                                <input type="text" name="search" class="form-control" placeholder="Search practice slots..." value="{{ search_query }}">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-search"></i> Search
+                                </button>
+                                {% if search_query %}
+                                    <a href="{% url 'players:practice_slots_list' %}" class="btn btn-secondary">Clear</a>
+                                {% endif %}
+                            </div>
+                        </form>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <a href="{% url 'players:practice_slot_create' %}" class="btn btn-success">
+                            <i class="bi bi-plus-circle me-1"></i>Add Practice Slot
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Practice Slots Table -->
+                {% if page_obj %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Practice Slot</th>
+                                    <th>Created</th>
+                                    <th>Last Updated</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for slot in page_obj %}
+                                    <tr>
+                                        <td><strong>{{ slot.practice_slot }}</strong></td>
+                                        <td>{{ slot.created_at|date:"M d, Y g:i A" }}</td>
+                                        <td>{{ slot.updated_at|date:"M d, Y g:i A" }}</td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <a href="{% url 'players:practice_slot_detail' slot.pk %}" class="btn btn-outline-primary btn-sm" title="Edit">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+                                                <a href="{% url 'players:practice_slot_delete' slot.pk %}" class="btn btn-outline-danger btn-sm" title="Delete">
+                                                    <i class="bi bi-trash"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if page_obj.has_other_pages %}
+                        <nav aria-label="Practice slots pagination">
+                            <ul class="pagination justify-content-center">
+                                {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}">First</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Previous</a>
+                                    </li>
+                                {% endif %}
+
+                                <li class="page-item active">
+                                    <span class="page-link">
+                                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                                    </span>
+                                </li>
+
+                                {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Next</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}">Last</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    {% endif %}
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        {% if search_query %}
+                            No practice slots found matching "{{ search_query }}".
+                        {% else %}
+                            No practice slots yet. Click "Add Practice Slot" to create one.
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Delete Practice Slot - WUSA 7U{% endblock %}
+
+{% block page_title %}Delete Practice Slot{% endblock %}
+
+{% block content %}
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card shadow">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>Confirm Deletion
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-3">Are you sure you want to delete this practice slot?</p>
+
+                        <div class="alert alert-warning">
+                            <strong>Practice Slot:</strong> {{ practice_slot.practice_slot }}
+                        </div>
+
+                        <p class="text-muted small">This action cannot be undone.</p>
+
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="d-flex justify-content-between">
+                                <a href="{% url 'players:practice_slots_list' %}" class="btn btn-secondary">
+                                    <i class="bi bi-arrow-left me-1"></i>Cancel
+                                </a>
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="bi bi-trash me-1"></i>Delete Practice Slot
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

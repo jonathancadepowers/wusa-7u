@@ -4015,3 +4015,100 @@ def delete_practice_slot_view(request, pk):
             'success': False,
             'error': f'An error occurred: {str(e)}'
         }, status=500)
+
+# Practice Slots CRUD Views
+def practice_slots_list_view(request):
+    """List all practice slots with search and pagination"""
+    from django.core.paginator import Paginator
+    from django.db.models import Q
+
+    search_query = request.GET.get('search', '')
+
+    practice_slots = PracticeSlot.objects.all()
+
+    # Apply search
+    if search_query:
+        practice_slots = practice_slots.filter(
+            Q(practice_slot__icontains=search_query)
+        )
+
+    # Order by most recent first
+    practice_slots = practice_slots.order_by('-created_at')
+
+    # Pagination
+    paginator = Paginator(practice_slots, 20)  # 20 items per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'page_obj': page_obj,
+        'search_query': search_query,
+        'total_slots': PracticeSlot.objects.count(),
+    }
+
+    return render(request, 'players/practice_slots_list.html', context)
+
+
+def practice_slot_create_view(request):
+    """Create a new practice slot"""
+    from django import forms
+    from django.contrib import messages
+
+    class PracticeSlotForm(forms.ModelForm):
+        class Meta:
+            model = PracticeSlot
+            fields = ['practice_slot']
+
+    if request.method == 'POST':
+        form = PracticeSlotForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Practice slot created successfully!')
+            return redirect('players:practice_slots_list')
+    else:
+        form = PracticeSlotForm()
+
+    return render(request, 'players/practice_slot_form.html', {'form': form})
+
+
+def practice_slot_detail_view(request, pk):
+    """Edit an existing practice slot"""
+    from django import forms
+    from django.contrib import messages
+
+    practice_slot = get_object_or_404(PracticeSlot, pk=pk)
+
+    class PracticeSlotForm(forms.ModelForm):
+        class Meta:
+            model = PracticeSlot
+            fields = ['practice_slot']
+
+    if request.method == 'POST':
+        form = PracticeSlotForm(request.POST, instance=practice_slot)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Practice slot updated successfully!')
+            return redirect('players:practice_slots_list')
+    else:
+        form = PracticeSlotForm(instance=practice_slot)
+
+    return render(request, 'players/practice_slot_form.html', {
+        'form': form,
+        'practice_slot': practice_slot
+    })
+
+
+def practice_slot_delete_view(request, pk):
+    """Delete a practice slot"""
+    from django.contrib import messages
+
+    practice_slot = get_object_or_404(PracticeSlot, pk=pk)
+
+    if request.method == 'POST':
+        practice_slot.delete()
+        messages.success(request, 'Practice slot deleted successfully!')
+        return redirect('players:practice_slots_list')
+
+    return render(request, 'players/practice_slot_confirm_delete.html', {
+        'practice_slot': practice_slot
+    })

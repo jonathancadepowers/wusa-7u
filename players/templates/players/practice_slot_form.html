@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}{% if practice_slot %}Edit{% else %}Add{% endif %} Practice Slot - WUSA 7U{% endblock %}
+
+{% block page_title %}{% if practice_slot %}Edit{% else %}Add{% endif %} Practice Slot{% endblock %}
+
+{% block content %}
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <form method="post">
+                            {% csrf_token %}
+
+                            <div class="mb-3">
+                                <label for="practice_slot" class="form-label">Practice Slot <span class="text-danger">*</span></label>
+                                <textarea class="form-control {% if form.practice_slot.errors %}is-invalid{% endif %}"
+                                          id="practice_slot"
+                                          name="practice_slot"
+                                          rows="3"
+                                          placeholder="Enter practice slot details (e.g., 'Monday 6:00 PM - 7:00 PM')"
+                                          required>{% if form.practice_slot.value %}{{ form.practice_slot.value }}{% endif %}</textarea>
+                                {% if form.practice_slot.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ form.practice_slot.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">Describe the practice slot time and details.</div>
+                            </div>
+
+                            <div class="d-flex justify-content-between">
+                                <a href="{% url 'players:practice_slots_list' %}" class="btn btn-secondary">
+                                    <i class="bi bi-arrow-left me-1"></i>Back to List
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-save me-1"></i>{% if practice_slot %}Update{% else %}Create{% endif %} Practice Slot
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
