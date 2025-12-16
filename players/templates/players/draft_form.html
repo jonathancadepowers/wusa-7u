@@ -215,6 +215,20 @@
                             </div>
                             {% endif %}
 
+                            <hr>
+
+                            <h5 class="mb-3">Additional Pre-Draft Tasks</h5>
+
+                            <ul>
+                                <li><strong>Draftable Players:</strong> By default, all players are considered eligible for the draft. However, any player that did not attend try-outs should be marked as "not draftable" on the <a href="{% url 'players:player_list' %}">player's page</a>. If someone attempts to draft an "undraftable" player during the draft, a warning appear (though a Division Coordinator can override it). Depending on the number of undraftable players there are, use as many picks as necessary at the end of the draft to randomly assign undraftable players to teams (using the "Random Pick" button on the draft page).</li>
+
+                                <li><strong>Declared Players:</strong> There is an exception to the "undraftable" rule described above. Before your draft starts, ask managers to declare any player that did not attend the draft as being "draftable." For each player, have a brief discussion about the player, and ensure their "draftable" flag on the <a href="{% url 'players:player_list' %}">player's page</a> remains checked.</li>
+
+                                <li><strong>Manager's Daughters:</strong> Based on the <a href="{% url 'players:manager_daughter_rankings' %}">ranking of managers' daughters</a>, before the draft starts, set all manager's daughter into a fixed draft position (by drafting them on the draft page). The higher ranked a manager's daughter is, the higher their draft position should be. This ensures managers are forced to pick their daughter, at the appropriate time in the draft.</li>
+                            </ul>
+
+                            <p class="mt-2"><strong>Do not begin the draft without doing all the above.</strong></p>
+
                             <div class="mt-4 d-flex justify-content-between">
                                 <a href="{% url 'players:settings' %}" class="btn btn-secondary">
                                     <i class="bi bi-arrow-left me-1"></i>Cancel
