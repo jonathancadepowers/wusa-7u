@@ -434,10 +434,14 @@ def validation_code_create_practice_slots():
     practice_slot_count = PracticeSlot.objects.count()
     is_valid = (team_count > 0 and practice_slot_count == team_count)
 
-    # Update ValidationCode.value field
-    validation = ValidationCode.objects.get(code='validation_code_create_practice_slots')
-    validation.value = is_valid
-    validation.save()
+    # Update ValidationCode.value field (if table exists)
+    try:
+        validation = ValidationCode.objects.get(code='validation_code_create_practice_slots')
+        validation.value = is_valid
+        validation.save()
+    except (ValidationCode.DoesNotExist, Exception):
+        # If ValidationCode table doesn't exist or record not found, skip
+        pass
 
     # Return metadata for display
     return {
