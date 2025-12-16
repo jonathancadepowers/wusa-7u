@@ -1507,8 +1507,10 @@ def team_detail_view(request, team_secret):
             logging.error(f"Error calculating checklist: {e}")
             checklist_items = []
 
-    # Get all practice slots for the dropdown
-    all_practice_slots = PracticeSlot.objects.all().order_by('practice_slot')
+    # Get practice slots that are not assigned to other teams
+    # Exclude slots that are assigned, but include this team's current slot
+    assigned_slot_ids = Team.objects.filter(practice_slot__isnull=False).exclude(pk=team.pk).values_list('practice_slot_id', flat=True)
+    all_practice_slots = PracticeSlot.objects.exclude(id__in=assigned_slot_ids).order_by('practice_slot')
 
     context = {
         'team': team,
@@ -1801,11 +1803,15 @@ def team_edit_view(request, pk):
         messages.success(request, f'Team {team.name} updated successfully!')
         return redirect('players:team_edit', pk=team.pk)
 
-    # Get all managers for dropdown
-    all_managers = Manager.objects.all().order_by('last_name', 'first_name')
+    # Get managers that are not assigned to other teams
+    # Exclude managers that are assigned, but include this team's current manager
+    assigned_manager_ids = Team.objects.filter(manager__isnull=False).exclude(pk=team.pk).values_list('manager_id', flat=True)
+    all_managers = Manager.objects.exclude(id__in=assigned_manager_ids).order_by('last_name', 'first_name')
 
-    # Get all practice slots for dropdown
-    all_practice_slots = PracticeSlot.objects.all().order_by('practice_slot')
+    # Get practice slots that are not assigned to other teams
+    # Exclude slots that are assigned, but include this team's current slot
+    assigned_slot_ids = Team.objects.filter(practice_slot__isnull=False).exclude(pk=team.pk).values_list('practice_slot_id', flat=True)
+    all_practice_slots = PracticeSlot.objects.exclude(id__in=assigned_slot_ids).order_by('practice_slot')
 
     # Get all players assigned to this team
     team_players = Player.objects.filter(team=team).order_by('first_name', 'last_name')
