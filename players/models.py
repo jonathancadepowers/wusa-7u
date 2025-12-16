@@ -155,7 +155,7 @@ class PracticeSlot(models.Model):
         verbose_name_plural = 'Practice Slots'
 
     def __str__(self):
-        return f"Practice Slot: {self.practice_slot}"
+        return self.practice_slot
 
 
 class PracticeSlotRanking(models.Model):
