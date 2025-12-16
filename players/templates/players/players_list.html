@@ -91,6 +91,7 @@
                                         {% endif %}
                                     </a>
                                 </th>
+                                <!-- Hidden: Attended Draft? column
                                 <th>
                                     <a href="?sort=attended_try_out&order={% if sort_by == 'attended_try_out' and order == 'asc' %}desc{% else %}asc{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" class="text-decoration-none text-dark">
                                         Attended Draft?
@@ -99,6 +100,7 @@
                                         {% endif %}
                                     </a>
                                 </th>
+                                -->
                                 <th>
                                     <a href="?sort=draftable&order={% if sort_by == 'draftable' and order == 'asc' %}desc{% else %}asc{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" class="text-decoration-none text-dark">
                                         Draftable?
@@ -128,9 +130,11 @@
                                     </td>
                                     <td>{{ player.school|default:"-" }}</td>
                                     <td>{{ player.history|default:"-" }}</td>
+                                    <!-- Hidden: Attended Draft? checkbox
                                     <td class="text-center">
                                         <input type="checkbox" class="form-check-input inline-edit-checkbox" data-player-id="{{ player.pk }}" data-field="attended_try_out" {% if player.attended_try_out %}checked{% endif %}>
                                     </td>
+                                    -->
                                     <td class="text-center">
                                         <input type="checkbox" class="form-check-input inline-edit-checkbox" data-player-id="{{ player.pk }}" data-field="draftable" {% if player.draftable %}checked{% endif %}>
                                     </td>
@@ -145,7 +149,7 @@
                                 </tr>
                             {% empty %}
                                 <tr>
-                                    <td colspan="7" class="text-center text-muted">
+                                    <td colspan="6" class="text-center text-muted">
                                         {% if search_query %}
                                             No players found matching "{{ search_query }}"
                                         {% else %}
