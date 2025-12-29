@@ -236,3 +236,18 @@ class DivisionValidationRegistry(models.Model):
 
     def __str__(self):
         return f"Validation Registry for {self.page}"
+
+
+class Habit(models.Model):
+    name = models.CharField(max_length=200)
+    description = models.TextField(blank=True, null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'habits'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.name

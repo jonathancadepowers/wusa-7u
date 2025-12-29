@@ -17,13 +17,23 @@ from datetime import datetime
 
 def settings_view(request):
     """Main settings page"""
-    from .models import Draft
+    from .models import Draft, Habit
 
     # Check if there's an existing draft
     draft_exists = Draft.objects.exists()
 
+    # Get or create the first habit record (for Life Tracker)
+    habit, created = Habit.objects.get_or_create(
+        id=1,
+        defaults={
+            'name': 'Life Tracker Habits',
+            'description': 'Main habits tracking record'
+        }
+    )
+
     context = {
-        'draft_exists': draft_exists
+        'draft_exists': draft_exists,
+        'habit': habit
     }
     return render(request, 'players/settings.html', context)
 
