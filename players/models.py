@@ -59,6 +59,7 @@ class Team(models.Model):
     name = models.CharField(max_length=100)
     manager_secret = models.CharField(max_length=100, unique=True)
     practice_slot = models.ForeignKey('PracticeSlot', on_delete=models.SET_NULL, null=True, blank=True, related_name='teams')
+    colors = models.CharField(max_length=200, blank=True, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

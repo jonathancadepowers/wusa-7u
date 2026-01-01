@@ -2104,6 +2104,7 @@ def team_edit_view(request, pk):
     if request.method == 'POST':
         team.name = request.POST.get('name')
         team.manager_secret = request.POST.get('manager_secret')
+        team.colors = request.POST.get('colors', '')
 
         # Handle manager assignment
         manager_id = request.POST.get('manager_id')
