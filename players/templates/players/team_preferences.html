@@ -83,11 +83,6 @@
                             Enter your email address and drag ALL team names from the available list to the rankings area on the right. Arrange them in order from #1 (most preferred) to least preferred.
                         </div>
 
-                        <div id="successAlert" class="alert alert-success" style="display: none;">
-                            <i class="bi bi-check-circle me-2"></i>
-                            <span id="successMessage"></span>
-                        </div>
-
                         <div id="errorAlert" class="alert alert-danger" style="display: none;">
                             <i class="bi bi-exclamation-triangle me-2"></i>
                             <span id="errorMessage"></span>
@@ -147,6 +142,30 @@
                             </div>
                         </form>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="successModalLabel">
+                        <i class="bi bi-check-circle-fill me-2"></i>Success!
+                    </h5>
+                </div>
+                <div class="modal-body text-center py-4">
+                    <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+                    <h4 class="mt-3 mb-3">Thank You!</h4>
+                    <p class="lead">Your team name preferences have been saved successfully.</p>
+                    <p class="text-muted">You can now close this page in your browser.</p>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-success" onclick="window.close()">
+                        <i class="bi bi-x-circle me-1"></i>Close This Page
+                    </button>
                 </div>
             </div>
         </div>
@@ -400,7 +419,6 @@
                 submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Submitting...';
 
                 // Hide previous alerts
-                document.getElementById('successAlert').style.display = 'none';
                 document.getElementById('errorAlert').style.display = 'none';
 
                 fetch('{% url "players:save_team_preferences" %}', {
@@ -416,15 +434,7 @@
                     submitBtn.innerHTML = originalBtnText;
 
                     if (data.success) {
-                        showSuccess(data.message);
-                        // Re-enable submit button for future updates
-                        setTimeout(() => {
-                            const rankedCount = document.querySelectorAll('#rankedTeams .team-item').length;
-                            const emailValue = document.getElementById('emailInput').value.trim();
-                            if (rankedCount > 0 && emailValue !== '') {
-                                submitBtn.disabled = false;
-                            }
-                        }, 100);
+                        showSuccessModal();
                     } else {
                         showError(data.error);
                     }
@@ -440,19 +450,9 @@
             });
         });
 
-        function showSuccess(message) {
-            const successAlert = document.getElementById('successAlert');
-            const successMessage = document.getElementById('successMessage');
-            successMessage.textContent = message;
-            successAlert.style.display = 'block';
-
-            // Scroll to top to show the message
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-
-            // Hide after 5 seconds
-            setTimeout(() => {
-                successAlert.style.display = 'none';
-            }, 5000);
+        function showSuccessModal() {
+            const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+            successModal.show();
         }
 
         function showError(message) {
