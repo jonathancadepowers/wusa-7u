@@ -1365,7 +1365,10 @@ def players_list_view(request):
     sort_by = request.GET.get('sort', 'last_name')
     order = request.GET.get('order', 'asc')
 
-    players = Player.objects.select_related('team').all()
+    from django.db.models import Count
+    players = Player.objects.select_related('team').annotate(
+        manager_count=Count('manager_parent')
+    ).all()
 
     # Apply search
     if search_query:
@@ -1379,7 +1382,7 @@ def players_list_view(request):
         )
 
     # Apply sorting
-    valid_sort_fields = ['last_name', 'first_name', 'team__name', 'school', 'history', 'attended_try_out', 'draftable']
+    valid_sort_fields = ['last_name', 'first_name', 'team__name', 'school', 'history', 'attended_try_out', 'draftable', 'manager_count']
     if sort_by in valid_sort_fields:
         if order == 'desc':
             # For team sorting, handle null values
