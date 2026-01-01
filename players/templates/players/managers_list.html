@@ -89,6 +89,7 @@
                                             {% endif %}
                                         </a>
                                     </th>
+                                    <th>Phone</th>
                                     <th>
                                         <a href="?sort=teams__name&order={% if sort_by == 'teams__name' and order == 'asc' %}desc{% else %}asc{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" class="text-decoration-none text-dark">
                                             Team
@@ -97,6 +98,7 @@
                                             {% endif %}
                                         </a>
                                     </th>
+                                    <th>Daughter</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -105,10 +107,18 @@
                                     <tr>
                                         <td><strong>{{ manager.first_name }} {{ manager.last_name }}</strong></td>
                                         <td>{{ manager.email }}</td>
+                                        <td>{{ manager.phone|default:"-" }}</td>
                                         <td>
                                             <button class="btn btn-sm btn-outline-secondary" onclick="openTeamModal({{ manager.pk }}, '{{ manager.first_name }} {{ manager.last_name }}', {% if manager.teams.first %}{{ manager.teams.first.pk }}{% else %}null{% endif %}, '{% if manager.teams.first %}{{ manager.teams.first.name }}{% endif %}')" title="Assign Team">
                                                 <span id="team-name-{{ manager.pk }}">{% if manager.teams.first %}{{ manager.teams.first.name }}{% else %}No Team{% endif %}</span>
                                             </button>
+                                        </td>
+                                        <td>
+                                            {% if manager.daughter %}
+                                                {{ manager.daughter.first_name }} {{ manager.daughter.last_name }}
+                                            {% else %}
+                                                -
+                                            {% endif %}
                                         </td>
                                         <td>
                                             <div class="btn-group btn-group-sm" role="group">

@@ -101,6 +101,7 @@
                                     </a>
                                 </th>
                                 -->
+                                <th>Manager's Daughter</th>
                                 <th>
                                     <a href="?sort=draftable&order={% if sort_by == 'draftable' and order == 'asc' %}desc{% else %}asc{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" class="text-decoration-none text-dark">
                                         Draftable?
@@ -136,6 +137,13 @@
                                     </td>
                                     -->
                                     <td class="text-center">
+                                        {% if player.manager_parent %}
+                                            <i class="bi bi-check-circle-fill text-success"></i>
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
                                         <input type="checkbox" class="form-check-input inline-edit-checkbox" data-player-id="{{ player.pk }}" data-field="draftable" {% if player.draftable %}checked{% endif %}>
                                     </td>
                                     <td>
@@ -149,7 +157,7 @@
                                 </tr>
                             {% empty %}
                                 <tr>
-                                    <td colspan="6" class="text-center text-muted">
+                                    <td colspan="7" class="text-center text-muted">
                                         {% if search_query %}
                                             No players found matching "{{ search_query }}"
                                         {% else %}
