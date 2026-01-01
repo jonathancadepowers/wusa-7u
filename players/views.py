@@ -1895,7 +1895,7 @@ def managers_list_view(request):
     sort_by = request.GET.get('sort', 'last_name')
     order = request.GET.get('order', 'asc')
 
-    managers = Manager.objects.prefetch_related('teams').all()
+    managers = Manager.objects.prefetch_related('teams').select_related('daughter').all()
 
     # Apply search
     if search_query:
@@ -1908,7 +1908,7 @@ def managers_list_view(request):
         )
 
     # Apply sorting
-    valid_sort_fields = ['last_name', 'first_name', 'email', 'teams__name']
+    valid_sort_fields = ['last_name', 'first_name', 'email', 'phone', 'teams__name', 'daughter__last_name']
     if sort_by in valid_sort_fields:
         if order == 'desc':
             if sort_by == 'teams__name':
