@@ -1451,6 +1451,19 @@ def player_detail_view(request, pk):
             except Team.DoesNotExist:
                 pass
 
+        # Handle manager assignment
+        manager_id = request.POST.get('manager_id')
+        # First, remove this player as daughter from any current manager
+        Manager.objects.filter(daughter=player).update(daughter=None)
+        # Then assign to new manager if selected
+        if manager_id and manager_id != '':
+            try:
+                manager = Manager.objects.get(pk=manager_id)
+                manager.daughter = player
+                manager.save()
+            except Manager.DoesNotExist:
+                pass
+
         player.save()
         messages.success(request, f'Player {player.first_name} {player.last_name} updated successfully!')
         return redirect('players:detail', pk=player.pk)
@@ -1458,9 +1471,15 @@ def player_detail_view(request, pk):
     # Get all teams for dropdown
     all_teams = Team.objects.all().order_by('name')
 
+    # Get available managers (those without a daughter, or the one currently linked to this player)
+    current_manager = Manager.objects.filter(daughter=player).first()
+    available_managers = Manager.objects.filter(daughter__isnull=True).order_by('last_name', 'first_name')
+
     context = {
         'player': player,
-        'all_teams': all_teams
+        'all_teams': all_teams,
+        'available_managers': available_managers,
+        'current_manager': current_manager
     }
     return render(request, 'players/player_detail.html', context)
 

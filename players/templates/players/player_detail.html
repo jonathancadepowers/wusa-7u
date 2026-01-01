@@ -93,6 +93,24 @@
                                 </select>
                             </div>
 
+                            <div class="mb-3">
+                                <label for="manager_id" class="form-label">Manager Parent</label>
+                                <select class="form-select" id="manager_id" name="manager_id">
+                                    <option value="">-- No Manager --</option>
+                                    {% if current_manager %}
+                                        <option value="{{ current_manager.pk }}" selected>
+                                            {{ current_manager.first_name }} {{ current_manager.last_name }}
+                                        </option>
+                                    {% endif %}
+                                    {% for manager in available_managers %}
+                                        <option value="{{ manager.pk }}">
+                                            {{ manager.first_name }} {{ manager.last_name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">Select a manager if this player is their daughter</div>
+                            </div>
+
                             <!-- Parent Contact Information -->
                             <h5 class="border-bottom pb-2 mb-3 mt-4">Parent Contact - Primary *</h5>
                             <div class="row mb-3">
