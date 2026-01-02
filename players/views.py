@@ -1834,29 +1834,7 @@ def team_detail_view(request, team_secret):
             'status': daughter_ranking_status
         })
 
-        # Task 3: Rank Practice Slots
-        total_slots = PracticeSlot.objects.count()
-        practice_ranking_status = 'not_started'
-
-        try:
-            practice_ranking = PracticeSlotRanking.objects.get(team=team)
-            ranking_data = json.loads(practice_ranking.rankings)
-            if len(ranking_data) == 0:
-                practice_ranking_status = 'not_started'
-            elif len(ranking_data) < total_slots:
-                practice_ranking_status = 'in_progress'
-            else:
-                practice_ranking_status = 'completed'
-        except PracticeSlotRanking.DoesNotExist:
-            practice_ranking_status = 'not_started'
-
-        checklist_items.append({
-            'title': 'Rank Practice Slots',
-            'url': f"/practice_slot_rankings/?team_secret={team.manager_secret}",
-            'status': practice_ranking_status
-        })
-
-        # Task 4: View All Rankings
+        # Task 3: View All Rankings
         # This is just a view action, so no status
         checklist_items.append({
             'title': 'View All Rankings',
