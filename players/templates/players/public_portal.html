@@ -14,6 +14,12 @@
                     <a href="{% url 'players:team_preferences' %}" class="alert-link fw-bold">Click here</a>
                 </div>
 
+                <div class="mb-3">
+                    <a href="#" class="btn btn-outline-primary" onclick="showManagerDataModal(); return false;">
+                        <i class="bi bi-people-fill me-2"></i>Manager Data
+                    </a>
+                </div>
+
                 <div class="card shadow">
                     <div class="card-header bg-primary text-white">
                         <h4 class="mb-0"><i class="bi bi-trophy-fill me-2"></i>Select Your Team</h4>
@@ -77,6 +83,51 @@
             </div>
         </div>
     </div>
+
+    <!-- Manager Data Modal -->
+    <div class="modal fade" id="managerDataModal" tabindex="-1" aria-labelledby="managerDataModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="managerDataModalLabel">
+                        <i class="bi bi-people-fill me-2"></i>Manager Data
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Click on any field to edit. Changes are saved automatically.
+                    </div>
+                    <div id="managerDataLoading" class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                    <div id="managerDataTable" style="display: none;">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Team</th>
+                                        <th>Phone</th>
+                                        <th>Email</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="managerTableBody">
+                                    <!-- Populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}
 
 {% block extra_js %}
@@ -84,8 +135,11 @@
         let currentTeamId = null;
         let secretModal = null;
 
+        let managerDataModal = null;
+
         document.addEventListener('DOMContentLoaded', function() {
             secretModal = new bootstrap.Modal(document.getElementById('secretModal'));
+            managerDataModal = new bootstrap.Modal(document.getElementById('managerDataModal'));
 
             // Allow Enter key to submit
             document.getElementById('teamSecret').addEventListener('keypress', function(e) {
@@ -166,6 +220,115 @@
                 // Reset button
                 accessButton.disabled = false;
                 accessButton.innerHTML = originalButtonHTML;
+            }
+        }
+
+        // Manager Data Modal Functions
+        async function showManagerDataModal() {
+            managerDataModal.show();
+
+            // Show loading state
+            document.getElementById('managerDataLoading').style.display = 'block';
+            document.getElementById('managerDataTable').style.display = 'none';
+
+            // Load manager data
+            try {
+                const response = await fetch('/api/managers-list/');
+                const data = await response.json();
+
+                if (data.success) {
+                    renderManagerTable(data.managers);
+                    document.getElementById('managerDataLoading').style.display = 'none';
+                    document.getElementById('managerDataTable').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error loading managers:', error);
+                document.getElementById('managerDataLoading').innerHTML =
+                    '<div class="alert alert-danger">Error loading manager data. Please try again.</div>';
+            }
+        }
+
+        function renderManagerTable(managers) {
+            const tbody = document.getElementById('managerTableBody');
+            tbody.innerHTML = '';
+
+            managers.forEach(manager => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="editable" data-manager-id="${manager.id}" data-field="name" contenteditable="true">
+                        ${manager.name}
+                    </td>
+                    <td>${manager.team || '-'}</td>
+                    <td class="editable" data-manager-id="${manager.id}" data-field="phone" contenteditable="true">
+                        ${manager.phone || ''}
+                    </td>
+                    <td class="editable" data-manager-id="${manager.id}" data-field="email" contenteditable="true">
+                        ${manager.email || ''}
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            // Add event listeners for editable cells
+            document.querySelectorAll('.editable').forEach(cell => {
+                cell.addEventListener('blur', handleCellEdit);
+                cell.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        this.blur();
+                    }
+                });
+            });
+        }
+
+        async function handleCellEdit(event) {
+            const cell = event.target;
+            const managerId = cell.getAttribute('data-manager-id');
+            const field = cell.getAttribute('data-field');
+            const newValue = cell.textContent.trim();
+
+            // Show saving indicator
+            const originalContent = cell.innerHTML;
+            cell.style.opacity = '0.5';
+
+            try {
+                const formData = new FormData();
+                formData.append('manager_id', managerId);
+                formData.append('field', field);
+                formData.append('value', newValue);
+                formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+                const response = await fetch('/api/update-manager/', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Success - flash green
+                    cell.style.opacity = '1';
+                    cell.style.backgroundColor = '#d4edda';
+                    setTimeout(() => {
+                        cell.style.backgroundColor = '';
+                    }, 1000);
+                } else {
+                    // Error - flash red and revert
+                    cell.style.opacity = '1';
+                    cell.style.backgroundColor = '#f8d7da';
+                    setTimeout(() => {
+                        cell.style.backgroundColor = '';
+                    }, 2000);
+                    alert('Error saving: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error updating manager:', error);
+                cell.style.opacity = '1';
+                cell.style.backgroundColor = '#f8d7da';
+                setTimeout(() => {
+                    cell.style.backgroundColor = '';
+                }, 2000);
+                alert('Error saving changes. Please try again.');
             }
         }
     </script>

@@ -1359,6 +1359,88 @@ def validate_team_secret_view(request):
         }, status=400)
 
 
+def managers_list_api_view(request):
+    """API endpoint to get list of all managers with their data"""
+    managers = Manager.objects.select_related('daughter').prefetch_related('teams').all().order_by('last_name', 'first_name')
+
+    managers_data = []
+    for manager in managers:
+        # Get team name if manager is assigned to a team
+        team_name = None
+        teams = manager.teams.all()
+        if teams.exists():
+            team_name = teams.first().name
+
+        managers_data.append({
+            'id': manager.id,
+            'name': f"{manager.first_name} {manager.last_name}",
+            'team': team_name,
+            'phone': manager.phone or '',
+            'email': manager.email or ''
+        })
+
+    return JsonResponse({
+        'success': True,
+        'managers': managers_data
+    })
+
+
+def update_manager_api_view(request):
+    """API endpoint to update manager data via AJAX"""
+    if request.method != 'POST':
+        return JsonResponse({
+            'success': False,
+            'error': 'Invalid request method'
+        }, status=400)
+
+    manager_id = request.POST.get('manager_id')
+    field = request.POST.get('field')
+    value = request.POST.get('value', '').strip()
+
+    if not manager_id or not field:
+        return JsonResponse({
+            'success': False,
+            'error': 'Missing required fields'
+        }, status=400)
+
+    try:
+        manager = Manager.objects.get(id=manager_id)
+
+        # Update the appropriate field
+        if field == 'name':
+            # Split name into first and last name
+            name_parts = value.split(' ', 1)
+            manager.first_name = name_parts[0] if len(name_parts) > 0 else ''
+            manager.last_name = name_parts[1] if len(name_parts) > 1 else ''
+        elif field == 'phone':
+            manager.phone = value
+        elif field == 'email':
+            manager.email = value
+        else:
+            return JsonResponse({
+                'success': False,
+                'error': 'Invalid field'
+            }, status=400)
+
+        manager.save()
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Manager updated successfully'
+        })
+
+    except Manager.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Manager not found'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
 def players_list_view(request):
     """List all players with search, sorting, and pagination"""
     search_query = request.GET.get('search', '')

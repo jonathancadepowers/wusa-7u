@@ -235,6 +235,8 @@ class MasterPasswordMiddleware:
     EXEMPT_API_PATHS = [
         '/api/verify-master-password/',
         '/api/validate-team-secret/',
+        '/api/managers-list/',
+        '/api/update-manager/',
     ]
 
     def __init__(self, get_response):
