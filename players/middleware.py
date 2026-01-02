@@ -209,6 +209,7 @@ class MasterPasswordMiddleware:
 
     Exempt pages:
     - public_portal/
+    - team_preferences/
     - player_rankings
     - manager_daughter_rankings/
     - practice_slot_rankings
@@ -220,6 +221,7 @@ class MasterPasswordMiddleware:
     # Define exempt URL patterns
     EXEMPT_PATHS = [
         '/public_portal/',
+        '/team_preferences/',
         '/player_rankings/',
         '/manager_daughter_rankings/',
         '/practice_slot_rankings/',
