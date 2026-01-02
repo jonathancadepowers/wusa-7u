@@ -27,14 +27,13 @@
                     {% else %}
                         <p class="mb-2"><strong>Manager:</strong> Not assigned</p>
                     {% endif %}
-                </div>
 
-                <!-- Practice Slot Information -->
-                {% if team.practice_slot %}
-                    <div class="mb-4">
+                    {% if team.practice_slot %}
                         <p class="mb-2"><strong>Practice Slot:</strong> {{ team.practice_slot }}</p>
-                    </div>
-                {% endif %}
+                    {% else %}
+                        <p class="mb-2"><strong>Practice Slot:</strong> Not Yet Assigned</p>
+                    {% endif %}
+                </div>
 
                 <!-- Pre-Season Checklist -->
                 {% if checklist_items %}
