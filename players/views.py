@@ -1785,10 +1785,12 @@ def team_detail_view(request, team_secret):
     # Calculate checklist status for this manager
     checklist_items = []
 
-    if team.manager:
-        try:
-            # Task 1: Rank All Players (top 20)
-            expected_player_count = 20
+    try:
+        # Task 1: Rank All Players (top 20)
+        expected_player_count = 20
+        player_ranking_status = 'not_started'
+
+        if team.manager:
             try:
                 player_ranking = PlayerRanking.objects.get(manager=team.manager)
                 ranking_data = json.loads(player_ranking.ranking)
@@ -1801,17 +1803,19 @@ def team_detail_view(request, team_secret):
             except PlayerRanking.DoesNotExist:
                 player_ranking_status = 'not_started'
 
-            checklist_items.append({
-                'title': 'Rank All Players',
-                'url': f"/player_rankings/?team_secret={team.manager_secret}",
-                'status': player_ranking_status
-            })
+        checklist_items.append({
+            'title': 'Rank All Players',
+            'url': f"/player_rankings/?team_secret={team.manager_secret}",
+            'status': player_ranking_status
+        })
 
-            # Task 2: Rank Managers' Daughters
-            # Get total count of all manager's daughters in the division
-            manager_daughter_ids = Manager.objects.filter(daughter__isnull=False).values_list('daughter_id', flat=True)
-            total_daughters = len(manager_daughter_ids)
+        # Task 2: Rank Managers' Daughters
+        # Get total count of all manager's daughters in the division
+        manager_daughter_ids = Manager.objects.filter(daughter__isnull=False).values_list('daughter_id', flat=True)
+        total_daughters = len(manager_daughter_ids)
+        daughter_ranking_status = 'not_started'
 
+        if team.manager:
             try:
                 daughter_ranking = ManagerDaughterRanking.objects.get(manager=team.manager)
                 ranking_data = json.loads(daughter_ranking.ranking)
@@ -1824,44 +1828,46 @@ def team_detail_view(request, team_secret):
             except ManagerDaughterRanking.DoesNotExist:
                 daughter_ranking_status = 'not_started'
 
-            checklist_items.append({
-                'title': "Rank Managers' Daughters",
-                'url': f"/manager_daughter_rankings/?team_secret={team.manager_secret}",
-                'status': daughter_ranking_status
-            })
+        checklist_items.append({
+            'title': "Rank Managers' Daughters",
+            'url': f"/manager_daughter_rankings/?team_secret={team.manager_secret}",
+            'status': daughter_ranking_status
+        })
 
-            # Task 3: Rank Practice Slots
-            total_slots = PracticeSlot.objects.count()
-            try:
-                practice_ranking = PracticeSlotRanking.objects.get(team=team)
-                ranking_data = json.loads(practice_ranking.rankings)
-                if len(ranking_data) == 0:
-                    practice_ranking_status = 'not_started'
-                elif len(ranking_data) < total_slots:
-                    practice_ranking_status = 'in_progress'
-                else:
-                    practice_ranking_status = 'completed'
-            except PracticeSlotRanking.DoesNotExist:
+        # Task 3: Rank Practice Slots
+        total_slots = PracticeSlot.objects.count()
+        practice_ranking_status = 'not_started'
+
+        try:
+            practice_ranking = PracticeSlotRanking.objects.get(team=team)
+            ranking_data = json.loads(practice_ranking.rankings)
+            if len(ranking_data) == 0:
                 practice_ranking_status = 'not_started'
+            elif len(ranking_data) < total_slots:
+                practice_ranking_status = 'in_progress'
+            else:
+                practice_ranking_status = 'completed'
+        except PracticeSlotRanking.DoesNotExist:
+            practice_ranking_status = 'not_started'
 
-            checklist_items.append({
-                'title': 'Rank Practice Slots',
-                'url': f"/practice_slot_rankings/?team_secret={team.manager_secret}",
-                'status': practice_ranking_status
-            })
+        checklist_items.append({
+            'title': 'Rank Practice Slots',
+            'url': f"/practice_slot_rankings/?team_secret={team.manager_secret}",
+            'status': practice_ranking_status
+        })
 
-            # Task 4: View All Rankings
-            # This is just a view action, so no status
-            checklist_items.append({
-                'title': 'View All Rankings',
-                'url': '/player_rankings/analyze/public/',
-                'status': 'n/a'
-            })
-        except Exception as e:
-            # If there's any error, just don't show the checklist
-            import logging
-            logging.error(f"Error calculating checklist: {e}")
-            checklist_items = []
+        # Task 4: View All Rankings
+        # This is just a view action, so no status
+        checklist_items.append({
+            'title': 'View All Rankings',
+            'url': '/player_rankings/analyze/public/',
+            'status': 'n/a'
+        })
+    except Exception as e:
+        # If there's any error, just don't show the checklist
+        import logging
+        logging.error(f"Error calculating checklist: {e}")
+        checklist_items = []
 
     context = {
         'team': team,
