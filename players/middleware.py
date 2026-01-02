@@ -210,18 +210,18 @@ class MasterPasswordMiddleware:
     Exempt pages:
     - public_portal/
     - team_preferences/
+    - teams/ (team detail pages with team secrets)
     - player_rankings
     - manager_daughter_rankings/
     - practice_slot_rankings
     - player_rankings/analyze/public/
-
-    Note: /teams/<team_secret>/ requires master password AND has its own team secret validation
     """
 
     # Define exempt URL patterns
     EXEMPT_PATHS = [
         '/public_portal/',
         '/team_preferences/',
+        '/teams/',
         '/player_rankings/',
         '/manager_daughter_rankings/',
         '/practice_slot_rankings/',
