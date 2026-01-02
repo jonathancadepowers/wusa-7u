@@ -210,7 +210,7 @@ class MasterPasswordMiddleware:
     Exempt pages:
     - public_portal/
     - team_preferences/
-    - teams/ (team detail pages with team secrets)
+    - teams/<team_secret>/ (team detail pages with team secrets, but NOT /teams/ list)
     - player_rankings
     - manager_daughter_rankings/
     - practice_slot_rankings
@@ -221,7 +221,6 @@ class MasterPasswordMiddleware:
     EXEMPT_PATHS = [
         '/public_portal/',
         '/team_preferences/',
-        '/teams/',
         '/player_rankings/',
         '/manager_daughter_rankings/',
         '/practice_slot_rankings/',
@@ -264,9 +263,16 @@ class MasterPasswordMiddleware:
 
     def _is_exempt_path(self, path):
         """Check if the given path is exempt from master password authentication."""
+        # Check standard exempt paths
         for exempt_path in self.EXEMPT_PATHS + self.EXEMPT_API_PATHS:
             if path.startswith(exempt_path):
                 return True
+
+        # Special handling: Exempt team detail pages (/teams/<team_secret>/) but not the list (/teams/)
+        if path.startswith('/teams/') and path != '/teams/' and len(path.split('/')) >= 3:
+            # Path is like /teams/abc123/ or /teams/abc123/toggle-star/
+            return True
+
         return False
 
     def _get_master_password_from_db(self):
