@@ -2238,11 +2238,10 @@ def player_rankings_view(request):
                     manager=manager,
                     defaults={'ranking': rankings_json}
                 )
+                messages.success(request, f'Player rankings saved successfully! ({len(player_ids)} players ranked)')
             else:
-                # If no manager, just create a new ranking
-                PlayerRanking.objects.create(ranking=rankings_json)
-
-            messages.success(request, f'Player rankings saved successfully! ({len(player_ids)} players ranked)')
+                # Cannot save rankings without a manager assigned to the team
+                messages.error(request, 'Cannot save rankings: No manager is assigned to this team yet.')
 
             # Redirect back to team page if team_secret was provided
             if team_secret:
