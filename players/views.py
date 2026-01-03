@@ -2419,13 +2419,12 @@ def manager_daughter_rankings_view(request):
                 if 'unsaved_email' in request.session:
                     del request.session['unsaved_email']
 
-                messages.success(request, f'Manager daughter rankings saved successfully! ({len(rankings_list)} players ranked)')
+                # Set session flag to show success modal
+                request.session['show_success_modal'] = True
+                request.session['num_players_ranked'] = len(rankings_list)
 
-                # Redirect back to team page if team_secret was provided
-                if team_secret:
-                    return redirect('players:team_detail', team_secret=team_secret)
-                else:
-                    return redirect('players:manager_daughter_rankings')
+                # Redirect to same page to show modal
+                return redirect(request.path + (f'?team_secret={team_secret}' if team_secret else ''))
             except json.JSONDecodeError:
                 messages.error(request, 'Invalid rankings data format.')
         else:
@@ -2465,6 +2464,10 @@ def manager_daughter_rankings_view(request):
     total_teams = Team.objects.count()
     num_rounds = math.ceil(total_players / total_teams) if total_teams > 0 else 1
 
+    # Check for success modal flag
+    show_success_modal = request.session.pop('show_success_modal', False)
+    num_players_ranked = request.session.pop('num_players_ranked', 0)
+
     context = {
         'all_players': all_players,
         'team_secret': team_secret,
@@ -2473,7 +2476,9 @@ def manager_daughter_rankings_view(request):
         'manager_daughter_ids': json.dumps(list(manager_daughter_ids)),  # Pass as JSON for JavaScript
         'manager_daughter_count': manager_daughter_count,  # Pass the count for dynamic requirements
         'num_rounds': num_rounds,  # Number of draft rounds
-        'unsaved_email': unsaved_email  # Pre-fill email if validation failed
+        'unsaved_email': unsaved_email,  # Pre-fill email if validation failed
+        'show_success_modal': show_success_modal,
+        'num_players_ranked': num_players_ranked
     }
     return render(request, 'players/manager_daughter_rankings.html', context)
 
