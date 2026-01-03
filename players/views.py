@@ -2376,48 +2376,47 @@ def manager_daughter_rankings_view(request):
             messages.error(request, 'Invalid team secret.')
 
     if request.method == 'POST':
-        # Get the rankings data from the form (comma-separated player IDs in ranked order)
+        # Get the rankings data from the form (JSON with player IDs, ranks, and draft rounds)
         rankings_data = request.POST.get('rankings', '')
 
         if rankings_data:
-            # Parse the comma-separated IDs
-            player_ids = [int(pid) for pid in rankings_data.split(',') if pid]
+            # Parse JSON data: [{"player_id": X, "rank": Y, "round": Z}, ...]
+            try:
+                rankings_list = json.loads(rankings_data)
 
-            # Create a JSON structure with rank and player ID
-            rankings_json = json.dumps([
-                {"rank": idx + 1, "player_id": player_id}
-                for idx, player_id in enumerate(player_ids)
-            ])
+                # Save the rankings as JSON
+                rankings_json = json.dumps(rankings_list)
 
-            # Update or create ranking for this manager (ensures only one ranking per manager)
-            if manager:
-                ManagerDaughterRanking.objects.update_or_create(
-                    manager=manager,
-                    defaults={'ranking': rankings_json}
-                )
-            else:
-                # If no manager, just create a new ranking
-                ManagerDaughterRanking.objects.create(ranking=rankings_json)
+                # Update or create ranking for this manager (ensures only one ranking per manager)
+                if manager:
+                    ManagerDaughterRanking.objects.update_or_create(
+                        manager=manager,
+                        defaults={'ranking': rankings_json}
+                    )
+                else:
+                    # If no manager, just create a new ranking
+                    ManagerDaughterRanking.objects.create(ranking=rankings_json)
 
-            messages.success(request, f'Manager daughter rankings saved successfully! ({len(player_ids)} players ranked)')
+                messages.success(request, f'Manager daughter rankings saved successfully! ({len(rankings_list)} players ranked)')
 
-            # Redirect back to team page if team_secret was provided
-            if team_secret:
-                return redirect('players:team_detail', team_secret=team_secret)
-            else:
-                return redirect('players:manager_daughter_rankings')
+                # Redirect back to team page if team_secret was provided
+                if team_secret:
+                    return redirect('players:team_detail', team_secret=team_secret)
+                else:
+                    return redirect('players:manager_daughter_rankings')
+            except json.JSONDecodeError:
+                messages.error(request, 'Invalid rankings data format.')
         else:
             messages.error(request, 'No rankings data provided.')
 
     # Load existing rankings for this manager
     existing_ranking = None
-    ranked_player_ids = []
+    existing_rankings_data = []
     if manager:
         try:
             existing_ranking = ManagerDaughterRanking.objects.get(manager=manager)
-            # Parse the JSON to get player IDs in order
-            rankings_data = json.loads(existing_ranking.ranking)
-            ranked_player_ids = [item['player_id'] for item in rankings_data]
+            # Parse the JSON to get full ranking data (player_id, rank, round)
+            existing_rankings_data = json.loads(existing_ranking.ranking)
         except ManagerDaughterRanking.DoesNotExist:
             pass
 
@@ -2428,13 +2427,20 @@ def manager_daughter_rankings_view(request):
     # Count the total number of manager daughter players (for dynamic requirement)
     manager_daughter_count = len(manager_daughter_ids)
 
+    # Calculate number of draft rounds: (total players / total teams), rounded up
+    import math
+    total_players = Player.objects.count()
+    total_teams = Team.objects.count()
+    num_rounds = math.ceil(total_players / total_teams) if total_teams > 0 else 1
+
     context = {
         'all_players': all_players,
         'team_secret': team_secret,
         'manager': manager,
-        'ranked_player_ids': json.dumps(ranked_player_ids),  # Pass as JSON for JavaScript
+        'existing_rankings_data': json.dumps(existing_rankings_data),  # Pass full ranking data as JSON for JavaScript
         'manager_daughter_ids': json.dumps(list(manager_daughter_ids)),  # Pass as JSON for JavaScript
-        'manager_daughter_count': manager_daughter_count  # Pass the count for dynamic requirements
+        'manager_daughter_count': manager_daughter_count,  # Pass the count for dynamic requirements
+        'num_rounds': num_rounds  # Number of draft rounds
     }
     return render(request, 'players/manager_daughter_rankings.html', context)
 
@@ -3478,38 +3484,52 @@ def player_rankings_analyze_public_view(request):
 
 @login_required
 def manager_daughter_rankings_analyze_view(request):
-    """Analyze manager daughter rankings with Borda count"""
+    """Analyze manager daughter rankings with Borda count and suggested draft rounds"""
     from .models import ManagerDaughterRanking, Manager, Player
     from collections import defaultdict
+    import statistics
 
     # Get all manager daughter rankings
     all_rankings = ManagerDaughterRanking.objects.all()
     player_scores = defaultdict(list)
+    player_rounds = defaultdict(list)  # Track which round each manager put the player in
     max_rank = 0
 
-    # Process all rankings to collect scores for each player
+    # Process all rankings to collect scores and rounds for each player
     for ranking in all_rankings:
         rankings_data = json.loads(ranking.ranking)
         for item in rankings_data:
             player_id = item.get('player_id')
             rank = item.get('rank')
+            round_num = item.get('round')  # Get the draft round
             if player_id and rank:
                 player_scores[player_id].append(rank)
                 max_rank = max(max_rank, rank)
+                if round_num:
+                    player_rounds[player_id].append(round_num)
 
-    # Calculate Borda count for each player
+    # Calculate Borda count and suggested round for each player
     player_stats = []
     for player_id, ranks in player_scores.items():
         # Borda count: rank 1 gets max_rank points, rank 2 gets max_rank-1 points, etc.
         borda_count = sum(max_rank - rank + 1 for rank in ranks)
         avg_rank = sum(ranks) / len(ranks)
+
+        # Calculate suggested draft round (median of all rounds managers assigned)
+        rounds = player_rounds.get(player_id, [])
+        if rounds:
+            suggested_round = round(statistics.median(rounds))
+        else:
+            suggested_round = None
+
         try:
             player = Player.objects.get(id=player_id)
             player_stats.append({
                 'player': player,
                 'average_rank': avg_rank,
                 'borda_count': borda_count,
-                'num_rankings': len(ranks)
+                'num_rankings': len(ranks),
+                'suggested_round': suggested_round
             })
         except Player.DoesNotExist:
             continue
