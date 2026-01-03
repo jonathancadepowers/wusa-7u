@@ -2376,28 +2376,8 @@ def manager_daughter_rankings_view(request):
             messages.error(request, 'Invalid team secret.')
 
     if request.method == 'POST':
-        # Get and validate email address
-        manager_email = request.POST.get('manager_email', '').strip().lower()
-
         # Get the rankings data from the form (JSON with player IDs, ranks, and draft rounds)
         rankings_data = request.POST.get('rankings', '')
-
-        if not manager_email:
-            messages.error(request, 'Please enter your email address.')
-            # Store rankings in session so user doesn't lose their work
-            request.session['unsaved_rankings'] = rankings_data
-            request.session['unsaved_email'] = request.POST.get('manager_email', '')
-            return redirect(request.path + (f'?team_secret={team_secret}' if team_secret else ''))
-
-        # Validate email matches a manager in the database
-        try:
-            validated_manager = Manager.objects.get(email__iexact=manager_email)
-        except Manager.DoesNotExist:
-            messages.error(request, 'Email address not found. Please enter the email address associated with your manager account.')
-            # Store rankings in session so user doesn't lose their work
-            request.session['unsaved_rankings'] = rankings_data
-            request.session['unsaved_email'] = request.POST.get('manager_email', '')
-            return redirect(request.path + (f'?team_secret={team_secret}' if team_secret else ''))
 
         if rankings_data:
             # Parse JSON data: [{"player_id": X, "rank": Y, "round": Z}, ...]
@@ -2407,24 +2387,25 @@ def manager_daughter_rankings_view(request):
                 # Save the rankings as JSON
                 rankings_json = json.dumps(rankings_list)
 
-                # Update or create ranking for this manager (use validated_manager)
-                ManagerDaughterRanking.objects.update_or_create(
-                    manager=validated_manager,
-                    defaults={'ranking': rankings_json}
-                )
+                # Update or create ranking for this manager (if manager exists)
+                if manager:
+                    ManagerDaughterRanking.objects.update_or_create(
+                        manager=manager,
+                        defaults={'ranking': rankings_json}
+                    )
 
-                # Clear unsaved rankings from session after successful save
-                if 'unsaved_rankings' in request.session:
-                    del request.session['unsaved_rankings']
-                if 'unsaved_email' in request.session:
-                    del request.session['unsaved_email']
+                    # Clear unsaved rankings from session after successful save
+                    if 'unsaved_rankings' in request.session:
+                        del request.session['unsaved_rankings']
 
-                # Set session flag to show success modal
-                request.session['show_success_modal'] = True
-                request.session['num_players_ranked'] = len(rankings_list)
+                    # Set session flag to show success modal
+                    request.session['show_success_modal'] = True
+                    request.session['num_players_ranked'] = len(rankings_list)
 
-                # Redirect to same page to show modal
-                return redirect(request.path + (f'?team_secret={team_secret}' if team_secret else ''))
+                    # Redirect to same page to show modal
+                    return redirect(request.path + (f'?team_secret={team_secret}' if team_secret else ''))
+                else:
+                    messages.error(request, 'Cannot save rankings: No manager is assigned to this team yet.')
             except json.JSONDecodeError:
                 messages.error(request, 'Invalid rankings data format.')
         else:
@@ -2433,13 +2414,11 @@ def manager_daughter_rankings_view(request):
     # Load existing rankings for this manager OR unsaved rankings from session
     existing_ranking = None
     existing_rankings_data = []
-    unsaved_email = ''
 
-    # Check if there are unsaved rankings in the session (from failed validation)
+    # Check if there are unsaved rankings in the session (from failed save)
     if 'unsaved_rankings' in request.session and request.session['unsaved_rankings']:
         try:
             existing_rankings_data = json.loads(request.session['unsaved_rankings'])
-            unsaved_email = request.session.get('unsaved_email', '')
         except json.JSONDecodeError:
             pass
     # Otherwise, load saved rankings for this manager
@@ -2476,7 +2455,6 @@ def manager_daughter_rankings_view(request):
         'manager_daughter_ids': json.dumps(list(manager_daughter_ids)),  # Pass as JSON for JavaScript
         'manager_daughter_count': manager_daughter_count,  # Pass the count for dynamic requirements
         'num_rounds': num_rounds,  # Number of draft rounds
-        'unsaved_email': unsaved_email,  # Pre-fill email if validation failed
         'show_success_modal': show_success_modal,
         'num_players_ranked': num_players_ranked
     }
