@@ -2398,12 +2398,13 @@ def manager_daughter_rankings_view(request):
                     if 'unsaved_rankings' in request.session:
                         del request.session['unsaved_rankings']
 
-                    # Set session flag to show success modal
-                    request.session['show_success_modal'] = True
-                    request.session['num_players_ranked'] = len(rankings_list)
+                    messages.success(request, f'Manager daughter rankings saved successfully! ({len(rankings_list)} players ranked)')
 
-                    # Redirect to same page to show modal
-                    return redirect(request.path + (f'?team_secret={team_secret}' if team_secret else ''))
+                    # Redirect back to team page if team_secret was provided
+                    if team_secret:
+                        return redirect('players:team_detail', team_secret=team_secret)
+                    else:
+                        return redirect('players:manager_daughter_rankings')
                 else:
                     messages.error(request, 'Cannot save rankings: No manager is assigned to this team yet.')
             except json.JSONDecodeError:
@@ -2443,10 +2444,6 @@ def manager_daughter_rankings_view(request):
     total_teams = Team.objects.count()
     num_rounds = math.ceil(total_players / total_teams) if total_teams > 0 else 1
 
-    # Check for success modal flag
-    show_success_modal = request.session.pop('show_success_modal', False)
-    num_players_ranked = request.session.pop('num_players_ranked', 0)
-
     context = {
         'all_players': all_players,
         'team_secret': team_secret,
@@ -2454,9 +2451,7 @@ def manager_daughter_rankings_view(request):
         'existing_rankings_data': json.dumps(existing_rankings_data),  # Pass full ranking data as JSON for JavaScript
         'manager_daughter_ids': json.dumps(list(manager_daughter_ids)),  # Pass as JSON for JavaScript
         'manager_daughter_count': manager_daughter_count,  # Pass the count for dynamic requirements
-        'num_rounds': num_rounds,  # Number of draft rounds
-        'show_success_modal': show_success_modal,
-        'num_players_ranked': num_players_ranked
+        'num_rounds': num_rounds  # Number of draft rounds
     }
     return render(request, 'players/manager_daughter_rankings.html', context)
 
