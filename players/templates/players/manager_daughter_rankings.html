@@ -39,6 +39,10 @@
         .player-item.dragging {
             opacity: 0.5;
         }
+        .player-item.drag-over-item {
+            border-top: 3px solid #0d6efd;
+            margin-top: 8px;
+        }
         .player-drop-zone.drag-over {
             background-color: #e3f2fd;
             border-color: #2196f3;
@@ -199,6 +203,7 @@
             document.querySelectorAll('.player-item').forEach(item => {
                 item.addEventListener('dragstart', handleDragStart);
                 item.addEventListener('dragend', handleDragEnd);
+                item.addEventListener('dragover', handleItemDragOver);
             });
         }
 
@@ -214,12 +219,33 @@
             document.querySelectorAll('.drag-over').forEach(el => {
                 el.classList.remove('drag-over');
             });
+            document.querySelectorAll('.drag-over-item').forEach(el => {
+                el.classList.remove('drag-over-item');
+            });
         }
 
         function handleDragOver(e) {
             if (e.preventDefault) {
                 e.preventDefault();
             }
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+
+        function handleItemDragOver(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            if (this === draggedElement) {
+                return false;
+            }
+
+            // Mark this item as the insertion point
+            document.querySelectorAll('.player-item').forEach(item => {
+                item.classList.remove('drag-over-item');
+            });
+            this.classList.add('drag-over-item');
+
             e.dataTransfer.dropEffect = 'move';
             return false;
         }
@@ -246,6 +272,19 @@
                 return false;
             }
 
+            // Check if we're dropping on another player item (for reordering)
+            const dropTarget = e.target.closest('.player-item');
+            if (dropTarget && dropTarget !== draggedElement) {
+                // Insert before the target item
+                const parent = dropTarget.parentNode;
+                parent.insertBefore(draggedElement, dropTarget);
+                draggedElement.classList.remove('dragging');
+
+                updateAllRankBadges();
+                updateRankingsField();
+                return false;
+            }
+
             // Remove placeholder if exists
             const placeholder = this.querySelector('p.text-muted');
             if (placeholder) {
@@ -259,6 +298,7 @@
             // Add drag event listeners to the clone
             clone.addEventListener('dragstart', handleDragStart);
             clone.addEventListener('dragend', handleDragEnd);
+            clone.addEventListener('dragover', handleItemDragOver);
 
             // Remove original element
             draggedElement.remove();
