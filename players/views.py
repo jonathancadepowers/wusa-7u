@@ -2379,8 +2379,14 @@ def manager_daughter_rankings_view(request):
         # Get and validate email address
         manager_email = request.POST.get('manager_email', '').strip().lower()
 
+        # Get the rankings data from the form (JSON with player IDs, ranks, and draft rounds)
+        rankings_data = request.POST.get('rankings', '')
+
         if not manager_email:
             messages.error(request, 'Please enter your email address.')
+            # Store rankings in session so user doesn't lose their work
+            request.session['unsaved_rankings'] = rankings_data
+            request.session['unsaved_email'] = request.POST.get('manager_email', '')
             return redirect(request.path + (f'?team_secret={team_secret}' if team_secret else ''))
 
         # Validate email matches a manager in the database
@@ -2388,10 +2394,10 @@ def manager_daughter_rankings_view(request):
             validated_manager = Manager.objects.get(email__iexact=manager_email)
         except Manager.DoesNotExist:
             messages.error(request, 'Email address not found. Please enter the email address associated with your manager account.')
+            # Store rankings in session so user doesn't lose their work
+            request.session['unsaved_rankings'] = rankings_data
+            request.session['unsaved_email'] = request.POST.get('manager_email', '')
             return redirect(request.path + (f'?team_secret={team_secret}' if team_secret else ''))
-
-        # Get the rankings data from the form (JSON with player IDs, ranks, and draft rounds)
-        rankings_data = request.POST.get('rankings', '')
 
         if rankings_data:
             # Parse JSON data: [{"player_id": X, "rank": Y, "round": Z}, ...]
@@ -2407,6 +2413,12 @@ def manager_daughter_rankings_view(request):
                     defaults={'ranking': rankings_json}
                 )
 
+                # Clear unsaved rankings from session after successful save
+                if 'unsaved_rankings' in request.session:
+                    del request.session['unsaved_rankings']
+                if 'unsaved_email' in request.session:
+                    del request.session['unsaved_email']
+
                 messages.success(request, f'Manager daughter rankings saved successfully! ({len(rankings_list)} players ranked)')
 
                 # Redirect back to team page if team_secret was provided
@@ -2419,10 +2431,20 @@ def manager_daughter_rankings_view(request):
         else:
             messages.error(request, 'No rankings data provided.')
 
-    # Load existing rankings for this manager
+    # Load existing rankings for this manager OR unsaved rankings from session
     existing_ranking = None
     existing_rankings_data = []
-    if manager:
+    unsaved_email = ''
+
+    # Check if there are unsaved rankings in the session (from failed validation)
+    if 'unsaved_rankings' in request.session and request.session['unsaved_rankings']:
+        try:
+            existing_rankings_data = json.loads(request.session['unsaved_rankings'])
+            unsaved_email = request.session.get('unsaved_email', '')
+        except json.JSONDecodeError:
+            pass
+    # Otherwise, load saved rankings for this manager
+    elif manager:
         try:
             existing_ranking = ManagerDaughterRanking.objects.get(manager=manager)
             # Parse the JSON to get full ranking data (player_id, rank, round)
@@ -2450,7 +2472,8 @@ def manager_daughter_rankings_view(request):
         'existing_rankings_data': json.dumps(existing_rankings_data),  # Pass full ranking data as JSON for JavaScript
         'manager_daughter_ids': json.dumps(list(manager_daughter_ids)),  # Pass as JSON for JavaScript
         'manager_daughter_count': manager_daughter_count,  # Pass the count for dynamic requirements
-        'num_rounds': num_rounds  # Number of draft rounds
+        'num_rounds': num_rounds,  # Number of draft rounds
+        'unsaved_email': unsaved_email  # Pre-fill email if validation failed
     }
     return render(request, 'players/manager_daughter_rankings.html', context)
 
