@@ -2376,6 +2376,20 @@ def manager_daughter_rankings_view(request):
             messages.error(request, 'Invalid team secret.')
 
     if request.method == 'POST':
+        # Get and validate email address
+        manager_email = request.POST.get('manager_email', '').strip().lower()
+
+        if not manager_email:
+            messages.error(request, 'Please enter your email address.')
+            return redirect(request.path + (f'?team_secret={team_secret}' if team_secret else ''))
+
+        # Validate email matches a manager in the database
+        try:
+            validated_manager = Manager.objects.get(email__iexact=manager_email)
+        except Manager.DoesNotExist:
+            messages.error(request, 'Email address not found. Please enter the email address associated with your manager account.')
+            return redirect(request.path + (f'?team_secret={team_secret}' if team_secret else ''))
+
         # Get the rankings data from the form (JSON with player IDs, ranks, and draft rounds)
         rankings_data = request.POST.get('rankings', '')
 
@@ -2387,15 +2401,11 @@ def manager_daughter_rankings_view(request):
                 # Save the rankings as JSON
                 rankings_json = json.dumps(rankings_list)
 
-                # Update or create ranking for this manager (ensures only one ranking per manager)
-                if manager:
-                    ManagerDaughterRanking.objects.update_or_create(
-                        manager=manager,
-                        defaults={'ranking': rankings_json}
-                    )
-                else:
-                    # If no manager, just create a new ranking
-                    ManagerDaughterRanking.objects.create(ranking=rankings_json)
+                # Update or create ranking for this manager (use validated_manager)
+                ManagerDaughterRanking.objects.update_or_create(
+                    manager=validated_manager,
+                    defaults={'ranking': rankings_json}
+                )
 
                 messages.success(request, f'Manager daughter rankings saved successfully! ({len(rankings_list)} players ranked)')
 

@@ -99,7 +99,23 @@
                             The system will use your rankings to suggest which round each daughter should be drafted in.
                         </div>
 
+                        <div class="alert alert-warning mb-4">
+                            <i class="bi bi-envelope me-2"></i>
+                            <strong>Email Verification Required:</strong> You must enter your manager email address below before submitting your rankings.
+                        </div>
+
                         <form method="post" id="rankingsForm">
+                            <div class="mb-4">
+                                <label for="manager_email" class="form-label"><strong>Your Manager Email Address:</strong></label>
+                                <input
+                                    type="email"
+                                    class="form-control"
+                                    id="manager_email"
+                                    name="manager_email"
+                                    placeholder="Enter your email address"
+                                    required>
+                                <div class="form-text">This must match the email address associated with your manager account.</div>
+                            </div>
                             {% csrf_token %}
                             <input type="hidden" id="rankingsField" name="rankings" value="">
                             {% if team_secret %}
