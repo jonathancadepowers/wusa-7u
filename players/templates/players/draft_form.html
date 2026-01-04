@@ -100,31 +100,60 @@
                         </div>
                         {% endif %}
 
-                        <!-- Read-only Draft Settings -->
+                        <!-- Draft Statistics -->
+                        {% if not picks_match_players %}
+                        <div class="alert alert-warning mb-4">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>Warning:</strong> Total draft picks ({{ total_draft_picks }}) does not equal total players ({{ player_count }}). Please review the player counts and draft settings.
+                        </div>
+                        {% endif %}
+
                         <div class="card mb-4 bg-light">
+                            <div class="card-header bg-secondary text-white">
+                                <strong><i class="bi bi-bar-chart me-2"></i>Draft Statistics</strong>
+                            </div>
                             <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label text-muted fw-bold">1. Draftable Players</label>
+                                        <p class="fs-4 mb-1 text-primary">{{ draftable_player_count }}</p>
+                                        <small class="text-muted">Players with "Draftable" flag = true</small>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label text-muted fw-bold">2. Draftable Rounds</label>
+                                        <p class="fs-4 mb-1 text-primary">{{ draftable_rounds }}</p>
+                                        <small class="text-muted">{{ draftable_player_count }} draftable players ÷ {{ team_count }} teams = {{ draftable_rounds }} (rounded down, no partial rounds)</small>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label text-muted fw-bold">3. Non-Draftable Players</label>
+                                        <p class="fs-4 mb-1 text-primary">{{ nondraftable_player_count }}</p>
+                                        <small class="text-muted">Players with "Draftable" flag = false</small>
+                                    </div>
+                                </div>
+
+                                <div class="row mb-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label text-muted fw-bold">4. Hat Pick Rounds</label>
+                                        <p class="fs-4 mb-1 text-primary">{{ nondraftable_rounds }}</p>
+                                        <small class="text-muted">({{ nondraftable_player_count }} non-draftable + {{ leftover_draftable_players }} leftover draftable) ÷ {{ team_count }} teams = {{ nondraftable_rounds }} rounds (rounded down)</small>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label text-muted fw-bold">5. Players in Final Round</label>
+                                        <p class="fs-4 mb-1 text-primary">{{ players_in_final_round }}</p>
+                                        <small class="text-muted">{{ player_count }} total players - {{ draftable_rounds }} draftable rounds × {{ team_count }} teams - {{ nondraftable_rounds }} hat pick rounds × {{ team_count }} teams = {{ players_in_final_round }} players</small>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label text-muted fw-bold">6. Total Draft Picks</label>
+                                        <p class="fs-4 mb-1 text-primary">{{ total_draft_picks }}</p>
+                                        <small class="text-muted">Sum of all picks across all rounds (including final partial round if needed)</small>
+                                    </div>
+                                </div>
+
                                 <div class="row">
-                                    <div class="col-md-3">
-                                        <label class="form-label text-muted">Total Players</label>
-                                        <p class="fs-5 mb-0">{{ player_count }}</p>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label class="form-label text-muted">Number of Rounds</label>
-                                        <p class="fs-5 mb-0">{% if draft %}{{ draft.rounds }}{% else %}{{ suggested_rounds }}{% endif %}</p>
-                                        {% if is_create %}
-                                            <small class="text-muted">Calculated as: Total Players / Number of Teams</small>
-                                        {% endif %}
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label class="form-label text-muted">Picks Per Round</label>
-                                        <p class="fs-5 mb-0">{% if draft %}{{ draft.picks_per_round }}{% else %}{{ suggested_picks_per_round }}{% endif %}</p>
-                                        {% if is_create %}
-                                            <small class="text-muted">Equal to the number of teams in the database</small>
-                                        {% endif %}
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label class="form-label text-muted">Max Players Per Team</label>
-                                        <p class="fs-5 mb-0">{{ max_players_per_team }}</p>
+                                    <div class="col-md-4">
+                                        <label class="form-label text-muted fw-bold">7. Total Players</label>
+                                        <p class="fs-4 mb-1 text-primary">{{ player_count }}</p>
+                                        <small class="text-muted">All players currently in the database</small>
                                     </div>
                                 </div>
                             </div>

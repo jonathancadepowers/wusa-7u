@@ -1172,6 +1172,40 @@ def edit_draft_view(request):
     player_count = Player.objects.count()
     team_count = Team.objects.count()
 
+    # Calculate draft statistics
+    import math
+
+    # 1. How many draftable players?
+    draftable_player_count = Player.objects.filter(draftable=True).count()
+
+    # 2. How many draftable rounds? (Cannot have partial rounds)
+    draftable_rounds = math.floor(draftable_player_count / team_count) if team_count > 0 else 0
+
+    # 3. How many non-draftable players?
+    nondraftable_player_count = Player.objects.filter(draftable=False).count()
+
+    # Left over draftable players who won't be drafted in draftable rounds
+    leftover_draftable_players = draftable_player_count - (draftable_rounds * team_count)
+
+    # 4. How many non-draftable rounds (hat pick rounds)?
+    total_nondraftable_pool = nondraftable_player_count + leftover_draftable_players
+    nondraftable_rounds = math.floor(total_nondraftable_pool / team_count) if team_count > 0 else 0
+
+    # 5. How many players in the final round?
+    total_picks_in_regular_rounds = (draftable_rounds * team_count) + (nondraftable_rounds * team_count)
+    players_in_final_round = player_count - total_picks_in_regular_rounds
+
+    # 6. Total number of draft picks across all rounds
+    if players_in_final_round > 0:
+        total_draft_picks = total_picks_in_regular_rounds + players_in_final_round
+    else:
+        total_draft_picks = total_picks_in_regular_rounds
+
+    # 7. Total number of players in database (already have this as player_count)
+
+    # Validation check
+    picks_match_players = (total_draft_picks == player_count)
+
     if request.method == 'POST':
 
         rounds = int(request.POST.get('rounds'))
@@ -1206,7 +1240,8 @@ def edit_draft_view(request):
 
         if draft:
             # Update existing draft
-            draft.rounds = rounds
+            draft.rounds_draftable = draftable_rounds
+            draft.rounds_nondraftable = nondraftable_rounds
             draft.picks_per_round = picks_per_round
             draft.order = order
             draft.final_round_draft_order = final_round_draft_order
@@ -1215,7 +1250,8 @@ def edit_draft_view(request):
         else:
             # Create new draft
             draft = Draft(
-                rounds=rounds,
+                rounds_draftable=draftable_rounds,
+                rounds_nondraftable=nondraftable_rounds,
                 picks_per_round=picks_per_round,
                 order=order,
                 final_round_draft_order=final_round_draft_order
@@ -1302,6 +1338,16 @@ def edit_draft_view(request):
         'final_round_team_names': final_round_team_names,
         'has_draft_picks': has_draft_picks,
         'no_show_players': no_show_players,
+        # Draft statistics
+        'draftable_player_count': draftable_player_count,
+        'draftable_rounds': draftable_rounds,
+        'nondraftable_player_count': nondraftable_player_count,
+        'leftover_draftable_players': leftover_draftable_players,
+        'nondraftable_rounds': nondraftable_rounds,
+        'players_in_final_round': players_in_final_round,
+        'total_draft_picks': total_draft_picks,
+        'picks_match_players': picks_match_players,
+        'team_count': team_count,
     }
     return render(request, 'players/draft_form.html', context)
 

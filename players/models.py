@@ -2,7 +2,8 @@ from django.db import models
 
 
 class Draft(models.Model):
-    rounds = models.IntegerField()
+    rounds_draftable = models.IntegerField()
+    rounds_nondraftable = models.IntegerField(default=0)
     picks_per_round = models.IntegerField()
     order = models.TextField()
     final_round_draft_order = models.TextField(blank=True, null=True)
