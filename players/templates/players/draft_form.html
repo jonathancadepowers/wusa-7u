@@ -269,15 +269,6 @@
                             <!-- Hidden field to store draft order as comma-separated IDs -->
                             <input type="hidden" id="orderField" name="order" value="">
 
-                        <div class="card mb-4 bg-light">
-                            <div class="card-header bg-secondary text-white">
-                                <strong><i class="bi bi-people me-2"></i>Manager's Daughters</strong>
-                            </div>
-                            <div class="card-body">
-                                <p class="mb-0">Based on the <a href="{% url 'players:manager_daughter_rankings_analyze' %}" target="_blank">ranking of managers' daughters</a>, before the draft starts, set all manager's daughters into a fixed draft position (by drafting them on the draft page). The higher ranked a manager's daughter is, the higher their draft position should be. This ensures managers are forced to pick their daughter at the appropriate time in the draft.</p>
-                            </div>
-                        </div>
-
                             <div class="mt-4 d-flex justify-content-between">
                                 <a href="{% url 'players:settings' %}" class="btn btn-secondary">
                                     <i class="bi bi-arrow-left me-1"></i>Cancel
