@@ -569,20 +569,42 @@
             `;
             container.appendChild(div);
 
-            // Add event listener to new checkbox
+            // Add event listener to new checkbox using the same function
             const newCheckbox = div.querySelector('.non-draftable-checkbox');
-            newCheckbox.addEventListener('change', recalculateStatistics);
+            newCheckbox.addEventListener('change', function(e) {
+                // If unchecked, remove the player from the list
+                if (!e.target.checked) {
+                    const parentCol = e.target.closest('.col-md-6');
+                    if (parentCol) {
+                        parentCol.remove();
+                    }
+                }
+                recalculateStatistics();
+            });
 
             // Trigger recalculation
             recalculateStatistics();
         }
 
         // Attach event listeners to checkboxes
-        document.addEventListener('DOMContentLoaded', function() {
+        function attachCheckboxListeners() {
             const checkboxes = document.querySelectorAll('.non-draftable-checkbox');
             checkboxes.forEach(checkbox => {
-                checkbox.addEventListener('change', recalculateStatistics);
+                checkbox.addEventListener('change', function(e) {
+                    // If unchecked, remove the player from the list
+                    if (!e.target.checked) {
+                        const parentCol = e.target.closest('.col-md-6');
+                        if (parentCol) {
+                            parentCol.remove();
+                        }
+                    }
+                    recalculateStatistics();
+                });
             });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            attachCheckboxListeners();
 
             // Initial calculation to ensure warning is shown if needed
             recalculateStatistics();
