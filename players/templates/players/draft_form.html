@@ -302,7 +302,6 @@
         // Real-time draft statistics recalculation
         const totalPlayers = {{ player_count }};
         const teamCount = {{ team_count }};
-        const allPlayerIds = {{ no_show_players|map(attribute='id')|list|safe }};
 
         function recalculateStatistics() {
             // Count checked non-draftable players
