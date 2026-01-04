@@ -115,8 +115,28 @@
 
                                 <hr class="my-3">
 
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Search for additional player to mark as non-draftable:</label>
+                                    <div class="input-group mb-2">
+                                        <input
+                                            type="text"
+                                            class="form-control"
+                                            id="player-search-input"
+                                            placeholder="Type player name..."
+                                            autocomplete="off">
+                                        <button class="btn btn-outline-secondary" type="button" id="clear-search-btn">
+                                            <i class="bi bi-x"></i>
+                                        </button>
+                                    </div>
+                                    <div id="player-search-results" class="list-group" style="max-height: 200px; overflow-y: auto; display: none;">
+                                        <!-- Search results will appear here -->
+                                    </div>
+                                </div>
+
+                                <hr class="my-3">
+
                                 <p class="mb-3"><strong>Select players who should be declared NOT draftable:</strong></p>
-                                <div class="row">
+                                <div class="row" id="non-draftable-checkboxes">
                                     {% for player in no_show_players %}
                                     <div class="col-md-6 mb-2">
                                         <div class="form-check">
@@ -493,6 +513,69 @@
             }
         }
 
+        // Player search functionality
+        let allPlayers = [];
+
+        async function loadAllPlayers() {
+            try {
+                const response = await fetch('/api/players/');
+                if (response.ok) {
+                    allPlayers = await response.json();
+                }
+            } catch (error) {
+                console.error('Error loading players:', error);
+            }
+        }
+
+        function searchPlayers(query) {
+            if (!query || query.length < 2) {
+                return [];
+            }
+
+            const lowerQuery = query.toLowerCase();
+            const existingCheckboxes = document.querySelectorAll('.non-draftable-checkbox');
+            const existingPlayerIds = new Set(Array.from(existingCheckboxes).map(cb => cb.value));
+
+            return allPlayers
+                .filter(player => {
+                    // Don't show players already in the checkbox list
+                    if (existingPlayerIds.has(player.id.toString())) {
+                        return false;
+                    }
+                    const fullName = `${player.first_name} ${player.last_name}`.toLowerCase();
+                    return fullName.includes(lowerQuery);
+                })
+                .slice(0, 10); // Limit to 10 results
+        }
+
+        function addPlayerToCheckboxList(player) {
+            const container = document.getElementById('non-draftable-checkboxes');
+            const div = document.createElement('div');
+            div.className = 'col-md-6 mb-2';
+            div.innerHTML = `
+                <div class="form-check">
+                    <input
+                        class="form-check-input non-draftable-checkbox"
+                        type="checkbox"
+                        name="non_draftable_players"
+                        value="${player.id}"
+                        id="noshow_${player.id}"
+                        checked>
+                    <label class="form-check-label" for="noshow_${player.id}">
+                        ${player.first_name} ${player.last_name} <span class="badge bg-success">Added</span>
+                    </label>
+                </div>
+            `;
+            container.appendChild(div);
+
+            // Add event listener to new checkbox
+            const newCheckbox = div.querySelector('.non-draftable-checkbox');
+            newCheckbox.addEventListener('change', recalculateStatistics);
+
+            // Trigger recalculation
+            recalculateStatistics();
+        }
+
         // Attach event listeners to checkboxes
         document.addEventListener('DOMContentLoaded', function() {
             const checkboxes = document.querySelectorAll('.non-draftable-checkbox');
@@ -502,6 +585,62 @@
 
             // Initial calculation to ensure warning is shown if needed
             recalculateStatistics();
+
+            // Load all players for search
+            loadAllPlayers();
+
+            // Player search input
+            const searchInput = document.getElementById('player-search-input');
+            const searchResults = document.getElementById('player-search-results');
+            const clearBtn = document.getElementById('clear-search-btn');
+
+            if (searchInput) {
+                searchInput.addEventListener('input', function(e) {
+                    const query = e.target.value;
+
+                    if (query.length < 2) {
+                        searchResults.style.display = 'none';
+                        searchResults.innerHTML = '';
+                        return;
+                    }
+
+                    const results = searchPlayers(query);
+
+                    if (results.length === 0) {
+                        searchResults.innerHTML = '<div class="list-group-item">No players found</div>';
+                        searchResults.style.display = 'block';
+                        return;
+                    }
+
+                    searchResults.innerHTML = results.map(player => `
+                        <button type="button" class="list-group-item list-group-item-action" data-player-id="${player.id}">
+                            ${player.first_name} ${player.last_name}
+                        </button>
+                    `).join('');
+                    searchResults.style.display = 'block';
+
+                    // Add click handlers to result items
+                    searchResults.querySelectorAll('button').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const playerId = this.dataset.playerId;
+                            const player = allPlayers.find(p => p.id.toString() === playerId);
+                            if (player) {
+                                addPlayerToCheckboxList(player);
+                                searchInput.value = '';
+                                searchResults.style.display = 'none';
+                                searchResults.innerHTML = '';
+                            }
+                        });
+                    });
+                });
+
+                clearBtn.addEventListener('click', function() {
+                    searchInput.value = '';
+                    searchResults.style.display = 'none';
+                    searchResults.innerHTML = '';
+                    searchInput.focus();
+                });
+            }
         });
 
         // Drag and Drop functionality

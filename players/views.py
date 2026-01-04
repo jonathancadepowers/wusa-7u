@@ -1433,6 +1433,22 @@ def validate_team_secret_view(request):
         }, status=400)
 
 
+def players_api_view(request):
+    """API endpoint to get list of all players"""
+    players = Player.objects.all().order_by('last_name', 'first_name')
+
+    players_data = []
+    for player in players:
+        players_data.append({
+            'id': player.id,
+            'first_name': player.first_name,
+            'last_name': player.last_name,
+            'draftable': player.draftable,
+        })
+
+    return JsonResponse(players_data, safe=False)
+
+
 def managers_list_api_view(request):
     """API endpoint to get list of all managers with their data"""
     managers = Manager.objects.select_related('daughter').prefetch_related('teams').all().order_by('last_name', 'first_name')
