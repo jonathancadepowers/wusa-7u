@@ -46,6 +46,11 @@
         .draft-table thead th {
             background-color: #f8f9fa;
         }
+        .draft-table thead th.hat-pick-round {
+            background-color: #fff3cd;
+            border-left: 3px solid #ffc107;
+            border-right: 3px solid #ffc107;
+        }
         .draft-table tbody td:first-child {
             background-color: #f8f9fa;
             width: 150px;
@@ -56,6 +61,14 @@
             width: 150px;
             min-width: 150px;
             max-width: 150px;
+        }
+        .draft-cell.hat-pick-round {
+            background-color: #fffbef;
+            border-left: 3px solid #ffc107;
+            border-right: 3px solid #ffc107;
+        }
+        .draft-cell.hat-pick-round.picked {
+            background-color: #ffeaa7;
         }
         .draft-cell.picked {
             background-color: #d1e7dd;
@@ -175,10 +188,10 @@
                                 <tr>
                                     <th class="text-center">Pick</th>
                                     {% for round_num in rounds %}
-                                        <th class="text-center">Round {{ round_num }}</th>
+                                        <th class="text-center{% if round_num in hat_pick_rounds %} hat-pick-round{% endif %}">Round {{ round_num }}</th>
                                     {% endfor %}
                                     {% if has_final_round %}
-                                        <th class="text-center">Round {{ final_round_number }}</th>
+                                        <th class="text-center hat-pick-round">Round {{ final_round_number }}</th>
                                     {% endif %}
                                 </tr>
                             </thead>
@@ -189,7 +202,7 @@
                                         {% for round_num in rounds %}
                                             {% with team=pick_assignments|get_item:round_num|get_item:pick_num %}
                                                 {% with existing_pick=draft_picks_map|get_item:round_num|get_item:pick_num %}
-                                                    <td class="draft-cell{% if existing_pick %} picked{% endif %}"
+                                                    <td class="draft-cell{% if existing_pick %} picked{% endif %}{% if round_num in hat_pick_rounds %} hat-pick-round{% endif %}"
                                                         data-practice-slot="{% if team.practice_slot %}{{ team.practice_slot.practice_slot }}{% else %}Not set{% endif %}"
                                                         data-team-name="{{ team }}"
                                                         {% if existing_pick %}data-player-id="{{ existing_pick.player_id }}" data-player-name="{{ existing_pick.player_name }}"{% endif %}>
@@ -203,7 +216,7 @@
                                             {% with team=pick_assignments|get_item:final_round_number|get_item:pick_num %}
                                                 {% if team %}
                                                     {% with existing_pick=draft_picks_map|get_item:final_round_number|get_item:pick_num %}
-                                                        <td class="draft-cell{% if existing_pick %} picked{% endif %}"
+                                                        <td class="draft-cell hat-pick-round{% if existing_pick %} picked{% endif %}"
                                                             data-practice-slot="{% if team.practice_slot %}{{ team.practice_slot.practice_slot }}{% else %}Not set{% endif %}"
                                                             data-team-name="{{ team }}"
                                                             {% if existing_pick %}data-player-id="{{ existing_pick.player_id }}" data-player-name="{{ existing_pick.player_name }}"{% endif %}>

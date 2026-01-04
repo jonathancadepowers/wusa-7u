@@ -2859,11 +2859,15 @@ def run_draft_view(request):
         for pick_num, team_id in enumerate(final_round_team_ids, start=1):
             pick_assignments[final_round_number][pick_num] = final_teams_dict[team_id]
 
+    # Determine which rounds are hat pick rounds
+    hat_pick_rounds = set(range(draft.rounds_draftable + 1, total_rounds + 1))
+
     context = {
         'draft': draft,
         'rounds': rounds,
         'picks': picks,
         'pick_assignments': pick_assignments,
+        'hat_pick_rounds': hat_pick_rounds,
         'draft_picks_map': draft_picks_map,
         'show_grid': True,
         'has_final_round': has_final_round,
