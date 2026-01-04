@@ -2913,6 +2913,24 @@ def run_draft_view(request):
     managers_with_rankings = ManagerDaughterRanking.objects.values_list('manager_id', flat=True)
     managers_without_rankings = all_managers.exclude(id__in=managers_with_rankings)
 
+    # Check if all manager's daughters have been drafted
+    managers_with_daughters = Manager.objects.filter(daughter__isnull=False)
+    undrafted_daughters = []
+
+    for manager in managers_with_daughters:
+        daughter = manager.daughter
+        # Check if daughter has been drafted (has a draft pick assigned)
+        is_drafted = DraftPick.objects.filter(player=daughter).exists()
+        if not is_drafted:
+            undrafted_daughters.append({
+                'manager': manager,
+                'daughter': daughter
+            })
+
+    # Calculate daughters drafted counts
+    total_daughters_count = managers_with_daughters.count()
+    daughters_drafted_count = total_daughters_count - len(undrafted_daughters)
+
     context = {
         'draft': draft,
         'rounds': rounds,
@@ -2927,6 +2945,9 @@ def run_draft_view(request):
         'top_players': top_players,
         'managers_without_rankings': managers_without_rankings,
         'managers_without_count': managers_without_rankings.count(),
+        'undrafted_daughters': undrafted_daughters,
+        'total_daughters_count': total_daughters_count,
+        'daughters_drafted_count': daughters_drafted_count,
     }
     return render(request, 'players/run_draft.html', context)
 

@@ -155,6 +155,21 @@
             {% endfor %}
         {% endif %}
 
+        {% if undrafted_daughters %}
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <h5 class="alert-heading"><i class="bi bi-exclamation-triangle me-2"></i>Manager's Daughters Not Yet Drafted</h5>
+                <p>The draft should not begin until all manager's daughters have been preset into a draft position.</p>
+                <p class="mb-2">The following manager's daughters have not been drafted yet:</p>
+                <ul class="mb-3">
+                    {% for item in undrafted_daughters %}
+                        <li><strong>{{ item.daughter.first_name }} {{ item.daughter.last_name }}</strong> (Manager: {{ item.manager.first_name }} {{ item.manager.last_name }})</li>
+                    {% endfor %}
+                </ul>
+                <p class="mb-0">Please click the <button type="button" class="btn btn-warning btn-sm" disabled>Manager's Daughters Rankings</button> button above to review the rankings and manually assign these players to draft positions before continuing.</p>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endif %}
+
         <div class="card shadow">
             <div class="card-header bg-primary text-white">
                 <div class="d-flex justify-content-between align-items-center">
@@ -172,6 +187,11 @@
                         <div class="text-white">
                             <small>
                                 <strong>Players Remaining:</strong> <span id="playersRemaining">0</span>
+                            </small>
+                        </div>
+                        <div class="text-white">
+                            <small>
+                                <strong>Manager's Daughters Drafted:</strong> <span id="daughtersDrafted">{{ daughters_drafted_count }}</span>/<span id="totalDaughters">{{ total_daughters_count }}</span>
                             </small>
                         </div>
                         <div>
