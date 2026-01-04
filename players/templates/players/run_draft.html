@@ -188,10 +188,18 @@
                                 <tr>
                                     <th class="text-center">Pick</th>
                                     {% for round_num in rounds %}
-                                        <th class="text-center{% if round_num in hat_pick_rounds %} hat-pick-round{% endif %}">Round {{ round_num }}</th>
+                                        <th class="text-center{% if round_num in hat_pick_rounds %} hat-pick-round{% endif %}">
+                                            Round {{ round_num }}
+                                            {% if round_num in hat_pick_rounds %}
+                                                <br><small class="badge bg-warning text-dark">Hat Pick</small>
+                                            {% endif %}
+                                        </th>
                                     {% endfor %}
                                     {% if has_final_round %}
-                                        <th class="text-center hat-pick-round">Round {{ final_round_number }}</th>
+                                        <th class="text-center hat-pick-round">
+                                            Round {{ final_round_number }}
+                                            <br><small class="badge bg-warning text-dark">Hat Pick</small>
+                                        </th>
                                     {% endif %}
                                 </tr>
                             </thead>
