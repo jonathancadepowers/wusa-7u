@@ -2866,6 +2866,53 @@ def run_draft_view(request):
     # Determine which rounds are hat pick rounds
     hat_pick_rounds = set(range(draft.rounds_draftable + 1, total_rounds + 1))
 
+    # Get manager daughter rankings data for modal
+    from collections import defaultdict
+    import statistics
+
+    all_rankings = ManagerDaughterRanking.objects.all()
+    player_scores = defaultdict(list)
+    player_rounds = defaultdict(list)
+    max_rank = 0
+
+    for ranking in all_rankings:
+        rankings_data = json.loads(ranking.ranking)
+        for item in rankings_data:
+            player_id = item.get('player_id')
+            rank = item.get('rank')
+            round_num = item.get('round')
+            if player_id and rank:
+                player_scores[player_id].append(rank)
+                max_rank = max(max_rank, rank)
+                if round_num:
+                    player_rounds[player_id].append(round_num)
+
+    player_stats = []
+    for player_id, ranks in player_scores.items():
+        borda_count = sum(max_rank - rank + 1 for rank in ranks)
+        avg_rank = sum(ranks) / len(ranks)
+        rounds = player_rounds.get(player_id, [])
+        suggested_round = round(statistics.median(rounds)) if rounds else None
+
+        try:
+            player = Player.objects.get(id=player_id)
+            player_stats.append({
+                'player': player,
+                'average_rank': avg_rank,
+                'borda_count': borda_count,
+                'num_rankings': len(ranks),
+                'suggested_round': suggested_round
+            })
+        except Player.DoesNotExist:
+            continue
+
+    player_stats.sort(key=lambda x: (-x['borda_count'], x['average_rank']))
+    top_players = player_stats[:20]
+
+    all_managers = Manager.objects.all()
+    managers_with_rankings = ManagerDaughterRanking.objects.values_list('manager_id', flat=True)
+    managers_without_rankings = all_managers.exclude(id__in=managers_with_rankings)
+
     context = {
         'draft': draft,
         'rounds': rounds,
@@ -2877,6 +2924,9 @@ def run_draft_view(request):
         'has_final_round': has_final_round,
         'final_round_number': final_round_number,
         'portal_open': portal_open,
+        'top_players': top_players,
+        'managers_without_rankings': managers_without_rankings,
+        'managers_without_count': managers_without_rankings.count(),
     }
     return render(request, 'players/run_draft.html', context)
 
