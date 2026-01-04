@@ -125,6 +125,9 @@
 
 {% block navbar_actions %}
     <div class="d-flex gap-2">
+        <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#managerDaughterRankingsModal">
+            <i class="bi bi-people me-1"></i>Manager's Daughters Rankings
+        </button>
         <form method="POST" action="{% url 'players:toggle_draft_portal' %}" class="d-inline">
             {% csrf_token %}
             <button type="submit" class="btn {% if portal_open %}btn-danger{% else %}btn-success{% endif %}">
@@ -174,12 +177,7 @@
 
         <div class="card shadow">
             <div class="card-header bg-primary text-white">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#managerDaughterRankingsModal">
-                            <i class="bi bi-people me-1"></i>Manager's Daughters Rankings
-                        </button>
-                    </div>
+                <div class="d-flex justify-content-end align-items-center">
                     <div class="d-flex align-items-center gap-3">
                         <div class="text-white">
                             <small>
