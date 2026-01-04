@@ -191,6 +191,17 @@
                                         <p class="fs-4 mb-1 text-primary" id="stat-total-players">{{ player_count }}</p>
                                         <small class="text-muted">All players currently in the database</small>
                                     </div>
+                                    <div class="col-md-8">
+                                        <label class="form-label text-muted fw-bold">Draft Visual</label>
+                                        <div id="draft-visual-container" style="display: flex; gap: 4px; flex-wrap: wrap; align-items: flex-end; min-height: 80px;">
+                                            <!-- Draft rounds will be rendered here by JavaScript -->
+                                        </div>
+                                        <small class="text-muted">
+                                            <span style="display: inline-block; width: 12px; height: 12px; background-color: #0d6efd; border: 1px solid #0a58ca; margin-right: 4px;"></span>Non-Hat Pick Rounds
+                                            &nbsp;&nbsp;
+                                            <span style="display: inline-block; width: 12px; height: 12px; background-color: #ffc107; border: 1px solid #d39e00; margin-right: 4px;"></span>Hat Pick Rounds
+                                        </small>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -370,6 +381,115 @@
                 warningAlert.style.display = 'block';
             } else {
                 warningAlert.style.display = 'none';
+            }
+
+            // Render draft visual
+            renderDraftVisual(draftableRounds, nondraftableRounds, teamCount, totalNondraftablePool);
+        }
+
+        function renderDraftVisual(draftableRounds, nondraftableRounds, teamCount, totalNondraftablePool) {
+            const container = document.getElementById('draft-visual-container');
+            container.innerHTML = '';
+
+            if (draftableRounds === 0 && nondraftableRounds === 0) {
+                container.innerHTML = '<small class="text-muted">No rounds configured</small>';
+                return;
+            }
+
+            const maxHeight = 100; // Maximum height in pixels
+            const maxPicks = Math.max(teamCount, totalNondraftablePool > 0 ? Math.ceil(totalNondraftablePool / nondraftableRounds) : 0);
+
+            // Render non-hat pick rounds
+            for (let i = 1; i <= draftableRounds; i++) {
+                const picks = teamCount;
+                const height = Math.max(20, (picks / maxPicks) * maxHeight);
+
+                const round = document.createElement('div');
+                round.style.cssText = `
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: flex-end;
+                    min-width: 35px;
+                `;
+
+                const bar = document.createElement('div');
+                bar.style.cssText = `
+                    width: 30px;
+                    height: ${height}px;
+                    background-color: #0d6efd;
+                    border: 2px solid #0a58ca;
+                    border-radius: 3px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: white;
+                    font-weight: bold;
+                    font-size: 11px;
+                `;
+                bar.textContent = picks;
+                bar.title = `Round ${i}: ${picks} picks`;
+
+                const label = document.createElement('small');
+                label.style.cssText = 'font-size: 10px; margin-top: 2px; color: #6c757d;';
+                label.textContent = `R${i}`;
+
+                round.appendChild(bar);
+                round.appendChild(label);
+                container.appendChild(round);
+            }
+
+            // Render hat pick rounds
+            for (let i = 1; i <= nondraftableRounds; i++) {
+                const isLastRound = (i === nondraftableRounds);
+                let picks;
+
+                if (nondraftableRounds === 1) {
+                    picks = totalNondraftablePool;
+                } else {
+                    if (isLastRound) {
+                        const fullRounds = nondraftableRounds - 1;
+                        picks = totalNondraftablePool - (fullRounds * teamCount);
+                    } else {
+                        picks = teamCount;
+                    }
+                }
+
+                const height = Math.max(20, (picks / maxPicks) * maxHeight);
+
+                const round = document.createElement('div');
+                round.style.cssText = `
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: flex-end;
+                    min-width: 35px;
+                `;
+
+                const bar = document.createElement('div');
+                bar.style.cssText = `
+                    width: 30px;
+                    height: ${height}px;
+                    background-color: #ffc107;
+                    border: 2px solid #d39e00;
+                    border-radius: 3px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: #000;
+                    font-weight: bold;
+                    font-size: 11px;
+                `;
+                bar.textContent = picks;
+                bar.title = `Hat Pick Round ${i}: ${picks} picks`;
+
+                const label = document.createElement('small');
+                label.style.cssText = 'font-size: 10px; margin-top: 2px; color: #6c757d;';
+                label.textContent = `H${i}`;
+
+                round.appendChild(bar);
+                round.appendChild(label);
+                container.appendChild(round);
             }
         }
 
