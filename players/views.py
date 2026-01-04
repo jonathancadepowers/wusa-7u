@@ -1272,7 +1272,9 @@ def edit_draft_view(request):
             draft.order = order
             draft.final_round_draft_order = final_round_draft_order
             draft.save()
-            messages.success(request, 'Draft updated successfully!')
+
+            from django.utils.safestring import mark_safe
+            messages.success(request, mark_safe('Draft updated successfully! <a href="/draft/run/" class="alert-link">Go to Draft Board</a>'))
         else:
             # Create new draft
             draft = Draft(
@@ -1283,7 +1285,9 @@ def edit_draft_view(request):
                 final_round_draft_order=final_round_draft_order
             )
             draft.save()
-            messages.success(request, 'Draft created successfully!')
+
+            from django.utils.safestring import mark_safe
+            messages.success(request, mark_safe('Draft created successfully! <a href="/draft/run/" class="alert-link">Go to Draft Board</a>'))
         return redirect('players:edit_draft')
 
     is_create = draft is None
