@@ -2891,8 +2891,8 @@ def run_draft_view(request):
     for player_id, ranks in player_scores.items():
         borda_count = sum(max_rank - rank + 1 for rank in ranks)
         avg_rank = sum(ranks) / len(ranks)
-        rounds = player_rounds.get(player_id, [])
-        suggested_round = round(statistics.median(rounds)) if rounds else None
+        player_round_nums = player_rounds.get(player_id, [])
+        suggested_round = round(statistics.median(player_round_nums)) if player_round_nums else None
 
         try:
             player = Player.objects.get(id=player_id)
