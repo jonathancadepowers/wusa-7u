@@ -595,8 +595,9 @@ def validation_code_setup_draft():
     if draft:
         # Check that all required draft configuration fields are populated
         # (rounds > 0, picks_per_round > 0, and order is not empty)
+        total_rounds = draft.rounds_draftable + draft.rounds_nondraftable
         draft_valid = (
-            draft.rounds and draft.rounds > 0 and
+            total_rounds and total_rounds > 0 and
             draft.picks_per_round and draft.picks_per_round > 0 and
             draft.order and draft.order.strip() != ''
         )
@@ -623,7 +624,8 @@ def validation_code_setup_draft():
     # Return metadata for display
     if draft:
         if draft_setup_complete:
-            status_note = f'Draft configured: {draft.rounds} rounds, {draft.picks_per_round} teams'
+            total_rounds = draft.rounds_draftable + draft.rounds_nondraftable
+            status_note = f'Draft configured: {total_rounds} rounds, {draft.picks_per_round} teams'
         else:
             status_note = 'Draft exists but not fully configured'
     else:
@@ -1307,11 +1309,12 @@ def edit_draft_view(request):
     final_round_team_names = []
 
     if draft:
-        total_regular_picks = draft.rounds * draft.picks_per_round
+        total_rounds = draft.rounds_draftable + draft.rounds_nondraftable
+        total_regular_picks = total_rounds * draft.picks_per_round
         if player_count > total_regular_picks:
             needs_extra_round = True
             extra_picks_needed = player_count - total_regular_picks
-            final_round_number = draft.rounds + 1
+            final_round_number = total_rounds + 1
 
             # Get team names for final round order if it exists
             if draft.final_round_draft_order:
@@ -2754,7 +2757,8 @@ def run_draft_view(request):
         return redirect('players:edit_draft')
 
     # Create ranges for rounds and picks
-    rounds = list(range(1, draft.rounds + 1))
+    total_rounds = draft.rounds_draftable + draft.rounds_nondraftable
+    rounds = list(range(1, total_rounds + 1))
     picks = list(range(1, draft.picks_per_round + 1))
 
     # Parse the order field to get team objects
@@ -2800,7 +2804,8 @@ def run_draft_view(request):
 
     if draft.final_round_draft_order:
         has_final_round = True
-        final_round_number = draft.rounds + 1
+        total_rounds = draft.rounds_draftable + draft.rounds_nondraftable
+        final_round_number = total_rounds + 1
 
         # Parse final round team IDs
         final_round_team_ids = [int(tid) for tid in draft.final_round_draft_order.split(',') if tid]
@@ -3027,7 +3032,8 @@ def validate_draft_assignment_view(request):
         draft = Draft.objects.latest('created_at')
 
         # Calculate total draft slots
-        total_slots = draft.rounds * draft.picks_per_round
+        total_rounds = draft.rounds_draftable + draft.rounds_nondraftable
+        total_slots = total_rounds * draft.picks_per_round
 
         # Add final round picks if configured
         if draft.final_round_draft_order:
@@ -3264,7 +3270,8 @@ def simulate_draft_view(request):
         current_player_index = 0
 
         # Create picks for regular rounds
-        for round_num in range(1, draft.rounds + 1):
+        total_rounds = draft.rounds_draftable + draft.rounds_nondraftable
+        for round_num in range(1, total_rounds + 1):
             if current_player_index >= len(available_players):
                 break
 
@@ -3297,7 +3304,8 @@ def simulate_draft_view(request):
             final_round_teams = Team.objects.filter(id__in=final_round_team_ids)
             teams_dict = {team.id: team for team in final_round_teams}
 
-            final_round_num = draft.rounds + 1
+            total_rounds = draft.rounds_draftable + draft.rounds_nondraftable
+            final_round_num = total_rounds + 1
 
             for pick_num, team_id in enumerate(final_round_team_ids, start=1):
                 if current_player_index >= len(available_players):
