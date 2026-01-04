@@ -162,8 +162,7 @@
                         <form method="post">
                             {% csrf_token %}
 
-                            <!-- Hidden fields to preserve rounds and picks_per_round values -->
-                            <input type="hidden" name="rounds" value="{% if draft %}{{ draft.rounds }}{% else %}{{ suggested_rounds }}{% endif %}">
+                            <!-- Hidden field to preserve picks_per_round value -->
                             <input type="hidden" name="picks_per_round" value="{% if draft %}{{ draft.picks_per_round }}{% else %}{{ suggested_picks_per_round }}{% endif %}">
 
                             <!-- Draft Order Section -->

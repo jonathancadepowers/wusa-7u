@@ -1210,7 +1210,6 @@ def edit_draft_view(request):
 
     if request.method == 'POST':
 
-        rounds = int(request.POST.get('rounds'))
         picks_per_round = int(request.POST.get('picks_per_round'))
         order = request.POST.get('order', '')
 
@@ -1224,9 +1223,29 @@ def edit_draft_view(request):
         if non_draftable_player_ids:
             Player.objects.filter(id__in=non_draftable_player_ids).update(draftable=False)
 
-        # Calculate if we need a final round with partial picks
+        # RECALCULATE draft statistics after updating draftable flags
         player_count = Player.objects.count()
-        total_regular_picks = rounds * picks_per_round
+        team_count = Team.objects.count()
+
+        # 1. How many draftable players?
+        draftable_player_count = Player.objects.filter(draftable=True).count()
+
+        # 2. How many draftable rounds?
+        draftable_rounds = math.floor(draftable_player_count / team_count) if team_count > 0 else 0
+
+        # 3. How many non-draftable players?
+        nondraftable_player_count = Player.objects.filter(draftable=False).count()
+
+        # Left over draftable players
+        leftover_draftable_players = draftable_player_count - (draftable_rounds * team_count)
+
+        # 4. How many non-draftable rounds?
+        total_nondraftable_pool = nondraftable_player_count + leftover_draftable_players
+        nondraftable_rounds = math.floor(total_nondraftable_pool / team_count) if team_count > 0 else 0
+
+        # Calculate if we need a final round with partial picks
+        total_rounds = draftable_rounds + nondraftable_rounds
+        total_regular_picks = total_rounds * picks_per_round
 
         # Generate final round draft order if needed
         final_round_draft_order = ''
