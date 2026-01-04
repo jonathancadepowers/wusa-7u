@@ -3063,9 +3063,14 @@ def make_pick_view(request):
             }
         )
 
+        # Check if this player is a manager's daughter
+        is_managers_daughter = hasattr(player, 'manager_daughter') and player.manager_daughter is not None
+
         return JsonResponse({
             'success': True,
-            'player_name': f"{player.first_name} {player.last_name}"
+            'player_name': f"{player.first_name} {player.last_name}",
+            'is_managers_daughter': is_managers_daughter,
+            'player_id': player.id
         })
 
     except Player.DoesNotExist:
@@ -3109,6 +3114,11 @@ def undraft_pick_view(request):
             player_conflict = player.conflict if player else None
             player_draftable = player.draftable if player else None
 
+            # Check if this player is a manager's daughter
+            is_managers_daughter = False
+            if player:
+                is_managers_daughter = hasattr(player, 'manager_daughter') and player.manager_daughter is not None
+
             draft_pick.delete()
 
             # Broadcast the undraft to all connected WebSocket clients
@@ -3136,7 +3146,9 @@ def undraft_pick_view(request):
                 )
 
         return JsonResponse({
-            'success': True
+            'success': True,
+            'is_managers_daughter': is_managers_daughter,
+            'player_id': player_id
         })
 
     except Team.DoesNotExist:

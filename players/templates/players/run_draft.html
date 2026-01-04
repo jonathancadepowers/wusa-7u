@@ -159,14 +159,14 @@
         {% endif %}
 
         {% if undrafted_daughters %}
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <h5 class="alert-heading"><i class="bi bi-exclamation-triangle me-2"></i>Manager's Daughters Not Yet Drafted ({{ undrafted_daughters|length }})</h5>
+            <div id="undraftedDaughtersAlert" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <h5 class="alert-heading"><i class="bi bi-exclamation-triangle me-2"></i>Manager's Daughters Not Yet Drafted (<span id="undraftedDaughtersCount">{{ undrafted_daughters|length }}</span>)</h5>
                 <p class="mb-0">The draft should not begin until all manager's daughters have been preset into a draft position. <a href="#undraftedDaughtersList" data-bs-toggle="collapse" class="alert-link">Show list</a></p>
                 <div class="collapse" id="undraftedDaughtersList">
                     <p class="mb-2 mt-3">The following manager's daughters have not been drafted yet:</p>
-                    <ul class="mb-3">
+                    <ul class="mb-3" id="undraftedDaughtersListItems">
                         {% for item in undrafted_daughters %}
-                            <li><strong>{{ item.daughter.first_name }} {{ item.daughter.last_name }}</strong> (Manager: {{ item.manager.first_name }} {{ item.manager.last_name }})</li>
+                            <li data-player-id="{{ item.daughter.id }}"><strong>{{ item.daughter.first_name }} {{ item.daughter.last_name }}</strong> (Manager: {{ item.manager.first_name }} {{ item.manager.last_name }})</li>
                         {% endfor %}
                     </ul>
                     <p class="mb-0">Click the <strong>Manager's Daughters Rankings</strong> button above to review the rankings and manually assign these players to draft positions.</p>
@@ -545,6 +545,53 @@
             document.getElementById('playersRemaining').textContent = remainingCells;
         }
 
+        // Helper function to update manager's daughters tracking
+        function updateManagersDaughters(playerId, action) {
+            const totalDaughtersElem = document.getElementById('totalDaughters');
+            const daughtersDraftedElem = document.getElementById('daughtersDrafted');
+            const undraftedCountElem = document.getElementById('undraftedDaughtersCount');
+            const undraftedListElem = document.getElementById('undraftedDaughtersListItems');
+            const alertElem = document.getElementById('undraftedDaughtersAlert');
+
+            if (!totalDaughtersElem || !daughtersDraftedElem) return;
+
+            const totalDaughters = parseInt(totalDaughtersElem.textContent);
+            let daughtersDrafted = parseInt(daughtersDraftedElem.textContent);
+
+            if (action === 'drafted') {
+                daughtersDrafted++;
+                // Remove from undrafted list
+                if (undraftedListElem) {
+                    const listItem = undraftedListElem.querySelector(`li[data-player-id="${playerId}"]`);
+                    if (listItem) {
+                        listItem.remove();
+                    }
+                }
+            } else if (action === 'undrafted') {
+                daughtersDrafted--;
+                // We can't add back to the list without player name/manager info
+                // So just update the count - user can refresh to see the full list
+            }
+
+            // Update the drafted count
+            daughtersDraftedElem.textContent = daughtersDrafted;
+
+            // Update the undrafted count
+            const undraftedCount = totalDaughters - daughtersDrafted;
+            if (undraftedCountElem) {
+                undraftedCountElem.textContent = undraftedCount;
+            }
+
+            // Hide/show the alert based on whether there are undrafted daughters
+            if (alertElem) {
+                if (undraftedCount === 0) {
+                    alertElem.style.display = 'none';
+                } else {
+                    alertElem.style.display = 'block';
+                }
+            }
+        }
+
         // Helper function to get cell by round and pick
         function getCellByRoundPick(round, pick) {
             const rows = document.querySelectorAll('.draft-table tbody tr');
@@ -786,6 +833,11 @@
                     // Update player counts
                     updatePlayerCounts();
 
+                    // Update manager's daughters tracking if applicable
+                    if (data.is_managers_daughter) {
+                        updateManagersDaughters(data.player_id, 'drafted');
+                    }
+
                     // Auto-progress to next unpicked cell
                     const nextUnpicked = findNextUnpickedCell();
                     if (nextUnpicked) {
@@ -856,6 +908,11 @@
 
                     // Update player counts
                     updatePlayerCounts();
+
+                    // Update manager's daughters tracking if applicable
+                    if (data.is_managers_daughter && data.player_id) {
+                        updateManagersDaughters(data.player_id, 'undrafted');
+                    }
                 } else {
                     alert('Error: ' + data.error);
                     this.disabled = false;
