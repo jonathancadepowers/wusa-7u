@@ -476,6 +476,7 @@
                 }
 
                 const height = Math.max(20, (picks / maxPicks) * maxHeight);
+                const roundNumber = draftableRounds + i; // Continue numbering from non-hat pick rounds
 
                 const round = document.createElement('div');
                 round.style.cssText = `
@@ -501,11 +502,11 @@
                     font-size: 11px;
                 `;
                 bar.textContent = picks;
-                bar.title = `Hat Pick Round ${i}: ${picks} picks`;
+                bar.title = `Round ${roundNumber} (Hat Pick): ${picks} picks`;
 
                 const label = document.createElement('small');
                 label.style.cssText = 'font-size: 10px; margin-top: 2px; color: #6c757d;';
-                label.textContent = `H${i}`;
+                label.textContent = `R${roundNumber}`;
 
                 round.appendChild(bar);
                 round.appendChild(label);
