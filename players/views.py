@@ -1190,17 +1190,22 @@ def edit_draft_view(request):
     leftover_draftable_players = draftable_player_count - (draftable_rounds * team_count)
 
     # 4. How many non-draftable rounds (hat pick rounds)?
-    # Hat pick round exists if there are ANY non-draftable or leftover players
+    # Hat pick rounds may be multiple rounds if there are more players than teams
+    # Example: 29 players with 18 teams = 2 rounds (18 + 11)
     total_nondraftable_pool = nondraftable_player_count + leftover_draftable_players
-    nondraftable_rounds = 1 if total_nondraftable_pool > 0 else 0
+    nondraftable_rounds = math.ceil(total_nondraftable_pool / team_count) if team_count > 0 and total_nondraftable_pool > 0 else 0
 
-    # 5. How many players in the final round (hat pick round)?
-    # If there's a hat pick round, all players in the pool go into that round
-    players_in_final_round = total_nondraftable_pool if nondraftable_rounds > 0 else 0
+    # 5. How many players in the final hat pick round?
+    # All but the last hat pick round will be full rounds, last round may be partial
+    if nondraftable_rounds > 0:
+        full_hat_pick_rounds = nondraftable_rounds - 1
+        players_in_final_round = total_nondraftable_pool - (full_hat_pick_rounds * team_count)
+    else:
+        players_in_final_round = 0
 
     # 6. Total number of draft picks across all rounds
-    # Draftable rounds are full rounds, hat pick round contains remaining players
-    total_draft_picks = (draftable_rounds * team_count) + players_in_final_round
+    # Draftable rounds are full rounds, hat pick rounds contain all remaining players
+    total_draft_picks = (draftable_rounds * team_count) + total_nondraftable_pool
 
     # 7. Total number of players in database (already have this as player_count)
 
@@ -1239,9 +1244,9 @@ def edit_draft_view(request):
         leftover_draftable_players = draftable_player_count - (draftable_rounds * team_count)
 
         # 4. How many non-draftable rounds (hat pick rounds)?
-        # Hat pick round exists if there are ANY non-draftable or leftover players
+        # Hat pick rounds may be multiple rounds if there are more players than teams
         total_nondraftable_pool = nondraftable_player_count + leftover_draftable_players
-        nondraftable_rounds = 1 if total_nondraftable_pool > 0 else 0
+        nondraftable_rounds = math.ceil(total_nondraftable_pool / team_count) if team_count > 0 and total_nondraftable_pool > 0 else 0
 
         # Calculate total picks
         # Draftable rounds are full rounds, hat pick round (if exists) contains remaining players
@@ -1365,6 +1370,7 @@ def edit_draft_view(request):
         'draftable_rounds': draftable_rounds,
         'nondraftable_player_count': nondraftable_player_count,
         'leftover_draftable_players': leftover_draftable_players,
+        'total_nondraftable_pool': total_nondraftable_pool,
         'nondraftable_rounds': nondraftable_rounds,
         'players_in_final_round': players_in_final_round,
         'total_draft_picks': total_draft_picks,
