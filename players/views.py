@@ -3064,7 +3064,8 @@ def make_pick_view(request):
         )
 
         # Check if this player is a manager's daughter
-        is_managers_daughter = hasattr(player, 'manager_daughter') and player.manager_daughter is not None
+        # A player is a manager's daughter if there's a Manager whose daughter field points to this player
+        is_managers_daughter = Manager.objects.filter(daughter=player).exists()
 
         return JsonResponse({
             'success': True,
@@ -3115,9 +3116,10 @@ def undraft_pick_view(request):
             player_draftable = player.draftable if player else None
 
             # Check if this player is a manager's daughter
+            # A player is a manager's daughter if there's a Manager whose daughter field points to this player
             is_managers_daughter = False
             if player:
-                is_managers_daughter = hasattr(player, 'manager_daughter') and player.manager_daughter is not None
+                is_managers_daughter = Manager.objects.filter(daughter=player).exists()
 
             draft_pick.delete()
 
