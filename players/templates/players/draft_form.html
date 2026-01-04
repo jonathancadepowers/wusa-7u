@@ -153,17 +153,17 @@
                                     <div class="col-md-4">
                                         <label class="form-label text-muted fw-bold">1. Draftable Players</label>
                                         <p class="fs-4 mb-1 text-primary" id="stat-draftable-players">{{ draftable_player_count }}</p>
-                                        <small class="text-muted">Players with "Draftable" flag = true</small>
+                                        <small class="text-muted">Players will be drafted during a non-hat pick round</small>
                                     </div>
                                     <div class="col-md-4">
-                                        <label class="form-label text-muted fw-bold">2. Draftable Rounds</label>
+                                        <label class="form-label text-muted fw-bold">2. Non-Draftable Players</label>
+                                        <p class="fs-4 mb-1 text-primary" id="stat-nondraftable-players">{{ nondraftable_player_count }}</p>
+                                        <small class="text-muted">Players who will be randomly assigned to a team during a hat pick round</small>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label text-muted fw-bold">3. Non-Hat Pick Rounds</label>
                                         <p class="fs-4 mb-1 text-primary" id="stat-draftable-rounds">{{ draftable_rounds }}</p>
                                         <small class="text-muted" id="stat-draftable-rounds-help">{{ draftable_player_count }} draftable players ÷ {{ team_count }} teams = {{ draftable_rounds }} (rounded down, no partial rounds)</small>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label text-muted fw-bold">3. Non-Draftable Players</label>
-                                        <p class="fs-4 mb-1 text-primary" id="stat-nondraftable-players">{{ nondraftable_player_count }}</p>
-                                        <small class="text-muted">Players with "Draftable" flag = false</small>
                                     </div>
                                 </div>
 
@@ -174,9 +174,9 @@
                                         <small class="text-muted" id="stat-nondraftable-rounds-help">{% if nondraftable_rounds > 0 %}{{ total_nondraftable_pool }} players ({{ nondraftable_player_count }} non-draftable + {{ leftover_draftable_players }} leftover) ÷ {{ team_count }} teams = {{ nondraftable_rounds }} hat pick {% if nondraftable_rounds == 1 %}round{% else %}rounds{% endif %}{% else %}No hat pick rounds needed{% endif %}</small>
                                     </div>
                                     <div class="col-md-4">
-                                        <label class="form-label text-muted fw-bold">5. Players in Final Hat Pick Round</label>
-                                        <p class="fs-4 mb-1 text-primary" id="stat-final-round-players">{{ players_in_final_round }}</p>
-                                        <small class="text-muted" id="stat-final-round-players-help">{% if players_in_final_round > 0 %}{% if nondraftable_rounds == 1 %}{{ nondraftable_player_count }} non-draftable + {{ leftover_draftable_players }} leftover = {{ players_in_final_round }} players in the only hat pick round{% else %}{{ nondraftable_rounds|add:"-1" }} full rounds of {{ team_count }} picks each, plus final round with {{ players_in_final_round }} picks{% endif %}{% else %}No players in hat pick round{% endif %}</small>
+                                        <label class="form-label text-muted fw-bold">5. Total Rounds</label>
+                                        <p class="fs-4 mb-1 text-primary" id="stat-total-rounds">{{ draftable_rounds|add:nondraftable_rounds }}</p>
+                                        <small class="text-muted" id="stat-total-rounds-help">{{ draftable_rounds }} non-hat pick rounds + {{ nondraftable_rounds }} hat pick rounds</small>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label text-muted fw-bold">6. Total Draft Picks</label>
@@ -187,7 +187,7 @@
 
                                 <div class="row">
                                     <div class="col-md-4">
-                                        <label class="form-label text-muted fw-bold">7. Total Players</label>
+                                        <label class="form-label text-muted fw-bold">7. Total Players in the Division</label>
                                         <p class="fs-4 mb-1 text-primary" id="stat-total-players">{{ player_count }}</p>
                                         <small class="text-muted">All players currently in the database</small>
                                     </div>
@@ -348,19 +348,10 @@
                 document.getElementById('stat-nondraftable-rounds-help').textContent = 'No hat pick rounds needed';
             }
 
-            document.getElementById('stat-final-round-players').textContent = playersInFinalRound;
-            if (playersInFinalRound > 0) {
-                if (nondraftableRounds === 1) {
-                    document.getElementById('stat-final-round-players-help').textContent =
-                        `${nondraftableCount} non-draftable + ${leftoverDraftable} leftover = ${playersInFinalRound} players in the only hat pick round`;
-                } else {
-                    const fullRounds = nondraftableRounds - 1;
-                    document.getElementById('stat-final-round-players-help').textContent =
-                        `${fullRounds} full rounds of ${teamCount} picks each, plus final round with ${playersInFinalRound} picks`;
-                }
-            } else {
-                document.getElementById('stat-final-round-players-help').textContent = 'No players in hat pick round';
-            }
+            // Update total rounds
+            const totalRounds = draftableRounds + nondraftableRounds;
+            document.getElementById('stat-total-rounds').textContent = totalRounds;
+            document.getElementById('stat-total-rounds-help').textContent = `${draftableRounds} non-hat pick rounds + ${nondraftableRounds} hat pick rounds`;
 
             document.getElementById('stat-total-picks').textContent = totalDraftPicks;
             document.getElementById('stat-total-players').textContent = totalPlayers;
