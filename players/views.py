@@ -1190,18 +1190,17 @@ def edit_draft_view(request):
     leftover_draftable_players = draftable_player_count - (draftable_rounds * team_count)
 
     # 4. How many non-draftable rounds (hat pick rounds)?
+    # Hat pick round exists if there are ANY non-draftable or leftover players
     total_nondraftable_pool = nondraftable_player_count + leftover_draftable_players
-    nondraftable_rounds = math.floor(total_nondraftable_pool / team_count) if team_count > 0 else 0
+    nondraftable_rounds = 1 if total_nondraftable_pool > 0 else 0
 
-    # 5. How many players in the final round?
-    total_picks_in_regular_rounds = (draftable_rounds * team_count) + (nondraftable_rounds * team_count)
-    players_in_final_round = player_count - total_picks_in_regular_rounds
+    # 5. How many players in the final round (hat pick round)?
+    # If there's a hat pick round, all players in the pool go into that round
+    players_in_final_round = total_nondraftable_pool if nondraftable_rounds > 0 else 0
 
     # 6. Total number of draft picks across all rounds
-    if players_in_final_round > 0:
-        total_draft_picks = total_picks_in_regular_rounds + players_in_final_round
-    else:
-        total_draft_picks = total_picks_in_regular_rounds
+    # Draftable rounds are full rounds, hat pick round contains remaining players
+    total_draft_picks = (draftable_rounds * team_count) + players_in_final_round
 
     # 7. Total number of players in database (already have this as player_count)
 
@@ -1239,13 +1238,14 @@ def edit_draft_view(request):
         # Left over draftable players
         leftover_draftable_players = draftable_player_count - (draftable_rounds * team_count)
 
-        # 4. How many non-draftable rounds?
+        # 4. How many non-draftable rounds (hat pick rounds)?
+        # Hat pick round exists if there are ANY non-draftable or leftover players
         total_nondraftable_pool = nondraftable_player_count + leftover_draftable_players
-        nondraftable_rounds = math.floor(total_nondraftable_pool / team_count) if team_count > 0 else 0
+        nondraftable_rounds = 1 if total_nondraftable_pool > 0 else 0
 
-        # Calculate if we need a final round with partial picks
-        total_rounds = draftable_rounds + nondraftable_rounds
-        total_regular_picks = total_rounds * picks_per_round
+        # Calculate total picks
+        # Draftable rounds are full rounds, hat pick round (if exists) contains remaining players
+        total_regular_picks = (draftable_rounds * picks_per_round) + total_nondraftable_pool
 
         # Generate final round draft order if needed
         final_round_draft_order = ''
