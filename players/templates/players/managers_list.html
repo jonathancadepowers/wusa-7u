@@ -34,39 +34,24 @@
                     <span class="text-muted">Total managers: <strong>{{ total_managers }}</strong></span>
                 </div>
 
-                <!-- Search Bar and Add Button -->
-                <div class="row mb-4 align-items-end">
-                    <div class="col-md-3">
-                        <form method="get">
-                            <div class="input-group">
-                                <input type="text" name="search" class="form-control" placeholder="Search by manager name or details..." value="{{ search_query }}">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="bi bi-search"></i> Search
-                                </button>
-                                {% if search_query %}
-                                    <a href="{% url 'players:managers_list' %}" class="btn btn-secondary">Clear</a>
-                                {% endif %}
-                            </div>
-                        </form>
-                    </div>
-                    <div class="col-md-9 text-end">
-                        <div class="d-flex gap-2 justify-content-end">
-                            <button type="button" class="btn btn-primary text-nowrap" data-bs-toggle="modal" data-bs-target="#sendEmailsModal">
-                                <i class="bi bi-envelope me-1"></i>Send Team Assignment Emails
-                            </button>
-                            <button type="button" class="btn btn-info text-nowrap" data-bs-toggle="modal" data-bs-target="#randomAssignModal">
-                                <i class="bi bi-shuffle me-1"></i>Randomly Assign Managers
-                            </button>
-                            <button type="button" class="btn btn-info text-nowrap" data-bs-toggle="modal" data-bs-target="#randomAssignDaughtersModal">
-                                <i class="bi bi-shuffle me-1"></i>Randomly Assign Daughters
-                            </button>
-                            <button type="button" class="btn btn-warning text-nowrap" data-bs-toggle="modal" data-bs-target="#unassignAllModal">
-                                <i class="bi bi-exclamation-triangle me-1"></i>Unassign All Managers
-                            </button>
-                            <a href="{% url 'players:manager_create' %}" class="btn btn-success text-nowrap">
-                                <i class="bi bi-plus-circle me-1"></i>Add Manager
-                            </a>
-                        </div>
+                <!-- Action Buttons -->
+                <div class="mb-4">
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button type="button" class="btn btn-primary text-nowrap" data-bs-toggle="modal" data-bs-target="#sendEmailsModal">
+                            <i class="bi bi-envelope me-1"></i>Send Team Assignment Emails
+                        </button>
+                        <button type="button" class="btn btn-info text-nowrap" data-bs-toggle="modal" data-bs-target="#randomAssignModal">
+                            <i class="bi bi-shuffle me-1"></i>Randomly Assign Managers
+                        </button>
+                        <button type="button" class="btn btn-info text-nowrap" data-bs-toggle="modal" data-bs-target="#randomAssignDaughtersModal">
+                            <i class="bi bi-shuffle me-1"></i>Randomly Assign Daughters
+                        </button>
+                        <button type="button" class="btn btn-warning text-nowrap" data-bs-toggle="modal" data-bs-target="#unassignAllModal">
+                            <i class="bi bi-exclamation-triangle me-1"></i>Unassign All Managers
+                        </button>
+                        <a href="{% url 'players:manager_create' %}" class="btn btn-success text-nowrap">
+                            <i class="bi bi-plus-circle me-1"></i>Add Manager
+                        </a>
                     </div>
                 </div>
 
@@ -77,7 +62,7 @@
                             <thead class="table-light">
                                 <tr>
                                     <th>
-                                        <a href="?sort=last_name&order={% if sort_by == 'last_name' and order == 'asc' %}desc{% else %}asc{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" class="text-decoration-none text-dark">
+                                        <a href="?sort=last_name&order={% if sort_by == 'last_name' and order == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none text-dark">
                                             Name
                                             {% if sort_by == 'last_name' %}
                                                 <i class="bi bi-arrow-{% if order == 'asc' %}up{% else %}down{% endif %}"></i>
@@ -85,7 +70,7 @@
                                         </a>
                                     </th>
                                     <th>
-                                        <a href="?sort=email&order={% if sort_by == 'email' and order == 'asc' %}desc{% else %}asc{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" class="text-decoration-none text-dark">
+                                        <a href="?sort=email&order={% if sort_by == 'email' and order == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none text-dark">
                                             Email
                                             {% if sort_by == 'email' %}
                                                 <i class="bi bi-arrow-{% if order == 'asc' %}up{% else %}down{% endif %}"></i>
@@ -93,7 +78,7 @@
                                         </a>
                                     </th>
                                     <th>
-                                        <a href="?sort=phone&order={% if sort_by == 'phone' and order == 'asc' %}desc{% else %}asc{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" class="text-decoration-none text-dark">
+                                        <a href="?sort=phone&order={% if sort_by == 'phone' and order == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none text-dark">
                                             Phone
                                             {% if sort_by == 'phone' %}
                                                 <i class="bi bi-arrow-{% if order == 'asc' %}up{% else %}down{% endif %}"></i>
@@ -101,7 +86,7 @@
                                         </a>
                                     </th>
                                     <th>
-                                        <a href="?sort=teams__name&order={% if sort_by == 'teams__name' and order == 'asc' %}desc{% else %}asc{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" class="text-decoration-none text-dark">
+                                        <a href="?sort=teams__name&order={% if sort_by == 'teams__name' and order == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none text-dark">
                                             Team
                                             {% if sort_by == 'teams__name' %}
                                                 <i class="bi bi-arrow-{% if order == 'asc' %}up{% else %}down{% endif %}"></i>
@@ -109,7 +94,7 @@
                                         </a>
                                     </th>
                                     <th>
-                                        <a href="?sort=daughter__last_name&order={% if sort_by == 'daughter__last_name' and order == 'asc' %}desc{% else %}asc{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" class="text-decoration-none text-dark">
+                                        <a href="?sort=daughter__last_name&order={% if sort_by == 'daughter__last_name' and order == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none text-dark">
                                             Daughter
                                             {% if sort_by == 'daughter__last_name' %}
                                                 <i class="bi bi-arrow-{% if order == 'asc' %}up{% else %}down{% endif %}"></i>
@@ -117,7 +102,7 @@
                                         </a>
                                     </th>
                                     <th>
-                                        <a href="?sort=passed_background_check&order={% if sort_by == 'passed_background_check' and order == 'asc' %}desc{% else %}asc{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" class="text-decoration-none text-dark">
+                                        <a href="?sort=passed_background_check&order={% if sort_by == 'passed_background_check' and order == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none text-dark">
                                             Background Check
                                             {% if sort_by == 'passed_background_check' %}
                                                 <i class="bi bi-arrow-{% if order == 'asc' %}up{% else %}down{% endif %}"></i>
@@ -178,10 +163,10 @@
                             <ul class="pagination justify-content-center">
                                 {% if page_obj.has_previous %}
                                     <li class="page-item">
-                                        <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if order %}&order={{ order }}{% endif %}">First</a>
+                                        <a class="page-link" href="?page=1{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if order %}&order={{ order }}{% endif %}">First</a>
                                     </li>
                                     <li class="page-item">
-                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if order %}&order={{ order }}{% endif %}">Previous</a>
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if order %}&order={{ order }}{% endif %}">Previous</a>
                                     </li>
                                 {% endif %}
 
@@ -193,10 +178,10 @@
 
                                 {% if page_obj.has_next %}
                                     <li class="page-item">
-                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if order %}&order={{ order }}{% endif %}">Next</a>
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if order %}&order={{ order }}{% endif %}">Next</a>
                                     </li>
                                     <li class="page-item">
-                                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if order %}&order={{ order }}{% endif %}">Last</a>
+                                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if order %}&order={{ order }}{% endif %}">Last</a>
                                     </li>
                                 {% endif %}
                             </ul>
@@ -205,11 +190,7 @@
                 {% else %}
                     <div class="alert alert-info">
                         <i class="bi bi-info-circle me-2"></i>
-                        {% if search_query %}
-                            No managers found matching "{{ search_query }}".
-                        {% else %}
-                            No managers yet. Click "Add Manager" to create one.
-                        {% endif %}
+                        No managers yet. Click "Add Manager" to create one.
                     </div>
                 {% endif %}
             </div>
