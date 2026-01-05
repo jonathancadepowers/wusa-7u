@@ -37,9 +37,6 @@
                 <!-- Action Buttons -->
                 <div class="mb-4">
                     <div class="d-flex gap-2 flex-wrap">
-                        <button type="button" class="btn btn-primary text-nowrap" data-bs-toggle="modal" data-bs-target="#sendEmailsModal">
-                            <i class="bi bi-envelope me-1"></i>Send Team Assignment Emails
-                        </button>
                         <button type="button" class="btn btn-info text-nowrap" data-bs-toggle="modal" data-bs-target="#randomAssignModal">
                             <i class="bi bi-shuffle me-1"></i>Randomly Assign Managers
                         </button>
@@ -283,81 +280,6 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-info" onclick="randomlyAssignDaughters()">
                         <i class="bi bi-shuffle me-1"></i>Proceed
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Send Team Assignment Emails Modal -->
-    <div class="modal fade" id="sendEmailsModal" tabindex="-1" aria-labelledby="sendEmailsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="sendEmailsModalLabel">
-                        <i class="bi bi-envelope-fill me-2"></i>Send Team Assignment Emails
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="alert alert-info mb-3">
-                        <strong><i class="bi bi-info-circle me-2"></i>Available Tokens:</strong>
-                        <div class="mt-2" style="font-size: 0.9em;">
-                            <code>{Manager's Name}</code> - Manager's first name<br>
-                            <code>{Team Name}</code> - Assigned team name<br>
-                            <code>{Team Secret}</code> - Team's secret access code<br>
-                            <code>{Portal URL}</code> - Link to team portal<br>
-                            <code>{Manager Email}</code> - Manager's email address<br>
-                            <code>{Practice Slot}</code> - Team's practice slot (if assigned)
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="emailSubject" class="form-label"><strong>Email Subject:</strong></label>
-                        <input type="text" class="form-control" id="emailSubject" value="Your WUSA 7U Team Assignment - {Team Name}">
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="emailBody" class="form-label"><strong>Email Body:</strong></label>
-                        <textarea class="form-control" id="emailBody" rows="15" style="font-family: monospace; font-size: 0.9em;">Hi {Manager's Name},
-
-Congratulations! You have been assigned as the manager for:
-
-{Team Name}
-{Practice Slot}
-
-To access your team portal and view your roster, visit:
-{Portal URL}
-
-Your Team Secret: {Team Secret}
-Save this for future access. You can bookmark your team portal page.
-
----
-PLEASE DO NOT REPLY TO THIS EMAIL
----
-
-For questions or assistance, please contact:
-
-WUSA Division Coordinator
-Email: noreply@wusa7u.com
-Phone: 713-263-4402
-
-Thank you for volunteering to be a team manager!
-
-Best regards,
-WUSA 7U Administration
-
----
-This email was sent to {Manager Email}
-© 2026 WUSA 7U. All rights reserved.</textarea>
-                    </div>
-
-                    <div id="send-emails-alert" class="alert d-none"></div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="sendTeamAssignmentEmails()">
-                        <i class="bi bi-envelope me-1"></i>Send Emails
                     </button>
                 </div>
             </div>
@@ -620,62 +542,5 @@ This email was sent to {Manager Email}
             });
         }
 
-        function sendTeamAssignmentEmails() {
-            const csrfToken = getCookie('csrftoken');
-            const btn = event.target;
-            const emailSubject = document.getElementById('emailSubject').value;
-            const emailBody = document.getElementById('emailBody').value;
-
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Sending...';
-
-            // Create form data to send
-            const formData = new URLSearchParams();
-            formData.append('email_subject', emailSubject);
-            formData.append('email_body', emailBody);
-
-            fetch('{% url "players:send_team_assignments" %}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-CSRFToken': csrfToken
-                },
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                const alertDiv = document.getElementById('send-emails-alert');
-
-                if (data.success) {
-                    alertDiv.className = 'alert alert-success';
-                    alertDiv.textContent = data.message;
-                    alertDiv.classList.remove('d-none');
-
-                    // Keep button disabled after success
-                    btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Sent!';
-                } else {
-                    alertDiv.className = 'alert alert-danger';
-                    let errorMessage = data.message || data.error || 'An error occurred';
-                    if (data.errors && data.errors.length > 0) {
-                        errorMessage += '\n\nFailed emails:\n' + data.errors.join('\n');
-                    }
-                    alertDiv.innerHTML = errorMessage.replace(/\n/g, '<br>');
-                    alertDiv.classList.remove('d-none');
-
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="bi bi-envelope me-1"></i>Send Emails';
-                }
-            })
-            .catch(error => {
-                const alertDiv = document.getElementById('send-emails-alert');
-                alertDiv.className = 'alert alert-danger';
-                alertDiv.textContent = 'Network error. Please try again.';
-                alertDiv.classList.remove('d-none');
-                console.error('Error:', error);
-
-                btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-envelope me-1"></i>Send Emails';
-            });
-        }
     </script>
 {% endblock %}

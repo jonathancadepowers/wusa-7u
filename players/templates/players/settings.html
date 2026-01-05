@@ -88,6 +88,9 @@
                         <p class="text-muted">Send emails to managers for various purposes.</p>
 
                         <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#emailAllManagersModal">
+                                <i class="bi bi-envelope me-2"></i>Email All Managers
+                            </button>
                             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#teamPreferencesEmailModal">
                                 <i class="bi bi-envelope me-2"></i>Send Team Preferences Email
                             </button>
@@ -394,6 +397,63 @@
                         </label>
                         <div id="teamPagesEmailBodyEditor"></div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Email All Managers Modal -->
+    <div class="modal fade" id="emailAllManagersModal" tabindex="-1" aria-labelledby="emailAllManagersModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="emailAllManagersModalLabel">
+                        <i class="bi bi-envelope-fill me-2"></i>Email All Managers
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Sandbox Mode Status -->
+                    <div id="emailSandboxStatus" class="alert mb-3">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        <strong>Email Sandbox Mode:</strong> <span id="sandboxStatusText">Loading...</span>
+                    </div>
+
+                    <div class="alert alert-info mb-3">
+                        <strong><i class="bi bi-info-circle me-2"></i>Available Tokens:</strong>
+                        <div class="mt-2" style="font-size: 0.9em;">
+                            <code>{Manager's Name}</code> - Manager's first name<br>
+                            <code>{Team Name}</code> - Assigned team name<br>
+                            <code>{Team Secret}</code> - Team's secret access code<br>
+                            <code>{Portal URL}</code> - Link to team portal<br>
+                            <code>{Manager Email}</code> - Manager's email address<br>
+                            <code>{Practice Slot}</code> - Team's practice slot (if assigned)
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="emailAllSubject" class="form-label"><strong>Email Subject:</strong></label>
+                        <input type="text" class="form-control" id="emailAllSubject" placeholder="Enter email subject">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="emailAllBody" class="form-label"><strong>Email Body:</strong></label>
+                        <textarea class="form-control" id="emailAllBody" rows="12" style="font-family: monospace; font-size: 0.9em;" placeholder="Enter email body here..."></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="emailAllCC" class="form-label"><strong>CC Addresses (optional):</strong></label>
+                        <input type="text" class="form-control" id="emailAllCC" placeholder="email1@example.com, email2@example.com">
+                        <div class="form-text">Separate multiple email addresses with commas</div>
+                    </div>
+
+                    <div id="send-all-emails-alert" class="alert d-none"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="sendEmailToAllManagers()">
+                        <i class="bi bi-envelope me-1"></i>Send Emails
+                    </button>
                 </div>
             </div>
         </div>
@@ -1358,5 +1418,119 @@
             loadSandboxModeStatus();
             loadSandboxTestEmail();
         });
+
+        // Email All Managers Modal - Load sandbox status when modal opens
+        document.getElementById('emailAllManagersModal').addEventListener('show.bs.modal', async function() {
+            try {
+                const response = await fetch('{% url "players:get_sendgrid_sandbox_status" %}', {
+                    method: 'GET',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    }
+                });
+
+                const result = await response.json();
+
+                const statusDiv = document.getElementById('emailSandboxStatus');
+                const statusText = document.getElementById('sandboxStatusText');
+
+                if (response.ok && result.success) {
+                    if (result.enabled) {
+                        statusDiv.className = 'alert alert-warning mb-3';
+                        statusText.innerHTML = '<strong>ENABLED</strong> - All emails will be sent to the test address instead of actual recipients';
+                    } else {
+                        statusDiv.className = 'alert alert-info mb-3';
+                        statusText.innerHTML = '<strong>DISABLED</strong> - Emails will be sent to actual recipients';
+                    }
+                } else {
+                    statusDiv.className = 'alert alert-secondary mb-3';
+                    statusText.textContent = 'Unknown';
+                }
+            } catch (error) {
+                console.error('Error loading sandbox status:', error);
+                document.getElementById('emailSandboxStatus').className = 'alert alert-secondary mb-3';
+                document.getElementById('sandboxStatusText').textContent = 'Error loading status';
+            }
+        });
+
+        // Send Email to All Managers
+        function sendEmailToAllManagers() {
+            const csrfToken = '{{ csrf_token }}';
+            const btn = event.target;
+            const emailSubject = document.getElementById('emailAllSubject').value.trim();
+            const emailBody = document.getElementById('emailAllBody').value.trim();
+            const emailCC = document.getElementById('emailAllCC').value.trim();
+
+            // Validation
+            if (!emailSubject) {
+                const alertDiv = document.getElementById('send-all-emails-alert');
+                alertDiv.className = 'alert alert-danger';
+                alertDiv.textContent = 'Please enter an email subject';
+                alertDiv.classList.remove('d-none');
+                return;
+            }
+
+            if (!emailBody) {
+                const alertDiv = document.getElementById('send-all-emails-alert');
+                alertDiv.className = 'alert alert-danger';
+                alertDiv.textContent = 'Please enter an email body';
+                alertDiv.classList.remove('d-none');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Sending...';
+
+            // Create form data to send
+            const formData = new URLSearchParams();
+            formData.append('email_subject', emailSubject);
+            formData.append('email_body', emailBody);
+            if (emailCC) {
+                formData.append('email_cc', emailCC);
+            }
+
+            fetch('{% url "players:send_team_assignments" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': csrfToken
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                const alertDiv = document.getElementById('send-all-emails-alert');
+
+                if (data.success) {
+                    alertDiv.className = 'alert alert-success';
+                    alertDiv.textContent = data.message;
+                    alertDiv.classList.remove('d-none');
+
+                    // Keep button disabled after success
+                    btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Sent!';
+                } else {
+                    alertDiv.className = 'alert alert-danger';
+                    let errorMessage = data.message || data.error || 'An error occurred';
+                    if (data.errors && data.errors.length > 0) {
+                        errorMessage += '\n\nFailed emails:\n' + data.errors.join('\n');
+                    }
+                    alertDiv.innerHTML = errorMessage.replace(/\n/g, '<br>');
+                    alertDiv.classList.remove('d-none');
+
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-envelope me-1"></i>Send Emails';
+                }
+            })
+            .catch(error => {
+                const alertDiv = document.getElementById('send-all-emails-alert');
+                alertDiv.className = 'alert alert-danger';
+                alertDiv.textContent = 'Network error. Please try again.';
+                alertDiv.classList.remove('d-none');
+                console.error('Error:', error);
+
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-envelope me-1"></i>Send Emails';
+            });
+        }
     </script>
 {% endblock %}

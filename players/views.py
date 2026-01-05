@@ -4530,6 +4530,13 @@ def send_team_assignment_emails_view(request):
     email_subject_template = request.POST.get('email_subject', 'Your WUSA 7U Team Assignment - {Team Name}')
     email_body_template = request.POST.get('email_body', '')
 
+    # Get CC addresses (optional)
+    email_cc = request.POST.get('email_cc', '').strip()
+    cc_list = []
+    if email_cc:
+        # Split by comma and strip whitespace
+        cc_list = [email.strip() for email in email_cc.split(',') if email.strip()]
+
     # Get all managers with assigned teams
     managers_with_teams = Manager.objects.filter(teams__isnull=False).distinct()
 
@@ -4586,6 +4593,7 @@ def send_team_assignment_emails_view(request):
                 body=body,
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 to=[recipient_email],
+                cc=cc_list if cc_list else None,
             )
 
             # Send email
