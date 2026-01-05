@@ -4510,6 +4510,14 @@ def send_team_assignment_emails_view(request):
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'POST request required'})
 
+    # Check if sandbox mode is enabled
+    sandbox_mode = False
+    try:
+        setting = GeneralSetting.objects.get(key='enable_sendgrid_sandbox_mode')
+        sandbox_mode = setting.value.lower() == 'true'
+    except GeneralSetting.DoesNotExist:
+        pass
+
     # Get custom email subject and body from request
     email_subject_template = request.POST.get('email_subject', 'Your WUSA 7U Team Assignment - {Team Name}')
     email_body_template = request.POST.get('email_body', '')
@@ -4554,33 +4562,77 @@ def send_team_assignment_emails_view(request):
             body = body.replace(token, value)
 
         try:
-            # Create email message (plain text only for now)
-            email = EmailMultiAlternatives(
-                subject=subject,
-                body=body,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                to=[manager.email],
-            )
+            if sandbox_mode:
+                # Sandbox mode: Skip sending, just count as success
+                success_count += 1
+                time.sleep(0.5)
+            else:
+                # Create email message (plain text only for now)
+                email = EmailMultiAlternatives(
+                    subject=subject,
+                    body=body,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    to=[manager.email],
+                )
 
-            # Send email
-            email.send()
-            success_count += 1
+                # Send email
+                email.send()
+                success_count += 1
 
-            # Small delay between emails
-            time.sleep(0.5)
+                # Small delay between emails
+                time.sleep(0.5)
 
         except Exception as e:
             error_count += 1
             errors.append(f'{manager.first_name} {manager.last_name}: {str(e)}')
 
+    message_suffix = ' (SANDBOX MODE - No emails sent)' if sandbox_mode else ''
+
     if error_count > 0:
         return JsonResponse({
             'success': False,
-            'message': f'Sent {success_count} email(s), but {error_count} failed',
+            'message': f'Sent {success_count} email(s), but {error_count} failed{message_suffix}',
             'errors': errors
         })
 
     return JsonResponse({
         'success': True,
-        'message': f'Successfully sent {success_count} team assignment email(s)'
+        'message': f'Successfully sent {success_count} team assignment email(s){message_suffix}'
     })
+
+
+def get_sendgrid_sandbox_status_view(request):
+    """Get the current status of SendGrid sandbox mode"""
+    try:
+        setting = GeneralSetting.objects.get(key='enable_sendgrid_sandbox_mode')
+        enabled = setting.value.lower() == 'true'
+        return JsonResponse({'success': True, 'enabled': enabled})
+    except GeneralSetting.DoesNotExist:
+        # Create the setting if it doesn't exist
+        GeneralSetting.objects.create(key='enable_sendgrid_sandbox_mode', value='false')
+        return JsonResponse({'success': True, 'enabled': False})
+
+
+def toggle_sendgrid_sandbox_view(request):
+    """Toggle SendGrid sandbox mode"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'POST request required'})
+
+    enabled = request.POST.get('enabled', 'false').lower() == 'true'
+
+    try:
+        setting, created = GeneralSetting.objects.get_or_create(
+            key='enable_sendgrid_sandbox_mode',
+            defaults={'value': str(enabled).lower()}
+        )
+        if not created:
+            setting.value = str(enabled).lower()
+            setting.save()
+
+        return JsonResponse({
+            'success': True,
+            'enabled': enabled,
+            'message': f'Sandbox mode {"enabled" if enabled else "disabled"}'
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})

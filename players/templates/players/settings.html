@@ -169,6 +169,11 @@
                                     <i class="bi bi-trash me-2"></i>Remove Cookie
                                 </button>
                             </div>
+                            <div class="col-auto">
+                                <button id="toggleSendGridSandboxBtn" class="btn btn-warning">
+                                    <i class="bi bi-envelope-x me-2"></i><span id="sandboxBtnText">Loading...</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1084,6 +1089,106 @@
                     alertDiv.remove();
                 }
             }, 5000);
+        });
+
+        // SendGrid Sandbox Mode toggle
+        let sandboxModeEnabled = false;
+
+        // Load current sandbox mode status when page loads
+        async function loadSandboxModeStatus() {
+            try {
+                const response = await fetch('{% url "players:get_sendgrid_sandbox_status" %}', {
+                    method: 'GET',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    }
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    sandboxModeEnabled = result.enabled;
+                    updateSandboxButtonText();
+                } else {
+                    document.getElementById('sandboxBtnText').textContent = 'Error';
+                }
+            } catch (error) {
+                console.error('Error loading sandbox mode status:', error);
+                document.getElementById('sandboxBtnText').textContent = 'Error';
+            }
+        }
+
+        function updateSandboxButtonText() {
+            const btnText = document.getElementById('sandboxBtnText');
+            if (sandboxModeEnabled) {
+                btnText.textContent = 'Sandbox Mode: ON';
+            } else {
+                btnText.textContent = 'Sandbox Mode: OFF';
+            }
+        }
+
+        // Toggle SendGrid Sandbox Mode
+        document.getElementById('toggleSendGridSandboxBtn').addEventListener('click', async function() {
+            const btn = this;
+            const originalHTML = btn.innerHTML;
+
+            try {
+                // Show loading state
+                btn.disabled = true;
+                btn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Toggling...';
+
+                const formData = new FormData();
+                formData.append('enabled', !sandboxModeEnabled);
+
+                const response = await fetch('{% url "players:toggle_sendgrid_sandbox" %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    sandboxModeEnabled = result.enabled;
+                    updateSandboxButtonText();
+
+                    // Show temporary alert
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert alert-success alert-dismissible fade show mt-3';
+                    alertDiv.role = 'alert';
+                    alertDiv.innerHTML = `
+                        <i class="bi bi-check-circle-fill me-2"></i>
+                        <strong>Sandbox mode ${sandboxModeEnabled ? 'enabled' : 'disabled'}!</strong>
+                        ${sandboxModeEnabled ? 'Emails will NOT be sent to recipients.' : 'Emails will be sent to recipients.'}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    `;
+
+                    const devSettingsCard = btn.closest('.card-body');
+                    devSettingsCard.appendChild(alertDiv);
+
+                    // Auto-dismiss alert after 5 seconds
+                    setTimeout(() => {
+                        if (alertDiv.parentElement) {
+                            alertDiv.remove();
+                        }
+                    }, 5000);
+
+                } else {
+                    throw new Error(result.message || 'Failed to toggle sandbox mode');
+                }
+
+            } catch (error) {
+                alert('Error toggling sandbox mode: ' + error.message);
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
+        // Load sandbox mode status on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSandboxModeStatus();
         });
     </script>
 {% endblock %}
