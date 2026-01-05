@@ -1421,6 +1421,20 @@
 
         // Email All Managers Modal - Load sandbox status when modal opens
         document.getElementById('emailAllManagersModal').addEventListener('show.bs.modal', async function() {
+            // Reset modal state
+            document.getElementById('emailAllSubject').value = '';
+            document.getElementById('emailAllBody').value = '';
+            document.getElementById('emailAllCC').value = '';
+            const alertDiv = document.getElementById('send-all-emails-alert');
+            alertDiv.classList.add('d-none');
+
+            // Reset send button
+            const sendBtn = document.querySelector('#emailAllManagersModal .btn-primary[onclick="sendEmailToAllManagers()"]');
+            if (sendBtn) {
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = '<i class="bi bi-envelope me-1"></i>Send Emails';
+            }
+
             try {
                 const response = await fetch('{% url "players:get_sendgrid_sandbox_status" %}', {
                     method: 'GET',
