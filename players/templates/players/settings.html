@@ -1175,16 +1175,20 @@
 
         function updateModalSandboxStatus() {
             const statusBadge = document.getElementById('modalSandboxStatus');
-            const toggleBtnText = document.getElementById('toggleBtnText');
+            const toggleBtn = document.getElementById('toggleSandboxModeBtn');
 
             if (sandboxModeEnabled) {
                 statusBadge.textContent = 'ENABLED';
                 statusBadge.className = 'badge bg-success';
-                toggleBtnText.textContent = 'Disable Sandbox Mode';
+                if (toggleBtn) {
+                    toggleBtn.innerHTML = '<i class="bi bi-toggle-off me-2"></i><span id="toggleBtnText">Disable Sandbox Mode</span>';
+                }
             } else {
                 statusBadge.textContent = 'DISABLED';
                 statusBadge.className = 'badge bg-secondary';
-                toggleBtnText.textContent = 'Enable Sandbox Mode';
+                if (toggleBtn) {
+                    toggleBtn.innerHTML = '<i class="bi bi-toggle-on me-2"></i><span id="toggleBtnText">Enable Sandbox Mode</span>';
+                }
             }
         }
 
@@ -1322,7 +1326,6 @@
         // Toggle Sandbox Mode from Modal
         document.getElementById('toggleSandboxModeBtn').addEventListener('click', async function() {
             const btn = this;
-            const originalHTML = btn.innerHTML;
             const statusSection = document.getElementById('sandboxStatusSection');
 
             try {
@@ -1369,9 +1372,10 @@
                         Error: ${error.message}
                     </div>
                 `;
+                // Restore button state on error
+                updateModalSandboxStatus();
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = originalHTML;
             }
         });
 
