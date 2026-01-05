@@ -2142,6 +2142,13 @@ def manager_detail_view(request, pk):
         # Update background check status (checkbox)
         manager.passed_background_check = request.POST.get('passed_background_check') == 'on'
 
+        # Update background check clearance date
+        clearance_date = request.POST.get('background_check_clearance_date')
+        if clearance_date:
+            manager.background_check_clearance_date = clearance_date
+        else:
+            manager.background_check_clearance_date = None
+
         # Update daughter assignment
         daughter_id = request.POST.get('daughter')
         if daughter_id:

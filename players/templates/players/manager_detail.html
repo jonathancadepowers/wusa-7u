@@ -66,6 +66,14 @@
                         </div>
                     </div>
 
+                    <div class="mb-3">
+                        <label for="background_check_clearance_date" class="form-label">Background Check Clearance Date</label>
+                        <input type="date" class="form-control" id="background_check_clearance_date" name="background_check_clearance_date" value="{% if manager.background_check_clearance_date %}{{ manager.background_check_clearance_date|date:'Y-m-d' }}{% endif %}">
+                        <div class="invalid-feedback" id="clearance_date_error">
+                            Clearance date is required when background check is marked as passed.
+                        </div>
+                    </div>
+
                     <div class="d-flex justify-content-between mt-4">
                         <a href="{% url 'players:managers_list' %}" class="btn btn-secondary">
                             <i class="bi bi-arrow-left me-1"></i>Back to List
@@ -99,4 +107,38 @@
         </div>
         {% endif %}
     </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('form');
+            const passedCheckbox = document.getElementById('passed_background_check');
+            const clearanceDateInput = document.getElementById('background_check_clearance_date');
+            const errorDiv = document.getElementById('clearance_date_error');
+
+            form.addEventListener('submit', function(e) {
+                // Clear previous validation states
+                clearanceDateInput.classList.remove('is-invalid');
+
+                // If passed background check is checked, clearance date is required
+                if (passedCheckbox.checked && !clearanceDateInput.value) {
+                    e.preventDefault();
+                    clearanceDateInput.classList.add('is-invalid');
+                    errorDiv.style.display = 'block';
+
+                    // Scroll to the error
+                    clearanceDateInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    return false;
+                }
+            });
+
+            // Remove error styling when user starts typing
+            clearanceDateInput.addEventListener('change', function() {
+                if (this.value) {
+                    this.classList.remove('is-invalid');
+                }
+            });
+        });
+    </script>
 {% endblock %}
