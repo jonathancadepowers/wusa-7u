@@ -113,6 +113,14 @@
                                             {% endif %}
                                         </a>
                                     </th>
+                                    <th>
+                                        <a href="?sort=passed_background_check&order={% if sort_by == 'passed_background_check' and order == 'asc' %}desc{% else %}asc{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" class="text-decoration-none text-dark">
+                                            Background Check
+                                            {% if sort_by == 'passed_background_check' %}
+                                                <i class="bi bi-arrow-{% if order == 'asc' %}up{% else %}down{% endif %}"></i>
+                                            {% endif %}
+                                        </a>
+                                    </th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -132,6 +140,13 @@
                                                 {{ manager.daughter.first_name }} {{ manager.daughter.last_name }}
                                             {% else %}
                                                 -
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            {% if manager.passed_background_check %}
+                                                <i class="bi bi-check-circle-fill text-success" style="font-size: 1.2rem;" title="Background check passed"></i>
+                                            {% else %}
+                                                <i class="bi bi-x-circle-fill text-danger" style="font-size: 1.2rem;" title="Background check not provided"></i>
                                             {% endif %}
                                         </td>
                                         <td>
