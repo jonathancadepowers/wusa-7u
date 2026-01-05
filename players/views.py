@@ -4506,6 +4506,7 @@ def send_team_assignment_emails_view(request):
     from django.core.mail import EmailMultiAlternatives
     from django.conf import settings
     import time
+    import json
 
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'POST request required'})
@@ -4598,7 +4599,12 @@ def send_team_assignment_emails_view(request):
 
             # Disable click tracking to keep original URLs (SendGrid-specific header)
             email.extra_headers = {
-                'X-SMTPAPI': '{"tracking_settings": {"click_tracking": {"enable": false}, "open_tracking": {"enable": false}}}'
+                'X-SMTPAPI': json.dumps({
+                    "tracking_settings": {
+                        "click_tracking": {"enable": False},
+                        "open_tracking": {"enable": False}
+                    }
+                })
             }
 
             # Send email
