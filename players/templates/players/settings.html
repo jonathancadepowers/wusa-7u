@@ -259,9 +259,6 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary" id="saveSandboxEmailBtn">
-                        <i class="bi bi-save me-2"></i>Save Test Email
-                    </button>
                     <button type="button" class="btn btn-warning" id="toggleSandboxModeBtn">
                         <i class="bi bi-toggle-off me-2"></i><span id="toggleBtnText">Toggle Mode</span>
                     </button>
@@ -1256,82 +1253,48 @@
             }
         }
 
-        // Save Sandbox Test Email
-        document.getElementById('saveSandboxEmailBtn').addEventListener('click', async function() {
-            const btn = this;
-            const originalHTML = btn.innerHTML;
-            const email = document.getElementById('sandboxTestEmail').value.trim();
-            const statusSection = document.getElementById('sandboxStatusSection');
-
-            if (!email) {
-                statusSection.style.display = 'block';
-                statusSection.innerHTML = `
-                    <div class="alert alert-danger" role="alert">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                        Please enter a test email address
-                    </div>
-                `;
-                return;
-            }
-
-            try {
-                btn.disabled = true;
-                btn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Saving...';
-
-                const formData = new FormData();
-                formData.append('email', email);
-
-                const response = await fetch('{% url "players:save_sandbox_test_email" %}', {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': '{{ csrf_token }}'
-                    },
-                    body: formData
-                });
-
-                const result = await response.json();
-
-                if (response.ok && result.success) {
-                    statusSection.style.display = 'block';
-                    statusSection.innerHTML = `
-                        <div class="alert alert-success" role="alert">
-                            <i class="bi bi-check-circle-fill me-2"></i>
-                            Test email address saved successfully!
-                        </div>
-                    `;
-
-                    btn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Saved!';
-
-                    setTimeout(() => {
-                        btn.disabled = false;
-                        btn.innerHTML = originalHTML;
-                        statusSection.style.display = 'none';
-                    }, 2000);
-                } else {
-                    throw new Error(result.message || 'Failed to save email');
-                }
-            } catch (error) {
-                statusSection.style.display = 'block';
-                statusSection.innerHTML = `
-                    <div class="alert alert-danger" role="alert">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                        Error: ${error.message}
-                    </div>
-                `;
-                btn.disabled = false;
-                btn.innerHTML = originalHTML;
-            }
-        });
-
         // Toggle Sandbox Mode from Modal
         document.getElementById('toggleSandboxModeBtn').addEventListener('click', async function() {
             const btn = this;
             const statusSection = document.getElementById('sandboxStatusSection');
+            const email = document.getElementById('sandboxTestEmail').value.trim();
 
             try {
+                // If enabling sandbox mode, validate email first
+                if (!sandboxModeEnabled && !email) {
+                    statusSection.style.display = 'block';
+                    statusSection.innerHTML = `
+                        <div class="alert alert-danger" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            Please enter a test email address before enabling sandbox mode
+                        </div>
+                    `;
+                    return;
+                }
+
                 btn.disabled = true;
                 btn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Toggling...';
 
+                // If enabling, save the email first
+                if (!sandboxModeEnabled) {
+                    const emailFormData = new FormData();
+                    emailFormData.append('email', email);
+
+                    const emailResponse = await fetch('{% url "players:save_sandbox_test_email" %}', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: emailFormData
+                    });
+
+                    const emailResult = await emailResponse.json();
+                    if (!emailResponse.ok || !emailResult.success) {
+                        throw new Error('Failed to save test email');
+                    }
+                }
+
+                // Now toggle sandbox mode
                 const formData = new FormData();
                 formData.append('enabled', !sandboxModeEnabled);
 
