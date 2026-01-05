@@ -4502,14 +4502,17 @@ def practice_slot_delete_view(request, pk):
 
 
 def send_team_assignment_emails_view(request):
-    """Send team assignment emails to all managers"""
+    """Send team assignment emails to all managers with custom template"""
     from django.core.mail import EmailMultiAlternatives
-    from django.template.loader import render_to_string
     from django.conf import settings
     import time
 
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'POST request required'})
+
+    # Get custom email subject and body from request
+    email_subject_template = request.POST.get('email_subject', 'Your WUSA 7U Team Assignment - {Team Name}')
+    email_body_template = request.POST.get('email_body', '')
 
     # Get all managers with assigned teams
     managers_with_teams = Manager.objects.filter(teams__isnull=False).distinct()
@@ -4530,27 +4533,34 @@ def send_team_assignment_emails_view(request):
         # Construct the portal URL
         portal_url = f"{request.scheme}://{request.get_host()}/teams/{team.manager_secret}/"
 
-        # Prepare context for templates
-        context = {
-            'manager': manager,
-            'team': team,
-            'portal_url': portal_url,
+        # Replace tokens with actual values
+        practice_slot_text = f"Practice Slot: {team.practice_slot}" if team.practice_slot else ""
+
+        replacements = {
+            "{Manager's Name}": manager.first_name,
+            "{Team Name}": team.name,
+            "{Team Secret}": team.manager_secret,
+            "{Portal URL}": portal_url,
+            "{Manager Email}": manager.email,
+            "{Practice Slot}": practice_slot_text,
         }
 
-        # Render email templates
-        subject = f'Your WUSA 7U Team Assignment - {team.name}'
-        text_content = render_to_string('players/emails/team_assignment.txt', context)
-        html_content = render_to_string('players/emails/team_assignment.html', context)
+        # Apply replacements to subject and body
+        subject = email_subject_template
+        body = email_body_template
+
+        for token, value in replacements.items():
+            subject = subject.replace(token, value)
+            body = body.replace(token, value)
 
         try:
-            # Create email message
+            # Create email message (plain text only for now)
             email = EmailMultiAlternatives(
                 subject=subject,
-                body=text_content,
+                body=body,
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 to=[manager.email],
             )
-            email.attach_alternative(html_content, "text/html")
 
             # Send email
             email.send()

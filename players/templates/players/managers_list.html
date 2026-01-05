@@ -310,7 +310,7 @@
 
     <!-- Send Team Assignment Emails Modal -->
     <div class="modal fade" id="sendEmailsModal" tabindex="-1" aria-labelledby="sendEmailsModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title" id="sendEmailsModalLabel">
@@ -320,14 +320,57 @@
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-info mb-3">
-                        <strong><i class="bi bi-info-circle me-2"></i>What will this do?</strong>
-                        <ul class="mb-0 mt-2">
-                            <li>Send an email to every manager who has a team assigned</li>
-                            <li>Email includes their team name and portal access link</li>
-                            <li>Emails are sent one at a time with a small delay</li>
-                        </ul>
+                        <strong><i class="bi bi-info-circle me-2"></i>Available Tokens:</strong>
+                        <div class="mt-2" style="font-size: 0.9em;">
+                            <code>{Manager's Name}</code> - Manager's first name<br>
+                            <code>{Team Name}</code> - Assigned team name<br>
+                            <code>{Team Secret}</code> - Team's secret access code<br>
+                            <code>{Portal URL}</code> - Link to team portal<br>
+                            <code>{Manager Email}</code> - Manager's email address<br>
+                            <code>{Practice Slot}</code> - Team's practice slot (if assigned)
+                        </div>
                     </div>
-                    <p><strong>Note:</strong> Make sure SendGrid is configured with your API key before sending emails.</p>
+
+                    <div class="mb-3">
+                        <label for="emailSubject" class="form-label"><strong>Email Subject:</strong></label>
+                        <input type="text" class="form-control" id="emailSubject" value="Your WUSA 7U Team Assignment - {Team Name}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="emailBody" class="form-label"><strong>Email Body:</strong></label>
+                        <textarea class="form-control" id="emailBody" rows="15" style="font-family: monospace; font-size: 0.9em;">Hi {Manager's Name},
+
+Congratulations! You have been assigned as the manager for:
+
+{Team Name}
+{Practice Slot}
+
+To access your team portal and view your roster, visit:
+{Portal URL}
+
+Your Team Secret: {Team Secret}
+Save this for future access. You can bookmark your team portal page.
+
+---
+PLEASE DO NOT REPLY TO THIS EMAIL
+---
+
+For questions or assistance, please contact:
+
+WUSA Division Coordinator
+Email: noreply@wusa7u.com
+Phone: 713-263-4402
+
+Thank you for volunteering to be a team manager!
+
+Best regards,
+WUSA 7U Administration
+
+---
+This email was sent to {Manager Email}
+© 2026 WUSA 7U. All rights reserved.</textarea>
+                    </div>
+
                     <div id="send-emails-alert" class="alert d-none"></div>
                 </div>
                 <div class="modal-footer">
@@ -599,15 +642,24 @@
         function sendTeamAssignmentEmails() {
             const csrfToken = getCookie('csrftoken');
             const btn = event.target;
+            const emailSubject = document.getElementById('emailSubject').value;
+            const emailBody = document.getElementById('emailBody').value;
+
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Sending...';
+
+            // Create form data to send
+            const formData = new URLSearchParams();
+            formData.append('email_subject', emailSubject);
+            formData.append('email_body', emailBody);
 
             fetch('{% url "players:send_team_assignments" %}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                     'X-CSRFToken': csrfToken
-                }
+                },
+                body: formData
             })
             .then(response => response.json())
             .then(data => {
