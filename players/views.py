@@ -2149,6 +2149,9 @@ def manager_detail_view(request, pk):
         else:
             manager.background_check_clearance_date = None
 
+        # Update comments
+        manager.comments = request.POST.get('comments', '')
+
         # Update daughter assignment
         daughter_id = request.POST.get('daughter')
         if daughter_id:

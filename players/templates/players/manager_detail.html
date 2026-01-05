@@ -74,6 +74,11 @@
                         </div>
                     </div>
 
+                    <div class="mb-3">
+                        <label for="comments" class="form-label">Comments</label>
+                        <textarea class="form-control" id="comments" name="comments" rows="5" placeholder="Add any notes or comments about this manager...">{{ manager.comments|default:"" }}</textarea>
+                    </div>
+
                     <div class="d-flex justify-content-between mt-4">
                         <a href="{% url 'players:managers_list' %}" class="btn btn-secondary">
                             <i class="bi bi-arrow-left me-1"></i>Back to List
