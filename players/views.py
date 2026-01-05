@@ -3879,9 +3879,9 @@ def save_team_preferences_view(request):
                 'error': 'Please rank at least one team name before submitting.'
             }, status=400)
 
-        # Check if email matches a manager
+        # Check if email matches a manager (case-insensitive)
         try:
-            manager = Manager.objects.get(email=email)
+            manager = Manager.objects.get(email__iexact=email)
         except Manager.DoesNotExist:
             return JsonResponse({
                 'success': False,
