@@ -2139,6 +2139,9 @@ def manager_detail_view(request, pk):
         manager.email = request.POST.get('email')
         manager.phone = request.POST.get('phone')
 
+        # Update background check status (checkbox)
+        manager.passed_background_check = request.POST.get('passed_background_check') == 'on'
+
         # Update daughter assignment
         daughter_id = request.POST.get('daughter')
         if daughter_id:
