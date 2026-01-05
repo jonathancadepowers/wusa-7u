@@ -1130,12 +1130,13 @@
         // Toggle SendGrid Sandbox Mode
         document.getElementById('toggleSendGridSandboxBtn').addEventListener('click', async function() {
             const btn = this;
-            const originalHTML = btn.innerHTML;
 
             try {
                 // Show loading state
                 btn.disabled = true;
-                btn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Toggling...';
+                const btnText = document.getElementById('sandboxBtnText');
+                const originalText = btnText.textContent;
+                btnText.textContent = 'Toggling...';
 
                 const formData = new FormData();
                 formData.append('enabled', !sandboxModeEnabled);
@@ -1181,6 +1182,8 @@
 
             } catch (error) {
                 alert('Error toggling sandbox mode: ' + error.message);
+                // Restore button state on error
+                updateSandboxButtonText();
             } finally {
                 btn.disabled = false;
             }
