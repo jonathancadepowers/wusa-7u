@@ -179,6 +179,7 @@
                                     <th>Team Secret</th>
                                     <th>Manager's Phone</th>
                                     <th>Manager's Email</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -188,10 +189,21 @@
                                         <td><strong>{{ team.manager_secret }}</strong></td>
                                         <td>{{ team.manager.phone }}</td>
                                         <td>{{ team.manager.email }}</td>
+                                        <td>
+                                            <button
+                                                type="button"
+                                                class="btn btn-sm btn-primary copy-email-btn"
+                                                data-manager-name="{{ team.manager.first_name }} {{ team.manager.last_name }}"
+                                                data-team-name="{{ team.name }}"
+                                                data-team-secret="{{ team.manager_secret }}"
+                                                title="Copy email template to clipboard">
+                                                <i class="bi bi-clipboard me-1"></i>Copy Email
+                                            </button>
+                                        </td>
                                     </tr>
                                 {% empty %}
                                     <tr>
-                                        <td colspan="4" class="text-center text-muted">No teams with assigned managers</td>
+                                        <td colspan="5" class="text-center text-muted">No teams with assigned managers</td>
                                     </tr>
                                 {% endfor %}
                             </tbody>
@@ -300,6 +312,63 @@
                 confirmButton.disabled = false;
                 confirmButton.innerHTML = '<i class="bi bi-x-circle me-1"></i>Unassign All Practice Slots';
                 statusDiv.innerHTML = '';
+            });
+
+            // Copy email to clipboard functionality
+            document.querySelectorAll('.copy-email-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const managerName = this.getAttribute('data-manager-name');
+                    const teamName = this.getAttribute('data-team-name');
+                    const teamSecret = this.getAttribute('data-team-secret');
+
+                    // Email template with token replacement
+                    const emailTemplate = `Hi ${managerName}-
+
+You have been assigned as the manager to the following team: ${teamName}
+
+To access your team portal:
+
+1: Visit: https://wusa-7u-6b0e52b973f0.herokuapp.com/public_portal
+
+2: Select your team
+
+3: Enter your team secret: ${teamSecret}
+
+A few quick FYIs/tips:
+
+- Never share your team secret with anyone. This secret ensures only YOU can access your team's portal.
+
+- *After* player evaluations, you must submit your "top 20 players" and "manager's daughter" rankings. This can be done via your team portal.
+
+If you have any trouble, let us know!
+
+Thanks,
+
+Jonathan & Martha
+
+---
+PLEASE DO NOT REPLY TO THIS EMAIL ADDRESS
+Only send us emails at: jonathan_powers@oxy.com and martharac@gmail.com`;
+
+                    // Copy to clipboard
+                    navigator.clipboard.writeText(emailTemplate).then(() => {
+                        // Show success feedback
+                        const originalHTML = this.innerHTML;
+                        this.innerHTML = '<i class="bi bi-check-circle me-1"></i>Copied!';
+                        this.classList.remove('btn-primary');
+                        this.classList.add('btn-success');
+
+                        // Reset button after 2 seconds
+                        setTimeout(() => {
+                            this.innerHTML = originalHTML;
+                            this.classList.remove('btn-success');
+                            this.classList.add('btn-primary');
+                        }, 2000);
+                    }).catch(err => {
+                        console.error('Failed to copy text: ', err);
+                        alert('Failed to copy to clipboard. Please try again.');
+                    });
+                });
             });
         });
     </script>
