@@ -4596,6 +4596,11 @@ def send_team_assignment_emails_view(request):
                 cc=cc_list if cc_list else None,
             )
 
+            # Disable click tracking to keep original URLs (SendGrid-specific header)
+            email.extra_headers = {
+                'X-SMTPAPI': '{"tracking_settings": {"click_tracking": {"enable": false}, "open_tracking": {"enable": false}}}'
+            }
+
             # Send email
             email.send()
             success_count += 1
