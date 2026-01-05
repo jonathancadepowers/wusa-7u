@@ -1189,14 +1189,48 @@
             }
         }
 
-        // Open Sandbox Mode Modal
-        document.getElementById('toggleSendGridSandboxBtn').addEventListener('click', function() {
-            // Update modal status before showing
-            updateModalSandboxStatus();
+        // Handle Sandbox Mode Button Click
+        document.getElementById('toggleSendGridSandboxBtn').addEventListener('click', async function() {
+            if (sandboxModeEnabled) {
+                // Currently ON - turn it OFF without showing modal
+                const btn = this;
+                const btnText = document.getElementById('sandboxBtnText');
 
-            // Open the modal
-            const modal = new bootstrap.Modal(document.getElementById('sandboxModeModal'));
-            modal.show();
+                try {
+                    btn.disabled = true;
+                    btnText.textContent = 'Toggling...';
+
+                    const formData = new FormData();
+                    formData.append('enabled', 'false');
+
+                    const response = await fetch('{% url "players:toggle_sendgrid_sandbox" %}', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: formData
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        sandboxModeEnabled = false;
+                        updateSandboxButtonText();
+                    } else {
+                        throw new Error(result.message || 'Failed to disable sandbox mode');
+                    }
+                } catch (error) {
+                    alert('Error disabling sandbox mode: ' + error.message);
+                    updateSandboxButtonText();
+                } finally {
+                    btn.disabled = false;
+                }
+            } else {
+                // Currently OFF - open modal to configure and enable
+                updateModalSandboxStatus();
+                const modal = new bootstrap.Modal(document.getElementById('sandboxModeModal'));
+                modal.show();
+            }
         });
 
         // Load and save sandbox test email
