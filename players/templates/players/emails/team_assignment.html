@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #0066cc;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            background-color: #f9f9f9;
+            padding: 30px;
+            border: 1px solid #ddd;
+        }
+        .team-info {
+            background-color: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #0066cc;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #0066cc;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .footer {
+            background-color: #333;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            border-radius: 0 0 5px 5px;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>WUSA 7U Team Assignment</h1>
+        </div>
+
+        <div class="content">
+            <p>Hi {{ manager.first_name }},</p>
+
+            <p>Congratulations! You have been assigned as the manager for:</p>
+
+            <div class="team-info">
+                <h2 style="margin-top: 0; color: #0066cc;">{{ team.name }}</h2>
+                {% if team.practice_slot %}
+                <p><strong>Practice Slot:</strong> {{ team.practice_slot }}</p>
+                {% endif %}
+            </div>
+
+            <p>To access your team portal and view your roster, click the button below or use the link:</p>
+
+            <div style="text-align: center;">
+                <a href="{{ portal_url }}" class="button">Access Team Portal</a>
+            </div>
+
+            <p style="font-size: 14px; color: #666;">
+                Or copy and paste this link:<br>
+                <code style="background: #f0f0f0; padding: 5px; display: inline-block; margin-top: 5px;">{{ portal_url }}</code>
+            </p>
+
+            <div class="team-info">
+                <h3 style="margin-top: 0;">Your Team Secret:</h3>
+                <p style="font-size: 18px; font-weight: bold; color: #0066cc;">{{ team.manager_secret }}</p>
+                <p style="font-size: 12px; color: #666;">Save this for future access. You can bookmark your team portal page.</p>
+            </div>
+
+            <div class="warning">
+                <p style="margin: 0;"><strong>⚠️ Please do not reply to this email.</strong></p>
+            </div>
+
+            <p><strong>For questions or assistance, please contact:</strong></p>
+            <p style="margin-left: 20px;">
+                [YOUR NAME]<br>
+                Email: [YOUR EMAIL]<br>
+                Phone: [YOUR PHONE]
+            </p>
+
+            <p>Thank you for volunteering to be a team manager!</p>
+
+            <p>Best regards,<br>
+            WUSA 7U Administration</p>
+        </div>
+
+        <div class="footer">
+            <p>This email was sent to {{ manager.email }}</p>
+            <p>&copy; 2026 WUSA 7U. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

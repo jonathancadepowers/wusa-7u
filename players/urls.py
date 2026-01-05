@@ -54,6 +54,7 @@ urlpatterns = [
     path('managers/unassign-all/', views.unassign_all_managers_view, name='unassign_all_managers'),
     path('managers/randomly-assign/', views.randomly_assign_managers_view, name='randomly_assign_managers'),
     path('managers/randomly-assign-daughters/', views.randomly_assign_daughters_view, name='randomly_assign_daughters'),
+    path('managers/send-team-assignments/', views.send_team_assignment_emails_view, name='send_team_assignments'),
     path('player_rankings/', views.player_rankings_view, name='player_rankings'),
     path('player_rankings/analyze/', views.player_rankings_analyze_view, name='player_rankings_analyze'),
     path('player_rankings/analyze/public/', views.player_rankings_analyze_public_view, name='player_rankings_analyze_public'),

@@ -4499,3 +4499,78 @@ def practice_slot_delete_view(request, pk):
     return render(request, 'players/practice_slot_confirm_delete.html', {
         'practice_slot': practice_slot
     })
+
+
+def send_team_assignment_emails_view(request):
+    """Send team assignment emails to all managers"""
+    from django.core.mail import EmailMultiAlternatives
+    from django.template.loader import render_to_string
+    from django.conf import settings
+    import time
+
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'POST request required'})
+
+    # Get all managers with assigned teams
+    managers_with_teams = Manager.objects.filter(teams__isnull=False).distinct()
+
+    if not managers_with_teams.exists():
+        return JsonResponse({'success': False, 'error': 'No managers with assigned teams found'})
+
+    success_count = 0
+    error_count = 0
+    errors = []
+
+    for manager in managers_with_teams:
+        team = manager.teams.first()
+
+        if not team:
+            continue
+
+        # Construct the portal URL
+        portal_url = f"{request.scheme}://{request.get_host()}/teams/{team.manager_secret}/"
+
+        # Prepare context for templates
+        context = {
+            'manager': manager,
+            'team': team,
+            'portal_url': portal_url,
+        }
+
+        # Render email templates
+        subject = f'Your WUSA 7U Team Assignment - {team.name}'
+        text_content = render_to_string('players/emails/team_assignment.txt', context)
+        html_content = render_to_string('players/emails/team_assignment.html', context)
+
+        try:
+            # Create email message
+            email = EmailMultiAlternatives(
+                subject=subject,
+                body=text_content,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[manager.email],
+            )
+            email.attach_alternative(html_content, "text/html")
+
+            # Send email
+            email.send()
+            success_count += 1
+
+            # Small delay between emails
+            time.sleep(0.5)
+
+        except Exception as e:
+            error_count += 1
+            errors.append(f'{manager.first_name} {manager.last_name}: {str(e)}')
+
+    if error_count > 0:
+        return JsonResponse({
+            'success': False,
+            'message': f'Sent {success_count} email(s), but {error_count} failed',
+            'errors': errors
+        })
+
+    return JsonResponse({
+        'success': True,
+        'message': f'Successfully sent {success_count} team assignment email(s)'
+    })

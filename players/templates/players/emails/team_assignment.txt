@@ -1,0 +1,34 @@
+WUSA 7U Team Assignment
+========================
+
+Hi {{ manager.first_name }},
+
+Congratulations! You have been assigned as the manager for:
+
+{{ team.name }}
+{% if team.practice_slot %}Practice Slot: {{ team.practice_slot }}{% endif %}
+
+To access your team portal and view your roster, visit:
+{{ portal_url }}
+
+Your Team Secret: {{ team.manager_secret }}
+Save this for future access. You can bookmark your team portal page.
+
+---
+PLEASE DO NOT REPLY TO THIS EMAIL
+---
+
+For questions or assistance, please contact:
+
+[YOUR NAME]
+Email: [YOUR EMAIL]
+Phone: [YOUR PHONE]
+
+Thank you for volunteering to be a team manager!
+
+Best regards,
+WUSA 7U Administration
+
+---
+This email was sent to {{ manager.email }}
+© 2026 WUSA 7U. All rights reserved.
