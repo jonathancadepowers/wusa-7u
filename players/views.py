@@ -4595,6 +4595,7 @@ def send_team_assignment_emails_view(request):
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 to=[recipient_email],
                 cc=cc_list if cc_list else None,
+                reply_to=['noreply@wusa7u.com'],
             )
 
             # Disable click tracking to keep original URLs (SendGrid-specific header)
