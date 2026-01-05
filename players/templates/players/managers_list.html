@@ -127,7 +127,11 @@
                             <tbody>
                                 {% for manager in page_obj %}
                                     <tr>
-                                        <td><strong>{{ manager.first_name }} {{ manager.last_name }}</strong></td>
+                                        <td>
+                                            <strong {% if manager.comments %}data-bs-toggle="tooltip" data-bs-placement="right" data-bs-html="true" title="{{ manager.comments|linebreaksbr }}"{% endif %}>
+                                                {{ manager.first_name }} {{ manager.last_name }}
+                                            </strong>
+                                        </td>
                                         <td>{{ manager.email }}</td>
                                         <td>{{ manager.phone|default:"-" }}</td>
                                         <td>
@@ -333,6 +337,12 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             teamModalInstance = new bootstrap.Modal(document.getElementById('teamModal'));
+
+            // Initialize Bootstrap tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
         });
 
         function openTeamModal(managerId, managerName, currentTeamId, currentTeamName) {
