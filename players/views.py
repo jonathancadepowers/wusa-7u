@@ -4612,8 +4612,8 @@ def send_team_assignment_emails_view(request):
             email.send()
             success_count += 1
 
-            # Small delay between emails
-            time.sleep(0.5)
+            # Delay between emails to avoid rate limiting
+            time.sleep(1.0)
 
         except Exception as e:
             error_count += 1
