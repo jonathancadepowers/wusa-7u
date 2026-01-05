@@ -56,6 +56,14 @@ class Manager(models.Model):
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
 
+    def has_valid_background_check(self):
+        """Check if manager has a valid background check (passed and less than 1 year old)"""
+        from datetime import date, timedelta
+        if not self.passed_background_check or not self.background_check_clearance_date:
+            return False
+        one_year_ago = date.today() - timedelta(days=365)
+        return self.background_check_clearance_date >= one_year_ago
+
 
 class Team(models.Model):
     manager = models.ForeignKey(Manager, on_delete=models.SET_NULL, null=True, blank=True, related_name='teams')

@@ -143,10 +143,10 @@
                                             {% endif %}
                                         </td>
                                         <td class="text-center">
-                                            {% if manager.passed_background_check %}
-                                                <i class="bi bi-check-circle-fill text-success" style="font-size: 1.2rem;" title="Background check passed"></i>
+                                            {% if manager.has_valid_background_check %}
+                                                <i class="bi bi-check-circle-fill text-success" style="font-size: 1.2rem;" title="Background check passed and valid"></i>
                                             {% else %}
-                                                <i class="bi bi-x-circle-fill text-danger" style="font-size: 1.2rem;" title="Background check not provided"></i>
+                                                <i class="bi bi-x-circle-fill text-danger" style="font-size: 1.2rem;" title="Background check not provided or expired"></i>
                                             {% endif %}
                                         </td>
                                         <td>
