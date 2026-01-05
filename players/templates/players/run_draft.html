@@ -569,8 +569,23 @@
                 }
             } else if (action === 'undrafted') {
                 daughtersDrafted--;
-                // We can't add back to the list without player name/manager info
-                // So just update the count - user can refresh to see the full list
+                // For undrafting, we need to fetch the updated list from the server
+                // to get the player name and manager info
+                fetch('/draft/undrafted-daughters/')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && undraftedListElem) {
+                            // Clear and rebuild the list
+                            undraftedListElem.innerHTML = '';
+                            data.undrafted_daughters.forEach(item => {
+                                const li = document.createElement('li');
+                                li.setAttribute('data-player-id', item.player_id);
+                                li.innerHTML = `<strong>${item.player_name}</strong> (Manager: ${item.manager_name})`;
+                                undraftedListElem.appendChild(li);
+                            });
+                        }
+                    })
+                    .catch(error => console.error('Error fetching undrafted daughters:', error));
             }
 
             // Update the drafted count

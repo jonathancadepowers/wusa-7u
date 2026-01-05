@@ -25,6 +25,7 @@ urlpatterns = [
     path('draft/available-players/', views.available_players_view, name='available_players'),
     path('draft/make-pick/', views.make_pick_view, name='make_pick'),
     path('draft/undraft-pick/', views.undraft_pick_view, name='undraft_pick'),
+    path('draft/undrafted-daughters/', views.undrafted_daughters_api, name='undrafted_daughters_api'),
     path('draft/validate-assignment/', views.validate_draft_assignment_view, name='validate_draft_assignment'),
     path('draft/reset/', views.reset_draft_view, name='reset_draft'),
     path('draft/assign-players/', views.assign_players_to_teams_view, name='assign_players_to_teams'),

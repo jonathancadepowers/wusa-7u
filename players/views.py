@@ -3159,6 +3159,27 @@ def undraft_pick_view(request):
         return JsonResponse({'success': False, 'error': str(e)})
 
 
+def undrafted_daughters_api(request):
+    """Return list of undrafted manager's daughters"""
+    managers_with_daughters = Manager.objects.filter(daughter__isnull=False)
+    undrafted_daughters = []
+
+    for manager in managers_with_daughters:
+        daughter = manager.daughter
+        is_drafted = DraftPick.objects.filter(player=daughter).exists()
+        if not is_drafted:
+            undrafted_daughters.append({
+                'player_id': daughter.id,
+                'player_name': f"{daughter.first_name} {daughter.last_name}",
+                'manager_name': f"{manager.first_name} {manager.last_name}"
+            })
+
+    return JsonResponse({
+        'success': True,
+        'undrafted_daughters': undrafted_daughters
+    })
+
+
 def validate_draft_assignment_view(request):
     """Validate draft assignment and return warning counts"""
     try:
