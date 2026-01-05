@@ -175,23 +175,6 @@
                                 </button>
                             </div>
                         </div>
-
-                        <div class="row g-2 mt-2" id="sandboxEmailSection" style="display: none;">
-                            <div class="col-12">
-                                <div class="alert alert-info mb-2" role="alert">
-                                    <i class="bi bi-info-circle me-2"></i>
-                                    <strong>Sandbox Mode:</strong> When enabled, all emails will be sent to the test email address below instead of actual recipients.
-                                </div>
-                            </div>
-                            <div class="col-md-8">
-                                <input type="email" class="form-control" id="sandboxTestEmail" placeholder="test@example.com">
-                            </div>
-                            <div class="col-md-4">
-                                <button id="saveSandboxEmailBtn" class="btn btn-primary w-100">
-                                    <i class="bi bi-save me-2"></i>Save Test Email
-                                </button>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -236,6 +219,52 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary" id="saveMasterPasswordBtn">
                         <i class="bi bi-save me-2"></i>Save Password
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sandbox Mode Modal -->
+    <div class="modal fade" id="sandboxModeModal" tabindex="-1" aria-labelledby="sandboxModeModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title" id="sandboxModeModalLabel">
+                        <i class="bi bi-envelope-x me-2"></i>SendGrid Sandbox Mode
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info" role="alert">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        <strong>Sandbox Mode:</strong> When enabled, all emails will be sent to the test email address below instead of actual recipients.
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label"><strong>Current Status:</strong></label>
+                        <div>
+                            <span id="modalSandboxStatus" class="badge bg-secondary">Loading...</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="sandboxTestEmail" class="form-label">Test Email Address</label>
+                        <input type="email" class="form-control" id="sandboxTestEmail" placeholder="test@example.com">
+                        <div class="form-text">All emails will be redirected to this address when sandbox mode is enabled.</div>
+                    </div>
+
+                    <div id="sandboxStatusSection" style="display: none;">
+                        <!-- Status messages will be displayed here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="saveSandboxEmailBtn">
+                        <i class="bi bi-save me-2"></i>Save Test Email
+                    </button>
+                    <button type="button" class="btn btn-warning" id="toggleSandboxModeBtn">
+                        <i class="bi bi-toggle-off me-2"></i><span id="toggleBtnText">Toggle Mode</span>
                     </button>
                 </div>
             </div>
@@ -1137,77 +1166,37 @@
 
         function updateSandboxButtonText() {
             const btnText = document.getElementById('sandboxBtnText');
-            const emailSection = document.getElementById('sandboxEmailSection');
 
             if (sandboxModeEnabled) {
                 btnText.textContent = 'Sandbox Mode: ON';
-                emailSection.style.display = 'block';
             } else {
                 btnText.textContent = 'Sandbox Mode: OFF';
-                emailSection.style.display = 'none';
             }
         }
 
-        // Toggle SendGrid Sandbox Mode
-        document.getElementById('toggleSendGridSandboxBtn').addEventListener('click', async function() {
-            const btn = this;
+        function updateModalSandboxStatus() {
+            const statusBadge = document.getElementById('modalSandboxStatus');
+            const toggleBtnText = document.getElementById('toggleBtnText');
 
-            try {
-                // Show loading state
-                btn.disabled = true;
-                const btnText = document.getElementById('sandboxBtnText');
-                const originalText = btnText.textContent;
-                btnText.textContent = 'Toggling...';
-
-                const formData = new FormData();
-                formData.append('enabled', !sandboxModeEnabled);
-
-                const response = await fetch('{% url "players:toggle_sendgrid_sandbox" %}', {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': '{{ csrf_token }}'
-                    },
-                    body: formData
-                });
-
-                const result = await response.json();
-
-                if (response.ok && result.success) {
-                    sandboxModeEnabled = result.enabled;
-                    updateSandboxButtonText();
-
-                    // Show temporary alert
-                    const alertDiv = document.createElement('div');
-                    alertDiv.className = 'alert alert-success alert-dismissible fade show mt-3';
-                    alertDiv.role = 'alert';
-                    alertDiv.innerHTML = `
-                        <i class="bi bi-check-circle-fill me-2"></i>
-                        <strong>Sandbox mode ${sandboxModeEnabled ? 'enabled' : 'disabled'}!</strong>
-                        ${sandboxModeEnabled ? 'Emails will NOT be sent to recipients.' : 'Emails will be sent to recipients.'}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    `;
-
-                    const devSettingsCard = btn.closest('.card-body');
-                    devSettingsCard.appendChild(alertDiv);
-
-                    // Auto-dismiss alert after 5 seconds
-                    setTimeout(() => {
-                        if (alertDiv.parentElement) {
-                            alertDiv.remove();
-                        }
-                    }, 5000);
-
-                } else {
-                    throw new Error(result.message || 'Failed to toggle sandbox mode');
-                }
-
-            } catch (error) {
-                alert('Error toggling sandbox mode: ' + error.message);
-                // Restore button state on error
-                updateSandboxButtonText();
-            } finally {
-                btn.disabled = false;
+            if (sandboxModeEnabled) {
+                statusBadge.textContent = 'ENABLED';
+                statusBadge.className = 'badge bg-success';
+                toggleBtnText.textContent = 'Disable Sandbox Mode';
+            } else {
+                statusBadge.textContent = 'DISABLED';
+                statusBadge.className = 'badge bg-secondary';
+                toggleBtnText.textContent = 'Enable Sandbox Mode';
             }
+        }
+
+        // Open Sandbox Mode Modal
+        document.getElementById('toggleSendGridSandboxBtn').addEventListener('click', function() {
+            // Update modal status before showing
+            updateModalSandboxStatus();
+
+            // Open the modal
+            const modal = new bootstrap.Modal(document.getElementById('sandboxModeModal'));
+            modal.show();
         });
 
         // Load and save sandbox test email
@@ -1230,13 +1219,21 @@
             }
         }
 
+        // Save Sandbox Test Email
         document.getElementById('saveSandboxEmailBtn').addEventListener('click', async function() {
             const btn = this;
             const originalHTML = btn.innerHTML;
             const email = document.getElementById('sandboxTestEmail').value.trim();
+            const statusSection = document.getElementById('sandboxStatusSection');
 
             if (!email) {
-                alert('Please enter a test email address');
+                statusSection.style.display = 'block';
+                statusSection.innerHTML = `
+                    <div class="alert alert-danger" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        Please enter a test email address
+                    </div>
+                `;
                 return;
             }
 
@@ -1258,17 +1255,88 @@
                 const result = await response.json();
 
                 if (response.ok && result.success) {
+                    statusSection.style.display = 'block';
+                    statusSection.innerHTML = `
+                        <div class="alert alert-success" role="alert">
+                            <i class="bi bi-check-circle-fill me-2"></i>
+                            Test email address saved successfully!
+                        </div>
+                    `;
+
                     btn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Saved!';
 
                     setTimeout(() => {
                         btn.disabled = false;
                         btn.innerHTML = originalHTML;
+                        statusSection.style.display = 'none';
                     }, 2000);
                 } else {
                     throw new Error(result.message || 'Failed to save email');
                 }
             } catch (error) {
-                alert('Error saving test email: ' + error.message);
+                statusSection.style.display = 'block';
+                statusSection.innerHTML = `
+                    <div class="alert alert-danger" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        Error: ${error.message}
+                    </div>
+                `;
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+            }
+        });
+
+        // Toggle Sandbox Mode from Modal
+        document.getElementById('toggleSandboxModeBtn').addEventListener('click', async function() {
+            const btn = this;
+            const originalHTML = btn.innerHTML;
+            const statusSection = document.getElementById('sandboxStatusSection');
+
+            try {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Toggling...';
+
+                const formData = new FormData();
+                formData.append('enabled', !sandboxModeEnabled);
+
+                const response = await fetch('{% url "players:toggle_sendgrid_sandbox" %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    sandboxModeEnabled = result.enabled;
+                    updateSandboxButtonText();
+                    updateModalSandboxStatus();
+
+                    statusSection.style.display = 'block';
+                    statusSection.innerHTML = `
+                        <div class="alert alert-success" role="alert">
+                            <i class="bi bi-check-circle-fill me-2"></i>
+                            Sandbox mode ${sandboxModeEnabled ? 'enabled' : 'disabled'} successfully!
+                        </div>
+                    `;
+
+                    setTimeout(() => {
+                        statusSection.style.display = 'none';
+                    }, 2000);
+                } else {
+                    throw new Error(result.message || 'Failed to toggle sandbox mode');
+                }
+            } catch (error) {
+                statusSection.style.display = 'block';
+                statusSection.innerHTML = `
+                    <div class="alert alert-danger" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        Error: ${error.message}
+                    </div>
+                `;
+            } finally {
                 btn.disabled = false;
                 btn.innerHTML = originalHTML;
             }
