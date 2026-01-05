@@ -43,6 +43,7 @@ class Manager(models.Model):
     email = models.EmailField()
     phone = models.CharField(max_length=20)
     daughter = models.ForeignKey('Player', on_delete=models.SET_NULL, null=True, blank=True, related_name='manager_parent')
+    passed_background_check = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
