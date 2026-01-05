@@ -9,4 +9,3 @@ pandas==2.2.3
 channels==4.0.0
 channels-redis==4.1.0
 daphne==4.0.0
-sendgrid==6.11.0
