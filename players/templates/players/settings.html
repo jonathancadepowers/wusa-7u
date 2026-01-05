@@ -175,6 +175,23 @@
                                 </button>
                             </div>
                         </div>
+
+                        <div class="row g-2 mt-2" id="sandboxEmailSection" style="display: none;">
+                            <div class="col-12">
+                                <div class="alert alert-info mb-2" role="alert">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    <strong>Sandbox Mode:</strong> When enabled, all emails will be sent to the test email address below instead of actual recipients.
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <input type="email" class="form-control" id="sandboxTestEmail" placeholder="test@example.com">
+                            </div>
+                            <div class="col-md-4">
+                                <button id="saveSandboxEmailBtn" class="btn btn-primary w-100">
+                                    <i class="bi bi-save me-2"></i>Save Test Email
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1120,10 +1137,14 @@
 
         function updateSandboxButtonText() {
             const btnText = document.getElementById('sandboxBtnText');
+            const emailSection = document.getElementById('sandboxEmailSection');
+
             if (sandboxModeEnabled) {
                 btnText.textContent = 'Sandbox Mode: ON';
+                emailSection.style.display = 'block';
             } else {
                 btnText.textContent = 'Sandbox Mode: OFF';
+                emailSection.style.display = 'none';
             }
         }
 
@@ -1189,9 +1210,74 @@
             }
         });
 
-        // Load sandbox mode status on page load
+        // Load and save sandbox test email
+        async function loadSandboxTestEmail() {
+            try {
+                const response = await fetch('{% url "players:get_sandbox_test_email" %}', {
+                    method: 'GET',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    }
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    document.getElementById('sandboxTestEmail').value = result.email || '';
+                }
+            } catch (error) {
+                console.error('Error loading sandbox test email:', error);
+            }
+        }
+
+        document.getElementById('saveSandboxEmailBtn').addEventListener('click', async function() {
+            const btn = this;
+            const originalHTML = btn.innerHTML;
+            const email = document.getElementById('sandboxTestEmail').value.trim();
+
+            if (!email) {
+                alert('Please enter a test email address');
+                return;
+            }
+
+            try {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Saving...';
+
+                const formData = new FormData();
+                formData.append('email', email);
+
+                const response = await fetch('{% url "players:save_sandbox_test_email" %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    btn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Saved!';
+
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        btn.innerHTML = originalHTML;
+                    }, 2000);
+                } else {
+                    throw new Error(result.message || 'Failed to save email');
+                }
+            } catch (error) {
+                alert('Error saving test email: ' + error.message);
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+            }
+        });
+
+        // Load sandbox mode status and test email on page load
         document.addEventListener('DOMContentLoaded', function() {
             loadSandboxModeStatus();
+            loadSandboxTestEmail();
         });
     </script>
 {% endblock %}

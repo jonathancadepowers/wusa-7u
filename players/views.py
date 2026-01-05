@@ -4510,13 +4510,21 @@ def send_team_assignment_emails_view(request):
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'POST request required'})
 
-    # Check if sandbox mode is enabled
+    # Check if sandbox mode is enabled and get test email
     sandbox_mode = False
+    sandbox_test_email = ''
     try:
         setting = GeneralSetting.objects.get(key='enable_sendgrid_sandbox_mode')
         sandbox_mode = setting.value.lower() == 'true'
     except GeneralSetting.DoesNotExist:
         pass
+
+    if sandbox_mode:
+        try:
+            setting = GeneralSetting.objects.get(key='sendgrid_sandbox_test_email')
+            sandbox_test_email = setting.value.strip()
+        except GeneralSetting.DoesNotExist:
+            pass
 
     # Get custom email subject and body from request
     email_subject_template = request.POST.get('email_subject', 'Your WUSA 7U Team Assignment - {Team Name}')
@@ -4562,31 +4570,36 @@ def send_team_assignment_emails_view(request):
             body = body.replace(token, value)
 
         try:
-            if sandbox_mode:
-                # Sandbox mode: Skip sending, just count as success
-                success_count += 1
-                time.sleep(0.5)
+            # Determine recipient email
+            if sandbox_mode and sandbox_test_email:
+                # Sandbox mode with test email: Send to test address
+                recipient_email = sandbox_test_email
+                # Add note to body indicating this is a sandbox test
+                body = f"[SANDBOX MODE - Original recipient: {manager.email}]\n\n" + body
             else:
-                # Create email message (plain text only for now)
-                email = EmailMultiAlternatives(
-                    subject=subject,
-                    body=body,
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    to=[manager.email],
-                )
+                # Normal mode: Send to actual manager
+                recipient_email = manager.email
 
-                # Send email
-                email.send()
-                success_count += 1
+            # Create email message (plain text only for now)
+            email = EmailMultiAlternatives(
+                subject=subject,
+                body=body,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[recipient_email],
+            )
 
-                # Small delay between emails
-                time.sleep(0.5)
+            # Send email
+            email.send()
+            success_count += 1
+
+            # Small delay between emails
+            time.sleep(0.5)
 
         except Exception as e:
             error_count += 1
             errors.append(f'{manager.first_name} {manager.last_name}: {str(e)}')
 
-    message_suffix = ' (SANDBOX MODE - No emails sent)' if sandbox_mode else ''
+    message_suffix = f' (SANDBOX MODE - Sent to {sandbox_test_email})' if (sandbox_mode and sandbox_test_email) else ''
 
     if error_count > 0:
         return JsonResponse({
@@ -4633,6 +4646,40 @@ def toggle_sendgrid_sandbox_view(request):
             'success': True,
             'enabled': enabled,
             'message': f'Sandbox mode {"enabled" if enabled else "disabled"}'
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+def get_sandbox_test_email_view(request):
+    """Get the sandbox test email address"""
+    try:
+        setting = GeneralSetting.objects.get(key='sendgrid_sandbox_test_email')
+        return JsonResponse({'success': True, 'email': setting.value})
+    except GeneralSetting.DoesNotExist:
+        return JsonResponse({'success': True, 'email': ''})
+
+
+def save_sandbox_test_email_view(request):
+    """Save the sandbox test email address"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'POST request required'})
+
+    email = request.POST.get('email', '').strip()
+
+    try:
+        setting, created = GeneralSetting.objects.get_or_create(
+            key='sendgrid_sandbox_test_email',
+            defaults={'value': email}
+        )
+        if not created:
+            setting.value = email
+            setting.save()
+
+        return JsonResponse({
+            'success': True,
+            'email': email,
+            'message': 'Test email saved successfully'
         })
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
