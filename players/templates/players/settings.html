@@ -1321,9 +1321,20 @@
                         </div>
                     `;
 
-                    setTimeout(() => {
-                        statusSection.style.display = 'none';
-                    }, 2000);
+                    // Close modal after enabling (not disabling, since disabling doesn't show modal)
+                    if (sandboxModeEnabled) {
+                        setTimeout(() => {
+                            const modalInstance = bootstrap.Modal.getInstance(document.getElementById('sandboxModeModal'));
+                            if (modalInstance) {
+                                modalInstance.hide();
+                            }
+                            statusSection.style.display = 'none';
+                        }, 1000);
+                    } else {
+                        setTimeout(() => {
+                            statusSection.style.display = 'none';
+                        }, 2000);
+                    }
                 } else {
                     throw new Error(result.message || 'Failed to toggle sandbox mode');
                 }
