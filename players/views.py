@@ -2045,10 +2045,10 @@ def team_detail_view(request, team_secret):
             'status': daughter_ranking_status
         })
 
-        # Task 3: Rank Siblings Requesting Team Separation
-        # Get count of players who have siblings AND request separation
-        sibling_separation_count = Player.objects.filter(
-            requests_separate_team_from_sibling=True
+        # Task 3: Rank Siblings NOT Requesting Team Separation
+        # Get count of players who have siblings AND do NOT request separation
+        sibling_together_count = Player.objects.filter(
+            requests_separate_team_from_sibling=False
         ).exclude(
             siblings__isnull=True
         ).count()
@@ -2068,7 +2068,7 @@ def team_detail_view(request, team_secret):
                 sibling_ranking_status = 'not_started'
 
         checklist_items.append({
-            'title': 'Rank Siblings Requesting Team Separation',
+            'title': 'Rank Siblings Who Want to Stay Together',
             'url': f"/sibling_rankings/?team_secret={team.manager_secret}",
             'status': sibling_ranking_status
         })
@@ -2633,7 +2633,7 @@ def manager_daughter_rankings_view(request):
 
 
 def sibling_rankings_view(request):
-    """Create or update sibling rankings for players with siblings who request separation"""
+    """Create or update sibling rankings for players with siblings who do NOT request separation"""
     # Get team_secret from URL parameter
     team_secret = request.GET.get('team_secret', request.POST.get('team_secret', ''))
 
@@ -2695,9 +2695,9 @@ def sibling_rankings_view(request):
         except SiblingRanking.DoesNotExist:
             pass
 
-    # Get players who have siblings AND request separation from siblings
+    # Get players who have siblings AND do NOT request separation from siblings
     all_players = Player.objects.filter(
-        requests_separate_team_from_sibling=True
+        requests_separate_team_from_sibling=False
     ).exclude(
         siblings__isnull=True
     ).order_by('last_name', 'first_name')
