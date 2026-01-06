@@ -3019,6 +3019,7 @@ def toggle_draft_portal_view(request):
     return redirect('players:run_draft')
 
 
+@csrf_exempt
 def available_players_view(request):
     """Get list of players not yet drafted"""
     include_player_id = request.GET.get('include_player')
