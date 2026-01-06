@@ -2709,6 +2709,9 @@ def sibling_rankings_view(request):
         siblings__isnull=True
     ).order_by('last_name', 'first_name')
 
+    # Calculate the required number of rankings based on actual count of siblings wanting to stay together
+    required_sibling_rankings = all_players.count()
+
     # Get IDs of all players who are managers' daughters
     manager_daughter_ids = list(Manager.objects.filter(daughter__isnull=False).values_list('daughter_id', flat=True))
 
@@ -2719,7 +2722,7 @@ def sibling_rankings_view(request):
         'manager': manager,
         'ranked_player_ids': json.dumps(ranked_player_ids),  # Pass as JSON for JavaScript
         'manager_daughter_ids': json.dumps(manager_daughter_ids),  # Pass as JSON for JavaScript
-        'required_rankings': required_rankings,  # Dynamic count based on number of teams × 2
+        'required_rankings': required_sibling_rankings,  # Actual count of siblings wanting to stay together
         'num_teams': num_teams
     }
     return render(request, 'players/sibling_rankings.html', context)
