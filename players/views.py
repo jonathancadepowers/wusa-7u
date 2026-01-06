@@ -2885,8 +2885,6 @@ def practice_slot_rankings_view(request):
     }
     return render(request, 'players/practice_slot_rankings.html', context)
 
-
-@login_required
 def practice_slots_analyze_view(request):
     """Display practice slots analysis page"""
     # Check if any teams already have practice slots assigned
@@ -2899,7 +2897,6 @@ def practice_slots_analyze_view(request):
     return render(request, 'players/practice_slots_analyze.html', context)
 
 
-@login_required
 @require_http_methods(["POST"])
 def run_practice_slots_analysis_view(request):
     """Run analysis to match teams with their preferred practice slots"""
@@ -2975,7 +2972,6 @@ def run_practice_slots_analysis_view(request):
         }, status=500)
 
 
-@login_required
 @require_http_methods(["POST"])
 def assign_practice_slots_to_teams_view(request):
     """Assign practice slots to teams based on analysis results"""
@@ -3785,7 +3781,6 @@ def team_preferences_view(request):
     return render(request, 'players/team_preferences.html', context)
 
 
-@login_required
 def player_rankings_analyze_view(request):
     """Analyze manager player rankings"""
     from .models import PlayerRanking, Manager, Player, GeneralSetting, Team
@@ -3862,7 +3857,6 @@ def player_rankings_analyze_view(request):
     return render(request, 'players/player_rankings_analyze.html', context)
 
 
-@login_required
 @require_http_methods(["POST"])
 def release_player_rankings_view(request):
     """Toggle player rankings release status"""
@@ -3976,7 +3970,6 @@ def player_rankings_analyze_public_view(request):
     return render(request, 'players/player_rankings_analyze_public.html', context)
 
 
-@login_required
 def manager_daughter_rankings_analyze_view(request):
     """Analyze manager daughter rankings with Borda count and suggested draft rounds"""
     from .models import ManagerDaughterRanking, Manager, Player
@@ -4047,13 +4040,11 @@ def manager_daughter_rankings_analyze_view(request):
     return render(request, 'players/manager_daughter_rankings_analyze.html', context)
 
 
-@login_required
 def try_out_check_in_view(request):
     """Try out check in form"""
     return render(request, 'players/try_out_check_in.html')
 
 
-@login_required
 def search_players_view(request):
     """Search players by name for autocomplete"""
     from .models import Player
@@ -4080,7 +4071,6 @@ def search_players_view(request):
     return JsonResponse({'results': results})
 
 
-@login_required
 @require_http_methods(["POST"])
 def toggle_try_out_attendance_view(request):
     """Toggle player try-out attendance"""
@@ -4552,7 +4542,6 @@ def send_team_preferences_email_view(request):
         }, status=500)
 
 
-@login_required
 def manage_practice_slots_view(request):
     """View to manage practice slots with CRUD operations"""
     from .models import PracticeSlot
@@ -4584,7 +4573,6 @@ def pre_season_practice_slot_selector_view(request):
     return render(request, 'players/pre_season_practice_slot_selector.html', context)
 
 
-@login_required
 @require_http_methods(["POST"])
 def create_practice_slot_view(request):
     """Create a new practice slot"""
@@ -4617,7 +4605,6 @@ def create_practice_slot_view(request):
         }, status=500)
 
 
-@login_required
 @require_http_methods(["POST"])
 def update_practice_slot_view(request, pk):
     """Update an existing practice slot"""
@@ -4657,7 +4644,6 @@ def update_practice_slot_view(request, pk):
         }, status=500)
 
 
-@login_required
 @require_http_methods(["POST"])
 def delete_practice_slot_view(request, pk):
     """Delete a practice slot"""
