@@ -3793,8 +3793,8 @@ def manager_daughter_rankings_analyze_view(request):
     # Sort by Borda count (higher is better), then by average rank (lower is better)
     player_stats.sort(key=lambda x: (-x['borda_count'], x['average_rank']))
 
-    # Get top 20 players
-    top_players = player_stats[:20]
+    # Show all manager daughters (not limited to top 20)
+    top_players = player_stats
 
     # Get managers who haven't submitted rankings
     all_managers = Manager.objects.all()
