@@ -73,11 +73,6 @@
             font-size: 0.85em;
             margin-left: 5px;
         }
-        .no-show-label {
-            color: #dc3545;
-            font-size: 0.85em;
-            margin-left: 5px;
-        }
     </style>
 {% endblock %}
 
@@ -378,38 +373,11 @@
             });
         }
 
-        function addNoShowLabels() {
-            const noShowPlayerIds = {{ no_show_player_ids|safe }};
-            const allPlayerItems = document.querySelectorAll('.player-item');
-
-            allPlayerItems.forEach(item => {
-                const playerId = parseInt(item.getAttribute('data-player-id'));
-                const playerNameSpan = item.querySelector('.player-name');
-
-                if (noShowPlayerIds.includes(playerId)) {
-                    // Remove existing label if any
-                    const existingLabel = item.querySelector('.no-show-label');
-                    if (existingLabel) {
-                        existingLabel.remove();
-                    }
-
-                    // Add no-show label
-                    const label = document.createElement('span');
-                    label.className = 'no-show-label';
-                    label.textContent = "(Skipped Tryouts)";
-                    playerNameSpan.parentNode.insertBefore(label, playerNameSpan.nextSibling);
-                }
-            });
-        }
-
         document.addEventListener('DOMContentLoaded', function() {
             initializeDragAndDrop();
 
             // Mark manager's daughters
             addManagerDaughterLabels();
-
-            // Mark players who skipped tryouts
-            addNoShowLabels();
 
             // Load existing rankings if they exist
             const existingRankings = {{ ranked_player_ids|safe }};

@@ -148,7 +148,7 @@
                                                 id="noshow_{{ player.id }}"
                                                 {% if not player.draftable %}checked{% endif %}>
                                             <label class="form-check-label" for="noshow_{{ player.id }}">
-                                                {{ player.first_name }} {{ player.last_name }}
+                                                {{ player.first_name }} {{ player.last_name }} <span style="color: #dc3545; font-size: 0.85em;">(Skipped Tryouts)</span>
                                             </label>
                                         </div>
                                     </div>
@@ -540,6 +540,11 @@
             const container = document.getElementById('non-draftable-checkboxes');
             const div = document.createElement('div');
             div.className = 'col-md-6 mb-2';
+
+            // Check if player skipped tryouts
+            const skippedTryouts = player.attended_try_out === false;
+            const tryoutLabel = skippedTryouts ? ' <span style="color: #dc3545; font-size: 0.85em;">(Skipped Tryouts)</span>' : '';
+
             div.innerHTML = `
                 <div class="form-check">
                     <input
@@ -550,7 +555,7 @@
                         id="noshow_${player.id}"
                         checked>
                     <label class="form-check-label" for="noshow_${player.id}">
-                        ${player.first_name} ${player.last_name} <span class="badge bg-success">Added</span>
+                        ${player.first_name} ${player.last_name}${tryoutLabel} <span class="badge bg-success">Added</span>
                     </label>
                 </div>
             `;
