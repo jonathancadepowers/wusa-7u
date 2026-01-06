@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 
 {% block title %}Practice Slots - WUSA 7U{% endblock %}
 
@@ -21,26 +22,11 @@
                     <span class="text-muted">Total practice slots: <strong>{{ total_slots }}</strong></span>
                 </div>
 
-                <!-- Search Bar and Add Button -->
-                <div class="row mb-4 align-items-end">
-                    <div class="col-md-6">
-                        <form method="get">
-                            <div class="input-group">
-                                <input type="text" name="search" class="form-control" placeholder="Search practice slots..." value="{{ search_query }}">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="bi bi-search"></i> Search
-                                </button>
-                                {% if search_query %}
-                                    <a href="{% url 'players:practice_slots_list' %}" class="btn btn-secondary">Clear</a>
-                                {% endif %}
-                            </div>
-                        </form>
-                    </div>
-                    <div class="col-md-6 text-end">
-                        <a href="{% url 'players:practice_slot_create' %}" class="btn btn-success">
-                            <i class="bi bi-plus-circle me-1"></i>Add Practice Slot
-                        </a>
-                    </div>
+                <!-- Add Button -->
+                <div class="mb-4 text-end">
+                    <a href="{% url 'players:practice_slot_create' %}" class="btn btn-success">
+                        <i class="bi bi-plus-circle me-1"></i>Add Practice Slot
+                    </a>
                 </div>
 
                 <!-- Practice Slots Table -->
@@ -63,14 +49,16 @@
                                         <td>
                                             <select class="form-select form-select-sm team-assignment-dropdown"
                                                     data-slot-id="{{ slot.pk }}"
-                                                    style="min-width: 150px;">
-                                                <option value="">-- Unassigned --</option>
-                                                {% for team in teams %}
-                                                    <option value="{{ team.pk }}"
-                                                            {% if team.practice_slot.pk == slot.pk %}selected{% endif %}>
-                                                        {{ team.name }}{% if team.manager %} ({{ team.manager.last_name }}){% endif %}
-                                                    </option>
-                                                {% endfor %}
+                                                    style="min-width: 200px;">
+                                                <option value="">Unassign Practice Slot</option>
+                                                {% with slot_available_teams|get_item:slot.pk as available_teams %}
+                                                    {% for team in available_teams %}
+                                                        <option value="{{ team.pk }}"
+                                                                {% if team.practice_slot.pk == slot.pk %}selected{% endif %}>
+                                                            {{ team.name }}{% if team.manager %} ({{ team.manager.last_name }}){% endif %}
+                                                        </option>
+                                                    {% endfor %}
+                                                {% endwith %}
                                             </select>
                                         </td>
                                         <td>{{ slot.created_at|date:"M d, Y g:i A" }}</td>
@@ -97,10 +85,10 @@
                             <ul class="pagination justify-content-center">
                                 {% if page_obj.has_previous %}
                                     <li class="page-item">
-                                        <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}">First</a>
+                                        <a class="page-link" href="?page=1">First</a>
                                     </li>
                                     <li class="page-item">
-                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Previous</a>
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
                                     </li>
                                 {% endif %}
 
@@ -112,10 +100,10 @@
 
                                 {% if page_obj.has_next %}
                                     <li class="page-item">
-                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Next</a>
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
                                     </li>
                                     <li class="page-item">
-                                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}">Last</a>
+                                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last</a>
                                     </li>
                                 {% endif %}
                             </ul>
@@ -124,11 +112,7 @@
                 {% else %}
                     <div class="alert alert-info">
                         <i class="bi bi-info-circle me-2"></i>
-                        {% if search_query %}
-                            No practice slots found matching "{{ search_query }}".
-                        {% else %}
-                            No practice slots yet. Click "Add Practice Slot" to create one.
-                        {% endif %}
+                        No practice slots yet. Click "Add Practice Slot" to create one.
                     </div>
                 {% endif %}
             </div>

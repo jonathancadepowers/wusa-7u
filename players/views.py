@@ -4745,14 +4745,22 @@ def practice_slots_list_view(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    # Get all teams for the assignment dropdown
-    teams = Team.objects.all().order_by('name')
+    # For each practice slot, determine which teams are available for assignment
+    # A team is available if it has no practice slot OR it's assigned to this slot
+    slot_available_teams = {}
+    for slot in page_obj:
+        # Get teams with no practice slot assigned
+        available_teams = Team.objects.filter(practice_slot__isnull=True).order_by('name')
+        # Also get the team currently assigned to this slot (if any)
+        currently_assigned = Team.objects.filter(practice_slot=slot).order_by('name')
+        # Combine them
+        slot_available_teams[slot.pk] = list(available_teams) + list(currently_assigned)
 
     context = {
         'page_obj': page_obj,
         'search_query': search_query,
         'total_slots': PracticeSlot.objects.count(),
-        'teams': teams,
+        'slot_available_teams': slot_available_teams,
     }
 
     return render(request, 'players/practice_slots_list.html', context)
