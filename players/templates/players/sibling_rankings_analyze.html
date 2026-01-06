@@ -35,11 +35,12 @@
 
                         <div class="alert alert-info mb-4">
                             <i class="bi bi-info-circle me-2"></i>
-                            <strong>How Rankings Are Calculated:</strong>
-                            <ul class="mb-0 mt-2">
-                                <li><strong>Borda Count:</strong> A voting system where each rank position earns points. Rank 1 earns the most points, rank 2 earns slightly fewer, and so on. Players are sorted by their total points.</li>
-                                <li><strong>Suggested Draft Round:</strong> Calculated as the median (middle value) of all the rounds that managers assigned to each player. This represents the consensus view of which round each player should be drafted in.</li>
-                            </ul>
+                            <strong>How Suggested Round is Determined:</strong>
+                            <p class="mb-0 mt-2">
+                                The <strong>Suggested Round</strong> is calculated as the median (middle value) of all the rounds that managers assigned to each player.
+                                This represents the consensus view of which round each player should be drafted in. For example, if 5 managers placed a player
+                                in rounds [1, 2, 2, 3, 2], the median is 2, so the suggested round would be Round 2.
+                            </p>
                         </div>
 
                         {% if top_players %}
@@ -47,12 +48,9 @@
                                 <table class="table table-striped table-bordered">
                                     <thead class="table-dark">
                                         <tr>
-                                            <th style="width: 80px;" class="text-center">Rank</th>
-                                            <th style="width: 200px;" class="text-center">Player Name</th>
-                                            <th style="width: 120px;" class="text-center">Suggested Round</th>
-                                            <th style="width: 150px;" class="text-center">Average Score</th>
-                                            <th style="width: 120px;" class="text-center">Rankings Received</th>
-                                            <th style="width: 120px;" class="text-center">Borda Count</th>
+                                            <th style="width: 100px;" class="text-center">Rank</th>
+                                            <th class="text-center">Player Name</th>
+                                            <th style="width: 200px;" class="text-center">Suggested Round</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -67,9 +65,6 @@
                                                         <span class="text-muted">-</span>
                                                     {% endif %}
                                                 </td>
-                                                <td class="text-center">{{ item.average_rank|floatformat:1 }}</td>
-                                                <td class="text-center">{{ item.num_rankings }}</td>
-                                                <td class="text-center"><strong>{{ item.borda_count }}</strong></td>
                                             </tr>
                                         {% endfor %}
                                     </tbody>
