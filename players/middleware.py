@@ -33,6 +33,10 @@ class ValidationMiddleware:
         if path == '/division_validation_registry/':
             return self.get_response(request)
 
+        # Skip validation for draft API endpoints
+        if path.startswith('/draft/available-players/') or path.startswith('/draft/make-pick/'):
+            return self.get_response(request)
+
         # === BEFORE REQUEST: Run "validations to run on page load" for GET requests ===
         if request.method == 'GET':
             validation_error = self._run_page_load_validations(path)
