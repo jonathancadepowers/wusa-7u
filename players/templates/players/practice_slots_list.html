@@ -68,7 +68,7 @@
                                                 {% for team in teams %}
                                                     <option value="{{ team.pk }}"
                                                             {% if team.practice_slot.pk == slot.pk %}selected{% endif %}>
-                                                        {{ team.name }}
+                                                        {{ team.name }}{% if team.manager %} ({{ team.manager.last_name }}){% endif %}
                                                     </option>
                                                 {% endfor %}
                                             </select>
