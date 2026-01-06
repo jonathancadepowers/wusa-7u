@@ -101,6 +101,18 @@
                             Rank players with siblings who do NOT request team separation. Drag players from the available list to the rankings area on the right. Arrange them in order from #1 (best) to #{{ required_rankings }}.
                         </div>
 
+                        {% if separation_players %}
+                        <div class="alert alert-warning">
+                            <h6 class="alert-heading"><i class="bi bi-info-circle me-2"></i>Siblings Requesting Team Separation</h6>
+                            <p class="mb-2">The following players have siblings but have requested to be on separate teams. They will be treated as normal players in the draft:</p>
+                            <ul class="mb-0">
+                                {% for player in separation_players %}
+                                <li>{{ player.first_name }} {{ player.last_name }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+
                         <form method="post" id="rankingsForm">
                             {% csrf_token %}
                             <input type="hidden" id="rankingsField" name="rankings" value="">

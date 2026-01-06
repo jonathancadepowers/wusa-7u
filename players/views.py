@@ -2702,11 +2702,19 @@ def sibling_rankings_view(request):
         siblings__isnull=True
     ).order_by('last_name', 'first_name')
 
+    # Get players who have siblings AND DO request separation (for informational display)
+    separation_players = Player.objects.filter(
+        requests_separate_team_from_sibling=True
+    ).exclude(
+        siblings__isnull=True
+    ).order_by('last_name', 'first_name')
+
     # Get IDs of all players who are managers' daughters
     manager_daughter_ids = list(Manager.objects.filter(daughter__isnull=False).values_list('daughter_id', flat=True))
 
     context = {
         'all_players': all_players,
+        'separation_players': separation_players,
         'team_secret': team_secret,
         'manager': manager,
         'ranked_player_ids': json.dumps(ranked_player_ids),  # Pass as JSON for JavaScript
