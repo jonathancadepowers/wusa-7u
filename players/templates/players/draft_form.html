@@ -146,7 +146,7 @@
                                                 name="non_draftable_players"
                                                 value="{{ player.id }}"
                                                 id="noshow_{{ player.id }}"
-                                                {% if not player.draftable %}checked{% endif %}>
+                                                checked>
                                             <label class="form-check-label" for="noshow_{{ player.id }}">
                                                 {{ player.first_name }} {{ player.last_name }} <span style="color: #dc3545; font-size: 0.85em;">(Skipped Tryouts)</span>
                                             </label>
