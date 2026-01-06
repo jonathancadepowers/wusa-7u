@@ -2637,10 +2637,6 @@ def sibling_rankings_view(request):
     # Get team_secret from URL parameter
     team_secret = request.GET.get('team_secret', request.POST.get('team_secret', ''))
 
-    # Calculate required number of rankings: (Number of Teams) × 2
-    num_teams = Team.objects.count()
-    required_rankings = num_teams * 2
-
     # Find the manager associated with this team_secret
     manager = None
     if team_secret:
@@ -2651,47 +2647,58 @@ def sibling_rankings_view(request):
             messages.error(request, 'Invalid team secret.')
 
     if request.method == 'POST':
-        # Get the rankings data from the form (comma-separated player IDs in ranked order)
+        # Get the rankings data from the form (JSON with player IDs, ranks, and draft rounds)
         rankings_data = request.POST.get('rankings', '')
 
         if rankings_data:
-            # Parse the comma-separated IDs
-            player_ids = [int(pid) for pid in rankings_data.split(',') if pid]
+            # Parse JSON data: [{"player_id": X, "rank": Y, "round": Z}, ...]
+            try:
+                rankings_list = json.loads(rankings_data)
 
-            # Create a JSON structure with rank and player ID
-            rankings_json = json.dumps([
-                {"rank": idx + 1, "player_id": player_id}
-                for idx, player_id in enumerate(player_ids)
-            ])
+                # Save the rankings as JSON
+                rankings_json = json.dumps(rankings_list)
 
-            # Update or create ranking for this manager (ensures only one ranking per manager)
-            if manager:
-                SiblingRanking.objects.update_or_create(
-                    manager=manager,
-                    defaults={'ranking': rankings_json}
-                )
-                messages.success(request, f'Sibling rankings saved successfully! ({len(player_ids)} players ranked)')
-            else:
-                # Cannot save rankings without a manager assigned to the team
-                messages.error(request, 'Cannot save rankings: No manager is assigned to this team yet.')
+                # Update or create ranking for this manager (if manager exists)
+                if manager:
+                    SiblingRanking.objects.update_or_create(
+                        manager=manager,
+                        defaults={'ranking': rankings_json}
+                    )
 
-            # Redirect back to team page if team_secret was provided
-            if team_secret:
-                return redirect('players:team_detail', team_secret=team_secret)
-            else:
-                return redirect('players:sibling_rankings')
+                    # Clear unsaved rankings from session after successful save
+                    if 'unsaved_sibling_rankings' in request.session:
+                        del request.session['unsaved_sibling_rankings']
+
+                    messages.success(request, f'Sibling rankings saved successfully! ({len(rankings_list)} players ranked)')
+
+                    # Redirect back to team page if team_secret was provided
+                    if team_secret:
+                        return redirect('players:team_detail', team_secret=team_secret)
+                    else:
+                        return redirect('players:sibling_rankings')
+                else:
+                    messages.error(request, 'Cannot save rankings: No manager is assigned to this team yet.')
+            except json.JSONDecodeError:
+                messages.error(request, 'Invalid rankings data format.')
         else:
             messages.error(request, 'No rankings data provided.')
 
-    # Load existing rankings for this manager
+    # Load existing rankings for this manager OR unsaved rankings from session
     existing_ranking = None
-    ranked_player_ids = []
-    if manager:
+    existing_rankings_data = []
+
+    # Check if there are unsaved rankings in the session (from failed save)
+    if 'unsaved_sibling_rankings' in request.session and request.session['unsaved_sibling_rankings']:
+        try:
+            existing_rankings_data = json.loads(request.session['unsaved_sibling_rankings'])
+        except json.JSONDecodeError:
+            pass
+    # Otherwise, load saved rankings for this manager
+    elif manager:
         try:
             existing_ranking = SiblingRanking.objects.get(manager=manager)
-            # Parse the JSON to get player IDs in order
-            rankings_data = json.loads(existing_ranking.ranking)
-            ranked_player_ids = [item['player_id'] for item in rankings_data]
+            # Parse the JSON to get full ranking data (player_id, rank, round)
+            existing_rankings_data = json.loads(existing_ranking.ranking)
         except SiblingRanking.DoesNotExist:
             pass
 
@@ -2709,8 +2716,14 @@ def sibling_rankings_view(request):
         siblings__isnull=True
     ).order_by('last_name', 'first_name')
 
-    # Calculate the required number of rankings based on actual count of siblings wanting to stay together
-    required_sibling_rankings = all_players.count()
+    # Calculate the count of siblings wanting to stay together
+    sibling_count = all_players.count()
+
+    # Calculate number of draft rounds: (total players / total teams), rounded up
+    import math
+    total_players = Player.objects.count()
+    total_teams = Team.objects.count()
+    num_rounds = math.ceil(total_players / total_teams) if total_teams > 0 else 1
 
     # Get IDs of all players who are managers' daughters
     manager_daughter_ids = list(Manager.objects.filter(daughter__isnull=False).values_list('daughter_id', flat=True))
@@ -2720,10 +2733,10 @@ def sibling_rankings_view(request):
         'separation_players': separation_players,
         'team_secret': team_secret,
         'manager': manager,
-        'ranked_player_ids': json.dumps(ranked_player_ids),  # Pass as JSON for JavaScript
+        'existing_rankings_data': json.dumps(existing_rankings_data),  # Pass full ranking data as JSON for JavaScript
         'manager_daughter_ids': json.dumps(manager_daughter_ids),  # Pass as JSON for JavaScript
-        'required_rankings': required_sibling_rankings,  # Actual count of siblings wanting to stay together
-        'num_teams': num_teams
+        'sibling_count': sibling_count,  # Pass the count for dynamic requirements
+        'num_rounds': num_rounds  # Number of draft rounds
     }
     return render(request, 'players/sibling_rankings.html', context)
 
