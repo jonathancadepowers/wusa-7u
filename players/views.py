@@ -4566,6 +4566,24 @@ def manage_practice_slots_view(request):
     return render(request, 'players/manage_practice_slots.html', context)
 
 
+def pre_season_practice_slot_selector_view(request):
+    """Display a random ordering of managers for establishing selection order"""
+    from .models import Manager
+    import random
+
+    # Get all managers
+    managers = list(Manager.objects.all())
+
+    # Randomize the order
+    random.shuffle(managers)
+
+    context = {
+        'managers': managers
+    }
+
+    return render(request, 'players/pre_season_practice_slot_selector.html', context)
+
+
 @login_required
 @require_http_methods(["POST"])
 def create_practice_slot_view(request):
