@@ -4668,6 +4668,59 @@ def delete_practice_slot_view(request, pk):
             'error': f'An error occurred: {str(e)}'
         }, status=500)
 
+
+@require_http_methods(["POST"])
+def assign_team_to_practice_slot_view(request):
+    """Assign a team to a practice slot"""
+    from .models import PracticeSlot, Team
+    import json
+
+    try:
+        data = json.loads(request.body)
+        slot_id = data.get('slot_id')
+        team_id = data.get('team_id')
+
+        # Get the practice slot
+        slot = PracticeSlot.objects.get(pk=slot_id)
+
+        if team_id:
+            # Assign the team to the practice slot
+            team = Team.objects.get(pk=team_id)
+
+            # Remove this practice slot from any other team that has it
+            Team.objects.filter(practice_slot=slot).update(practice_slot=None)
+
+            # Assign to the new team
+            team.practice_slot = slot
+            team.save()
+
+            message = f'{team.name} assigned to {slot.practice_slot}'
+        else:
+            # Unassign practice slot from any team that has it
+            Team.objects.filter(practice_slot=slot).update(practice_slot=None)
+            message = f'Practice slot unassigned'
+
+        return JsonResponse({
+            'success': True,
+            'message': message
+        })
+    except PracticeSlot.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Practice slot not found.'
+        }, status=404)
+    except Team.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Team not found.'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
 # Practice Slots CRUD Views
 def practice_slots_list_view(request):
     """List all practice slots with search and pagination"""
@@ -4692,10 +4745,14 @@ def practice_slots_list_view(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
+    # Get all teams for the assignment dropdown
+    teams = Team.objects.all().order_by('name')
+
     context = {
         'page_obj': page_obj,
         'search_query': search_query,
         'total_slots': PracticeSlot.objects.count(),
+        'teams': teams,
     }
 
     return render(request, 'players/practice_slots_list.html', context)

@@ -79,6 +79,7 @@ urlpatterns = [
     path('practice_slots/<int:pk>/update/', views.update_practice_slot_view, name='update_practice_slot'),
     path('practice_slots/<int:pk>/delete/', views.delete_practice_slot_view, name='delete_practice_slot'),
     path('practice_slots/analyze/', views.practice_slots_analyze_view, name='practice_slots_analyze'),
+    path('practice_slots/assign-team/', views.assign_team_to_practice_slot_view, name='assign_team_to_practice_slot'),
     # Practice Slots CRUD UI
     path('practice_slots/', views.practice_slots_list_view, name='practice_slots_list'),
     path('practice_slot/create/', views.practice_slot_create_view, name='practice_slot_create'),

@@ -50,6 +50,7 @@
                             <thead class="table-light">
                                 <tr>
                                     <th>Practice Slot</th>
+                                    <th>Assigned Team</th>
                                     <th>Created</th>
                                     <th>Last Updated</th>
                                     <th>Actions</th>
@@ -59,6 +60,19 @@
                                 {% for slot in page_obj %}
                                     <tr>
                                         <td><strong>{{ slot.practice_slot }}</strong></td>
+                                        <td>
+                                            <select class="form-select form-select-sm team-assignment-dropdown"
+                                                    data-slot-id="{{ slot.pk }}"
+                                                    style="min-width: 150px;">
+                                                <option value="">-- Unassigned --</option>
+                                                {% for team in teams %}
+                                                    <option value="{{ team.pk }}"
+                                                            {% if team.practice_slot.pk == slot.pk %}selected{% endif %}>
+                                                        {{ team.name }}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                        </td>
                                         <td>{{ slot.created_at|date:"M d, Y g:i A" }}</td>
                                         <td>{{ slot.updated_at|date:"M d, Y g:i A" }}</td>
                                         <td>
@@ -120,4 +134,76 @@
             </div>
         </div>
     </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle team assignment dropdown changes
+            const dropdowns = document.querySelectorAll('.team-assignment-dropdown');
+
+            dropdowns.forEach(dropdown => {
+                dropdown.addEventListener('change', async function() {
+                    const slotId = this.getAttribute('data-slot-id');
+                    const teamId = this.value;
+
+                    try {
+                        const response = await fetch('{% url "players:assign_team_to_practice_slot" %}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': getCookie('csrftoken')
+                            },
+                            body: JSON.stringify({
+                                slot_id: slotId,
+                                team_id: teamId || null
+                            })
+                        });
+
+                        const data = await response.json();
+
+                        if (data.success) {
+                            // Show success message
+                            showMessage(data.message, 'success');
+                            // Reload the page to reflect changes
+                            setTimeout(() => location.reload(), 1000);
+                        } else {
+                            showMessage(data.error || 'Failed to assign team', 'danger');
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        showMessage('An error occurred while assigning the team', 'danger');
+                    }
+                });
+            });
+
+            // Helper function to get CSRF token
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+
+            // Helper function to show messages
+            function showMessage(message, type) {
+                const container = document.querySelector('.container.mt-4');
+                const alertDiv = document.createElement('div');
+                alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+                alertDiv.innerHTML = `
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                container.insertBefore(alertDiv, container.firstChild);
+            }
+        });
+    </script>
 {% endblock %}
