@@ -102,6 +102,7 @@ class Player(models.Model):
     assistant_manager_volunteer_name = models.CharField(max_length=100, blank=True, null=True)
     attended_try_out = models.BooleanField(default=True)
     draftable = models.BooleanField(default=True)
+    siblings = models.ManyToManyField('self', blank=True, symmetrical=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
