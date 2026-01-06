@@ -1406,6 +1406,7 @@ def public_portal_view(request):
 def validate_team_secret_view(request):
     """Validate team secret and return team URL if valid"""
     team_secret = request.POST.get('team_secret', '').strip()
+    team_id = request.POST.get('team_id', '').strip()
     MASTER_PASSWORD = get_master_password_from_db()
 
     if not team_secret:
@@ -1414,8 +1415,20 @@ def validate_team_secret_view(request):
             'error': 'Please enter a team secret.'
         }, status=400)
 
-    # Check if master password is used - redirect to first team
+    # Check if master password is used - redirect to the selected team
     if team_secret == MASTER_PASSWORD:
+        # Try to get the team that was originally selected
+        if team_id:
+            try:
+                selected_team = Team.objects.get(pk=team_id)
+                return JsonResponse({
+                    'success': True,
+                    'team_url': f'/teams/{selected_team.manager_secret}/'
+                })
+            except Team.DoesNotExist:
+                pass
+
+        # Fallback to first team if no team_id provided or team not found
         first_team = Team.objects.order_by('name').first()
         if first_team:
             return JsonResponse({

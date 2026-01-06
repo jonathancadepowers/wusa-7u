@@ -192,6 +192,7 @@
             try {
                 const formData = new FormData();
                 formData.append('team_secret', secret);
+                formData.append('team_id', currentTeamId);
                 formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
 
                 const response = await fetch('/api/validate-team-secret/', {
