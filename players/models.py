@@ -103,6 +103,7 @@ class Player(models.Model):
     attended_try_out = models.BooleanField(default=True)
     draftable = models.BooleanField(default=True)
     siblings = models.ManyToManyField('self', blank=True, symmetrical=True)
+    requests_separate_team_from_sibling = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

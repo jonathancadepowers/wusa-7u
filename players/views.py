@@ -1632,6 +1632,7 @@ def player_detail_view(request, pk):
         player.assistant_manager_volunteer_name = request.POST.get('assistant_manager_volunteer_name') or None
         player.attended_try_out = request.POST.get('attended_try_out') == 'on'
         player.draftable = request.POST.get('draftable') == 'on'
+        player.requests_separate_team_from_sibling = request.POST.get('requests_separate_team_from_sibling') == 'on'
 
         # Handle team assignment
         team_id = request.POST.get('team_id')

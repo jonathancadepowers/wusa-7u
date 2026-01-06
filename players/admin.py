@@ -59,7 +59,7 @@ class PlayerAdmin(admin.ModelAdmin):
             'fields': ('first_name', 'last_name', 'birthday', 'school', 'jersey_size', 'attended_try_out', 'draftable')
         }),
         ('Family Relationships', {
-            'fields': ('siblings',)
+            'fields': ('siblings', 'requests_separate_team_from_sibling')
         }),
         ('Registration Details', {
             'fields': ('history', 'conflict', 'additional_registration_info')
