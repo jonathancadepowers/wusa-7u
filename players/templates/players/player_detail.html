@@ -111,6 +111,19 @@
                                 <div class="form-text">Select a manager if this player is their daughter</div>
                             </div>
 
+                            <div class="mb-3">
+                                <label for="sibling_ids" class="form-label">Siblings</label>
+                                <select class="form-select" id="sibling_ids" name="sibling_ids" multiple size="5">
+                                    {% for other_player in all_other_players %}
+                                        <option value="{{ other_player.pk }}"
+                                            {% if other_player in player.siblings.all %}selected{% endif %}>
+                                            {{ other_player.first_name }} {{ other_player.last_name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">Hold Ctrl (Cmd on Mac) to select multiple siblings</div>
+                            </div>
+
                             <!-- Parent Contact Information -->
                             <h5 class="border-bottom pb-2 mb-3 mt-4">Parent Contact - Primary *</h5>
                             <div class="row mb-3">

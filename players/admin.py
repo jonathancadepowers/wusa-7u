@@ -28,6 +28,7 @@ class PlayerAdmin(admin.ModelAdmin):
     list_filter = ['team', 'school', 'jersey_size', 'attended_try_out', 'draftable']
     search_fields = ['first_name', 'last_name', 'parent_email_1', 'parent_email_2']
     date_hierarchy = 'birthday'
+    filter_horizontal = ['siblings']
 
     class Media:
         js = ('admin/js/player_inline_edit.js',)
@@ -56,6 +57,9 @@ class PlayerAdmin(admin.ModelAdmin):
         }),
         ('Player Information', {
             'fields': ('first_name', 'last_name', 'birthday', 'school', 'jersey_size', 'attended_try_out', 'draftable')
+        }),
+        ('Family Relationships', {
+            'fields': ('siblings',)
         }),
         ('Registration Details', {
             'fields': ('history', 'conflict', 'additional_registration_info')

@@ -1658,6 +1658,18 @@ def player_detail_view(request, pk):
                 pass
 
         player.save()
+
+        # Handle siblings - clear existing and add selected
+        player.siblings.clear()
+        sibling_ids = request.POST.getlist('sibling_ids')
+        for sibling_id in sibling_ids:
+            if sibling_id:
+                try:
+                    sibling = Player.objects.get(pk=sibling_id)
+                    player.siblings.add(sibling)
+                except Player.DoesNotExist:
+                    pass
+
         messages.success(request, f'Player {player.first_name} {player.last_name} updated successfully!')
         return redirect('players:detail', pk=player.pk)
 
@@ -1668,11 +1680,15 @@ def player_detail_view(request, pk):
     current_manager = Manager.objects.filter(daughter=player).first()
     available_managers = Manager.objects.filter(daughter__isnull=True).order_by('last_name', 'first_name')
 
+    # Get all other players for siblings dropdown (exclude current player)
+    all_other_players = Player.objects.exclude(pk=player.pk).order_by('last_name', 'first_name')
+
     context = {
         'player': player,
         'all_teams': all_teams,
         'available_managers': available_managers,
-        'current_manager': current_manager
+        'current_manager': current_manager,
+        'all_other_players': all_other_players
     }
     return render(request, 'players/player_detail.html', context)
 
