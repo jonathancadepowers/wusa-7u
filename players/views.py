@@ -2480,12 +2480,16 @@ def player_rankings_view(request):
     # Get IDs of all players who are managers' daughters
     manager_daughter_ids = list(Manager.objects.filter(daughter__isnull=False).values_list('daughter_id', flat=True))
 
+    # Get IDs of all players who did not attend tryouts
+    no_show_player_ids = list(Player.objects.filter(attended_try_out=False).values_list('id', flat=True))
+
     context = {
         'all_players': all_players,
         'team_secret': team_secret,
         'manager': manager,
         'ranked_player_ids': json.dumps(ranked_player_ids),  # Pass as JSON for JavaScript
         'manager_daughter_ids': json.dumps(manager_daughter_ids),  # Pass as JSON for JavaScript
+        'no_show_player_ids': json.dumps(no_show_player_ids),  # Pass as JSON for JavaScript
         'required_rankings': required_rankings,  # Dynamic count based on number of teams × 2
         'num_teams': num_teams
     }
