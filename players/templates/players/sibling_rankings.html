@@ -1,0 +1,441 @@
+{% extends "base.html" %}
+
+{% block title %}Sibling Rankings - WUSA 7U{% endblock %}
+
+{% block page_title %}WUSA 7U - Sibling Rankings{% endblock %}
+
+{% block extra_css %}
+    <style>
+        .player-drop-zone {
+            min-height: 400px;
+            padding: 10px;
+            border: 2px dashed #dee2e6;
+            border-radius: 4px;
+        }
+        #rankedPlayers {
+            height: 920px;
+            overflow-y: auto;
+        }
+        #availablePlayers {
+            height: 920px;
+            overflow-y: auto;
+        }
+        .available-players-card-body {
+            height: 1020px;
+        }
+        .rankings-card-body {
+            height: 1020px;
+        }
+        .player-item {
+            background-color: #fff;
+            border: 1px solid #dee2e6;
+            padding: 10px 15px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            cursor: move;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+        }
+        .player-item:hover {
+            background-color: #f8f9fa;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .player-item.dragging {
+            visibility: hidden;
+        }
+        .player-item.drag-over-item {
+            margin-top: 50px;
+        }
+        .player-drop-zone.drag-over {
+            background-color: #e3f2fd;
+            border-color: #2196f3;
+        }
+        .rank-badge {
+            background-color: #0d6efd;
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+        .available-players-zone {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .manager-daughter-label {
+            color: #dc3545;
+            font-size: 0.85em;
+            margin-left: 5px;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="container mt-4">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="row">
+            <div class="col-lg-10 offset-lg-1">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <div class="alert alert-warning" id="incompleteWarning" style="display: none;">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Your rankings are not complete/final until you rank exactly {{ required_rankings }} players.
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Rank players with siblings who request team separation. Drag players from the available list to the rankings area on the right. Arrange them in order from #1 (best) to #{{ required_rankings }}.
+                        </div>
+
+                        <form method="post" id="rankingsForm">
+                            {% csrf_token %}
+                            <input type="hidden" id="rankingsField" name="rankings" value="">
+                            {% if team_secret %}
+                                <input type="hidden" name="team_secret" value="{{ team_secret }}">
+                            {% endif %}
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header bg-secondary text-white">
+                                            <strong><i class="bi bi-people me-2"></i>Available Players</strong>
+                                        </div>
+                                        <div class="card-body available-players-card-body">
+                                            <div class="mb-3">
+                                                <input type="text" id="playerSearch" class="form-control" placeholder="Search players by name...">
+                                            </div>
+                                            <div id="availablePlayers" class="player-drop-zone">
+                                                {% for player in all_players %}
+                                                    <div class="player-item" draggable="true" data-player-id="{{ player.id }}" data-is-daughter="false">
+                                                        <i class="bi bi-grip-vertical me-2"></i>
+                                                        <span class="player-name">{{ player.first_name }} {{ player.last_name }}</span>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header bg-success text-white">
+                                            <strong><i class="bi bi-trophy-fill me-2"></i>Your Rankings (<span id="rankCount">0</span>/{{ required_rankings }})</strong>
+                                        </div>
+                                        <div class="card-body rankings-card-body">
+                                            <div id="rankedPlayers" class="player-drop-zone">
+                                                <p class="text-muted text-center mt-5">Drag players here to rank them</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between mt-4">
+                                {% if team_secret %}
+                                    <a href="{% url 'players:team_detail' team_secret %}" class="btn btn-secondary">
+                                        <i class="bi bi-arrow-left me-1"></i>Back to Team Page
+                                    </a>
+                                {% else %}
+                                    <a href="{% url 'players:settings' %}" class="btn btn-secondary">
+                                        <i class="bi bi-arrow-left me-1"></i>Cancel
+                                    </a>
+                                {% endif %}
+                                <button type="submit" class="btn btn-success" id="submitBtn">
+                                    <i class="bi bi-check-circle me-1"></i>Save Rankings
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        // Drag and Drop functionality
+        let draggedElement = null;
+        let insertBeforeElement = null;
+        const MAX_RANKINGS = {{ required_rankings }};
+
+        function initializeDragAndDrop() {
+            const playerItems = document.querySelectorAll('.player-item');
+            const dropZones = document.querySelectorAll('.player-drop-zone');
+
+            playerItems.forEach(item => {
+                item.addEventListener('dragstart', handleDragStart);
+                item.addEventListener('dragend', handleDragEnd);
+                item.addEventListener('dragover', handleItemDragOver);
+            });
+
+            dropZones.forEach(zone => {
+                zone.addEventListener('dragover', handleDragOver);
+                zone.addEventListener('drop', handleDrop);
+                zone.addEventListener('dragleave', handleDragLeave);
+                zone.addEventListener('dragenter', handleDragEnter);
+            });
+        }
+
+        function handleDragStart(e) {
+            draggedElement = this;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', this.innerHTML);
+        }
+
+        function handleDragEnd(e) {
+            this.classList.remove('dragging');
+            document.querySelectorAll('.drag-over').forEach(el => {
+                el.classList.remove('drag-over');
+            });
+            document.querySelectorAll('.drag-over-item').forEach(el => {
+                el.classList.remove('drag-over-item');
+            });
+            insertBeforeElement = null;
+        }
+
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+
+        function handleItemDragOver(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            if (this === draggedElement) {
+                return false;
+            }
+
+            insertBeforeElement = this;
+
+            document.querySelectorAll('.player-item').forEach(item => {
+                item.classList.remove('drag-over-item');
+            });
+
+            this.classList.add('drag-over-item');
+
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+
+        function handleDragEnter(e) {
+            if (e.target.classList.contains('player-drop-zone')) {
+                e.target.classList.add('drag-over');
+            }
+        }
+
+        function handleDragLeave(e) {
+            if (e.target.classList.contains('player-drop-zone')) {
+                e.target.classList.remove('drag-over');
+            }
+        }
+
+        function handleDrop(e) {
+            e.stopPropagation();
+            e.preventDefault();
+
+            this.classList.remove('drag-over');
+
+            if (!draggedElement) {
+                return false;
+            }
+
+            // Check if dropping into ranked players zone
+            const rankedZone = document.getElementById('rankedPlayers');
+            const isDroppedInRanked = this.id === 'rankedPlayers' || this === rankedZone;
+
+            if (isDroppedInRanked) {
+                // Check if we're at max capacity
+                const currentRankCount = rankedZone.querySelectorAll('.player-item').length;
+                const isDraggingFromRanked = draggedElement.parentNode === rankedZone;
+
+                if (currentRankCount >= MAX_RANKINGS && !isDraggingFromRanked) {
+                    alert(`You can only rank up to ${MAX_RANKINGS} players.`);
+                    return false;
+                }
+
+                // Remove placeholder text if exists
+                const placeholder = rankedZone.querySelector('p.text-muted');
+                if (placeholder) {
+                    placeholder.remove();
+                }
+            }
+
+            const clone = draggedElement.cloneNode(true);
+
+            // Remove the dragging class from the clone to ensure visibility
+            clone.classList.remove('dragging');
+
+            clone.addEventListener('dragstart', handleDragStart);
+            clone.addEventListener('dragend', handleDragEnd);
+            clone.addEventListener('dragover', handleItemDragOver);
+
+            draggedElement.remove();
+
+            if (insertBeforeElement && insertBeforeElement.parentNode === this) {
+                this.insertBefore(clone, insertBeforeElement);
+            } else {
+                this.appendChild(clone);
+            }
+
+            updateRankBadges();
+            updateRankingsField();
+
+            return false;
+        }
+
+        function updateRankBadges() {
+            const rankedZone = document.getElementById('rankedPlayers');
+            const rankedItems = rankedZone.querySelectorAll('.player-item');
+
+            rankedItems.forEach((item, index) => {
+                // Remove existing rank badge if any
+                const existingBadge = item.querySelector('.rank-badge');
+                if (existingBadge) {
+                    existingBadge.remove();
+                }
+
+                // Add new rank badge
+                const badge = document.createElement('span');
+                badge.className = 'rank-badge';
+                badge.textContent = index + 1;
+                item.insertBefore(badge, item.firstChild);
+            });
+
+            // Update rank count
+            document.getElementById('rankCount').textContent = rankedItems.length;
+
+            // Show/hide incomplete warning
+            const incompleteWarning = document.getElementById('incompleteWarning');
+            if (rankedItems.length !== MAX_RANKINGS) {
+                incompleteWarning.style.display = 'block';
+            } else {
+                incompleteWarning.style.display = 'none';
+            }
+
+            // Enable/disable submit button
+            const submitBtn = document.getElementById('submitBtn');
+            if (rankedItems.length > 0) {
+                submitBtn.disabled = false;
+            } else {
+                submitBtn.disabled = true;
+            }
+        }
+
+        function updateRankingsField() {
+            const rankedZone = document.getElementById('rankedPlayers');
+            const rankedItems = rankedZone.querySelectorAll('.player-item');
+            const playerIds = Array.from(rankedItems).map(item => item.getAttribute('data-player-id'));
+            document.getElementById('rankingsField').value = playerIds.join(',');
+        }
+
+        function addManagerDaughterLabels() {
+            const managerDaughterIds = {{ manager_daughter_ids|safe }};
+            const allPlayerItems = document.querySelectorAll('.player-item');
+
+            allPlayerItems.forEach(item => {
+                const playerId = parseInt(item.getAttribute('data-player-id'));
+                const playerNameSpan = item.querySelector('.player-name');
+
+                if (managerDaughterIds.includes(playerId)) {
+                    item.setAttribute('data-is-daughter', 'true');
+
+                    // Remove existing label if any
+                    const existingLabel = item.querySelector('.manager-daughter-label');
+                    if (existingLabel) {
+                        existingLabel.remove();
+                    }
+
+                    // Add manager's daughter label
+                    const label = document.createElement('span');
+                    label.className = 'manager-daughter-label';
+                    label.textContent = "(Manager's Daughter)";
+                    playerNameSpan.parentNode.insertBefore(label, playerNameSpan.nextSibling);
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDragAndDrop();
+
+            // Mark manager's daughters
+            addManagerDaughterLabels();
+
+            // Load existing rankings if they exist
+            const existingRankings = {{ ranked_player_ids|safe }};
+            if (existingRankings && existingRankings.length > 0) {
+                const availablePlayers = document.getElementById('availablePlayers');
+                const rankedPlayers = document.getElementById('rankedPlayers');
+
+                // Remove placeholder text
+                const placeholder = rankedPlayers.querySelector('p.text-muted');
+                if (placeholder) {
+                    placeholder.remove();
+                }
+
+                // Move players from available to ranked in the correct order
+                existingRankings.forEach(playerId => {
+                    const playerItem = availablePlayers.querySelector(`[data-player-id="${playerId}"]`);
+                    if (playerItem) {
+                        rankedPlayers.appendChild(playerItem);
+                    }
+                });
+
+                updateRankBadges();
+                updateRankingsField();
+            } else {
+                // Disable submit button initially if no existing rankings
+                document.getElementById('submitBtn').disabled = true;
+                // Show warning since no players are ranked
+                updateRankBadges();
+            }
+
+            // Player search/filter functionality
+            const searchInput = document.getElementById('playerSearch');
+            const availablePlayers = document.getElementById('availablePlayers');
+
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const playerItems = availablePlayers.querySelectorAll('.player-item');
+
+                playerItems.forEach(item => {
+                    const playerName = item.querySelector('.player-name').textContent.toLowerCase();
+                    if (playerName.includes(searchTerm)) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+
+            // Update rankings field before form submission
+            document.getElementById('rankingsForm').addEventListener('submit', function(e) {
+                const rankedCount = document.querySelectorAll('#rankedPlayers .player-item').length;
+                if (rankedCount === 0) {
+                    e.preventDefault();
+                    alert('Please rank at least one player before submitting.');
+                    return false;
+                }
+                updateRankingsField();
+            });
+        });
+    </script>
+{% endblock %}

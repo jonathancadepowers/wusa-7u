@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Player, Team, Manager, Draft, PlayerRanking, ManagerDaughterRanking, DraftPick, TeamPreference, PracticeSlot, PracticeSlotRanking, GeneralSetting, ValidationCode, StarredDraftPick, DivisionValidationRegistry
+from .models import Player, Team, Manager, Draft, PlayerRanking, ManagerDaughterRanking, SiblingRanking, DraftPick, TeamPreference, PracticeSlot, PracticeSlotRanking, GeneralSetting, ValidationCode, StarredDraftPick, DivisionValidationRegistry
 
 
 @admin.register(Draft)
@@ -86,6 +86,13 @@ class PlayerRankingAdmin(admin.ModelAdmin):
 
 @admin.register(ManagerDaughterRanking)
 class ManagerDaughterRankingAdmin(admin.ModelAdmin):
+    list_display = ['id', 'manager', 'ranking', 'created_at', 'updated_at']
+    search_fields = ['ranking']
+    list_filter = ['manager']
+
+
+@admin.register(SiblingRanking)
+class SiblingRankingAdmin(admin.ModelAdmin):
     list_display = ['id', 'manager', 'ranking', 'created_at', 'updated_at']
     search_fields = ['ranking']
     list_filter = ['manager']

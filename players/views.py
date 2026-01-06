@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.views.decorators.csrf import csrf_exempt
 from django.db import models
-from .models import Player, Team, Manager, PlayerRanking, ManagerDaughterRanking, Draft, DraftPick, TeamPreference, GeneralSetting, StarredDraftPick, DivisionValidationRegistry, ValidationCode, PracticeSlot
+from .models import Player, Team, Manager, PlayerRanking, ManagerDaughterRanking, SiblingRanking, Draft, DraftPick, TeamPreference, GeneralSetting, StarredDraftPick, DivisionValidationRegistry, ValidationCode, PracticeSlot
 import pandas as pd
 import json
 import os
@@ -2045,7 +2045,35 @@ def team_detail_view(request, team_secret):
             'status': daughter_ranking_status
         })
 
-        # Task 3: View All Rankings
+        # Task 3: Rank Siblings Requesting Team Separation
+        # Get count of players who have siblings AND request separation
+        sibling_separation_count = Player.objects.filter(
+            requests_separate_team_from_sibling=True
+        ).exclude(
+            siblings__isnull=True
+        ).count()
+
+        sibling_ranking_status = 'not_started'
+        if team.manager:
+            try:
+                sibling_ranking = SiblingRanking.objects.get(manager=team.manager)
+                ranking_data = json.loads(sibling_ranking.ranking)
+                if len(ranking_data) == 0:
+                    sibling_ranking_status = 'not_started'
+                elif len(ranking_data) < expected_player_count:
+                    sibling_ranking_status = 'in_progress'
+                else:
+                    sibling_ranking_status = 'completed'
+            except SiblingRanking.DoesNotExist:
+                sibling_ranking_status = 'not_started'
+
+        checklist_items.append({
+            'title': 'Rank Siblings Requesting Team Separation',
+            'url': f"/sibling_rankings/?team_secret={team.manager_secret}",
+            'status': sibling_ranking_status
+        })
+
+        # Task 4: View All Rankings
         # This is just a view action, so no status
         checklist_items.append({
             'title': 'View All Rankings',
@@ -2602,6 +2630,91 @@ def manager_daughter_rankings_view(request):
         'num_rounds': num_rounds  # Number of draft rounds
     }
     return render(request, 'players/manager_daughter_rankings.html', context)
+
+
+def sibling_rankings_view(request):
+    """Create or update sibling rankings for players with siblings who request separation"""
+    # Get team_secret from URL parameter
+    team_secret = request.GET.get('team_secret', request.POST.get('team_secret', ''))
+
+    # Calculate required number of rankings: (Number of Teams) × 2
+    num_teams = Team.objects.count()
+    required_rankings = num_teams * 2
+
+    # Find the manager associated with this team_secret
+    manager = None
+    if team_secret:
+        try:
+            team = Team.objects.get(manager_secret=team_secret)
+            manager = team.manager
+        except Team.DoesNotExist:
+            messages.error(request, 'Invalid team secret.')
+
+    if request.method == 'POST':
+        # Get the rankings data from the form (comma-separated player IDs in ranked order)
+        rankings_data = request.POST.get('rankings', '')
+
+        if rankings_data:
+            # Parse the comma-separated IDs
+            player_ids = [int(pid) for pid in rankings_data.split(',') if pid]
+
+            # Create a JSON structure with rank and player ID
+            rankings_json = json.dumps([
+                {"rank": idx + 1, "player_id": player_id}
+                for idx, player_id in enumerate(player_ids)
+            ])
+
+            # Update or create ranking for this manager (ensures only one ranking per manager)
+            if manager:
+                SiblingRanking.objects.update_or_create(
+                    manager=manager,
+                    defaults={'ranking': rankings_json}
+                )
+                messages.success(request, f'Sibling rankings saved successfully! ({len(player_ids)} players ranked)')
+            else:
+                # Cannot save rankings without a manager assigned to the team
+                messages.error(request, 'Cannot save rankings: No manager is assigned to this team yet.')
+
+            # Redirect back to team page if team_secret was provided
+            if team_secret:
+                return redirect('players:team_detail', team_secret=team_secret)
+            else:
+                return redirect('players:sibling_rankings')
+        else:
+            messages.error(request, 'No rankings data provided.')
+
+    # Load existing rankings for this manager
+    existing_ranking = None
+    ranked_player_ids = []
+    if manager:
+        try:
+            existing_ranking = SiblingRanking.objects.get(manager=manager)
+            # Parse the JSON to get player IDs in order
+            rankings_data = json.loads(existing_ranking.ranking)
+            ranked_player_ids = [item['player_id'] for item in rankings_data]
+        except SiblingRanking.DoesNotExist:
+            pass
+
+    # Get players who have siblings AND request separation from siblings
+    all_players = Player.objects.filter(
+        requests_separate_team_from_sibling=True
+    ).exclude(
+        siblings__isnull=True
+    ).order_by('last_name', 'first_name')
+
+    # Get IDs of all players who are managers' daughters
+    manager_daughter_ids = list(Manager.objects.filter(daughter__isnull=False).values_list('daughter_id', flat=True))
+
+    context = {
+        'all_players': all_players,
+        'team_secret': team_secret,
+        'manager': manager,
+        'ranked_player_ids': json.dumps(ranked_player_ids),  # Pass as JSON for JavaScript
+        'manager_daughter_ids': json.dumps(manager_daughter_ids),  # Pass as JSON for JavaScript
+        'required_rankings': required_rankings,  # Dynamic count based on number of teams × 2
+        'num_teams': num_teams
+    }
+    return render(request, 'players/sibling_rankings.html', context)
 
 
 def practice_slot_rankings_view(request):

@@ -144,6 +144,20 @@ class ManagerDaughterRanking(models.Model):
         return f"Manager Daughter Ranking {self.id} by {self.manager}" if self.manager else f"Manager Daughter Ranking {self.id}"
 
 
+class SiblingRanking(models.Model):
+    manager = models.ForeignKey(Manager, on_delete=models.SET_NULL, null=True, blank=True, related_name='sibling_rankings')
+    ranking = models.TextField()
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'sibling_rankings'
+
+    def __str__(self):
+        return f"Sibling Ranking {self.id} by {self.manager}" if self.manager else f"Sibling Ranking {self.id}"
+
+
 class TeamPreference(models.Model):
     manager = models.ForeignKey(Manager, on_delete=models.CASCADE, related_name='team_preferences')
     preferences = models.JSONField(default=dict)
