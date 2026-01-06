@@ -93,12 +93,12 @@
                     <div class="card-body">
                         <div class="alert alert-warning" id="incompleteWarning" style="display: none;">
                             <i class="bi bi-exclamation-triangle me-2"></i>
-                            Your rankings are not complete/final until you rank exactly 20 players.
+                            Your rankings are not complete/final until you rank exactly {{ required_rankings }} players.
                         </div>
 
                         <div class="alert alert-info">
                             <i class="bi bi-info-circle me-2"></i>
-                            Drag players from the available list to the rankings area on the right. Arrange them in order from #1 (best) to #20.
+                            Drag players from the available list to the rankings area on the right. Arrange them in order from #1 (best) to #{{ required_rankings }}.
                         </div>
 
                         <form method="post" id="rankingsForm">
@@ -132,7 +132,7 @@
                                 <div class="col-md-6">
                                     <div class="card">
                                         <div class="card-header bg-success text-white">
-                                            <strong><i class="bi bi-trophy-fill me-2"></i>Your Rankings (<span id="rankCount">0</span>/20)</strong>
+                                            <strong><i class="bi bi-trophy-fill me-2"></i>Your Rankings (<span id="rankCount">0</span>/{{ required_rankings }})</strong>
                                         </div>
                                         <div class="card-body rankings-card-body">
                                             <div id="rankedPlayers" class="player-drop-zone">
@@ -170,7 +170,7 @@
         // Drag and Drop functionality
         let draggedElement = null;
         let insertBeforeElement = null;
-        const MAX_RANKINGS = 20;
+        const MAX_RANKINGS = {{ required_rankings }};
 
         function initializeDragAndDrop() {
             const playerItems = document.querySelectorAll('.player-item');
@@ -325,7 +325,7 @@
 
             // Show/hide incomplete warning
             const incompleteWarning = document.getElementById('incompleteWarning');
-            if (rankedItems.length !== 20) {
+            if (rankedItems.length !== MAX_RANKINGS) {
                 incompleteWarning.style.display = 'block';
             } else {
                 incompleteWarning.style.display = 'none';

@@ -487,12 +487,16 @@ def validation_code_analyze_and_release_player_rankings():
     from .models import ValidationCode
     import json
 
-    # Count ONLY complete player rankings (those with exactly 20 players ranked)
+    # Calculate required number of rankings: (Number of Teams) × 2
+    num_teams = Team.objects.count()
+    required_player_count = num_teams * 2
+
+    # Count ONLY complete player rankings (those with exactly the required number of players ranked)
     complete_rankings_count = 0
     for ranking in PlayerRanking.objects.all():
         try:
             ranking_data = json.loads(ranking.ranking)
-            if isinstance(ranking_data, list) and len(ranking_data) == 20:
+            if isinstance(ranking_data, list) and len(ranking_data) == required_player_count:
                 complete_rankings_count += 1
         except (json.JSONDecodeError, TypeError):
             # Skip invalid JSON
@@ -1060,7 +1064,7 @@ def division_setup_checklist_view(request):
         },
         {
             'title': 'Analyze & Release Player Rankings',
-            'description': 'Once all managers have submitted their top 20 player rankings, review them and then release them to managers to review.',
+            'description': 'Once all managers have submitted their player rankings, review them and then release them to managers to review.',
             'validation_code': 'validation_code_analyze_and_release_player_rankings',
             'validation_source': inspect.getsource(validation_code_analyze_and_release_player_rankings),            'validation_logic': 'All managers have submitted player rankings (PlayerRanking record exists for each manager)',
             'validation_description': 'At least one player ranking has been submitted and the scored player rankings have been released to managers',
@@ -1962,8 +1966,9 @@ def team_detail_view(request, team_secret):
     checklist_items = []
 
     try:
-        # Task 1: Rank All Players (top 20)
-        expected_player_count = 20
+        # Task 1: Rank All Players (dynamic count based on number of teams × 2)
+        num_teams = Team.objects.count()
+        expected_player_count = num_teams * 2
         player_ranking_status = 'not_started'
 
         if team.manager:
@@ -2394,9 +2399,13 @@ def team_delete_view(request, pk):
 
 
 def player_rankings_view(request):
-    """Create or update player rankings (top 20 players)"""
+    """Create or update player rankings (dynamic count based on number of teams × 2)"""
     # Get team_secret from URL parameter
     team_secret = request.GET.get('team_secret', request.POST.get('team_secret', ''))
+
+    # Calculate required number of rankings: (Number of Teams) × 2
+    num_teams = Team.objects.count()
+    required_rankings = num_teams * 2
 
     # Find the manager associated with this team_secret
     manager = None
@@ -2463,7 +2472,9 @@ def player_rankings_view(request):
         'team_secret': team_secret,
         'manager': manager,
         'ranked_player_ids': json.dumps(ranked_player_ids),  # Pass as JSON for JavaScript
-        'manager_daughter_ids': json.dumps(manager_daughter_ids)  # Pass as JSON for JavaScript
+        'manager_daughter_ids': json.dumps(manager_daughter_ids),  # Pass as JSON for JavaScript
+        'required_rankings': required_rankings,  # Dynamic count based on number of teams × 2
+        'num_teams': num_teams
     }
     return render(request, 'players/player_rankings.html', context)
 
@@ -3539,8 +3550,12 @@ def team_preferences_view(request):
 @login_required
 def player_rankings_analyze_view(request):
     """Analyze manager player rankings"""
-    from .models import PlayerRanking, Manager, Player, GeneralSetting
+    from .models import PlayerRanking, Manager, Player, GeneralSetting, Team
     from collections import defaultdict
+
+    # Calculate required number of rankings: (Number of Teams) × 2
+    num_teams = Team.objects.count()
+    required_rankings = num_teams * 2
 
     # Check if rankings have been released
     rankings_released = False
@@ -3591,7 +3606,7 @@ def player_rankings_analyze_view(request):
 
     # Sort by Borda count (higher is better), then by average rank as tiebreaker
     player_stats.sort(key=lambda x: (-x['borda_count'], x['average_rank']))
-    top_players = player_stats[:20]
+    top_players = player_stats[:required_rankings]
 
     # Find managers who haven't submitted rankings
     all_managers = Manager.objects.all()
@@ -3603,6 +3618,8 @@ def player_rankings_analyze_view(request):
         'managers_without_rankings': managers_without_rankings,
         'managers_without_count': managers_without_rankings.count(),
         'rankings_released': rankings_released,
+        'required_rankings': required_rankings,
+        'num_teams': num_teams,
     }
     return render(request, 'players/player_rankings_analyze.html', context)
 
@@ -3646,8 +3663,12 @@ def release_player_rankings_view(request):
 
 def player_rankings_analyze_public_view(request):
     """Public view of player rankings analysis (no login required)"""
-    from .models import PlayerRanking, Manager, Player, GeneralSetting
+    from .models import PlayerRanking, Manager, Player, GeneralSetting, Team
     from collections import defaultdict
+
+    # Calculate required number of rankings: (Number of Teams) × 2
+    num_teams = Team.objects.count()
+    required_rankings = num_teams * 2
 
     # Check if rankings are released
     rankings_released = False
@@ -3705,12 +3726,14 @@ def player_rankings_analyze_public_view(request):
 
     # Sort by Borda count (higher is better), then by average rank as tiebreaker
     player_stats.sort(key=lambda x: (-x['borda_count'], x['average_rank']))
-    top_players = player_stats[:20]
+    top_players = player_stats[:required_rankings]
 
     # Don't show manager submission info on public page
     context = {
         'top_players': top_players,
         'rankings_released': True,
+        'required_rankings': required_rankings,
+        'num_teams': num_teams,
     }
     return render(request, 'players/player_rankings_analyze_public.html', context)
 
