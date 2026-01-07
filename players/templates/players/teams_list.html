@@ -21,36 +21,18 @@
                     <span class="text-muted">Total teams: <strong>{{ total_teams }}</strong></span>
                 </div>
 
-                <!-- Search Bar and Add Button -->
-                <div class="row mb-4 align-items-end">
-                    <div class="col-md-6">
-                        <form method="get">
-                            <div class="input-group">
-                                <input type="text" name="search" class="form-control" placeholder="Search by team name or manager..." value="{{ search_query }}">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="bi bi-search"></i> Search
-                                </button>
-                                {% if search_query %}
-                                    <a href="{% url 'players:teams_list' %}" class="btn btn-secondary">Clear</a>
-                                {% endif %}
-                            </div>
-                            <!-- Hidden inputs to preserve sort state -->
-                            <input type="hidden" name="sort" value="{{ sort_by }}">
-                            <input type="hidden" name="order" value="{{ order }}">
-                        </form>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="d-flex gap-2 justify-content-end">
-                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#unassignPracticeSlotsModal">
-                                <i class="bi bi-x-circle me-1"></i>Unassign Practice Slots
-                            </button>
-                            <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#teamSecretsModal">
-                                <i class="bi bi-key me-1"></i>View All Team Secrets
-                            </button>
-                            <a href="{% url 'players:team_create' %}" class="btn btn-success">
-                                <i class="bi bi-plus-circle me-1"></i>Add Team
-                            </a>
-                        </div>
+                <!-- Action Buttons -->
+                <div class="mb-4">
+                    <div class="d-flex gap-2 justify-content-end">
+                        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#unassignPracticeSlotsModal">
+                            <i class="bi bi-x-circle me-1"></i>Unassign Practice Slots
+                        </button>
+                        <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#teamSecretsModal">
+                            <i class="bi bi-key me-1"></i>View All Team Secrets
+                        </button>
+                        <a href="{% url 'players:team_create' %}" class="btn btn-success">
+                            <i class="bi bi-plus-circle me-1"></i>Add Team
+                        </a>
                     </div>
                 </div>
 
@@ -60,7 +42,7 @@
                         <thead class="table-light">
                             <tr>
                                 <th>
-                                    <a href="?sort=name&order={% if sort_by == 'name' and order == 'asc' %}desc{% else %}asc{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" class="text-decoration-none text-dark">
+                                    <a href="?sort=name&order={% if sort_by == 'name' and order == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none text-dark">
                                         Team Name
                                         {% if sort_by == 'name' %}
                                             <i class="bi bi-arrow-{% if order == 'asc' %}up{% else %}down{% endif %}"></i>
@@ -68,7 +50,7 @@
                                     </a>
                                 </th>
                                 <th>
-                                    <a href="?sort=manager__last_name&order={% if sort_by == 'manager__last_name' and order == 'asc' %}desc{% else %}asc{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" class="text-decoration-none text-dark">
+                                    <a href="?sort=manager__last_name&order={% if sort_by == 'manager__last_name' and order == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none text-dark">
                                         Manager
                                         {% if sort_by == 'manager__last_name' %}
                                             <i class="bi bi-arrow-{% if order == 'asc' %}up{% else %}down{% endif %}"></i>
@@ -76,7 +58,7 @@
                                     </a>
                                 </th>
                                 <th>
-                                    <a href="?sort=player_count&order={% if sort_by == 'player_count' and order == 'asc' %}desc{% else %}asc{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" class="text-decoration-none text-dark">
+                                    <a href="?sort=player_count&order={% if sort_by == 'player_count' and order == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none text-dark">
                                         Players
                                         {% if sort_by == 'player_count' %}
                                             <i class="bi bi-arrow-{% if order == 'asc' %}up{% else %}down{% endif %}"></i>
@@ -110,11 +92,7 @@
                             {% empty %}
                                 <tr>
                                     <td colspan="4" class="text-center text-muted">
-                                        {% if search_query %}
-                                            No teams found matching "{{ search_query }}"
-                                        {% else %}
-                                            No teams in database
-                                        {% endif %}
+                                        No teams in database
                                     </td>
                                 </tr>
                             {% endfor %}
@@ -128,10 +106,10 @@
                         <ul class="pagination justify-content-center">
                             {% if page_obj.has_previous %}
                                 <li class="page-item">
-                                    <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if order %}&order={{ order }}{% endif %}">First</a>
+                                    <a class="page-link" href="?page=1{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if order %}&order={{ order }}{% endif %}">First</a>
                                 </li>
                                 <li class="page-item">
-                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if order %}&order={{ order }}{% endif %}">Previous</a>
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if order %}&order={{ order }}{% endif %}">Previous</a>
                                 </li>
                             {% endif %}
 
@@ -143,10 +121,10 @@
 
                             {% if page_obj.has_next %}
                                 <li class="page-item">
-                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if order %}&order={{ order }}{% endif %}">Next</a>
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if order %}&order={{ order }}{% endif %}">Next</a>
                                 </li>
                                 <li class="page-item">
-                                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if order %}&order={{ order }}{% endif %}">Last</a>
+                                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if order %}&order={{ order }}{% endif %}">Last</a>
                                 </li>
                             {% endif %}
                         </ul>
