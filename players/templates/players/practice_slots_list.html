@@ -37,8 +37,6 @@
                                 <tr>
                                     <th>Practice Slot</th>
                                     <th>Assigned Team</th>
-                                    <th>Created</th>
-                                    <th>Last Updated</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -61,8 +59,6 @@
                                                 {% endwith %}
                                             </select>
                                         </td>
-                                        <td>{{ slot.created_at|date:"M d, Y g:i A" }}</td>
-                                        <td>{{ slot.updated_at|date:"M d, Y g:i A" }}</td>
                                         <td>
                                             <div class="btn-group btn-group-sm" role="group">
                                                 <a href="{% url 'players:practice_slot_detail' slot.pk %}" class="btn btn-outline-primary btn-sm" title="Edit">
