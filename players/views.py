@@ -2432,6 +2432,7 @@ def team_edit_view(request, pk):
         team.name = request.POST.get('name')
         team.manager_secret = request.POST.get('manager_secret')
         team.colors = request.POST.get('colors', '')
+        team.preseason_practice_slot = request.POST.get('preseason_practice_slot', '')
 
         # Handle manager assignment
         manager_id = request.POST.get('manager_id')

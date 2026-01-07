@@ -34,6 +34,12 @@
                         <p class="mb-2"><strong>Practice Slot:</strong> Not Yet Assigned</p>
                     {% endif %}
 
+                    {% if team.preseason_practice_slot %}
+                        <p class="mb-2"><strong>Pre-Season Practice Slot:</strong> {{ team.preseason_practice_slot }}</p>
+                    {% else %}
+                        <p class="mb-2"><strong>Pre-Season Practice Slot:</strong> Not Yet Assigned</p>
+                    {% endif %}
+
                     {% if team.manager and team.manager.has_valid_background_check %}
                         <p class="mb-2"><strong>Background Check:</strong> <span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Passed</span></p>
                     {% else %}
