@@ -4,28 +4,111 @@
 
 {% block page_title %}WUSA 7U - Team Portal{% endblock %}
 
+{% block extra_css %}
+<style>
+    .hover-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+        cursor: pointer;
+    }
+    .hover-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
     <div class="container mt-5">
         <div class="row justify-content-center">
-            <div class="col-md-8">
-                <div class="mb-3">
-                    <a href="{% url 'players:team_preferences' %}" class="btn btn-outline-primary me-2">
-                        <i class="bi bi-clipboard-check me-2"></i>Submit Team Preferences
-                    </a>
-                    <a href="#" class="btn btn-outline-primary me-2" onclick="showManagerDataModal(); return false;">
-                        <i class="bi bi-people-fill me-2"></i>Manager Data
-                    </a>
-                    <a href="https://docs.google.com/presentation/d/1NdUP0QAdI8vp_TmofHwIEyrsXc5GKPEP8b_yEoDk1VQ/edit?usp=sharing" class="btn btn-outline-primary me-2" target="_blank">
-                        <i class="bi bi-file-earmark-slides me-2"></i>Pre-Season Info Deck
-                    </a>
-                    <a href="https://docs.google.com/spreadsheets/d/1eo7L0w6liR51sMMBjkwuxvdPCPKYLsFR/edit?usp=sharing&ouid=106177974752139787465&rtpof=true&sd=true" class="btn btn-outline-primary mt-2 me-2" target="_blank">
-                        <i class="bi bi-table me-2"></i>Player Data & Eval Template
-                    </a>
-                    <a href="https://docs.google.com/spreadsheets/d/1Kdw5pIWtB9i2cjqwVGx6Iry5fJgojsUj/edit?usp=sharing&ouid=106177974752139787465&rtpof=true&sd=true" class="btn btn-outline-primary mt-2" target="_blank">
-                        <i class="bi bi-clipboard-data me-2"></i>Try Out Registrations
-                    </a>
+            <div class="col-md-10">
+                <!-- Quick Links Section -->
+                <div class="mb-4">
+                    <h5 class="mb-3"><i class="bi bi-link-45deg me-2"></i>Quick Links</h5>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <a href="{% url 'players:team_preferences' %}" class="text-decoration-none">
+                                <div class="card h-100 shadow-sm hover-card">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center">
+                                            <div class="text-primary me-3" style="font-size: 2rem;">
+                                                <i class="bi bi-clipboard-check"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-1">Submit Team Preferences</h6>
+                                                <small class="text-muted">Submit your team name choices</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="#" onclick="showManagerDataModal(); return false;" class="text-decoration-none">
+                                <div class="card h-100 shadow-sm hover-card">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center">
+                                            <div class="text-primary me-3" style="font-size: 2rem;">
+                                                <i class="bi bi-people-fill"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-1">Manager Data</h6>
+                                                <small class="text-muted">View and edit manager information</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
                 </div>
 
+                <!-- Resources Section -->
+                <div class="mb-4">
+                    <h5 class="mb-3"><i class="bi bi-folder2-open me-2"></i>Resources</h5>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <a href="https://docs.google.com/presentation/d/1NdUP0QAdI8vp_TmofHwIEyrsXc5GKPEP8b_yEoDk1VQ/edit?usp=sharing" target="_blank" class="text-decoration-none">
+                                <div class="card h-100 shadow-sm hover-card">
+                                    <div class="card-body text-center">
+                                        <div class="text-primary mb-2" style="font-size: 2.5rem;">
+                                            <i class="bi bi-file-earmark-slides"></i>
+                                        </div>
+                                        <h6 class="mb-1">Pre-Season Info Deck</h6>
+                                        <small class="text-muted">View presentation</small>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a href="https://docs.google.com/spreadsheets/d/1eo7L0w6liR51sMMBjkwuxvdPCPKYLsFR/edit?usp=sharing&ouid=106177974752139787465&rtpof=true&sd=true" target="_blank" class="text-decoration-none">
+                                <div class="card h-100 shadow-sm hover-card">
+                                    <div class="card-body text-center">
+                                        <div class="text-primary mb-2" style="font-size: 2.5rem;">
+                                            <i class="bi bi-table"></i>
+                                        </div>
+                                        <h6 class="mb-1">Player Data & Eval Template</h6>
+                                        <small class="text-muted">View spreadsheet</small>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a href="https://docs.google.com/spreadsheets/d/1Kdw5pIWtB9i2cjqwVGx6Iry5fJgojsUj/edit?usp=sharing&ouid=106177974752139787465&rtpof=true&sd=true" target="_blank" class="text-decoration-none">
+                                <div class="card h-100 shadow-sm hover-card">
+                                    <div class="card-body text-center">
+                                        <div class="text-primary mb-2" style="font-size: 2.5rem;">
+                                            <i class="bi bi-clipboard-data"></i>
+                                        </div>
+                                        <h6 class="mb-1">Try Out Registrations</h6>
+                                        <small class="text-muted">View spreadsheet</small>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Team Access Section -->
                 <div class="card shadow">
                     <div class="card-header bg-primary text-white">
                         <h4 class="mb-0"><i class="bi bi-trophy-fill me-2"></i>Select Your Team</h4>
