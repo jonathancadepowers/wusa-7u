@@ -4633,11 +4633,17 @@ def pre_season_practice_slot_selector_view(request):
     from .models import Manager
     import random
 
-    # Get all managers
-    managers = list(Manager.objects.all())
+    # Get all managers and separate into board members and non-board members
+    all_managers = list(Manager.objects.all())
+    board_members = [m for m in all_managers if m.board_member]
+    non_board_members = [m for m in all_managers if not m.board_member]
 
-    # Randomize the order
-    random.shuffle(managers)
+    # Randomize each group separately
+    random.shuffle(board_members)
+    random.shuffle(non_board_members)
+
+    # Combine with board members first
+    managers = board_members + non_board_members
 
     context = {
         'managers': managers
