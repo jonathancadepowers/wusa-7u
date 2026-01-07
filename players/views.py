@@ -2149,14 +2149,6 @@ def team_detail_view(request, team_secret):
             'url': f"/sibling_rankings/?team_secret={team.manager_secret}",
             'status': sibling_ranking_status
         })
-
-        # Task 4: View All Rankings
-        # This is just a view action, so no status
-        checklist_items.append({
-            'title': 'View All Rankings',
-            'url': '/player_rankings/analyze/public/',
-            'status': 'n/a'
-        })
     except Exception as e:
         # If there's any error, just don't show the checklist
         import logging
