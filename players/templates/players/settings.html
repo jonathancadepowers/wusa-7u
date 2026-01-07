@@ -431,41 +431,129 @@
             if (success && data.success) {
                 // Success
                 modalHeader.className = 'modal-header bg-success text-white';
-                modalBody.innerHTML = `
+
+                let bodyHTML = `
                     <div class="alert alert-success">
                         <h5><i class="bi bi-check-circle-fill me-2"></i>Import Successful!</h5>
                     </div>
-                    <table class="table">
-                        <tbody>
-                            <tr>
-                                <th>Total Rows in Excel:</th>
-                                <td>${data.total_rows}</td>
-                            </tr>
-                            <tr>
-                                <th>Successfully Imported:</th>
-                                <td class="text-success fw-bold">${data.imported}</td>
-                            </tr>
-                            <tr>
-                                <th>Errors/Skipped:</th>
-                                <td class="${data.errors.length > 0 ? 'text-warning' : 'text-muted'} fw-bold">${data.errors.length}</td>
-                            </tr>
-                            <tr>
-                                <th>Total Players in Database:</th>
-                                <td class="text-primary fw-bold">${data.total_players}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    ${data.errors.length > 0 ? `
+
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <div class="card border-success">
+                                <div class="card-body text-center">
+                                    <h3 class="text-success mb-0">${data.added}</h3>
+                                    <small class="text-muted">Added</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card border-info">
+                                <div class="card-body text-center">
+                                    <h3 class="text-info mb-0">${data.updated}</h3>
+                                    <small class="text-muted">Updated</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card border-danger">
+                                <div class="card-body text-center">
+                                    <h3 class="text-danger mb-0">${data.deleted}</h3>
+                                    <small class="text-muted">Deleted</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card border-primary">
+                                <div class="card-body text-center">
+                                    <h3 class="text-primary mb-0">${data.total_players}</h3>
+                                    <small class="text-muted">Total Players</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Show added players
+                if (data.added_players && data.added_players.length > 0) {
+                    bodyHTML += `
+                        <div class="mb-3">
+                            <h6 class="text-success"><i class="bi bi-plus-circle me-2"></i>Added Players (${data.added_players.length})</h6>
+                            <div class="card">
+                                <div class="card-body" style="max-height: 200px; overflow-y: auto;">
+                                    <ul class="list-unstyled mb-0">
+                                        ${data.added_players.map(p => `<li><strong>${p.name}</strong> (${p.birthday})</li>`).join('')}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // Show updated players with changes
+                if (data.updated_players && data.updated_players.length > 0) {
+                    bodyHTML += `
+                        <div class="mb-3">
+                            <h6 class="text-info"><i class="bi bi-arrow-repeat me-2"></i>Updated Players (${data.updated_players.length})</h6>
+                            <div class="card">
+                                <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                    `;
+
+                    data.updated_players.forEach(p => {
+                        bodyHTML += `
+                            <div class="mb-3">
+                                <strong>${p.name}</strong>
+                                <ul class="small mt-1">
+                                    ${p.changes.map(c => `
+                                        <li>
+                                            <span class="text-muted">${c.field}:</span>
+                                            <span class="text-danger text-decoration-line-through">${c.old || '(empty)'}</span>
+                                            <span class="mx-1">→</span>
+                                            <span class="text-success">${c.new || '(empty)'}</span>
+                                        </li>
+                                    `).join('')}
+                                </ul>
+                            </div>
+                        `;
+                    });
+
+                    bodyHTML += `
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // Show deleted players
+                if (data.deleted_players && data.deleted_players.length > 0) {
+                    bodyHTML += `
+                        <div class="mb-3">
+                            <h6 class="text-danger"><i class="bi bi-trash me-2"></i>Deleted Players (${data.deleted_players.length})</h6>
+                            <div class="card">
+                                <div class="card-body" style="max-height: 200px; overflow-y: auto;">
+                                    <ul class="list-unstyled mb-0">
+                                        ${data.deleted_players.map(p => `<li><strong>${p.name}</strong> (${p.birthday})</li>`).join('')}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // Show errors if any
+                if (data.errors && data.errors.length > 0) {
+                    bodyHTML += `
                         <div class="mt-3">
-                            <h6>Errors:</h6>
+                            <h6 class="text-warning"><i class="bi bi-exclamation-triangle me-2"></i>Errors (${data.errors.length})</h6>
                             <div class="alert alert-warning">
-                                <ul class="mb-0">
+                                <ul class="mb-0 small">
                                     ${data.errors.map(err => `<li>Row ${err.row}: ${err.name} - ${err.error}</li>`).join('')}
                                 </ul>
                             </div>
                         </div>
-                    ` : ''}
-                `;
+                    `;
+                }
+
+                modalBody.innerHTML = bodyHTML;
             } else {
                 // Error
                 modalHeader.className = 'modal-header bg-danger text-white';

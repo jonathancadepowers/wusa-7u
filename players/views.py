@@ -1807,9 +1807,29 @@ def assign_player_team_view(request, pk):
             }, status=400)
 
 
-@require_http_methods(["POST"])
+def _generate_player_key(first_name, last_name, birthday):
+    """Generate a composite key for player matching: firstname_lastname_YYYY-MM-DD"""
+    if not first_name or not last_name:
+        return None
+
+    # Normalize names: lowercase, strip whitespace
+    first = str(first_name).lower().strip()
+    last = str(last_name).lower().strip()
+
+    # Format birthday
+    if birthday:
+        if isinstance(birthday, str):
+            birthday = str(birthday)
+        else:
+            birthday = birthday.strftime('%Y-%m-%d')
+    else:
+        birthday = 'no-birthday'
+
+    return f"{first}_{last}_{birthday}"
+
+
 def import_players_view(request):
-    """Handle Excel file upload and import"""
+    """Handle Excel file upload and import with update/delete/add logic"""
     if 'excel_file' not in request.FILES:
         return JsonResponse({
             'success': False,
@@ -1831,19 +1851,15 @@ def import_players_view(request):
         full_path = default_storage.path(file_path)
 
         # Read Excel file with appropriate engine
-        # Try to read as Excel first, but fall back to TSV if it's actually a text file
         try:
             if excel_file.name.endswith('.xls'):
                 df = pd.read_excel(full_path, engine='xlrd')
             else:
                 df = pd.read_excel(full_path, engine='openpyxl')
         except Exception as excel_error:
-            # If reading as Excel fails, try reading as tab-delimited text
-            # This handles cases where .xls files are actually TSV exports
             try:
                 df = pd.read_csv(full_path, sep='\t', encoding='utf-8')
             except Exception as csv_error:
-                # If both fail, raise the original Excel error
                 raise excel_error
 
         # Validate required columns
@@ -1863,16 +1879,40 @@ def import_players_view(request):
                 'error': f'Missing required columns: {", ".join(missing_columns)}'
             }, status=400)
 
-        # Process the data
-        players_to_create = []
-        errors = []
+        # Get all existing players from database
+        existing_players = Player.objects.all()
+        existing_players_dict = {}  # key -> player object
+        for player in existing_players:
+            key = _generate_player_key(player.first_name, player.last_name, player.birthday)
+            if key:
+                existing_players_dict[key] = player
 
+        # Track changes
+        added_players = []
+        updated_players = []
+        errors = []
+        file_player_keys = set()  # Track which players are in the file
+
+        # Process uploaded data
         for idx, row in df.iterrows():
             try:
                 # Skip rows where Enrollment Type is not "Player"
                 enrollment_type = row.get('Enrollment Type')
                 if pd.isna(enrollment_type) or str(enrollment_type).strip().lower() != 'player':
                     continue
+
+                # Extract player data
+                first_name = row['Enrollee First Name']
+                last_name = row['Enrollee Last Name']
+                birthday_value = pd.to_datetime(row['Enrollee Birthday'], errors='coerce')
+                birthday = birthday_value.date() if pd.notna(birthday_value) else None
+
+                # Generate key for this player
+                player_key = _generate_player_key(first_name, last_name, birthday)
+                if not player_key:
+                    continue
+
+                file_player_keys.add(player_key)
 
                 # Handle school field
                 school = row.get('School')
@@ -1898,29 +1938,55 @@ def import_players_view(request):
 
                 additional_info = "\n".join(additional_info_parts) if additional_info_parts else None
 
-                # Convert birthday to date (allow blank/null birthdays)
-                birthday_value = pd.to_datetime(row['Enrollee Birthday'], errors='coerce')
-                birthday = birthday_value.date() if pd.notna(birthday_value) else None
+                # Prepare player data
+                player_data = {
+                    'last_name': last_name,
+                    'first_name': first_name,
+                    'birthday': birthday,
+                    'history': row.get('New vs Returning') if pd.notna(row.get('New vs Returning')) else None,
+                    'school': school if pd.notna(school) else None,
+                    'conflict': row.get('Day Conflict') if pd.notna(row.get('Day Conflict')) else None,
+                    'additional_registration_info': additional_info,
+                    'parent_phone_1': row['Customer Phone Number'],
+                    'parent_email_1': row['Customer Email Address'],
+                    'parent_phone_2': row.get('Customer 2 Phone Number') if pd.notna(row.get('Customer 2 Phone Number')) else None,
+                    'parent_email_2': row.get('Customer 2 Email') if pd.notna(row.get('Customer 2 Email')) else None,
+                    'jersey_size': row.get('Jersey Size') if pd.notna(row.get('Jersey Size')) else None,
+                    'manager_volunteer_name': row.get('Manager Name') if pd.notna(row.get('Manager Name')) else None,
+                    'assistant_manager_volunteer_name': row.get('Asst Manager Name') if pd.notna(row.get('Asst Manager Name')) else None,
+                }
 
-                # Create player object
-                player = Player(
-                    last_name=row['Enrollee Last Name'],
-                    first_name=row['Enrollee First Name'],
-                    birthday=birthday,
-                    history=row.get('New vs Returning') if pd.notna(row.get('New vs Returning')) else None,
-                    school=school if pd.notna(school) else None,
-                    conflict=row.get('Day Conflict') if pd.notna(row.get('Day Conflict')) else None,
-                    additional_registration_info=additional_info,
-                    parent_phone_1=row['Customer Phone Number'],
-                    parent_email_1=row['Customer Email Address'],
-                    parent_phone_2=row.get('Customer 2 Phone Number') if pd.notna(row.get('Customer 2 Phone Number')) else None,
-                    parent_email_2=row.get('Customer 2 Email') if pd.notna(row.get('Customer 2 Email')) else None,
-                    jersey_size=row.get('Jersey Size') if pd.notna(row.get('Jersey Size')) else None,
-                    manager_volunteer_name=row.get('Manager Name') if pd.notna(row.get('Manager Name')) else None,
-                    assistant_manager_volunteer_name=row.get('Asst Manager Name') if pd.notna(row.get('Asst Manager Name')) else None,
-                )
+                # Check if player exists
+                if player_key in existing_players_dict:
+                    # UPDATE existing player
+                    existing_player = existing_players_dict[player_key]
+                    changed_fields = []
 
-                players_to_create.append(player)
+                    for field, new_value in player_data.items():
+                        old_value = getattr(existing_player, field)
+                        # Compare values, treating None and empty string as equivalent
+                        if str(old_value or '') != str(new_value or ''):
+                            changed_fields.append({
+                                'field': field,
+                                'old': str(old_value or ''),
+                                'new': str(new_value or '')
+                            })
+                            setattr(existing_player, field, new_value)
+
+                    if changed_fields:
+                        existing_player.save()
+                        updated_players.append({
+                            'name': f"{first_name} {last_name}",
+                            'changes': changed_fields
+                        })
+                else:
+                    # ADD new player
+                    new_player = Player(**player_data)
+                    new_player.save()
+                    added_players.append({
+                        'name': f"{first_name} {last_name}",
+                        'birthday': birthday.strftime('%Y-%m-%d') if birthday else 'No birthday'
+                    })
 
             except Exception as e:
                 errors.append({
@@ -1929,18 +1995,29 @@ def import_players_view(request):
                     'error': str(e)
                 })
 
-        # Import the players
-        if players_to_create:
-            Player.objects.bulk_create(players_to_create)
+        # DELETE players not in the file
+        deleted_players = []
+        for key, player in existing_players_dict.items():
+            if key not in file_player_keys:
+                deleted_players.append({
+                    'name': f"{player.first_name} {player.last_name}",
+                    'birthday': player.birthday.strftime('%Y-%m-%d') if player.birthday else 'No birthday'
+                })
+                player.delete()
 
         # Clean up temp file
         default_storage.delete(file_path)
 
-        # Return success response
+        # Return detailed success response
         return JsonResponse({
             'success': True,
             'total_rows': len(df),
-            'imported': len(players_to_create),
+            'added': len(added_players),
+            'updated': len(updated_players),
+            'deleted': len(deleted_players),
+            'added_players': added_players,
+            'updated_players': updated_players,
+            'deleted_players': deleted_players,
             'errors': errors,
             'total_players': Player.objects.count()
         })
