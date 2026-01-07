@@ -2274,6 +2274,9 @@ def manager_detail_view(request, pk):
         # Update background check status (checkbox)
         manager.passed_background_check = request.POST.get('passed_background_check') == 'on'
 
+        # Update board member status (checkbox)
+        manager.board_member = request.POST.get('board_member') == 'on'
+
         # Update background check clearance date
         clearance_date = request.POST.get('background_check_clearance_date')
         if clearance_date:

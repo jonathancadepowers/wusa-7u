@@ -45,6 +45,7 @@ class Manager(models.Model):
     daughter = models.ForeignKey('Player', on_delete=models.SET_NULL, null=True, blank=True, related_name='manager_parent')
     passed_background_check = models.BooleanField(default=False)
     background_check_clearance_date = models.DateField(null=True, blank=True)
+    board_member = models.BooleanField(default=False)
     comments = models.TextField(blank=True, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
