@@ -47,7 +47,7 @@
                         {% for week in calendar %}
                         <tr>
                             {% for day in week %}
-                            <td class="calendar-day {% if day == 0 %}empty-day{% endif %} {% if day == today.day and month == today.month and year == today.year %}today{% endif %}" style="height: 120px; vertical-align: top;">
+                            <td class="calendar-day {% if day == 0 %}empty-day{% endif %} {% if day == today.day and month == today.month and year == today.year %}today{% endif %}">
                                 {% if day != 0 %}
                                     <div class="day-number {% if day == today.day and month == today.month and year == today.year %}text-primary fw-bold{% endif %}">
                                         {{ day }}
@@ -56,7 +56,8 @@
                                         {% for event_day, event_list in events_by_day.items %}
                                             {% if event_day == day %}
                                             {% for event_data in event_list %}
-                                                <div class="event-badge bg-primary text-white"
+                                                <div class="event-badge text-white"
+                                                     style="background-color: {% if event_data.event.event_type %}{{ event_data.event.event_type.color }}{% else %}#0d6efd{% endif %};"
                                                      data-bs-toggle="tooltip"
                                                      data-bs-placement="top"
                                                      data-bs-html="true"
@@ -87,11 +88,22 @@
 <style>
 .calendar-table {
     font-size: 0.9rem;
+    table-layout: fixed;
+    width: 100%;
+}
+
+.calendar-table th,
+.calendar-table td {
+    width: 14.28%; /* 100% / 7 days */
 }
 
 .calendar-day {
     padding: 0.5rem;
     position: relative;
+    height: 150px;
+    width: 100%;
+    vertical-align: top;
+    overflow: hidden;
 }
 
 .calendar-day.empty-day {
@@ -109,6 +121,9 @@
 
 .events-container {
     font-size: 0.85rem;
+    max-height: 110px;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .event-badge {
@@ -201,6 +216,13 @@
                             Find icons at <a href="https://icons.getbootstrap.com/" target="_blank">Bootstrap Icons</a>
                         </small>
                     </div>
+                    <div class="mb-3">
+                        <label for="eventTypeColor" class="form-label">Display Color</label>
+                        <input type="color" class="form-control form-control-color" id="eventTypeColor" value="#0d6efd" title="Choose event color">
+                        <small class="form-text text-muted">
+                            Choose the background color for events of this type
+                        </small>
+                    </div>
                 </form>
                 <div id="createEventTypeError" class="alert alert-danger d-none" role="alert"></div>
                 <div id="createEventTypeSuccess" class="alert alert-success d-none" role="alert"></div>
@@ -237,6 +259,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('saveEventTypeBtn').addEventListener('click', async function() {
         const name = document.getElementById('eventTypeName').value.trim();
         const icon = document.getElementById('eventTypeIcon').value.trim();
+        const color = document.getElementById('eventTypeColor').value;
         const errorDiv = document.getElementById('createEventTypeError');
         const successDiv = document.getElementById('createEventTypeSuccess');
         const btn = this;
@@ -257,6 +280,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const formData = new FormData();
             formData.append('name', name);
             formData.append('bootstrap_icon_id', icon);
+            formData.append('color', color);
 
             const response = await fetch('{% url "players:create_event_type" %}', {
                 method: 'POST',

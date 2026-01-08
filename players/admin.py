@@ -240,13 +240,13 @@ class DivisionValidationRegistryAdmin(admin.ModelAdmin):
 
 @admin.register(EventType)
 class EventTypeAdmin(admin.ModelAdmin):
-    list_display = ['id', 'name', 'bootstrap_icon_id', 'created_at', 'updated_at']
+    list_display = ['id', 'name', 'bootstrap_icon_id', 'color', 'created_at', 'updated_at']
     search_fields = ['name', 'bootstrap_icon_id']
     readonly_fields = ['created_at', 'updated_at']
 
     fieldsets = (
         ('Event Type', {
-            'fields': ('name', 'bootstrap_icon_id')
+            'fields': ('name', 'bootstrap_icon_id', 'color')
         }),
         ('Metadata', {
             'fields': ('created_at', 'updated_at'),

@@ -4998,6 +4998,7 @@ def create_event_type_view(request):
     try:
         name = request.POST.get('name', '').strip()
         bootstrap_icon_id = request.POST.get('bootstrap_icon_id', '').strip()
+        color = request.POST.get('color', '#0d6efd').strip()
 
         if not name or not bootstrap_icon_id:
             return JsonResponse({
@@ -5008,7 +5009,8 @@ def create_event_type_view(request):
         # Create the event type
         event_type = EventType.objects.create(
             name=name,
-            bootstrap_icon_id=bootstrap_icon_id
+            bootstrap_icon_id=bootstrap_icon_id,
+            color=color
         )
 
         return JsonResponse({

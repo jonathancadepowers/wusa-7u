@@ -272,6 +272,7 @@ class DivisionValidationRegistry(models.Model):
 class EventType(models.Model):
     name = models.CharField(max_length=100)
     bootstrap_icon_id = models.CharField(max_length=100)
+    color = models.CharField(max_length=7, default='#0d6efd', help_text='Hex color code (e.g., #0d6efd)')
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
