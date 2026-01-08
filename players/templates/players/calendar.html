@@ -47,12 +47,13 @@
                         {% for week in calendar %}
                         <tr>
                             {% for day in week %}
-                            <td class="calendar-day {% if day == 0 %}empty-day{% endif %} {% if day == today.day and month == today.month and year == today.year %}today{% endif %}">
+                            <td class="calendar-day {% if day == 0 %}empty-day{% endif %} {% if day == today.day and month == today.month and year == today.year %}today{% endif %}" {% if day != 0 %}onclick="openCreateEventModal({{ year }}, {{ month }}, {{ day }})"{% endif %}>
                                 {% if day != 0 %}
-                                    <div class="day-number {% if day == today.day and month == today.month and year == today.year %}text-primary fw-bold{% endif %}">
+                                    <i class="bi bi-plus-circle-fill add-event-icon"></i>
+                                    <div class="day-number {% if day == today.day and month == today.month and year == today.year %}text-primary fw-bold{% endif %}" style="position: relative; z-index: 2;">
                                         {{ day }}
                                     </div>
-                                    <div class="events-container">
+                                    <div class="events-container" style="position: relative; z-index: 2;">
                                         {% for event_day, event_list in events_by_day.items %}
                                             {% if event_day == day %}
                                                 {% for event_data in event_list %}
@@ -62,6 +63,7 @@
                                                          data-bs-toggle="tooltip"
                                                          data-bs-placement="top"
                                                          data-bs-html="true"
+                                                         onclick="event.stopPropagation();"
                                                          title="<strong>{{ event_data.event.name }}</strong><br>
                                                                 {% if event_data.event.event_type %}<i class='bi {{ event_data.event.event_type.bootstrap_icon_id }}'></i> {{ event_data.event.event_type.name }}<br>{% endif %}
                                                                 <i class='bi bi-clock'></i> {{ event_data.local_time|date:'g:i A' }}<br>
@@ -73,7 +75,7 @@
                                                     {% endif %}
                                                 {% endfor %}
                                                 {% if event_list|length > 3 %}
-                                                <div class="more-events-link" onclick="showDayEvents({{ day }}, '{{ month_name }}', {{ year }})">
+                                                <div class="more-events-link" onclick="event.stopPropagation(); showDayEvents({{ day }}, '{{ month_name }}', {{ year }});">
                                                     +{{ event_list|length|add:"-3" }} more...
                                                 </div>
                                                 {% endif %}
@@ -111,14 +113,37 @@
     width: 100%;
     vertical-align: top;
     overflow: hidden;
+    cursor: pointer;
 }
 
 .calendar-day.empty-day {
     background-color: #f8f9fa;
+    cursor: default;
 }
 
 .calendar-day.today {
     background-color: #e7f3ff;
+}
+
+.calendar-day:not(.empty-day):hover {
+    background-color: #f0f0f0;
+}
+
+.calendar-day:not(.empty-day):hover .add-event-icon {
+    opacity: 1;
+}
+
+.add-event-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 3rem;
+    color: #198754;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+    z-index: 1;
 }
 
 .day-number {
@@ -781,6 +806,32 @@ async function updateEventType(eventTypeId) {
         btn.disabled = false;
         btn.innerHTML = originalHTML;
     }
+}
+
+// Global function to open Create Event modal with date pre-filled
+function openCreateEventModal(year, month, day) {
+    const modal = new bootstrap.Modal(document.getElementById('createEventModal'));
+
+    // Format the date as YYYY-MM-DD for the datetime-local input
+    // Month needs to be zero-padded
+    const monthStr = String(month).padStart(2, '0');
+    const dayStr = String(day).padStart(2, '0');
+    const dateStr = `${year}-${monthStr}-${dayStr}T09:00`; // Default to 9:00 AM
+
+    // Set the date/time input value
+    document.getElementById('eventTimestamp').value = dateStr;
+
+    // Clear other fields
+    document.getElementById('eventName').value = '';
+    document.getElementById('eventType').value = '';
+    document.getElementById('eventLocation').value = '';
+    document.getElementById('eventDescription').value = '';
+
+    // Hide any error/success messages
+    document.getElementById('createEventError').classList.add('d-none');
+    document.getElementById('createEventSuccess').classList.add('d-none');
+
+    modal.show();
 }
 
 // Global function to show all events for a specific day
