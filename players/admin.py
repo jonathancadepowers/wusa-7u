@@ -257,15 +257,15 @@ class EventTypeAdmin(admin.ModelAdmin):
 
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
-    list_display = ['id', 'name', 'event_type', 'timestamp', 'created_at', 'updated_at']
+    list_display = ['id', 'name', 'event_type', 'location', 'timestamp', 'created_at', 'updated_at']
     list_filter = ['event_type', 'timestamp']
-    search_fields = ['name', 'description']
+    search_fields = ['name', 'description', 'location']
     readonly_fields = ['created_at', 'updated_at']
     date_hierarchy = 'timestamp'
 
     fieldsets = (
         ('Event Information', {
-            'fields': ('name', 'event_type', 'timestamp', 'description')
+            'fields': ('name', 'event_type', 'location', 'timestamp', 'description')
         }),
         ('Metadata', {
             'fields': ('created_at', 'updated_at'),
