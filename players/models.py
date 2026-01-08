@@ -267,3 +267,22 @@ class DivisionValidationRegistry(models.Model):
 
     def __str__(self):
         return f"Validation Registry for {self.page}"
+
+
+class Event(models.Model):
+    type = models.CharField(max_length=100)
+    name = models.CharField(max_length=200)
+    description = models.TextField()
+    timestamp = models.DateTimeField()
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'events'
+        ordering = ['-timestamp']
+        verbose_name = 'Event'
+        verbose_name_plural = 'Events'
+
+    def __str__(self):
+        return f"{self.name} ({self.type}) - {self.timestamp.strftime('%Y-%m-%d %H:%M')}"
