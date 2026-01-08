@@ -91,4 +91,7 @@ urlpatterns = [
     path('calendar/', views.calendar_view, name='calendar'),
     path('calendar/create-event/', views.create_event_view, name='create_event'),
     path('calendar/create-event-type/', views.create_event_type_view, name='create_event_type'),
+    # Timezone Settings
+    path('api/get-timezone-info/', views.get_timezone_info_view, name='get_timezone_info'),
+    path('api/set-timezone/', views.set_timezone_view, name='set_timezone'),
 ]

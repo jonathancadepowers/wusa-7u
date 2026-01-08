@@ -12,7 +12,19 @@ from .models import Player, Team, Manager, PlayerRanking, ManagerDaughterRanking
 import pandas as pd
 import json
 import os
+import pytz
 from datetime import datetime
+
+
+def get_display_timezone():
+    """Get the configured display timezone from database, default to UTC"""
+    try:
+        setting = GeneralSetting.objects.filter(key='display_timezone').first()
+        if setting and setting.value:
+            return pytz.timezone(setting.value)
+        return pytz.UTC
+    except:
+        return pytz.UTC
 
 
 def settings_view(request):
@@ -5053,6 +5065,77 @@ def create_event_view(request):
             'success': True,
             'message': f'Event "{name}" created successfully!',
             'event_id': event.id
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
+@require_http_methods(["GET"])
+def get_timezone_info_view(request):
+    """Get list of available timezones and current timezone setting"""
+    import pytz
+    from .models import GeneralSetting
+
+    try:
+        # Get all common timezones
+        timezones = pytz.common_timezones
+
+        # Get current timezone from database
+        current_tz_setting = GeneralSetting.objects.filter(key='display_timezone').first()
+        current_timezone = current_tz_setting.value if current_tz_setting else None
+
+        return JsonResponse({
+            'success': True,
+            'timezones': list(timezones),
+            'current_timezone': current_timezone
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
+@require_http_methods(["POST"])
+@csrf_exempt
+def set_timezone_view(request):
+    """Set the display timezone for the application"""
+    import pytz
+    from .models import GeneralSetting
+
+    try:
+        timezone = request.POST.get('timezone', '').strip()
+
+        if not timezone:
+            return JsonResponse({
+                'success': False,
+                'error': 'Please provide a timezone.'
+            }, status=400)
+
+        # Validate timezone
+        if timezone not in pytz.common_timezones:
+            return JsonResponse({
+                'success': False,
+                'error': 'Invalid timezone selected.'
+            }, status=400)
+
+        # Update or create the setting
+        setting, created = GeneralSetting.objects.update_or_create(
+            key='display_timezone',
+            defaults={'value': timezone}
+        )
+
+        action = "created" if created else "updated"
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Display timezone {action} successfully to {timezone}!',
+            'timezone': timezone
         })
 
     except Exception as e:
