@@ -392,7 +392,14 @@ document.addEventListener('DOMContentLoaded', function() {
                                         <input type="text" class="form-control form-control-sm" value="${et.name}" data-field="name">
                                     </div>
                                     <div class="col-md-4 mb-3">
-                                        <label class="form-label small text-muted">Icon ID</label>
+                                        <label class="form-label small text-muted">
+                                            Icon ID
+                                            <i class="bi bi-info-circle text-muted"
+                                               data-bs-toggle="tooltip"
+                                               data-bs-placement="top"
+                                               data-bs-html="true"
+                                               title="Visit <a href='https://icons.getbootstrap.com/' target='_blank'>Bootstrap Icons</a>, find your icon, and copy its class name.<br><br><strong>Example:</strong> For the calendar icon, enter <code>bi-calendar-event</code>"></i>
+                                        </label>
                                         <input type="text" class="form-control form-control-sm" value="${et.bootstrap_icon_id}" data-field="icon">
                                     </div>
                                     <div class="col-md-4 mb-3">
@@ -428,6 +435,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         `;
                     });
                     listContainer.innerHTML = html;
+
+                    // Reinitialize Bootstrap tooltips for dynamically generated content
+                    const tooltipTriggerList = [].slice.call(listContainer.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                    tooltipTriggerList.map(function (tooltipTriggerEl) {
+                        return new bootstrap.Tooltip(tooltipTriggerEl);
+                    });
 
                     // Setup color swatch handlers for each event type
                     result.event_types.forEach(et => {
