@@ -269,6 +269,23 @@ class DivisionValidationRegistry(models.Model):
         return f"Validation Registry for {self.page}"
 
 
+class EventType(models.Model):
+    name = models.CharField(max_length=100)
+    bootstrap_icon_id = models.CharField(max_length=100)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'event_types'
+        ordering = ['name']
+        verbose_name = 'Event Type'
+        verbose_name_plural = 'Event Types'
+
+    def __str__(self):
+        return self.name
+
+
 class Event(models.Model):
     type = models.CharField(max_length=100)
     name = models.CharField(max_length=200)
