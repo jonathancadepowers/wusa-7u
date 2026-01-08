@@ -4948,6 +4948,10 @@ def calendar_view(request):
     # Get all event types for the modal dropdown
     event_types = EventType.objects.all().order_by('name')
 
+    # Get display timezone
+    display_tz = get_display_timezone()
+    display_timezone_name = str(display_tz)
+
     # Get all events for this month
     # events = Event.objects.filter(
     #     timestamp__year=year,
@@ -4973,6 +4977,7 @@ def calendar_view(request):
         'next_month': next_month.month,
         'today': today,
         'event_types': event_types,
+        'display_timezone_name': display_timezone_name,
         # 'events_by_day': events_by_day,
     }
 
