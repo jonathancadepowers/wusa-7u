@@ -4910,3 +4910,56 @@ def practice_slot_delete_view(request, pk):
     })
 
 
+def calendar_view(request):
+    """Display a monthly calendar with events"""
+    import calendar
+    from datetime import date
+    from dateutil.relativedelta import relativedelta
+    from .models import Event
+
+    # Get year and month from query parameters, default to current month
+    today = date.today()
+    year = int(request.GET.get('year', today.year))
+    month = int(request.GET.get('month', today.month))
+
+    # Create a date object for the first day of the month
+    current_date = date(year, month, 1)
+
+    # Calculate previous and next months
+    prev_month = current_date - relativedelta(months=1)
+    next_month = current_date + relativedelta(months=1)
+
+    # Get calendar data for the month
+    cal = calendar.monthcalendar(year, month)
+    month_name = calendar.month_name[month]
+
+    # Get all events for this month
+    # events = Event.objects.filter(
+    #     timestamp__year=year,
+    #     timestamp__month=month
+    # ).select_related('event_type')
+
+    # # Organize events by day
+    # events_by_day = {}
+    # for event in events:
+    #     day = event.timestamp.day
+    #     if day not in events_by_day:
+    #         events_by_day[day] = []
+    #     events_by_day[day].append(event)
+
+    context = {
+        'calendar': cal,
+        'month_name': month_name,
+        'year': year,
+        'month': month,
+        'prev_year': prev_month.year,
+        'prev_month': prev_month.month,
+        'next_year': next_month.year,
+        'next_month': next_month.month,
+        'today': today,
+        # 'events_by_day': events_by_day,
+    }
+
+    return render(request, 'players/calendar.html', context)
+
+

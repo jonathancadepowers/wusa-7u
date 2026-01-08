@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Player, Team, Manager, Draft, PlayerRanking, ManagerDaughterRanking, SiblingRanking, DraftPick, TeamPreference, PracticeSlot, PracticeSlotRanking, GeneralSetting, ValidationCode, StarredDraftPick, DivisionValidationRegistry
+from .models import Player, Team, Manager, Draft, PlayerRanking, ManagerDaughterRanking, SiblingRanking, DraftPick, TeamPreference, PracticeSlot, PracticeSlotRanking, GeneralSetting, ValidationCode, StarredDraftPick, DivisionValidationRegistry, Event, EventType
 
 
 @admin.register(Draft)
@@ -230,6 +230,42 @@ class DivisionValidationRegistryAdmin(admin.ModelAdmin):
     fieldsets = (
         ('Validation Registry', {
             'fields': ('page', 'validations_to_run_on_page_load', 'validation_code_triggers')
+        }),
+        ('Metadata', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(EventType)
+class EventTypeAdmin(admin.ModelAdmin):
+    list_display = ['id', 'name', 'bootstrap_icon_id', 'created_at', 'updated_at']
+    search_fields = ['name', 'bootstrap_icon_id']
+    readonly_fields = ['created_at', 'updated_at']
+
+    fieldsets = (
+        ('Event Type', {
+            'fields': ('name', 'bootstrap_icon_id')
+        }),
+        ('Metadata', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(Event)
+class EventAdmin(admin.ModelAdmin):
+    list_display = ['id', 'name', 'event_type', 'timestamp', 'created_at', 'updated_at']
+    list_filter = ['event_type', 'timestamp']
+    search_fields = ['name', 'description']
+    readonly_fields = ['created_at', 'updated_at']
+    date_hierarchy = 'timestamp'
+
+    fieldsets = (
+        ('Event Information', {
+            'fields': ('name', 'event_type', 'timestamp', 'description')
         }),
         ('Metadata', {
             'fields': ('created_at', 'updated_at'),
