@@ -287,7 +287,7 @@ class EventType(models.Model):
 
 
 class Event(models.Model):
-    type = models.CharField(max_length=100)
+    event_type = models.ForeignKey(EventType, on_delete=models.SET_NULL, null=True, blank=True, related_name='events')
     name = models.CharField(max_length=200)
     description = models.TextField()
     timestamp = models.DateTimeField()
@@ -302,4 +302,5 @@ class Event(models.Model):
         verbose_name_plural = 'Events'
 
     def __str__(self):
-        return f"{self.name} ({self.type}) - {self.timestamp.strftime('%Y-%m-%d %H:%M')}"
+        type_name = self.event_type.name if self.event_type else 'No Type'
+        return f"{self.name} ({type_name}) - {self.timestamp.strftime('%Y-%m-%d %H:%M')}"
