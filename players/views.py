@@ -5087,6 +5087,77 @@ def create_event_view(request):
 
 
 @require_http_methods(["GET"])
+def get_event_types_view(request):
+    """Get all event types"""
+    from .models import EventType
+
+    try:
+        event_types = EventType.objects.all().order_by('name')
+        event_types_data = [{
+            'id': et.id,
+            'name': et.name,
+            'bootstrap_icon_id': et.bootstrap_icon_id,
+            'color': et.color
+        } for et in event_types]
+
+        return JsonResponse({
+            'success': True,
+            'event_types': event_types_data
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
+@require_http_methods(["POST"])
+@csrf_exempt
+def update_event_type_view(request):
+    """Update an existing event type"""
+    from .models import EventType
+
+    try:
+        event_type_id = request.POST.get('id', '').strip()
+        name = request.POST.get('name', '').strip()
+        bootstrap_icon_id = request.POST.get('bootstrap_icon_id', '').strip()
+        color = request.POST.get('color', '#0d6efd').strip()
+
+        if not event_type_id or not name or not bootstrap_icon_id:
+            return JsonResponse({
+                'success': False,
+                'error': 'Please provide all required fields.'
+            }, status=400)
+
+        # Get the event type
+        try:
+            event_type = EventType.objects.get(id=event_type_id)
+        except EventType.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': 'Event type not found.'
+            }, status=404)
+
+        # Update the event type
+        event_type.name = name
+        event_type.bootstrap_icon_id = bootstrap_icon_id
+        event_type.color = color
+        event_type.save()
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Event type "{name}" updated successfully!'
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
+@require_http_methods(["GET"])
 def get_timezone_info_view(request):
     """Get list of available timezones and current timezone setting"""
     import pytz

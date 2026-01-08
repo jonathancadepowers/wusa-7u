@@ -13,8 +13,8 @@
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createEventModal">
                     <i class="bi bi-plus-circle me-1"></i>Create Event
                 </button>
-                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createEventTypeModal">
-                    <i class="bi bi-plus-circle me-1"></i>Create Event Type
+                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modifyEventTypesModal">
+                    <i class="bi bi-pencil-square me-1"></i>Modify Event Types
                 </button>
             </div>
 
@@ -67,7 +67,7 @@
                                                             {% if event_data.event.location %}<i class='bi bi-geo-alt'></i> {{ event_data.event.location }}<br>{% endif %}
                                                             {% if event_data.event.description %}{{ event_data.event.description|truncatewords:20 }}{% endif %}">
                                                     <i class="bi {% if event_data.event.event_type %}{{ event_data.event.event_type.bootstrap_icon_id }}{% else %}bi-calendar-event{% endif %}"></i>
-                                                    {{ event_data.local_time|date:'g:i A' }} {{ event_data.event.name|truncatewords:3 }}
+                                                    {{ event_data.event.name|truncatewords:3 }}
                                                 </div>
                                             {% endfor %}
                                             {% endif %}
@@ -140,6 +140,25 @@
 .event-badge:hover {
     opacity: 0.8;
 }
+
+.color-swatch {
+    width: 40px;
+    height: 40px;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    border: 3px solid transparent;
+    transition: all 0.2s;
+}
+
+.color-swatch:hover {
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.color-swatch.selected {
+    border-color: #000;
+    box-shadow: 0 0 0 2px #fff, 0 0 0 4px #000;
+}
 </style>
 
 <!-- Create Event Modal -->
@@ -195,41 +214,87 @@
     </div>
 </div>
 
-<!-- Create Event Type Modal -->
-<div class="modal fade" id="createEventTypeModal" tabindex="-1" aria-labelledby="createEventTypeModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+<!-- Modify Event Types Modal -->
+<div class="modal fade" id="modifyEventTypesModal" tabindex="-1" aria-labelledby="modifyEventTypesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="createEventTypeModalLabel">Create New Event Type</h5>
+                <h5 class="modal-title" id="modifyEventTypesModalLabel">Modify Event Types</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="createEventTypeForm">
-                    <div class="mb-3">
-                        <label for="eventTypeName" class="form-label">Name</label>
-                        <input type="text" class="form-control" id="eventTypeName" required>
+                <!-- Create New Event Type Section -->
+                <div class="card mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h6 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Create New Event Type</h6>
                     </div>
-                    <div class="mb-3">
-                        <label for="eventTypeIcon" class="form-label">Bootstrap Icon ID</label>
-                        <input type="text" class="form-control" id="eventTypeIcon" placeholder="e.g., bi-calendar-event" required>
-                        <small class="form-text text-muted">
-                            Find icons at <a href="https://icons.getbootstrap.com/" target="_blank">Bootstrap Icons</a>
-                        </small>
+                    <div class="card-body">
+                        <form id="createEventTypeForm">
+                            <div class="mb-3">
+                                <label for="newEventTypeName" class="form-label">Name</label>
+                                <input type="text" class="form-control" id="newEventTypeName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="newEventTypeIcon" class="form-label">Bootstrap Icon ID</label>
+                                <input type="text" class="form-control" id="newEventTypeIcon" placeholder="e.g., bi-calendar-event" required>
+                                <small class="form-text text-muted">
+                                    Find icons at <a href="https://icons.getbootstrap.com/" target="_blank">Bootstrap Icons</a>
+                                </small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Display Color</label>
+                                <div id="newColorSwatches" class="d-flex flex-wrap gap-2 mb-2">
+                                    <div class="color-swatch" data-color="#0d6efd" style="background-color: #0d6efd;" title="Blue"></div>
+                                    <div class="color-swatch" data-color="#6610f2" style="background-color: #6610f2;" title="Indigo"></div>
+                                    <div class="color-swatch" data-color="#6f42c1" style="background-color: #6f42c1;" title="Purple"></div>
+                                    <div class="color-swatch" data-color="#d63384" style="background-color: #d63384;" title="Pink"></div>
+                                    <div class="color-swatch" data-color="#dc3545" style="background-color: #dc3545;" title="Red"></div>
+                                    <div class="color-swatch" data-color="#fd7e14" style="background-color: #fd7e14;" title="Orange"></div>
+                                    <div class="color-swatch" data-color="#ffc107" style="background-color: #ffc107;" title="Yellow"></div>
+                                    <div class="color-swatch" data-color="#198754" style="background-color: #198754;" title="Green"></div>
+                                    <div class="color-swatch" data-color="#20c997" style="background-color: #20c997;" title="Teal"></div>
+                                    <div class="color-swatch" data-color="#0dcaf0" style="background-color: #0dcaf0;" title="Cyan"></div>
+                                    <div class="color-swatch" data-color="#6c757d" style="background-color: #6c757d;" title="Gray"></div>
+                                    <div class="color-swatch" data-color="#495057" style="background-color: #495057;" title="Dark"></div>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="newCustomColorToggle">
+                                    <label class="form-check-label" for="newCustomColorToggle">
+                                        Use custom color code
+                                    </label>
+                                </div>
+                                <input type="text" class="form-control mt-2 d-none" id="newCustomColorInput" placeholder="#0d6efd" pattern="^#[0-9A-Fa-f]{6}$">
+                                <input type="hidden" id="newEventTypeColor" value="#0d6efd">
+                            </div>
+                            <button type="button" class="btn btn-success btn-sm" id="createNewEventTypeBtn">
+                                <i class="bi bi-plus-circle me-1"></i>Create Event Type
+                            </button>
+                        </form>
+                        <div id="createEventTypeError" class="alert alert-danger d-none mt-3" role="alert"></div>
+                        <div id="createEventTypeSuccess" class="alert alert-success d-none mt-3" role="alert"></div>
                     </div>
-                    <div class="mb-3">
-                        <label for="eventTypeColor" class="form-label">Display Color</label>
-                        <input type="color" class="form-control form-control-color" id="eventTypeColor" value="#0d6efd" title="Choose event color">
-                        <small class="form-text text-muted">
-                            Choose the background color for events of this type
-                        </small>
+                </div>
+
+                <!-- Existing Event Types Section -->
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h6 class="mb-0"><i class="bi bi-pencil-square me-2"></i>Edit Existing Event Types</h6>
                     </div>
-                </form>
-                <div id="createEventTypeError" class="alert alert-danger d-none" role="alert"></div>
-                <div id="createEventTypeSuccess" class="alert alert-success d-none" role="alert"></div>
+                    <div class="card-body">
+                        <div id="existingEventTypesList">
+                            <div class="text-center py-3">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="updateEventTypeError" class="alert alert-danger d-none mt-3" role="alert"></div>
+                        <div id="updateEventTypeSuccess" class="alert alert-success d-none mt-3" role="alert"></div>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success" id="saveEventTypeBtn">Create Event Type</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -255,11 +320,181 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('adminButtons').style.display = 'block';
     }
 
-    // Create Event Type
-    document.getElementById('saveEventTypeBtn').addEventListener('click', async function() {
-        const name = document.getElementById('eventTypeName').value.trim();
-        const icon = document.getElementById('eventTypeIcon').value.trim();
-        const color = document.getElementById('eventTypeColor').value;
+    // Handle color swatch selection for new event types
+    const newColorSwatches = document.querySelectorAll('#newColorSwatches .color-swatch');
+    const newEventTypeColorInput = document.getElementById('newEventTypeColor');
+    const newCustomColorToggle = document.getElementById('newCustomColorToggle');
+    const newCustomColorInput = document.getElementById('newCustomColorInput');
+
+    newColorSwatches.forEach(swatch => {
+        swatch.addEventListener('click', function() {
+            if (!newCustomColorToggle.checked) {
+                newColorSwatches.forEach(s => s.classList.remove('selected'));
+                this.classList.add('selected');
+                newEventTypeColorInput.value = this.dataset.color;
+            }
+        });
+    });
+
+    // Select first color by default
+    newColorSwatches[0].classList.add('selected');
+
+    newCustomColorToggle.addEventListener('change', function() {
+        if (this.checked) {
+            newColorSwatches.forEach(s => s.classList.remove('selected'));
+            newCustomColorInput.classList.remove('d-none');
+            newCustomColorInput.required = true;
+        } else {
+            newCustomColorInput.classList.add('d-none');
+            newCustomColorInput.required = false;
+            newColorSwatches[0].classList.add('selected');
+            newEventTypeColorInput.value = newColorSwatches[0].dataset.color;
+        }
+    });
+
+    newCustomColorInput.addEventListener('input', function() {
+        if (this.value.match(/^#[0-9A-Fa-f]{6}$/)) {
+            newEventTypeColorInput.value = this.value;
+        }
+    });
+
+    // Load event types when modal is opened
+    const modifyEventTypesModal = document.getElementById('modifyEventTypesModal');
+    modifyEventTypesModal.addEventListener('show.bs.modal', loadEventTypes);
+
+    async function loadEventTypes() {
+        const listContainer = document.getElementById('existingEventTypesList');
+        listContainer.innerHTML = '<div class="text-center py-3"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+
+        try {
+            const response = await fetch('{% url "players:get_event_types" %}');
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                if (result.event_types.length === 0) {
+                    listContainer.innerHTML = '<p class="text-muted text-center">No event types found. Create one above!</p>';
+                } else {
+                    const presetColors = ['#0d6efd', '#6610f2', '#6f42c1', '#d63384', '#dc3545', '#fd7e14', '#ffc107', '#198754', '#20c997', '#0dcaf0', '#6c757d', '#495057'];
+
+                    let html = '';
+                    result.event_types.forEach(et => {
+                        const swatchesHtml = presetColors.map(color =>
+                            `<div class="color-swatch ${et.color === color ? 'selected' : ''}" data-color="${color}" style="background-color: ${color};"></div>`
+                        ).join('');
+
+                        const isCustomColor = !presetColors.includes(et.color);
+
+                        html += `
+                            <div class="border rounded p-3 mb-3" data-event-type-id="${et.id}">
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label small text-muted">Name</label>
+                                        <input type="text" class="form-control form-control-sm" value="${et.name}" data-field="name">
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label small text-muted">Icon ID</label>
+                                        <input type="text" class="form-control form-control-sm" value="${et.bootstrap_icon_id}" data-field="icon">
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label small text-muted">Preview</label>
+                                        <div>
+                                            <span class="badge text-white" style="background-color: ${et.color};">
+                                                <i class="bi ${et.bootstrap_icon_id}"></i> ${et.name}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small text-muted">Display Color</label>
+                                    <div class="color-swatches-${et.id} d-flex flex-wrap gap-2 mb-2">
+                                        ${swatchesHtml}
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input custom-color-toggle" type="checkbox" id="customColorToggle${et.id}" ${isCustomColor ? 'checked' : ''}>
+                                        <label class="form-check-label" for="customColorToggle${et.id}">
+                                            Use custom color code
+                                        </label>
+                                    </div>
+                                    <input type="text" class="form-control form-control-sm mt-2 custom-color-input ${isCustomColor ? '' : 'd-none'}"
+                                           value="${isCustomColor ? et.color : '#0d6efd'}"
+                                           placeholder="#0d6efd"
+                                           pattern="^#[0-9A-Fa-f]{6}$">
+                                    <input type="hidden" data-field="color" value="${et.color}">
+                                </div>
+                                <button type="button" class="btn btn-primary btn-sm" onclick="updateEventType(${et.id})">
+                                    <i class="bi bi-check-circle me-1"></i>Save Changes
+                                </button>
+                            </div>
+                        `;
+                    });
+                    listContainer.innerHTML = html;
+
+                    // Setup color swatch handlers for each event type
+                    result.event_types.forEach(et => {
+                        setupColorSwatchHandlers(et.id);
+                    });
+                }
+            } else {
+                listContainer.innerHTML = '<p class="text-danger">Failed to load event types.</p>';
+            }
+        } catch (error) {
+            listContainer.innerHTML = '<p class="text-danger">An error occurred while loading event types.</p>';
+        }
+    }
+
+    // Setup color swatch handlers for existing event types
+    function setupColorSwatchHandlers(eventTypeId) {
+        const container = document.querySelector(`[data-event-type-id="${eventTypeId}"]`);
+        const swatches = container.querySelectorAll('.color-swatch');
+        const colorInput = container.querySelector('[data-field="color"]');
+        const customToggle = container.querySelector('.custom-color-toggle');
+        const customInput = container.querySelector('.custom-color-input');
+
+        swatches.forEach(swatch => {
+            swatch.addEventListener('click', function() {
+                if (!customToggle.checked) {
+                    swatches.forEach(s => s.classList.remove('selected'));
+                    this.classList.add('selected');
+                    colorInput.value = this.dataset.color;
+                    // Update preview
+                    const preview = container.querySelector('.badge');
+                    preview.style.backgroundColor = this.dataset.color;
+                }
+            });
+        });
+
+        customToggle.addEventListener('change', function() {
+            if (this.checked) {
+                swatches.forEach(s => s.classList.remove('selected'));
+                customInput.classList.remove('d-none');
+                customInput.required = true;
+            } else {
+                customInput.classList.add('d-none');
+                customInput.required = false;
+                const firstSwatch = swatches[0];
+                firstSwatch.classList.add('selected');
+                colorInput.value = firstSwatch.dataset.color;
+                // Update preview
+                const preview = container.querySelector('.badge');
+                preview.style.backgroundColor = firstSwatch.dataset.color;
+            }
+        });
+
+        customInput.addEventListener('input', function() {
+            if (this.value.match(/^#[0-9A-Fa-f]{6}$/)) {
+                colorInput.value = this.value;
+                // Update preview
+                const preview = container.querySelector('.badge');
+                preview.style.backgroundColor = this.value;
+            }
+        });
+    }
+
+    // Create New Event Type
+    document.getElementById('createNewEventTypeBtn').addEventListener('click', async function() {
+        const name = document.getElementById('newEventTypeName').value.trim();
+        const icon = document.getElementById('newEventTypeIcon').value.trim();
+        const color = document.getElementById('newEventTypeColor').value;
         const errorDiv = document.getElementById('createEventTypeError');
         const successDiv = document.getElementById('createEventTypeSuccess');
         const btn = this;
@@ -296,11 +531,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 successDiv.textContent = result.message;
                 successDiv.classList.remove('d-none');
                 document.getElementById('createEventTypeForm').reset();
+                document.getElementById('newEventTypeColor').value = '#0d6efd';
 
-                // Reload event types in the event modal
+                // Reload the event types list
+                await loadEventTypes();
+
+                // Clear success message after 3 seconds
                 setTimeout(() => {
-                    window.location.reload();
-                }, 1500);
+                    successDiv.classList.add('d-none');
+                }, 3000);
             } else {
                 errorDiv.textContent = result.error || 'Failed to create event type.';
                 errorDiv.classList.remove('d-none');
@@ -310,7 +549,7 @@ document.addEventListener('DOMContentLoaded', function() {
             errorDiv.classList.remove('d-none');
         } finally {
             btn.disabled = false;
-            btn.innerHTML = 'Create Event Type';
+            btn.innerHTML = '<i class="bi bi-plus-circle me-1"></i>Create Event Type';
         }
     });
 
@@ -384,5 +623,71 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+// Global function to update event type (called from dynamically generated HTML)
+async function updateEventType(eventTypeId) {
+    const container = document.querySelector(`[data-event-type-id="${eventTypeId}"]`);
+    const name = container.querySelector('[data-field="name"]').value.trim();
+    const icon = container.querySelector('[data-field="icon"]').value.trim();
+    const color = container.querySelector('[data-field="color"]').value;
+    const errorDiv = document.getElementById('updateEventTypeError');
+    const successDiv = document.getElementById('updateEventTypeSuccess');
+    const btn = container.querySelector('button');
+
+    errorDiv.classList.add('d-none');
+    successDiv.classList.add('d-none');
+
+    if (!name || !icon) {
+        errorDiv.textContent = 'Please fill in all fields.';
+        errorDiv.classList.remove('d-none');
+        return;
+    }
+
+    const originalHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+
+    try {
+        const formData = new FormData();
+        formData.append('id', eventTypeId);
+        formData.append('name', name);
+        formData.append('bootstrap_icon_id', icon);
+        formData.append('color', color);
+
+        const response = await fetch('{% url "players:update_event_type" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            successDiv.textContent = result.message;
+            successDiv.classList.remove('d-none');
+
+            // Update the preview badge
+            const preview = container.querySelector('.badge');
+            preview.style.backgroundColor = color;
+            preview.innerHTML = `<i class="bi ${icon}"></i> ${name}`;
+
+            // Clear success message after 3 seconds
+            setTimeout(() => {
+                successDiv.classList.add('d-none');
+            }, 3000);
+        } else {
+            errorDiv.textContent = result.error || 'Failed to update event type.';
+            errorDiv.classList.remove('d-none');
+        }
+    } catch (error) {
+        errorDiv.textContent = 'An error occurred. Please try again.';
+        errorDiv.classList.remove('d-none');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+    }
+}
 </script>
 {% endblock %}
