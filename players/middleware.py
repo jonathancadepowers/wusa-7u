@@ -219,6 +219,7 @@ class MasterPasswordMiddleware:
     - manager_daughter_rankings/
     - practice_slot_rankings
     - player_rankings/analyze/public/
+    - calendar/
     """
 
     # Define exempt URL patterns
@@ -229,6 +230,7 @@ class MasterPasswordMiddleware:
         '/manager_daughter_rankings/',
         '/practice_slot_rankings/',
         '/player_rankings/analyze/public/',
+        '/calendar/',
         '/admin/',
         '/static/',
         '/media/',
