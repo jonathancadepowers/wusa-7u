@@ -191,7 +191,7 @@
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label for="eventLocation" class="form-label">Location</label>
+                        <label for="eventLocation" class="form-label">Location (Optional)</label>
                         <input type="text" class="form-control" id="eventLocation">
                     </div>
                     <div class="mb-3">
@@ -363,6 +363,37 @@ document.addEventListener('DOMContentLoaded', function() {
             newEventTypeColorInput.value = this.value;
         }
     });
+
+    // Function to refresh event types dropdown in Create Event modal
+    async function refreshEventTypesDropdown() {
+        const eventTypeSelect = document.getElementById('eventType');
+        const currentValue = eventTypeSelect.value; // Preserve current selection if any
+
+        try {
+            const response = await fetch('{% url "players:get_event_types" %}');
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                // Clear existing options except the first placeholder
+                eventTypeSelect.innerHTML = '<option value="">Select event type...</option>';
+
+                // Add new options
+                result.event_types.forEach(et => {
+                    const option = document.createElement('option');
+                    option.value = et.id;
+                    option.textContent = et.name;
+                    eventTypeSelect.appendChild(option);
+                });
+
+                // Restore previous selection if it still exists
+                if (currentValue) {
+                    eventTypeSelect.value = currentValue;
+                }
+            }
+        } catch (error) {
+            console.error('Failed to refresh event types dropdown:', error);
+        }
+    }
 
     // Load event types when modal is opened
     const modifyEventTypesModal = document.getElementById('modifyEventTypesModal');
@@ -552,8 +583,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('createEventTypeForm').reset();
                 document.getElementById('newEventTypeColor').value = '#0d6efd';
 
-                // Reload the event types list
+                // Reload the event types list in the modal
                 await loadEventTypes();
+
+                // Refresh the event types dropdown in the Create Event modal
+                await refreshEventTypesDropdown();
 
                 // Clear success message after 3 seconds
                 setTimeout(() => {
