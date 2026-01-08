@@ -53,7 +53,24 @@
                                         {{ day }}
                                     </div>
                                     <div class="events-container">
-                                        {# Events will be displayed here in the future #}
+                                        {% for event_day, event_list in events_by_day.items %}
+                                            {% if event_day == day %}
+                                            {% for event_data in event_list %}
+                                                <div class="event-badge bg-primary text-white"
+                                                     data-bs-toggle="tooltip"
+                                                     data-bs-placement="top"
+                                                     data-bs-html="true"
+                                                     title="<strong>{{ event_data.event.name }}</strong><br>
+                                                            {% if event_data.event.event_type %}<i class='bi {{ event_data.event.event_type.bootstrap_icon_id }}'></i> {{ event_data.event.event_type.name }}<br>{% endif %}
+                                                            <i class='bi bi-clock'></i> {{ event_data.local_time|date:'g:i A' }}<br>
+                                                            {% if event_data.event.location %}<i class='bi bi-geo-alt'></i> {{ event_data.event.location }}<br>{% endif %}
+                                                            {% if event_data.event.description %}{{ event_data.event.description|truncatewords:20 }}{% endif %}">
+                                                    <i class="bi {% if event_data.event.event_type %}{{ event_data.event.event_type.bootstrap_icon_id }}{% else %}bi-calendar-event{% endif %}"></i>
+                                                    {{ event_data.local_time|date:'g:i A' }} {{ event_data.event.name|truncatewords:3 }}
+                                                </div>
+                                            {% endfor %}
+                                            {% endif %}
+                                        {% endfor %}
                                     </div>
                                 {% endif %}
                             </td>

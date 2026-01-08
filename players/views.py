@@ -4953,18 +4953,23 @@ def calendar_view(request):
     display_timezone_name = str(display_tz)
 
     # Get all events for this month
-    # events = Event.objects.filter(
-    #     timestamp__year=year,
-    #     timestamp__month=month
-    # ).select_related('event_type')
+    events = Event.objects.filter(
+        timestamp__year=year,
+        timestamp__month=month
+    ).select_related('event_type')
 
-    # # Organize events by day
-    # events_by_day = {}
-    # for event in events:
-    #     day = event.timestamp.day
-    #     if day not in events_by_day:
-    #         events_by_day[day] = []
-    #     events_by_day[day].append(event)
+    # Organize events by day (convert UTC timestamps to display timezone)
+    events_by_day = {}
+    for event in events:
+        # Convert UTC timestamp to display timezone
+        local_time = event.timestamp.astimezone(display_tz)
+        day = local_time.day
+        if day not in events_by_day:
+            events_by_day[day] = []
+        events_by_day[day].append({
+            'event': event,
+            'local_time': local_time
+        })
 
     context = {
         'calendar': cal,
@@ -4978,7 +4983,7 @@ def calendar_view(request):
         'today': today,
         'event_types': event_types,
         'display_timezone_name': display_timezone_name,
-        # 'events_by_day': events_by_day,
+        'events_by_day': events_by_day,
     }
 
     return render(request, 'players/calendar.html', context)
