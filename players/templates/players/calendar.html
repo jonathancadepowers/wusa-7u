@@ -273,6 +273,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // Hide error messages when user interacts with form
+    const createEventForm = document.getElementById('createEventForm');
+    createEventForm.addEventListener('input', function() {
+        const errorDiv = document.getElementById('createEventError');
+        errorDiv.classList.add('d-none');
+    });
+
     // Create Event
     document.getElementById('saveEventBtn').addEventListener('click', async function() {
         const name = document.getElementById('eventName').value.trim();
