@@ -41,9 +41,15 @@
                     {% endif %}
 
                     {% if team.manager and team.manager.has_valid_background_check %}
-                        <p class="mb-2"><strong>Background Check:</strong> <span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Passed</span></p>
+                        <p class="mb-2"><strong>Manager Background Check:</strong> <span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Passed</span></p>
                     {% else %}
-                        <p class="mb-2"><strong>Background Check:</strong> <span class="text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>Not Provided</span></p>
+                        <p class="mb-2"><strong>Manager Background Check:</strong> <span class="text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>Not Provided</span></p>
+                    {% endif %}
+
+                    {% if team.colors %}
+                        <p class="mb-2"><strong>Team Colors:</strong> {{ team.colors }}</p>
+                    {% else %}
+                        <p class="mb-2"><strong>Team Colors:</strong> Not Yet Assigned</p>
                     {% endif %}
                 </div>
 
