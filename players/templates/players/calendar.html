@@ -55,21 +55,28 @@
                                     <div class="events-container">
                                         {% for event_day, event_list in events_by_day.items %}
                                             {% if event_day == day %}
-                                            {% for event_data in event_list %}
-                                                <div class="event-badge text-white"
-                                                     style="background-color: {% if event_data.event.event_type %}{{ event_data.event.event_type.color }}{% else %}#0d6efd{% endif %};"
-                                                     data-bs-toggle="tooltip"
-                                                     data-bs-placement="top"
-                                                     data-bs-html="true"
-                                                     title="<strong>{{ event_data.event.name }}</strong><br>
-                                                            {% if event_data.event.event_type %}<i class='bi {{ event_data.event.event_type.bootstrap_icon_id }}'></i> {{ event_data.event.event_type.name }}<br>{% endif %}
-                                                            <i class='bi bi-clock'></i> {{ event_data.local_time|date:'g:i A' }}<br>
-                                                            {% if event_data.event.location %}<i class='bi bi-geo-alt'></i> {{ event_data.event.location }}<br>{% endif %}
-                                                            {% if event_data.event.description %}{{ event_data.event.description|truncatewords:20 }}{% endif %}">
-                                                    <i class="bi {% if event_data.event.event_type %}{{ event_data.event.event_type.bootstrap_icon_id }}{% else %}bi-calendar-event{% endif %}"></i>
-                                                    {{ event_data.event.name|truncatewords:3 }}
+                                                {% for event_data in event_list %}
+                                                    {% if forloop.counter <= 3 %}
+                                                    <div class="event-badge text-white"
+                                                         style="background-color: {% if event_data.event.event_type %}{{ event_data.event.event_type.color }}{% else %}#0d6efd{% endif %};"
+                                                         data-bs-toggle="tooltip"
+                                                         data-bs-placement="top"
+                                                         data-bs-html="true"
+                                                         title="<strong>{{ event_data.event.name }}</strong><br>
+                                                                {% if event_data.event.event_type %}<i class='bi {{ event_data.event.event_type.bootstrap_icon_id }}'></i> {{ event_data.event.event_type.name }}<br>{% endif %}
+                                                                <i class='bi bi-clock'></i> {{ event_data.local_time|date:'g:i A' }}<br>
+                                                                {% if event_data.event.location %}<i class='bi bi-geo-alt'></i> {{ event_data.event.location }}<br>{% endif %}
+                                                                {% if event_data.event.description %}{{ event_data.event.description|truncatewords:20 }}{% endif %}">
+                                                        <i class="bi {% if event_data.event.event_type %}{{ event_data.event.event_type.bootstrap_icon_id }}{% else %}bi-calendar-event{% endif %}"></i>
+                                                        {{ event_data.event.name|truncatewords:3 }}
+                                                    </div>
+                                                    {% endif %}
+                                                {% endfor %}
+                                                {% if event_list|length > 3 %}
+                                                <div class="more-events-link" onclick="showDayEvents({{ day }}, '{{ month_name }}', {{ year }})">
+                                                    +{{ event_list|length|add:"-3" }} more...
                                                 </div>
-                                            {% endfor %}
+                                                {% endif %}
                                             {% endif %}
                                         {% endfor %}
                                     </div>
@@ -164,6 +171,18 @@
 .tooltip-inner {
     max-width: 400px !important;
     text-align: left !important;
+}
+
+.more-events-link {
+    font-size: 0.75rem;
+    color: #0d6efd;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    text-decoration: underline;
+}
+
+.more-events-link:hover {
+    color: #0a58ca;
 }
 </style>
 
@@ -301,6 +320,27 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Day Events Modal -->
+<div class="modal fade" id="dayEventsModal" tabindex="-1" aria-labelledby="dayEventsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="dayEventsModalLabel"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                <div id="dayEventsContent">
+                    <div class="text-center py-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -741,6 +781,54 @@ async function updateEventType(eventTypeId) {
         btn.disabled = false;
         btn.innerHTML = originalHTML;
     }
+}
+
+// Global function to show all events for a specific day
+function showDayEvents(day, monthName, year) {
+    const modal = new bootstrap.Modal(document.getElementById('dayEventsModal'));
+    const modalTitle = document.getElementById('dayEventsModalLabel');
+    const contentDiv = document.getElementById('dayEventsContent');
+
+    // Set modal title
+    modalTitle.textContent = `Events for ${monthName} ${day}, ${year}`;
+
+    // Get all events for this day from the template data
+    const eventsData = {{ events_by_day_json|safe }};
+    const dayEvents = eventsData[day] || [];
+
+    if (dayEvents.length === 0) {
+        contentDiv.innerHTML = '<p class="text-muted">No events for this day.</p>';
+    } else {
+        let html = '<div class="list-group">';
+        dayEvents.forEach(eventData => {
+            const event = eventData.event;
+            const localTime = new Date(eventData.local_time);
+            const timeStr = localTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+
+            html += `
+                <div class="list-group-item">
+                    <div class="d-flex w-100 justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="badge text-white me-2" style="background-color: ${event.event_type ? event.event_type.color : '#0d6efd'};">
+                                    <i class="bi ${event.event_type ? event.event_type.bootstrap_icon_id : 'bi-calendar-event'}"></i>
+                                </span>
+                                <h6 class="mb-0">${event.name}</h6>
+                            </div>
+                            ${event.event_type ? `<p class="mb-1 text-muted small"><i class="bi ${event.event_type.bootstrap_icon_id}"></i> ${event.event_type.name}</p>` : ''}
+                            <p class="mb-1"><i class="bi bi-clock"></i> ${timeStr}</p>
+                            ${event.location ? `<p class="mb-1"><i class="bi bi-geo-alt"></i> ${event.location}</p>` : ''}
+                            ${event.description ? `<p class="mb-0 text-muted small">${event.description}</p>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        contentDiv.innerHTML = html;
+    }
+
+    modal.show();
 }
 </script>
 {% endblock %}

@@ -4971,6 +4971,31 @@ def calendar_view(request):
             'local_time': local_time
         })
 
+    # Sort events within each day by local_time (chronological order)
+    for day in events_by_day:
+        events_by_day[day].sort(key=lambda x: x['local_time'])
+
+    # Create JSON-serializable version of events_by_day for JavaScript
+    import json
+    events_by_day_json = {}
+    for day, event_list in events_by_day.items():
+        events_by_day_json[day] = []
+        for event_data in event_list:
+            event_dict = {
+                'event': {
+                    'name': event_data['event'].name,
+                    'description': event_data['event'].description,
+                    'location': event_data['event'].location,
+                    'event_type': {
+                        'name': event_data['event'].event_type.name,
+                        'bootstrap_icon_id': event_data['event'].event_type.bootstrap_icon_id,
+                        'color': event_data['event'].event_type.color,
+                    } if event_data['event'].event_type else None,
+                },
+                'local_time': event_data['local_time'].isoformat(),
+            }
+            events_by_day_json[day].append(event_dict)
+
     context = {
         'calendar': cal,
         'month_name': month_name,
@@ -4984,6 +5009,7 @@ def calendar_view(request):
         'event_types': event_types,
         'display_timezone_name': display_timezone_name,
         'events_by_day': events_by_day,
+        'events_by_day_json': json.dumps(events_by_day_json),
     }
 
     return render(request, 'players/calendar.html', context)
