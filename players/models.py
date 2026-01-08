@@ -289,7 +289,7 @@ class EventType(models.Model):
 class Event(models.Model):
     event_type = models.ForeignKey(EventType, on_delete=models.SET_NULL, null=True, blank=True, related_name='events')
     name = models.CharField(max_length=200)
-    description = models.TextField()
+    description = models.TextField(blank=True, null=True)
     location = models.CharField(max_length=200, blank=True, null=True)
     timestamp = models.DateTimeField()
 

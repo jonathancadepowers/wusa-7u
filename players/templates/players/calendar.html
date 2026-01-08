@@ -148,8 +148,8 @@
                         <input type="datetime-local" class="form-control" id="eventTimestamp" required>
                     </div>
                     <div class="mb-3">
-                        <label for="eventDescription" class="form-label">Description</label>
-                        <textarea class="form-control" id="eventDescription" rows="3" required></textarea>
+                        <label for="eventDescription" class="form-label">Description (Optional)</label>
+                        <textarea class="form-control" id="eventDescription" rows="3"></textarea>
                     </div>
                 </form>
                 <div id="createEventError" class="alert alert-danger d-none" role="alert"></div>
@@ -287,8 +287,8 @@ document.addEventListener('DOMContentLoaded', function() {
         errorDiv.classList.add('d-none');
         successDiv.classList.add('d-none');
 
-        if (!name || !eventType || !timestamp || !description) {
-            errorDiv.textContent = 'Please fill in all required fields.';
+        if (!name || !eventType || !timestamp) {
+            errorDiv.textContent = 'Please fill in all required fields (Name, Event Type, and Date & Time).';
             errorDiv.classList.remove('d-none');
             return;
         }

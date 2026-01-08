@@ -5033,10 +5033,10 @@ def create_event_view(request):
         timestamp_str = request.POST.get('timestamp', '').strip()
         description = request.POST.get('description', '').strip()
 
-        if not name or not event_type_id or not timestamp_str or not description:
+        if not name or not event_type_id or not timestamp_str:
             return JsonResponse({
                 'success': False,
-                'error': 'Please provide all required fields (name, event type, timestamp, description).'
+                'error': 'Please provide all required fields (name, event type, and timestamp).'
             }, status=400)
 
         # Get the event type
@@ -5063,7 +5063,7 @@ def create_event_view(request):
             event_type=event_type,
             location=location if location else None,
             timestamp=timestamp,
-            description=description
+            description=description if description else None
         )
 
         return JsonResponse({
