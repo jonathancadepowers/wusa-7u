@@ -89,7 +89,10 @@ urlpatterns = [
     path('practice_slots/assign/', views.assign_practice_slots_to_teams_view, name='assign_practice_slots_to_teams'),
     # Calendar
     path('calendar/', views.calendar_view, name='calendar'),
+    path('calendar/get-event/', views.get_event_view, name='get_event'),
     path('calendar/create-event/', views.create_event_view, name='create_event'),
+    path('calendar/update-event/', views.update_event_view, name='update_event'),
+    path('calendar/delete-event/', views.delete_event_view, name='delete_event'),
     path('calendar/create-event-type/', views.create_event_type_view, name='create_event_type'),
     path('calendar/get-event-types/', views.get_event_types_view, name='get_event_types'),
     path('calendar/update-event-type/', views.update_event_type_view, name='update_event_type'),

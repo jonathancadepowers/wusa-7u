@@ -58,12 +58,12 @@
                                             {% if event_day == day %}
                                                 {% for event_data in event_list %}
                                                     {% if forloop.counter <= 3 %}
-                                                    <div class="event-badge text-white"
-                                                         style="background-color: {% if event_data.event.event_type %}{{ event_data.event.event_type.color }}{% else %}#0d6efd{% endif %};"
+                                                    <div class="event-badge text-white {% if needs_master_password_challenge == False %}event-editable{% endif %}"
+                                                         style="background-color: {% if event_data.event.event_type %}{{ event_data.event.event_type.color }}{% else %}#0d6efd{% endif %}; {% if needs_master_password_challenge == False %}cursor: pointer;{% endif %}"
                                                          data-bs-toggle="tooltip"
                                                          data-bs-placement="top"
                                                          data-bs-html="true"
-                                                         onclick="event.stopPropagation();"
+                                                         onclick="event.stopPropagation(); {% if needs_master_password_challenge == False %}openEditEventModal({{ event_data.event.id }});{% endif %}"
                                                          title="<strong>{{ event_data.event.name }}</strong><br>
                                                                 {% if event_data.event.event_type %}<i class='bi {{ event_data.event.event_type.bootstrap_icon_id }}'></i> {{ event_data.event.event_type.name }}<br>{% endif %}
                                                                 <i class='bi bi-clock'></i> {{ event_data.local_time|date:'g:i A' }}<br>
@@ -135,10 +135,9 @@
 
 .add-event-icon {
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 3rem;
+    bottom: 8px;
+    right: 8px;
+    font-size: 1.2rem;
     color: #198754;
     opacity: 0;
     transition: opacity 0.2s;
@@ -366,6 +365,61 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Event Modal -->
+<div class="modal fade" id="editEventModal" tabindex="-1" aria-labelledby="editEventModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editEventModalLabel">Edit Event</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editEventForm">
+                    <input type="hidden" id="editEventId">
+                    <div class="mb-3">
+                        <label for="editEventName" class="form-label">Event Name</label>
+                        <input type="text" class="form-control" id="editEventName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editEventType" class="form-label">Event Type</label>
+                        <select class="form-select" id="editEventType" required>
+                            <option value="">Select event type...</option>
+                            {% for event_type in event_types %}
+                            <option value="{{ event_type.id }}">{{ event_type.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editEventLocation" class="form-label">Location (Optional)</label>
+                        <input type="text" class="form-control" id="editEventLocation">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editEventTimestamp" class="form-label">
+                            Date & Time
+                            <i class="bi bi-info-circle text-muted"
+                               data-bs-toggle="tooltip"
+                               data-bs-placement="right"
+                               title="Enter date and time in {{ display_timezone_name }} timezone"></i>
+                        </label>
+                        <input type="datetime-local" class="form-control" id="editEventTimestamp" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editEventDescription" class="form-label">Description (Optional)</label>
+                        <textarea class="form-control" id="editEventDescription" rows="3"></textarea>
+                    </div>
+                </form>
+                <div id="editEventError" class="alert alert-danger d-none" role="alert"></div>
+                <div id="editEventSuccess" class="alert alert-success d-none" role="alert"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" id="deleteEventBtn">Delete Event</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="updateEventBtn">Save Changes</button>
             </div>
         </div>
     </div>
@@ -850,6 +904,7 @@ function showDayEvents(day, monthName, year) {
     if (dayEvents.length === 0) {
         contentDiv.innerHTML = '<p class="text-muted">No events for this day.</p>';
     } else {
+        const hasMasterPassword = {% if needs_master_password_challenge == False %}true{% else %}false{% endif %};
         let html = '<div class="list-group">';
         dayEvents.forEach(eventData => {
             const event = eventData.event;
@@ -857,7 +912,7 @@ function showDayEvents(day, monthName, year) {
             const timeStr = localTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 
             html += `
-                <div class="list-group-item">
+                <div class="list-group-item ${hasMasterPassword ? 'list-group-item-action' : ''}" ${hasMasterPassword ? `style="cursor: pointer;" onclick="openEditEventModal(${event.id});"` : ''}>
                     <div class="d-flex w-100 justify-content-between align-items-start">
                         <div class="flex-grow-1">
                             <div class="d-flex align-items-center mb-2">
@@ -881,5 +936,171 @@ function showDayEvents(day, monthName, year) {
 
     modal.show();
 }
+
+// Global function to open Edit Event modal
+async function openEditEventModal(eventId) {
+    const modal = new bootstrap.Modal(document.getElementById('editEventModal'));
+    const errorDiv = document.getElementById('editEventError');
+    const successDiv = document.getElementById('editEventSuccess');
+
+    // Hide error/success messages
+    errorDiv.classList.add('d-none');
+    successDiv.classList.add('d-none');
+
+    try {
+        // Fetch event data from the server
+        const response = await fetch(`{% url "players:get_event" %}?id=${eventId}`);
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+            errorDiv.textContent = result.error || 'Failed to load event data.';
+            errorDiv.classList.remove('d-none');
+            return;
+        }
+
+        // Populate the form with event data
+        const event = result.event;
+        document.getElementById('editEventId').value = event.id;
+        document.getElementById('editEventName').value = event.name;
+        document.getElementById('editEventType').value = event.event_type_id || '';
+        document.getElementById('editEventLocation').value = event.location;
+        document.getElementById('editEventTimestamp').value = event.timestamp;
+        document.getElementById('editEventDescription').value = event.description;
+
+        // Show the modal
+        modal.show();
+
+    } catch (error) {
+        errorDiv.textContent = 'An error occurred loading the event.';
+        errorDiv.classList.remove('d-none');
+    }
+}
+
+// Handle Update Event button click
+document.getElementById('updateEventBtn').addEventListener('click', async function() {
+    const btn = this;
+    const originalHTML = btn.innerHTML;
+    const errorDiv = document.getElementById('editEventError');
+    const successDiv = document.getElementById('editEventSuccess');
+
+    // Hide previous messages
+    errorDiv.classList.add('d-none');
+    successDiv.classList.add('d-none');
+
+    // Get form values
+    const eventId = document.getElementById('editEventId').value;
+    const name = document.getElementById('editEventName').value.trim();
+    const eventType = document.getElementById('editEventType').value;
+    const location = document.getElementById('editEventLocation').value.trim();
+    const timestamp = document.getElementById('editEventTimestamp').value;
+    const description = document.getElementById('editEventDescription').value.trim();
+
+    if (!name || !timestamp) {
+        errorDiv.textContent = 'Event name and date/time are required.';
+        errorDiv.classList.remove('d-none');
+        return;
+    }
+
+    // Show loading state
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+
+    try {
+        const formData = new FormData();
+        formData.append('id', eventId);
+        formData.append('name', name);
+        formData.append('event_type', eventType);
+        formData.append('location', location);
+        formData.append('timestamp', timestamp);
+        formData.append('description', description);
+
+        const response = await fetch('{% url "players:update_event" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            successDiv.textContent = result.message;
+            successDiv.classList.remove('d-none');
+
+            // Reload the page after a short delay
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else {
+            errorDiv.textContent = result.error || 'Failed to update event.';
+            errorDiv.classList.remove('d-none');
+        }
+    } catch (error) {
+        errorDiv.textContent = 'An error occurred. Please try again.';
+        errorDiv.classList.remove('d-none');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+    }
+});
+
+// Handle Delete Event button click
+document.getElementById('deleteEventBtn').addEventListener('click', async function() {
+    const eventName = document.getElementById('editEventName').value.trim();
+
+    if (!confirm(`Are you sure you want to delete the event "${eventName}"? This action cannot be undone.`)) {
+        return;
+    }
+
+    const btn = this;
+    const originalHTML = btn.innerHTML;
+    const errorDiv = document.getElementById('editEventError');
+    const successDiv = document.getElementById('editEventSuccess');
+
+    // Hide previous messages
+    errorDiv.classList.add('d-none');
+    successDiv.classList.add('d-none');
+
+    const eventId = document.getElementById('editEventId').value;
+
+    // Show loading state
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Deleting...';
+
+    try {
+        const formData = new FormData();
+        formData.append('id', eventId);
+
+        const response = await fetch('{% url "players:delete_event" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            successDiv.textContent = result.message;
+            successDiv.classList.remove('d-none');
+
+            // Reload the page after a short delay
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else {
+            errorDiv.textContent = result.error || 'Failed to delete event.';
+            errorDiv.classList.remove('d-none');
+        }
+    } catch (error) {
+        errorDiv.textContent = 'An error occurred. Please try again.';
+        errorDiv.classList.remove('d-none');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+    }
+});
 </script>
 {% endblock %}

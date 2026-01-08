@@ -4983,6 +4983,7 @@ def calendar_view(request):
         for event_data in event_list:
             event_dict = {
                 'event': {
+                    'id': event_data['event'].id,
                     'name': event_data['event'].name,
                     'description': event_data['event'].description,
                     'location': event_data['event'].location,
@@ -5174,6 +5175,158 @@ def update_event_type_view(request):
         return JsonResponse({
             'success': True,
             'message': f'Event type "{name}" updated successfully!'
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
+@require_http_methods(["POST"])
+@csrf_exempt
+def update_event_view(request):
+    """Update an existing event"""
+    from .models import Event, EventType
+    from datetime import datetime
+
+    try:
+        event_id = request.POST.get('id', '').strip()
+        name = request.POST.get('name', '').strip()
+        event_type_id = request.POST.get('event_type', '').strip()
+        location = request.POST.get('location', '').strip()
+        timestamp_str = request.POST.get('timestamp', '').strip()
+        description = request.POST.get('description', '').strip()
+
+        if not event_id or not name or not timestamp_str:
+            return JsonResponse({
+                'success': False,
+                'error': 'Please provide all required fields.'
+            }, status=400)
+
+        # Get the event
+        try:
+            event = Event.objects.get(id=event_id)
+        except Event.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': 'Event not found.'
+            }, status=404)
+
+        # Validate event type if provided
+        event_type = None
+        if event_type_id:
+            try:
+                event_type = EventType.objects.get(id=event_type_id)
+            except EventType.DoesNotExist:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Invalid event type selected.'
+                }, status=400)
+
+        # Parse the timestamp
+        try:
+            timestamp = datetime.fromisoformat(timestamp_str)
+        except ValueError:
+            return JsonResponse({
+                'success': False,
+                'error': 'Invalid timestamp format.'
+            }, status=400)
+
+        # Update the event
+        event.name = name
+        event.event_type = event_type
+        event.location = location if location else None
+        event.timestamp = timestamp
+        event.description = description if description else None
+        event.save()
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Event "{name}" updated successfully!'
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
+@require_http_methods(["GET"])
+def get_event_view(request):
+    """Get a single event by ID"""
+    from .models import Event
+
+    try:
+        event_id = request.GET.get('id', '').strip()
+
+        if not event_id:
+            return JsonResponse({
+                'success': False,
+                'error': 'Event ID is required.'
+            }, status=400)
+
+        # Get the event
+        try:
+            event = Event.objects.get(id=event_id)
+        except Event.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': 'Event not found.'
+            }, status=404)
+
+        # Return event data
+        return JsonResponse({
+            'success': True,
+            'event': {
+                'id': event.id,
+                'name': event.name,
+                'event_type_id': event.event_type.id if event.event_type else None,
+                'location': event.location or '',
+                'timestamp': event.timestamp.isoformat(),
+                'description': event.description or ''
+            }
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
+@require_http_methods(["POST"])
+@csrf_exempt
+def delete_event_view(request):
+    """Delete an existing event"""
+    from .models import Event
+
+    try:
+        event_id = request.POST.get('id', '').strip()
+
+        if not event_id:
+            return JsonResponse({
+                'success': False,
+                'error': 'Event ID is required.'
+            }, status=400)
+
+        # Get the event
+        try:
+            event = Event.objects.get(id=event_id)
+        except Event.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': 'Event not found.'
+            }, status=404)
+
+        event_name = event.name
+        event.delete()
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Event "{event_name}" deleted successfully!'
         })
 
     except Exception as e:
