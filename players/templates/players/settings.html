@@ -379,8 +379,13 @@
                     </div>
 
                     <div class="mb-3">
+                        <label for="timezoneSearch" class="form-label">Search Time Zone</label>
+                        <input type="text" class="form-control" id="timezoneSearch" placeholder="Type to search timezones...">
+                    </div>
+
+                    <div class="mb-3">
                         <label for="timezoneSelect" class="form-label">Select Time Zone</label>
-                        <select class="form-select" id="timezoneSelect">
+                        <select class="form-select" id="timezoneSelect" size="10">
                             <option value="">Loading timezones...</option>
                         </select>
                         <div class="form-text">Current timezone: <span id="currentTimezone">Not set</span></div>
@@ -1270,9 +1275,16 @@
 
         // Timezone modal handler
         const timezoneModal = document.getElementById('timezoneModal');
+        let allTimezones = [];
+        let currentSelectedTimezone = null;
+
         timezoneModal.addEventListener('show.bs.modal', async function() {
             const selectElement = document.getElementById('timezoneSelect');
+            const searchInput = document.getElementById('timezoneSearch');
             const currentTimezoneSpan = document.getElementById('currentTimezone');
+
+            // Clear search input
+            searchInput.value = '';
 
             try {
                 // Fetch timezone list and current setting
@@ -1280,17 +1292,11 @@
                 const data = await response.json();
 
                 if (data.success) {
+                    allTimezones = data.timezones;
+                    currentSelectedTimezone = data.current_timezone;
+
                     // Populate timezone dropdown
-                    selectElement.innerHTML = '<option value="">Select a timezone...</option>';
-                    data.timezones.forEach(tz => {
-                        const option = document.createElement('option');
-                        option.value = tz;
-                        option.textContent = tz;
-                        if (tz === data.current_timezone) {
-                            option.selected = true;
-                        }
-                        selectElement.appendChild(option);
-                    });
+                    populateTimezoneDropdown(allTimezones, currentSelectedTimezone);
 
                     // Update current timezone display
                     currentTimezoneSpan.textContent = data.current_timezone || 'Not set (using UTC)';
@@ -1298,6 +1304,43 @@
             } catch (error) {
                 console.error('Error loading timezone info:', error);
                 selectElement.innerHTML = '<option value="">Error loading timezones</option>';
+            }
+        });
+
+        // Function to populate timezone dropdown
+        function populateTimezoneDropdown(timezones, selectedTimezone) {
+            const selectElement = document.getElementById('timezoneSelect');
+            selectElement.innerHTML = '';
+
+            if (timezones.length === 0) {
+                selectElement.innerHTML = '<option value="">No timezones found</option>';
+                return;
+            }
+
+            timezones.forEach(tz => {
+                const option = document.createElement('option');
+                option.value = tz;
+                option.textContent = tz;
+                if (tz === selectedTimezone) {
+                    option.selected = true;
+                }
+                selectElement.appendChild(option);
+            });
+        }
+
+        // Search functionality
+        document.getElementById('timezoneSearch').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+
+            if (searchTerm === '') {
+                // Show all timezones
+                populateTimezoneDropdown(allTimezones, currentSelectedTimezone);
+            } else {
+                // Filter timezones
+                const filteredTimezones = allTimezones.filter(tz =>
+                    tz.toLowerCase().includes(searchTerm)
+                );
+                populateTimezoneDropdown(filteredTimezones, currentSelectedTimezone);
             }
         });
 
