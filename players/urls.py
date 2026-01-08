@@ -89,4 +89,6 @@ urlpatterns = [
     path('practice_slots/assign/', views.assign_practice_slots_to_teams_view, name='assign_practice_slots_to_teams'),
     # Calendar
     path('calendar/', views.calendar_view, name='calendar'),
+    path('calendar/create-event/', views.create_event_view, name='create_event'),
+    path('calendar/create-event-type/', views.create_event_type_view, name='create_event_type'),
 ]

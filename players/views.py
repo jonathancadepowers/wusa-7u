@@ -4915,7 +4915,7 @@ def calendar_view(request):
     import calendar
     from datetime import date
     from dateutil.relativedelta import relativedelta
-    from .models import Event
+    from .models import Event, EventType
 
     # Get year and month from query parameters, default to current month
     today = date.today()
@@ -4932,6 +4932,9 @@ def calendar_view(request):
     # Get calendar data for the month
     cal = calendar.monthcalendar(year, month)
     month_name = calendar.month_name[month]
+
+    # Get all event types for the modal dropdown
+    event_types = EventType.objects.all().order_by('name')
 
     # Get all events for this month
     # events = Event.objects.filter(
@@ -4957,9 +4960,105 @@ def calendar_view(request):
         'next_year': next_month.year,
         'next_month': next_month.month,
         'today': today,
+        'event_types': event_types,
         # 'events_by_day': events_by_day,
     }
 
     return render(request, 'players/calendar.html', context)
+
+
+@require_http_methods(["POST"])
+@csrf_exempt
+def create_event_type_view(request):
+    """Create a new event type"""
+    from .models import EventType
+
+    try:
+        name = request.POST.get('name', '').strip()
+        bootstrap_icon_id = request.POST.get('bootstrap_icon_id', '').strip()
+
+        if not name or not bootstrap_icon_id:
+            return JsonResponse({
+                'success': False,
+                'error': 'Please provide both name and bootstrap icon ID.'
+            }, status=400)
+
+        # Create the event type
+        event_type = EventType.objects.create(
+            name=name,
+            bootstrap_icon_id=bootstrap_icon_id
+        )
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Event type "{name}" created successfully!',
+            'event_type_id': event_type.id
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
+@require_http_methods(["POST"])
+@csrf_exempt
+def create_event_view(request):
+    """Create a new event"""
+    from .models import Event, EventType
+    from datetime import datetime
+
+    try:
+        name = request.POST.get('name', '').strip()
+        event_type_id = request.POST.get('event_type_id', '').strip()
+        location = request.POST.get('location', '').strip()
+        timestamp_str = request.POST.get('timestamp', '').strip()
+        description = request.POST.get('description', '').strip()
+
+        if not name or not event_type_id or not timestamp_str or not description:
+            return JsonResponse({
+                'success': False,
+                'error': 'Please provide all required fields (name, event type, timestamp, description).'
+            }, status=400)
+
+        # Get the event type
+        try:
+            event_type = EventType.objects.get(id=event_type_id)
+        except EventType.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': 'Invalid event type selected.'
+            }, status=400)
+
+        # Parse the timestamp (format: YYYY-MM-DDTHH:MM from datetime-local input)
+        try:
+            timestamp = datetime.fromisoformat(timestamp_str)
+        except ValueError:
+            return JsonResponse({
+                'success': False,
+                'error': 'Invalid timestamp format.'
+            }, status=400)
+
+        # Create the event
+        event = Event.objects.create(
+            name=name,
+            event_type=event_type,
+            location=location if location else None,
+            timestamp=timestamp,
+            description=description
+        )
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Event "{name}" created successfully!',
+            'event_id': event.id
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
 
 
