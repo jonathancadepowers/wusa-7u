@@ -884,6 +884,10 @@
                 const data = JSON.parse(e.data);
                 const currentTeamId = {{ team.id }};
 
+                // Preserve the collapse state of the Draft Pool section
+                const draftPoolCollapse = document.getElementById('draftPoolCollapse');
+                const wasExpanded = draftPoolCollapse ? draftPoolCollapse.classList.contains('show') : false;
+
                 if (data.type === 'draft_update') {
                     // Remove the drafted player from the available players table
                     const availableTable = document.getElementById('availablePlayersTable');
@@ -920,6 +924,11 @@
 
                     // Show undraft flash message
                     showUndraftNotification(data.team_name, data.player_name, data.round, data.pick);
+                }
+
+                // Restore the collapse state after DOM manipulation
+                if (draftPoolCollapse && wasExpanded && !draftPoolCollapse.classList.contains('show')) {
+                    draftPoolCollapse.classList.add('show');
                 }
             };
 
