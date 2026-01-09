@@ -933,10 +933,19 @@
                 // Restore the collapse state after DOM manipulation
                 // Use setTimeout to ensure Bootstrap has processed any changes
                 setTimeout(() => {
-                    if (draftPoolCollapse && wasExpanded && !draftPoolCollapse.classList.contains('show')) {
-                        draftPoolCollapse.classList.add('show');
+                    if (draftPoolCollapse && wasExpanded) {
+                        // Force the element to stay expanded using Bootstrap's API
+                        const bsCollapse = bootstrap.Collapse.getInstance(draftPoolCollapse);
+                        if (bsCollapse) {
+                            bsCollapse.show();
+                        } else {
+                            // If no Bootstrap instance exists, just add the class
+                            if (!draftPoolCollapse.classList.contains('show')) {
+                                draftPoolCollapse.classList.add('show');
+                            }
+                        }
                     }
-                }, 10);
+                }, 50);
             };
 
             draftSocket.onclose = function(e) {
