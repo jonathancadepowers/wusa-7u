@@ -5427,3 +5427,28 @@ def set_timezone_view(request):
         }, status=500)
 
 
+@require_http_methods(["POST"])
+@csrf_exempt
+def clear_draft_stars_view(request):
+    """Delete all starred draft picks"""
+    from .models import StarredDraftPick
+
+    try:
+        # Count how many stars we're about to delete
+        count = StarredDraftPick.objects.count()
+
+        # Delete all starred draft picks
+        StarredDraftPick.objects.all().delete()
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Successfully deleted {count} starred draft pick{"s" if count != 1 else ""}!'
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+

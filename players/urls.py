@@ -99,4 +99,6 @@ urlpatterns = [
     # Timezone Settings
     path('api/get-timezone-info/', views.get_timezone_info_view, name='get_timezone_info'),
     path('api/set-timezone/', views.set_timezone_view, name='set_timezone'),
+    # Draft Settings
+    path('api/clear-draft-stars/', views.clear_draft_stars_view, name='clear_draft_stars'),
 ]
