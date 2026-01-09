@@ -4964,7 +4964,7 @@ def calendar_view(request):
         # Convert UTC timestamp to display timezone
         local_time = event.timestamp.astimezone(display_tz)
         day = local_time.day
-        # Check if event has a specific time (not midnight)
+        # Check if event has a specific time (not midnight in local timezone)
         has_time = not (local_time.hour == 0 and local_time.minute == 0 and local_time.second == 0)
         if day not in events_by_day:
             events_by_day[day] = []
@@ -5088,7 +5088,15 @@ def create_event_view(request):
 
         # Parse the timestamp (format: YYYY-MM-DDTHH:MM from datetime-local input)
         try:
-            timestamp = datetime.fromisoformat(timestamp_str)
+            # Parse as naive datetime first
+            naive_timestamp = datetime.fromisoformat(timestamp_str)
+            # Get display timezone
+            from .models import GeneralSetting
+            import pytz
+            display_tz_setting = GeneralSetting.objects.filter(key='display_timezone').first()
+            display_tz = pytz.timezone(display_tz_setting.value) if display_tz_setting else pytz.UTC
+            # Localize to display timezone, then convert to UTC for storage
+            timestamp = display_tz.localize(naive_timestamp)
         except ValueError:
             return JsonResponse({
                 'success': False,
@@ -5231,7 +5239,15 @@ def update_event_view(request):
 
         # Parse the timestamp
         try:
-            timestamp = datetime.fromisoformat(timestamp_str)
+            # Parse as naive datetime first
+            naive_timestamp = datetime.fromisoformat(timestamp_str)
+            # Get display timezone
+            from .models import GeneralSetting
+            import pytz
+            display_tz_setting = GeneralSetting.objects.filter(key='display_timezone').first()
+            display_tz = pytz.timezone(display_tz_setting.value) if display_tz_setting else pytz.UTC
+            # Localize to display timezone, then convert to UTC for storage
+            timestamp = display_tz.localize(naive_timestamp)
         except ValueError:
             return JsonResponse({
                 'success': False,
