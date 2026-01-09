@@ -931,9 +931,12 @@
                 }
 
                 // Restore the collapse state after DOM manipulation
-                if (draftPoolCollapse && wasExpanded && !draftPoolCollapse.classList.contains('show')) {
-                    draftPoolCollapse.classList.add('show');
-                }
+                // Use setTimeout to ensure Bootstrap has processed any changes
+                setTimeout(() => {
+                    if (draftPoolCollapse && wasExpanded && !draftPoolCollapse.classList.contains('show')) {
+                        draftPoolCollapse.classList.add('show');
+                    }
+                }, 10);
             };
 
             draftSocket.onclose = function(e) {
