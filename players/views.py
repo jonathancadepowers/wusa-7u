@@ -3584,6 +3584,19 @@ def reset_draft_view(request):
         # Delete all draft picks
         deleted_count = DraftPick.objects.all().delete()[0]
 
+        # Broadcast the draft reset to all connected WebSocket clients
+        from asgiref.sync import async_to_sync
+        from channels.layers import get_channel_layer
+
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            'draft_updates',
+            {
+                'type': 'draft_reset',
+                'message': 'Draft has been reset'
+            }
+        )
+
         return JsonResponse({
             'success': True,
             'message': f'Successfully reset draft. Deleted {deleted_count} draft picks.'

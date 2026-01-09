@@ -925,6 +925,9 @@
 
                     // Show undraft flash message
                     showUndraftNotification(data.team_name, data.player_name, data.round, data.pick);
+                } else if (data.type === 'draft_reset') {
+                    // Draft has been reset - reload the page to show empty draft state
+                    window.location.reload();
                 }
 
                 // Restore the collapse state after DOM manipulation
