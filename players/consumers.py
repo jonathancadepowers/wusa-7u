@@ -59,3 +59,10 @@ class DraftConsumer(AsyncWebsocketConsumer):
             'round': event['round'],
             'pick': event['pick']
         }))
+
+    async def draft_reset(self, event):
+        # Send draft reset message to WebSocket
+        await self.send(text_data=json.dumps({
+            'type': 'draft_reset',
+            'message': event.get('message', 'Draft has been reset')
+        }))
