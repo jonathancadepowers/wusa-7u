@@ -4964,11 +4964,14 @@ def calendar_view(request):
         # Convert UTC timestamp to display timezone
         local_time = event.timestamp.astimezone(display_tz)
         day = local_time.day
+        # Check if event has a specific time (not midnight)
+        has_time = not (local_time.hour == 0 and local_time.minute == 0 and local_time.second == 0)
         if day not in events_by_day:
             events_by_day[day] = []
         events_by_day[day].append({
             'event': event,
-            'local_time': local_time
+            'local_time': local_time,
+            'has_time': has_time
         })
 
     # Sort events within each day by local_time (chronological order)
@@ -4994,6 +4997,7 @@ def calendar_view(request):
                     } if event_data['event'].event_type else None,
                 },
                 'local_time': event_data['local_time'].isoformat(),
+                'has_time': event_data['has_time'],
             }
             events_by_day_json[day].append(event_dict)
 

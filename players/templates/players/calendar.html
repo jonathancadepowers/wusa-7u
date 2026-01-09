@@ -6,18 +6,18 @@
 
 {% block content %}
 <div class="container mt-4">
+    <!-- Admin Action Buttons (only shown if master password cookie exists) -->
+    <div id="adminButtons" class="mb-3 d-flex justify-content-end" style="display: none !important;">
+        <button type="button" class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#createEventModal">
+            <i class="bi bi-plus-circle me-1"></i>Create Event
+        </button>
+        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modifyEventTypesModal">
+            <i class="bi bi-pencil-square me-1"></i>Modify Event Types
+        </button>
+    </div>
+
     <div class="card shadow">
         <div class="card-body">
-            <!-- Admin Action Buttons (only shown if master password cookie exists) -->
-            <div id="adminButtons" class="mb-3" style="display: none;">
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createEventModal">
-                    <i class="bi bi-plus-circle me-1"></i>Create Event
-                </button>
-                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modifyEventTypesModal">
-                    <i class="bi bi-pencil-square me-1"></i>Modify Event Types
-                </button>
-            </div>
-
             <!-- Month Navigation -->
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <a href="?year={{ prev_year }}&month={{ prev_month }}" class="btn btn-outline-primary">
@@ -66,7 +66,7 @@
                                                          onclick="event.stopPropagation(); {% if needs_master_password_challenge == False %}openEditEventModal({{ event_data.event.id }});{% endif %}"
                                                          title="<strong>{{ event_data.event.name }}</strong><br>
                                                                 {% if event_data.event.event_type %}<i class='bi {{ event_data.event.event_type.bootstrap_icon_id }}'></i> {{ event_data.event.event_type.name }}<br>{% endif %}
-                                                                <i class='bi bi-clock'></i> {{ event_data.local_time|date:'g:i A' }}<br>
+                                                                {% if event_data.has_time %}<i class='bi bi-clock'></i> {{ event_data.local_time|date:'g:i A' }}<br>{% endif %}
                                                                 {% if event_data.event.location %}<i class='bi bi-geo-alt'></i> {{ event_data.event.location }}<br>{% endif %}
                                                                 {% if event_data.event.description %}{{ event_data.event.description|truncatewords:20 }}{% endif %}">
                                                         <i class="bi {% if event_data.event.event_type %}{{ event_data.event.event_type.bootstrap_icon_id }}{% else %}bi-calendar-event{% endif %}"></i>
@@ -238,14 +238,18 @@
                         <input type="text" class="form-control" id="eventLocation">
                     </div>
                     <div class="mb-3">
-                        <label for="eventTimestamp" class="form-label">
-                            Date & Time
+                        <label for="eventDate" class="form-label">
+                            Date
                             <i class="bi bi-info-circle text-muted"
                                data-bs-toggle="tooltip"
                                data-bs-placement="right"
-                               title="Enter date and time in {{ display_timezone_name }} timezone"></i>
+                               title="Enter date in {{ display_timezone_name }} timezone"></i>
                         </label>
-                        <input type="datetime-local" class="form-control" id="eventTimestamp" required>
+                        <input type="date" class="form-control" id="eventDate" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="eventTime" class="form-label">Time (Optional)</label>
+                        <input type="time" class="form-control" id="eventTime">
                     </div>
                     <div class="mb-3">
                         <label for="eventDescription" class="form-label">Description (Optional)</label>
@@ -399,14 +403,18 @@
                         <input type="text" class="form-control" id="editEventLocation">
                     </div>
                     <div class="mb-3">
-                        <label for="editEventTimestamp" class="form-label">
-                            Date & Time
+                        <label for="editEventDate" class="form-label">
+                            Date
                             <i class="bi bi-info-circle text-muted"
                                data-bs-toggle="tooltip"
                                data-bs-placement="right"
-                               title="Enter date and time in {{ display_timezone_name }} timezone"></i>
+                               title="Enter date in {{ display_timezone_name }} timezone"></i>
                         </label>
-                        <input type="datetime-local" class="form-control" id="editEventTimestamp" required>
+                        <input type="date" class="form-control" id="editEventDate" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editEventTime" class="form-label">Time (Optional)</label>
+                        <input type="time" class="form-control" id="editEventTime">
                     </div>
                     <div class="mb-3">
                         <label for="editEventDescription" class="form-label">Description (Optional)</label>
@@ -737,7 +745,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const name = document.getElementById('eventName').value.trim();
         const eventType = document.getElementById('eventType').value;
         const location = document.getElementById('eventLocation').value.trim();
-        const timestamp = document.getElementById('eventTimestamp').value;
+        const eventDate = document.getElementById('eventDate').value;
+        const eventTime = document.getElementById('eventTime').value;
         const description = document.getElementById('eventDescription').value.trim();
         const errorDiv = document.getElementById('createEventError');
         const successDiv = document.getElementById('createEventSuccess');
@@ -746,11 +755,14 @@ document.addEventListener('DOMContentLoaded', function() {
         errorDiv.classList.add('d-none');
         successDiv.classList.add('d-none');
 
-        if (!name || !eventType || !timestamp) {
-            errorDiv.textContent = 'Please fill in all required fields (Name, Event Type, and Date & Time).';
+        if (!name || !eventType || !eventDate) {
+            errorDiv.textContent = 'Please fill in all required fields (Name, Event Type, and Date).';
             errorDiv.classList.remove('d-none');
             return;
         }
+
+        // Combine date and time - if no time provided, use midnight
+        const timestamp = eventTime ? `${eventDate}T${eventTime}` : `${eventDate}T00:00`;
 
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating...';
@@ -866,14 +878,16 @@ async function updateEventType(eventTypeId) {
 function openCreateEventModal(year, month, day) {
     const modal = new bootstrap.Modal(document.getElementById('createEventModal'));
 
-    // Format the date as YYYY-MM-DD for the datetime-local input
-    // Month needs to be zero-padded
+    // Format the date as YYYY-MM-DD
     const monthStr = String(month).padStart(2, '0');
     const dayStr = String(day).padStart(2, '0');
-    const dateStr = `${year}-${monthStr}-${dayStr}T09:00`; // Default to 9:00 AM
+    const dateStr = `${year}-${monthStr}-${dayStr}`;
 
-    // Set the date/time input value
-    document.getElementById('eventTimestamp').value = dateStr;
+    // Set the date input value
+    document.getElementById('eventDate').value = dateStr;
+
+    // Clear time field (make it optional)
+    document.getElementById('eventTime').value = '';
 
     // Clear other fields
     document.getElementById('eventName').value = '';
@@ -910,6 +924,7 @@ function showDayEvents(day, monthName, year) {
             const event = eventData.event;
             const localTime = new Date(eventData.local_time);
             const timeStr = localTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+            const hasTime = eventData.has_time;
 
             html += `
                 <div class="list-group-item ${hasMasterPassword ? 'list-group-item-action' : ''}" ${hasMasterPassword ? `style="cursor: pointer;" onclick="openEditEventModal(${event.id});"` : ''}>
@@ -922,7 +937,7 @@ function showDayEvents(day, monthName, year) {
                                 <h6 class="mb-0">${event.name}</h6>
                             </div>
                             ${event.event_type ? `<p class="mb-1 text-muted small"><i class="bi ${event.event_type.bootstrap_icon_id}"></i> ${event.event_type.name}</p>` : ''}
-                            <p class="mb-1"><i class="bi bi-clock"></i> ${timeStr}</p>
+                            ${hasTime ? `<p class="mb-1"><i class="bi bi-clock"></i> ${timeStr}</p>` : ''}
                             ${event.location ? `<p class="mb-1"><i class="bi bi-geo-alt"></i> ${event.location}</p>` : ''}
                             ${event.description ? `<p class="mb-0 text-muted small">${event.description}</p>` : ''}
                         </div>
@@ -964,7 +979,17 @@ async function openEditEventModal(eventId) {
         document.getElementById('editEventName').value = event.name;
         document.getElementById('editEventType').value = event.event_type_id || '';
         document.getElementById('editEventLocation').value = event.location;
-        document.getElementById('editEventTimestamp').value = event.timestamp;
+
+        // Split timestamp into date and time
+        const timestampParts = event.timestamp.split('T');
+        document.getElementById('editEventDate').value = timestampParts[0];
+        // Only set time if it's not midnight (00:00:00)
+        if (timestampParts[1] && !timestampParts[1].startsWith('00:00')) {
+            document.getElementById('editEventTime').value = timestampParts[1].substring(0, 5); // HH:MM
+        } else {
+            document.getElementById('editEventTime').value = '';
+        }
+
         document.getElementById('editEventDescription').value = event.description;
 
         // Show the modal
@@ -992,14 +1017,18 @@ document.getElementById('updateEventBtn').addEventListener('click', async functi
     const name = document.getElementById('editEventName').value.trim();
     const eventType = document.getElementById('editEventType').value;
     const location = document.getElementById('editEventLocation').value.trim();
-    const timestamp = document.getElementById('editEventTimestamp').value;
+    const eventDate = document.getElementById('editEventDate').value;
+    const eventTime = document.getElementById('editEventTime').value;
     const description = document.getElementById('editEventDescription').value.trim();
 
-    if (!name || !timestamp) {
-        errorDiv.textContent = 'Event name and date/time are required.';
+    if (!name || !eventDate) {
+        errorDiv.textContent = 'Event name and date are required.';
         errorDiv.classList.remove('d-none');
         return;
     }
+
+    // Combine date and time - if no time provided, use midnight
+    const timestamp = eventTime ? `${eventDate}T${eventTime}` : `${eventDate}T00:00`;
 
     // Show loading state
     btn.disabled = true;
