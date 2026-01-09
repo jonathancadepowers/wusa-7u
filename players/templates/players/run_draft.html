@@ -292,6 +292,9 @@
                     <div id="practiceSlotInfo" class="alert alert-primary" style="display: none;">
                         <strong>Team Practice:</strong> <span id="practiceSlotText"></span>
                     </div>
+                    <div id="siblingInfo" class="alert alert-warning" style="display: none; background-color: #ff8c00; color: white; border-color: #ff8c00;">
+                        <strong>Sibling Notice:</strong> Player has a sibling that must be drafted by the same team.
+                    </div>
                     <div id="notDraftableWarning" class="alert alert-danger" style="display: none;">
                         <strong>Player is not draftable.</strong>
                     </div>
@@ -521,6 +524,7 @@
             // Reset and hide conflict and practice slot boxes
             document.getElementById('conflictInfo').style.display = 'none';
             document.getElementById('practiceSlotInfo').style.display = 'none';
+            document.getElementById('siblingInfo').style.display = 'none';
             document.getElementById('notDraftableWarning').style.display = 'none';
             document.getElementById('conflictText').textContent = '';
 
@@ -740,6 +744,7 @@
                             option.textContent = `${player.first_name} ${player.last_name}`;
                             option.dataset.conflict = player.conflict || '';
                             option.dataset.draftable = player.draftable;
+                            option.dataset.hasSiblingRequirement = player.has_sibling_requirement || false;
 
                             // Pre-select if this is the current player in edit mode
                             if (selectedPlayerId && player.id == selectedPlayerId) {
@@ -772,8 +777,10 @@
             const selectedOption = this.options[this.selectedIndex];
             const conflict = selectedOption ? selectedOption.dataset.conflict : '';
             const draftable = selectedOption ? selectedOption.dataset.draftable === 'true' : true;
+            const hasSiblingRequirement = selectedOption ? selectedOption.dataset.hasSiblingRequirement === 'true' : false;
             const conflictInfo = document.getElementById('conflictInfo');
             const practiceSlotInfo = document.getElementById('practiceSlotInfo');
+            const siblingInfo = document.getElementById('siblingInfo');
             const notDraftableWarning = document.getElementById('notDraftableWarning');
             const confirmBtn = document.getElementById('confirmPickBtn');
 
@@ -787,6 +794,13 @@
                 // Show practice slot info
                 practiceSlotInfo.style.display = 'block';
 
+                // Show/hide sibling info
+                if (hasSiblingRequirement) {
+                    siblingInfo.style.display = 'block';
+                } else {
+                    siblingInfo.style.display = 'none';
+                }
+
                 // Show/hide not draftable warning
                 if (!draftable) {
                     notDraftableWarning.style.display = 'block';
@@ -797,6 +811,7 @@
                 confirmBtn.disabled = true;
                 conflictInfo.style.display = 'none';
                 practiceSlotInfo.style.display = 'none';
+                siblingInfo.style.display = 'none';
                 notDraftableWarning.style.display = 'none';
             }
         });

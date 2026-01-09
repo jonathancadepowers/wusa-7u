@@ -3345,7 +3345,8 @@ def available_players_view(request):
         'first_name': player.first_name,
         'last_name': player.last_name,
         'conflict': player.conflict,
-        'draftable': player.draftable
+        'draftable': player.draftable,
+        'has_sibling_requirement': player.siblings.exists() and not player.requests_separate_team_from_sibling
     } for player in available_players]
 
     return JsonResponse({
