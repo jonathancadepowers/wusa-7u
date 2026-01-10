@@ -5,6 +5,15 @@
 {% block page_title %}WUSA 7U - Try Out Check In{% endblock %}
 
 {% block content %}
+    <!-- Alphabet Navigation -->
+    <div id="alphabetNav" style="position: fixed; left: 20px; top: 50%; transform: translateY(-50%); z-index: 1000;">
+        <div style="display: flex; flex-direction: column; gap: 2px;">
+            {% for letter in "ABCDEFGHIJKLMNOPQRSTUVWXYZ" %}
+            <a href="#letter-{{ letter }}" class="alphabet-link" style="text-decoration: none; color: #0d6efd; font-weight: bold; font-size: 14px; padding: 2px 8px; border-radius: 3px; transition: background-color 0.2s;">{{ letter }}</a>
+            {% endfor %}
+        </div>
+    </div>
+
     <div class="container mt-5">
         <div class="row">
             <div class="col-lg-8 offset-lg-2">
@@ -51,7 +60,7 @@
                                     <tbody>
                                         {% regroup all_players by last_name.0 as players_by_letter %}
                                         {% for letter_group in players_by_letter %}
-                                        <tr class="table-secondary">
+                                        <tr class="table-secondary" id="letter-{{ letter_group.grouper|upper }}">
                                             <td><strong>{{ letter_group.grouper|upper }}</strong></td>
                                         </tr>
                                         {% for player in letter_group.list %}
@@ -76,6 +85,14 @@
             </div>
         </div>
     </div>
+{% endblock %}
+
+{% block extra_css %}
+    <style>
+        .alphabet-link:hover {
+            background-color: #e7f3ff;
+        }
+    </style>
 {% endblock %}
 
 {% block extra_js %}
