@@ -220,6 +220,7 @@ class MasterPasswordMiddleware:
     - practice_slot_rankings
     - player_rankings/analyze/public/
     - calendar/
+    - try_out_check_in/
     """
 
     # Define exempt URL patterns
@@ -231,6 +232,7 @@ class MasterPasswordMiddleware:
         '/practice_slot_rankings/',
         '/player_rankings/analyze/public/',
         '/calendar/',
+        '/try_out_check_in/',
         '/admin/',
         '/static/',
         '/media/',
@@ -242,6 +244,8 @@ class MasterPasswordMiddleware:
         '/api/validate-team-secret/',
         '/api/managers-list/',
         '/api/update-manager/',
+        '/api/search-players/',
+        '/api/toggle-try-out-attendance/',
     ]
 
     def __init__(self, get_response):
