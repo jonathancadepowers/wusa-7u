@@ -102,7 +102,7 @@ class Player(models.Model):
     jersey_size = models.CharField(max_length=50, blank=True, null=True)
     manager_volunteer_name = models.CharField(max_length=100, blank=True, null=True)
     assistant_manager_volunteer_name = models.CharField(max_length=100, blank=True, null=True)
-    attended_try_out = models.BooleanField(default=True)
+    attended_try_out = models.BooleanField(default=False)
     draftable = models.BooleanField(default=True)
     siblings = models.ManyToManyField('self', blank=True, symmetrical=True)
     requests_separate_team_from_sibling = models.BooleanField(default=False)
