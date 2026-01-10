@@ -46,7 +46,6 @@
 
                         <!-- All Players Table -->
                         <div class="mt-5">
-                            <h4 class="mb-3">All Players</h4>
                             <div class="table-responsive">
                                 <table class="table table-hover">
                                     <tbody>
@@ -198,6 +197,9 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
+                    // Update the badge in the table for this player
+                    updateTableBadge(selectedPlayer.id, attended);
+
                     // Show flash message
                     showFlashMessage(data.message);
 
@@ -216,6 +218,30 @@
                 btn.innerHTML = originalHtml;
                 alert('An unexpected error occurred: ' + error.message);
             });
+        }
+
+        // Update badge in the table
+        function updateTableBadge(playerId, attended) {
+            const tableLink = document.querySelector(`.player-name-link[data-player-id="${playerId}"]`);
+            if (tableLink) {
+                // Update the data attribute
+                tableLink.dataset.attended = attended ? 'true' : 'false';
+
+                // Update the badge
+                const existingBadge = tableLink.querySelector('.badge');
+                if (attended) {
+                    if (!existingBadge) {
+                        const badge = document.createElement('span');
+                        badge.className = 'badge bg-success ms-2';
+                        badge.textContent = 'Checked In';
+                        tableLink.appendChild(badge);
+                    }
+                } else {
+                    if (existingBadge) {
+                        existingBadge.remove();
+                    }
+                }
+            }
         }
 
         // Show flash message
