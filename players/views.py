@@ -2149,7 +2149,7 @@ def team_detail_view(request, team_secret):
                 ranking_data = json.loads(sibling_ranking.ranking)
                 if len(ranking_data) == 0:
                     sibling_ranking_status = 'not_started'
-                elif len(ranking_data) < expected_player_count:
+                elif len(ranking_data) < sibling_together_count:
                     sibling_ranking_status = 'in_progress'
                 else:
                     sibling_ranking_status = 'completed'
