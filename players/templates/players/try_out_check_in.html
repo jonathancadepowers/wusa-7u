@@ -43,6 +43,34 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- All Players Table -->
+                        <div class="mt-5">
+                            <h4 class="mb-3">All Players</h4>
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for player in all_players %}
+                                        <tr>
+                                            <td>
+                                                <a href="#" class="player-name-link" data-player-id="{{ player.id }}" data-player-name="{{ player.first_name }} {{ player.last_name }}" data-attended="{{ player.attended_try_out|yesno:'true,false' }}">
+                                                    {{ player.first_name }} {{ player.last_name }}
+                                                    {% if player.attended_try_out %}
+                                                    <span class="badge bg-success ms-2">Checked In</span>
+                                                    {% endif %}
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -234,5 +262,69 @@
         document.addEventListener('DOMContentLoaded', function() {
             playerSearch.focus();
         });
+
+        // Handle clicks on player names in the table
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.player-name-link')) {
+                e.preventDefault();
+                const link = e.target.closest('.player-name-link');
+                const playerId = link.dataset.playerId;
+                const playerName = link.dataset.playerName;
+                const currentlyAttended = link.dataset.attended === 'true';
+
+                // Toggle attendance (opposite of current state)
+                toggleAttendanceFromTable(playerId, playerName, !currentlyAttended, link);
+            }
+        });
+
+        // Toggle attendance from table click
+        function toggleAttendanceFromTable(playerId, playerName, newAttendedState, linkElement) {
+            fetch('{% url "players:toggle_try_out_attendance" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    player_id: playerId,
+                    attended: newAttendedState
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update the link's data attribute
+                    linkElement.dataset.attended = newAttendedState ? 'true' : 'false';
+
+                    // Update the badge
+                    const existingBadge = linkElement.querySelector('.badge');
+                    if (newAttendedState) {
+                        if (!existingBadge) {
+                            const badge = document.createElement('span');
+                            badge.className = 'badge bg-success ms-2';
+                            badge.textContent = 'Checked In';
+                            linkElement.appendChild(badge);
+                        }
+                    } else {
+                        if (existingBadge) {
+                            existingBadge.remove();
+                        }
+                    }
+
+                    // Show flash message
+                    showFlashMessage(data.message);
+
+                    // Hide flash message after 2 seconds
+                    setTimeout(() => {
+                        flashMessage.classList.add('d-none');
+                    }, 2000);
+                } else {
+                    alert('Error: ' + (data.error || 'Failed to update attendance'));
+                }
+            })
+            .catch(error => {
+                alert('An unexpected error occurred: ' + error.message);
+            });
+        }
     </script>
 {% endblock %}

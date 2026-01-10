@@ -4141,7 +4141,14 @@ def manager_daughter_rankings_analyze_view(request):
 
 def try_out_check_in_view(request):
     """Try out check in form"""
-    return render(request, 'players/try_out_check_in.html')
+    from .models import Player
+
+    # Get all players ordered by last name, first name
+    all_players = Player.objects.all().order_by('last_name', 'first_name')
+
+    return render(request, 'players/try_out_check_in.html', {
+        'all_players': all_players
+    })
 
 
 def search_players_view(request):
