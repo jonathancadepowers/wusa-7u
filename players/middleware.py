@@ -215,9 +215,10 @@ class MasterPasswordMiddleware:
     - public_portal/
     - team_preferences/
     - teams/<team_secret>/ (team detail pages with team secrets, but NOT /teams/ list)
-    - player_rankings
+    - player_rankings/
     - manager_daughter_rankings/
-    - practice_slot_rankings
+    - sibling_rankings/
+    - practice_slot_rankings/
     - player_rankings/analyze/public/
     - calendar/
     - try_out_check_in/
@@ -229,6 +230,7 @@ class MasterPasswordMiddleware:
         '/team_preferences/',
         '/player_rankings/',
         '/manager_daughter_rankings/',
+        '/sibling_rankings/',
         '/practice_slot_rankings/',
         '/player_rankings/analyze/public/',
         '/calendar/',
