@@ -4146,8 +4146,16 @@ def try_out_check_in_view(request):
     # Get all players ordered by last name, first name
     all_players = Player.objects.all().order_by('last_name', 'first_name')
 
+    # Calculate statistics
+    total_count = all_players.count()
+    checked_in_count = all_players.filter(attended_try_out=True).count()
+    not_checked_in_count = total_count - checked_in_count
+
     return render(request, 'players/try_out_check_in.html', {
-        'all_players': all_players
+        'all_players': all_players,
+        'total_count': total_count,
+        'checked_in_count': checked_in_count,
+        'not_checked_in_count': not_checked_in_count
     })
 
 

@@ -33,6 +33,34 @@
                             <span id="flashMessageText"></span>
                         </div>
 
+                        <!-- Statistics Blocks -->
+                        <div class="row mb-4">
+                            <div class="col-md-4 mb-3 mb-md-0">
+                                <div class="card bg-success text-white">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title mb-2">Checked In</h5>
+                                        <h2 class="mb-0" id="checkedInCount">{{ checked_in_count }}</h2>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3 mb-md-0">
+                                <div class="card bg-warning text-white">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title mb-2">Not Checked In</h5>
+                                        <h2 class="mb-0" id="notCheckedInCount">{{ not_checked_in_count }}</h2>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-primary text-white">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title mb-2">Total Registered</h5>
+                                        <h2 class="mb-0" id="totalRegisteredCount">{{ total_count }}</h2>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Search Box -->
                         <div class="mb-4">
                             <input
@@ -266,6 +294,9 @@
                         existingBadge.remove();
                     }
                 }
+
+                // Update statistics counts
+                updateStatistics(attended);
             }
         }
 
@@ -362,6 +393,9 @@
                             existingBadge.remove();
                         }
                     }
+
+                    // Update statistics counts
+                    updateStatistics(newAttendedState);
                     // Don't show flash message - only update the badge
                 } else {
                     alert('Error: ' + (data.error || 'Failed to update attendance'));
@@ -370,6 +404,26 @@
             .catch(error => {
                 alert('An unexpected error occurred: ' + error.message);
             });
+        }
+
+        // Update statistics counts
+        function updateStatistics(wasCheckedIn) {
+            const checkedInCountEl = document.getElementById('checkedInCount');
+            const notCheckedInCountEl = document.getElementById('notCheckedInCount');
+
+            let checkedInCount = parseInt(checkedInCountEl.textContent);
+            let notCheckedInCount = parseInt(notCheckedInCountEl.textContent);
+
+            if (wasCheckedIn) {
+                checkedInCount++;
+                notCheckedInCount--;
+            } else {
+                checkedInCount--;
+                notCheckedInCount++;
+            }
+
+            checkedInCountEl.textContent = checkedInCount;
+            notCheckedInCountEl.textContent = notCheckedInCount;
         }
 
         // Filter toggle functionality - three states: 0 = all, 1 = non-checked only, 2 = checked only
