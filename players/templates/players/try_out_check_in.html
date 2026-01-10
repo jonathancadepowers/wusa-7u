@@ -266,6 +266,26 @@
                         existingBadge.remove();
                     }
                 }
+
+                // Apply current filter state to this player's row
+                applyFilterToRow(tableLink);
+            }
+        }
+
+        // Apply current filter state to a specific player row
+        function applyFilterToRow(linkElement) {
+            const row = linkElement.closest('tr');
+            const isAttended = linkElement.dataset.attended === 'true';
+
+            if (filterState === 0) {
+                // Show all - always visible
+                row.style.display = '';
+            } else if (filterState === 1) {
+                // Show only non-checked-in
+                row.style.display = isAttended ? 'none' : '';
+            } else if (filterState === 2) {
+                // Show only checked-in
+                row.style.display = isAttended ? '' : 'none';
             }
         }
 
@@ -362,7 +382,9 @@
                             existingBadge.remove();
                         }
                     }
-                    // Don't show flash message - only update the badge
+
+                    // Apply current filter state to this player's row
+                    applyFilterToRow(linkElement);
                 } else {
                     alert('Error: ' + (data.error || 'Failed to update attendance'));
                 }
