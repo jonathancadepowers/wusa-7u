@@ -49,16 +49,16 @@
                             <h4 class="mb-3">All Players</h4>
                             <div class="table-responsive">
                                 <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Name</th>
-                                        </tr>
-                                    </thead>
                                     <tbody>
-                                        {% for player in all_players %}
+                                        {% regroup all_players by last_name.0 as players_by_letter %}
+                                        {% for letter_group in players_by_letter %}
+                                        <tr class="table-secondary">
+                                            <td><strong>{{ letter_group.grouper|upper }}</strong></td>
+                                        </tr>
+                                        {% for player in letter_group.list %}
                                         <tr>
                                             <td>
-                                                <a href="#" class="player-name-link" data-player-id="{{ player.id }}" data-player-name="{{ player.first_name }} {{ player.last_name }}" data-attended="{{ player.attended_try_out|yesno:'true,false' }}">
+                                                <a href="#" class="player-name-link fs-5" style="text-decoration: none; color: black; cursor: pointer;" data-player-id="{{ player.id }}" data-player-name="{{ player.first_name }} {{ player.last_name }}" data-attended="{{ player.attended_try_out|yesno:'true,false' }}">
                                                     {{ player.first_name }} {{ player.last_name }}
                                                     {% if player.attended_try_out %}
                                                     <span class="badge bg-success ms-2">Checked In</span>
@@ -66,6 +66,7 @@
                                                 </a>
                                             </td>
                                         </tr>
+                                        {% endfor %}
                                         {% endfor %}
                                     </tbody>
                                 </table>
@@ -310,14 +311,7 @@
                             existingBadge.remove();
                         }
                     }
-
-                    // Show flash message
-                    showFlashMessage(data.message);
-
-                    // Hide flash message after 2 seconds
-                    setTimeout(() => {
-                        flashMessage.classList.add('d-none');
-                    }, 2000);
+                    // Don't show flash message - only update the badge
                 } else {
                     alert('Error: ' + (data.error || 'Failed to update attendance'));
                 }
