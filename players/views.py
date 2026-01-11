@@ -5537,7 +5537,9 @@ def set_draft_order_and_daughters_view(request):
         for ranking in all_player_rankings:
             rankings_list = json.loads(ranking.ranking)
             num_players = len(rankings_list)
-            for idx, player_id in enumerate(rankings_list):
+            for idx, item in enumerate(rankings_list):
+                # Extract player_id from the dict (format: {"rank": 1, "player_id": 123})
+                player_id = item['player_id']
                 # Borda count: higher rank = higher score
                 player_borda_scores[player_id] += (num_players - idx)
 
