@@ -95,7 +95,11 @@ DATABASES = {
 
 # Override database with DATABASE_URL if present (for Heroku)
 if 'DATABASE_URL' in os.environ:
-    DATABASES['default'] = dj_database_url.config(conn_max_age=0, ssl_require=True)
+    DATABASES['default'] = dj_database_url.config(
+        conn_max_age=600,  # Keep connections alive for 10 minutes
+        conn_health_checks=True,  # Check connection health before reuse
+        ssl_require=True
+    )
 
 
 # Password validation
