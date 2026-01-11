@@ -750,8 +750,10 @@
 
             // Click on player name for editing
             document.addEventListener('click', function(e) {
-                if (e.target.classList.contains('team-name')) {
-                    const cell = e.target.closest('.draft-cell');
+                // Check if click is on team-name span or any of its children
+                const teamNameElement = e.target.closest('.team-name');
+                if (teamNameElement) {
+                    const cell = teamNameElement.closest('.draft-cell');
                     if (cell && cell.classList.contains('picked')) {
                         openPickModal(cell, true);
                     }
