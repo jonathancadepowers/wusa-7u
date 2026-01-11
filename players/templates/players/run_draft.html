@@ -1278,8 +1278,6 @@
                     <!-- Main content (shown when no picks exist) -->
                     <div id="draftOrderContent" style="display: none;">
                         <div class="mb-4">
-                            <h6>Draft Order & Manager's Daughter Placement</h6>
-
                             <p>The draft pick assigned to any given team is based on their Draft Priority Score. How this score is calculated depends on which classification a team falls under:</p>
 
                             <p><strong>Classification #1: The team has an "elite" manager's daughter</strong></p>
@@ -1328,11 +1326,20 @@
 
             // Check if any draft picks exist
             fetch('/api/check-draft-picks/')
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     document.getElementById('draftOrderLoading').style.display = 'none';
 
-                    if (data.picks_exist) {
+                    if (data.error) {
+                        // Show error from server
+                        document.getElementById('draftOrderError').innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>' + data.error;
+                        document.getElementById('draftOrderError').style.display = 'block';
+                    } else if (data.picks_exist) {
                         // Show error message
                         document.getElementById('draftOrderError').style.display = 'block';
                     } else {
@@ -1342,13 +1349,12 @@
 
                         // Update dynamic values
                         document.getElementById('topPlayerCount').textContent = data.top_player_count;
-                        document.getElementById('topPlayerCount2').textContent = data.top_player_count;
                     }
                 })
                 .catch(error => {
                     console.error('Error checking draft picks:', error);
                     document.getElementById('draftOrderLoading').style.display = 'none';
-                    document.getElementById('draftOrderError').innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>An error occurred while checking draft status.';
+                    document.getElementById('draftOrderError').innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>An error occurred while checking draft status: ' + error.message;
                     document.getElementById('draftOrderError').style.display = 'block';
                 });
         });
