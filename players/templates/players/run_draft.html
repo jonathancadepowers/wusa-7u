@@ -285,8 +285,9 @@
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <strong id="teamNameDisplay"></strong><br>
-                        <strong id="pickInfo"></strong>
+                        <div><strong>Team:</strong> <span id="teamNameDisplay"></span></div>
+                        <div><strong>Round:</strong> <span id="roundDisplay"></span></div>
+                        <div><strong>Pick:</strong> <span id="pickDisplay"></span></div>
                     </div>
                     <div class="mb-3">
                         <select class="form-select" id="playerSelect">
@@ -520,13 +521,14 @@
             // Calculate overall pick number
             const overallPick = (currentRound - 1) * picksPerRound + currentPick;
 
-            // Get team name and practice slot
-            const teamName = cell.querySelector('.team-name').textContent;
+            // Get team name from data attribute (not from .team-name which shows player name when picked)
+            const teamName = cell.dataset.teamName;
             const practiceSlot = cell.dataset.practiceSlot || 'Not set';
 
             // Update modal
-            document.getElementById('teamNameDisplay').textContent = `Team: ${teamName}`;
-            document.getElementById('pickInfo').textContent = `Round ${currentRound}, Pick ${overallPick}`;
+            document.getElementById('teamNameDisplay').textContent = teamName;
+            document.getElementById('roundDisplay').textContent = currentRound;
+            document.getElementById('pickDisplay').textContent = overallPick;
             document.getElementById('practiceSlotText').textContent = practiceSlot;
 
             // Reset and hide conflict and practice slot boxes
