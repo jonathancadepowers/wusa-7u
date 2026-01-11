@@ -205,14 +205,14 @@ class ValidationCodeAdmin(admin.ModelAdmin):
 
 @admin.register(StarredDraftPick)
 class StarredDraftPickAdmin(admin.ModelAdmin):
-    list_display = ['id', 'team', 'player', 'created_at', 'updated_at']
+    list_display = ['id', 'team', 'player', 'order', 'created_at', 'updated_at']
     list_filter = ['team']
     search_fields = ['team__name', 'player__first_name', 'player__last_name']
     readonly_fields = ['created_at', 'updated_at']
 
     fieldsets = (
         ('Starred Pick', {
-            'fields': ('team', 'player')
+            'fields': ('team', 'player', 'order')
         }),
         ('Metadata', {
             'fields': ('created_at', 'updated_at'),
