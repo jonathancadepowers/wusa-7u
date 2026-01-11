@@ -236,7 +236,8 @@
                                                 {% with existing_pick=draft_picks_map|get_item:round_num|get_item:pick_num %}
                                                     <td class="draft-cell{% if existing_pick %} picked{% endif %}{% if round_num in hat_pick_rounds %} hat-pick-round{% endif %}{% if not team %} bg-light{% endif %}"
                                                         {% if team %}data-practice-slot="{% if team.practice_slot %}{{ team.practice_slot.practice_slot }}{% else %}Not set{% endif %}"
-                                                        data-team-name="{{ team }}"{% endif %}
+                                                        data-team-name="{{ team }}"
+                                                        data-manager-name="{% if team.manager %}{{ team.manager.first_name }} {{ team.manager.last_name }}{% else %}No manager{% endif %}"{% endif %}
                                                         {% if existing_pick %}data-player-id="{{ existing_pick.player_id }}" data-player-name="{{ existing_pick.player_name }}"{% endif %}>
                                                         {% if team %}<span class="team-name">{% if existing_pick %}{{ existing_pick.player_name }}{% else %}{{ team }}{% endif %}</span>
                                                         <i class="bi bi-plus-circle add-icon"></i>{% endif %}
@@ -252,6 +253,7 @@
                                                             <td class="draft-cell hat-pick-round{% if existing_pick %} picked{% endif %}"
                                                                 data-practice-slot="{% if team.practice_slot %}{{ team.practice_slot.practice_slot }}{% else %}Not set{% endif %}"
                                                                 data-team-name="{{ team }}"
+                                                                data-manager-name="{% if team.manager %}{{ team.manager.first_name }} {{ team.manager.last_name }}{% else %}No manager{% endif %}"
                                                                 {% if existing_pick %}data-player-id="{{ existing_pick.player_id }}" data-player-name="{{ existing_pick.player_name }}"{% endif %}>
                                                                 <span class="team-name">{% if existing_pick %}{{ existing_pick.player_name }}{% else %}{{ team }}{% endif %}</span>
                                                                 <i class="bi bi-plus-circle add-icon"></i>
@@ -286,6 +288,7 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <div><strong>Team:</strong> <span id="teamNameDisplay"></span></div>
+                        <div><strong>Manager:</strong> <span id="managerNameDisplay"></span></div>
                         <div><strong>Round:</strong> <span id="roundDisplay"></span></div>
                         <div><strong>Pick:</strong> <span id="pickDisplay"></span></div>
                     </div>
@@ -521,12 +524,14 @@
             // Calculate overall pick number
             const overallPick = (currentRound - 1) * picksPerRound + currentPick;
 
-            // Get team name from data attribute (not from .team-name which shows player name when picked)
+            // Get team name and manager name from data attributes (not from .team-name which shows player name when picked)
             const teamName = cell.dataset.teamName;
+            const managerName = cell.dataset.managerName || 'No manager';
             const practiceSlot = cell.dataset.practiceSlot || 'Not set';
 
             // Update modal
             document.getElementById('teamNameDisplay').textContent = teamName;
+            document.getElementById('managerNameDisplay').textContent = managerName;
             document.getElementById('roundDisplay').textContent = currentRound;
             document.getElementById('pickDisplay').textContent = overallPick;
             document.getElementById('practiceSlotText').textContent = practiceSlot;
