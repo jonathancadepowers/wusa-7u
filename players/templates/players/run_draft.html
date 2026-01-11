@@ -250,7 +250,15 @@
                                                         data-team-name="{{ team }}"
                                                         data-manager-name="{% if team.manager %}{{ team.manager.first_name }} {{ team.manager.last_name }}{% else %}No manager{% endif %}"{% endif %}
                                                         {% if existing_pick %}data-player-id="{{ existing_pick.player_id }}" data-player-name="{{ existing_pick.player_name }}"{% endif %}>
-                                                        {% if team %}<span class="team-name">{% if existing_pick %}{{ existing_pick.player_name }}{% else %}{{ team }}{% endif %}</span>
+                                                        {% if team %}
+                                                            {% if existing_pick %}
+                                                                <span class="team-name">
+                                                                    <div>{{ existing_pick.player_name }}</div>
+                                                                    <div style="font-size: 0.7em; opacity: 0.8; margin-top: 2px;">{{ team }}</div>
+                                                                </span>
+                                                            {% else %}
+                                                                <span class="team-name">{{ team }}</span>
+                                                            {% endif %}
                                                         <i class="bi bi-plus-circle add-icon"></i>{% endif %}
                                                     </td>
                                                 {% endwith %}
@@ -266,7 +274,14 @@
                                                                 data-team-name="{{ team }}"
                                                                 data-manager-name="{% if team.manager %}{{ team.manager.first_name }} {{ team.manager.last_name }}{% else %}No manager{% endif %}"
                                                                 {% if existing_pick %}data-player-id="{{ existing_pick.player_id }}" data-player-name="{{ existing_pick.player_name }}"{% endif %}>
-                                                                <span class="team-name">{% if existing_pick %}{{ existing_pick.player_name }}{% else %}{{ team }}{% endif %}</span>
+                                                                {% if existing_pick %}
+                                                                    <span class="team-name">
+                                                                        <div>{{ existing_pick.player_name }}</div>
+                                                                        <div style="font-size: 0.7em; opacity: 0.8; margin-top: 2px;">{{ team }}</div>
+                                                                    </span>
+                                                                {% else %}
+                                                                    <span class="team-name">{{ team }}</span>
+                                                                {% endif %}
                                                                 <i class="bi bi-plus-circle add-icon"></i>
                                                             </td>
                                                         {% endwith %}
@@ -871,9 +886,10 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Update the cell with player name
+                    // Update the cell with player name and team name
                     const teamNameSpan = currentCell.querySelector('.team-name');
-                    teamNameSpan.textContent = data.player_name;
+                    const teamName = currentCell.dataset.teamName;
+                    teamNameSpan.innerHTML = `<div>${data.player_name}</div><div style="font-size: 0.7em; opacity: 0.8; margin-top: 2px;">${teamName}</div>`;
 
                     // Mark cell as picked and store player ID
                     currentCell.classList.add('picked');
