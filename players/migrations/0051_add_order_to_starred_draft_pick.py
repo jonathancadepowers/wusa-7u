@@ -10,38 +10,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.CreateModel(
-            name='DivisionValidationRegistry',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('page', models.TextField()),
-                ('validations_to_run_on_page_load', models.JSONField(default=list)),
-                ('validation_code_triggers', models.JSONField(default=list)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-            ],
-            options={
-                'verbose_name': 'Division Validation Registry',
-                'verbose_name_plural': 'Division Validation Registry',
-                'db_table': 'division_validation_registry',
-            },
-        ),
-        migrations.CreateModel(
-            name='ValidationCode',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('code', models.CharField(max_length=255, unique=True)),
-                ('value', models.BooleanField(default=False)),
-                ('error_message', models.TextField(blank=True, null=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-            ],
-            options={
-                'verbose_name': 'Validation Code',
-                'verbose_name_plural': 'Validation Codes',
-                'db_table': 'validation_codes',
-            },
-        ),
         migrations.AlterModelOptions(
             name='starreddraftpick',
             options={'ordering': ['team', 'order'], 'verbose_name': 'Starred Draft Pick', 'verbose_name_plural': 'Starred Draft Picks'},
