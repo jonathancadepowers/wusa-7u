@@ -5481,3 +5481,165 @@ def clear_draft_stars_view(request):
         }, status=500)
 
 
+
+@require_http_methods(["GET"])
+@csrf_exempt
+def check_draft_picks_view(request):
+    """Check if any draft picks exist and return configuration data"""
+    from .models import DraftPick, Team
+
+    try:
+        # Check if any draft picks exist
+        picks_exist = DraftPick.objects.exists()
+
+        # Calculate top player count (2n where n = number of teams)
+        team_count = Team.objects.count()
+        top_player_count = team_count * 2
+
+        return JsonResponse({
+            'picks_exist': picks_exist,
+            'top_player_count': top_player_count
+        })
+    except Exception as e:
+        return JsonResponse({
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
+@require_http_methods(["POST"])
+@csrf_exempt
+def set_draft_order_and_daughters_view(request):
+    """
+    Calculate and set draft order based on ranking data, then create
+    draft picks for all manager's daughters in their designated rounds
+    """
+    from .models import Draft, DraftPick, Team, Player, PlayerRanking, ManagerDaughterRanking
+    from collections import defaultdict
+    import statistics
+
+    try:
+        # Step 1: Get all teams with managers who have daughters
+        teams_with_daughters = Team.objects.filter(
+            manager__isnull=False,
+            manager__daughter__isnull=False
+        ).select_related('manager', 'manager__daughter').distinct()
+
+        if not teams_with_daughters.exists():
+            return JsonResponse({
+                'success': False,
+                'error': 'No teams with manager\'s daughters found'
+            }, status=400)
+
+        # Step 2: Calculate Borda counts for all players in player_rankings
+        all_player_rankings = PlayerRanking.objects.all()
+        player_borda_scores = defaultdict(int)
+
+        for ranking in all_player_rankings:
+            rankings_list = json.loads(ranking.ranking)
+            num_players = len(rankings_list)
+            for idx, player_id in enumerate(rankings_list):
+                # Borda count: higher rank = higher score
+                player_borda_scores[player_id] += (num_players - idx)
+
+        # Step 3: Calculate Borda counts for manager's daughters in manager_daughter_rankings
+        all_daughter_rankings = ManagerDaughterRanking.objects.all()
+        daughter_borda_scores = defaultdict(int)
+        daughter_median_rounds = defaultdict(list)
+
+        for ranking in all_daughter_rankings:
+            rankings_list = json.loads(ranking.ranking)
+            num_daughters = len(rankings_list)
+            for idx, item in enumerate(rankings_list):
+                player_id = item['player_id']
+                suggested_round = item.get('round', 1)
+
+                # Borda count for daughters
+                daughter_borda_scores[player_id] += (num_daughters - idx)
+
+                # Collect suggested rounds for median calculation
+                daughter_median_rounds[player_id].append(suggested_round)
+
+        # Step 4: Calculate draft order priority for each team
+        team_priorities = []
+
+        for team in teams_with_daughters:
+            daughter = team.manager.daughter
+            daughter_id = daughter.id
+
+            # Check if daughter is in top players (player_rankings)
+            in_top_players = daughter_id in player_borda_scores
+
+            if in_top_players:
+                # Elite daughter - picks later
+                overall_borda = player_borda_scores[daughter_id]
+                daughter_borda = daughter_borda_scores.get(daughter_id, 0)
+                # Higher score = picks later
+                priority_score = overall_borda - (daughter_borda * 0.5)
+            else:
+                # Non-elite daughter - picks earlier
+                daughter_borda = daughter_borda_scores.get(daughter_id, 0)
+                # Negative score to ensure they sort before elite daughters
+                # Lower daughter rank (worse) = more negative = picks earlier
+                priority_score = -(daughter_borda)
+
+            team_priorities.append({
+                'team': team,
+                'daughter_id': daughter_id,
+                'priority_score': priority_score,
+                'median_round': statistics.median(daughter_median_rounds.get(daughter_id, [1]))
+            })
+
+        # Step 5: Sort teams by priority score (lowest = picks first)
+        team_priorities.sort(key=lambda x: x['priority_score'])
+
+        # Step 6: Create draft order (comma-separated team IDs)
+        draft_order = ','.join(str(item['team'].id) for item in team_priorities)
+
+        # Step 7: Update the Draft table
+        draft = Draft.objects.first()
+        if not draft:
+            return JsonResponse({
+                'success': False,
+                'error': 'No draft configuration found'
+            }, status=400)
+
+        draft.order = draft_order
+        draft.save()
+
+        # Step 8: Create DraftPick records for each manager's daughter
+        total_teams = len(team_priorities)
+
+        for draft_position, item in enumerate(team_priorities, start=1):
+            team = item['team']
+            daughter_id = item['daughter_id']
+            median_round = int(item['median_round'])
+
+            # Calculate pick number based on snake draft
+            # Odd rounds: pick = draft_position
+            # Even rounds: pick = (total_teams - draft_position + 1)
+            if median_round % 2 == 1:
+                pick_number = draft_position
+            else:
+                pick_number = total_teams - draft_position + 1
+
+            # Create the draft pick
+            DraftPick.objects.create(
+                round=median_round,
+                pick=pick_number,
+                player_id=daughter_id,
+                team=team
+            )
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Draft order set and {len(team_priorities)} manager\'s daughters assigned to their rounds',
+            'draft_order': draft_order
+        })
+
+    except Exception as e:
+        import traceback
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}',
+            'traceback': traceback.format_exc()
+        }, status=500)

@@ -125,6 +125,9 @@
 
 {% block navbar_actions %}
     <div class="d-flex gap-2">
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#configureDraftOrderModal">
+            <i class="bi bi-gear me-1"></i>Configure Draft Order
+        </button>
         <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#managerDaughterRankingsModal">
             <i class="bi bi-people me-1"></i>Manager's Daughters Rankings
         </button>
@@ -1244,6 +1247,153 @@
             var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
             var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
                 return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+    </script>
+
+    <!-- Configure Draft Order Modal -->
+    <div class="modal fade" id="configureDraftOrderModal" tabindex="-1" aria-labelledby="configureDraftOrderModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="configureDraftOrderModalLabel">Configure Draft Order & Manager's Daughter Placements</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Loading indicator -->
+                    <div id="draftOrderLoading" class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Checking draft status...</p>
+                    </div>
+
+                    <!-- Error message (if draft picks exist) -->
+                    <div id="draftOrderError" class="alert alert-danger" style="display: none;">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>This feature cannot be used because some draft picks have already been made.</strong>
+                        <p class="mb-0 mt-2">Please reset the draft before configuring the draft order.</p>
+                    </div>
+
+                    <!-- Main content (shown when no picks exist) -->
+                    <div id="draftOrderContent" style="display: none;">
+                        <div class="mb-4">
+                            <h6>Draft Order & Manager's Daughter Placement - How It Works</h6>
+                            <p>Here's how we're determining the draft order and when your daughters get drafted. The goal is to create a balanced and fair draft where every team has an equitable opportunity to build a competitive roster.</p>
+
+                            <p><strong>Here's the logic:</strong></p>
+                            <p>We're using ALL the ranking data you submitted (both the overall player rankings and the manager's daughter rankings) to determine the draft order.</p>
+
+                            <ul>
+                                <li><strong>If your daughter was ranked in the top players overall</strong> (meaning she made it into the collective top <span id="topPlayerCount">__</span> players that everyone ranked), that indicates she's viewed as one of the elite players in the draft. Teams with daughters in this category will pick <strong>later</strong> in the draft order.</li>
+                                <li><strong>If your daughter was NOT ranked in the top players overall</strong> (meaning she didn't appear in the top <span id="topPlayerCount2">__</span>), that simply means she wasn't included in that specific ranking set. Teams with daughters in this category will pick <strong>earlier</strong> in the draft order, giving you first access to available talent.</li>
+                                <li><strong>Among daughters who weren't in the top player rankings</strong>, we use your manager's daughter rankings to determine the specific order.</li>
+                            </ul>
+
+                            <p><strong>When does your daughter get drafted?</strong></p>
+                            <p>Based on everyone's suggested draft rounds for each manager's daughter, we calculate the <strong>median round</strong> where your daughter should be drafted. When that round comes up in the draft, <strong>you MUST draft your daughter</strong> - this is called a "force pick."</p>
+
+                            <p><strong>Example:</strong></p>
+                            <ul>
+                                <li>If 8 managers suggested your daughter should go in Round 3 and 4 managers suggested Round 4, the median is Round 3</li>
+                                <li>You'll be required to use your Round 3 pick on your daughter</li>
+                                <li>Your position within the draft order determines which pick number you have in Round 3</li>
+                            </ul>
+
+                            <p><strong>Bottom line:</strong> Teams whose daughters weren't included in the top overall player rankings pick earlier in the draft, giving you priority access to the available talent pool. Teams whose daughters were ranked among the top overall players pick later. This approach ensures every team can assemble a competitive roster regardless of where their daughter falls in the rankings.</p>
+
+                            <p class="text-muted fst-italic">Fair and balanced based on the data you all submitted!</p>
+                        </div>
+
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>Warning:</strong> This will set the draft order and pre-assign all manager's daughters to their designated rounds. This action will modify the draft configuration.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-success" id="setDraftOrderBtn" style="display: none;">
+                        <i class="bi bi-check-circle me-2"></i>Set Draft Order & Manager's Daughter's Picks
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configure Draft Order Modal Logic
+        const configureDraftOrderModal = document.getElementById('configureDraftOrderModal');
+
+        configureDraftOrderModal.addEventListener('show.bs.modal', function (event) {
+            // Show loading, hide content/error
+            document.getElementById('draftOrderLoading').style.display = 'block';
+            document.getElementById('draftOrderError').style.display = 'none';
+            document.getElementById('draftOrderContent').style.display = 'none';
+            document.getElementById('setDraftOrderBtn').style.display = 'none';
+
+            // Check if any draft picks exist
+            fetch('/api/check-draft-picks/')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('draftOrderLoading').style.display = 'none';
+
+                    if (data.picks_exist) {
+                        // Show error message
+                        document.getElementById('draftOrderError').style.display = 'block';
+                    } else {
+                        // Show content and button
+                        document.getElementById('draftOrderContent').style.display = 'block';
+                        document.getElementById('setDraftOrderBtn').style.display = 'inline-block';
+
+                        // Update dynamic values
+                        document.getElementById('topPlayerCount').textContent = data.top_player_count;
+                        document.getElementById('topPlayerCount2').textContent = data.top_player_count;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking draft picks:', error);
+                    document.getElementById('draftOrderLoading').style.display = 'none';
+                    document.getElementById('draftOrderError').innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>An error occurred while checking draft status.';
+                    document.getElementById('draftOrderError').style.display = 'block';
+                });
+        });
+
+        // Handle Set Draft Order button click
+        document.getElementById('setDraftOrderBtn').addEventListener('click', function() {
+            const btn = this;
+            const originalHtml = btn.innerHTML;
+
+            // Disable button and show loading
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+
+            fetch('/api/set-draft-order-and-daughters/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Close modal
+                    bootstrap.Modal.getInstance(configureDraftOrderModal).hide();
+
+                    // Reload the page to show updated draft board
+                    location.reload();
+                } else {
+                    alert('Error: ' + (data.error || 'Failed to set draft order'));
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                }
+            })
+            .catch(error => {
+                console.error('Error setting draft order:', error);
+                alert('An unexpected error occurred');
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
             });
         });
     </script>
