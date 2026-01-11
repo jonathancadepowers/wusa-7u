@@ -240,12 +240,14 @@ class ValidationCode(models.Model):
 class StarredDraftPick(models.Model):
     player = models.ForeignKey('Player', on_delete=models.CASCADE, related_name='starred_by_teams')
     team = models.ForeignKey('Team', on_delete=models.CASCADE, related_name='starred_players')
+    order = models.IntegerField(default=0)  # Order within the team's starred list
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'starred_draft_picks'
         unique_together = ('player', 'team')
+        ordering = ['team', 'order']  # Order by team first, then by order
         verbose_name = 'Starred Draft Pick'
         verbose_name_plural = 'Starred Draft Picks'
 

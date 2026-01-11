@@ -238,76 +238,128 @@
                     </div>
                     <div class="collapse show" id="draftPoolCollapse">
                         <div class="card-body">
-                        {% if available_players %}
                         <!-- Tips -->
                         <div class="alert alert-info mb-3">
                             <p class="mb-1"><i class="bi bi-lightbulb me-1"></i><strong>Tip:</strong> Players will auto-magically disappear below as they are drafted. No page refresh needed!</p>
-                            <p class="mb-0"><i class="bi bi-lightbulb me-1"></i><strong>Tip:</strong> Star players you like, then sort by the "Starred" column.</p>
+                            <p class="mb-0"><i class="bi bi-lightbulb me-1"></i><strong>Tip:</strong> Star players you like to move them to "My Starred Players" and reorder them.</p>
                         </div>
-                        <!-- Search Box -->
-                        <div class="mb-3">
-                            <input type="text" id="availablePlayersSearch" class="form-control" placeholder="Search by player name...">
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table table-hover" id="availablePlayersTable">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th style="cursor: pointer;" onclick="sortAvailablePlayersTable(0)">
-                                            Name <i class="bi"></i>
-                                        </th>
-                                        <th style="cursor: pointer;" onclick="sortAvailablePlayersTable(1)">
-                                            History <i class="bi"></i>
-                                        </th>
-                                        <th style="cursor: pointer;" onclick="sortAvailablePlayersTable(2)">
-                                            Conflict <i class="bi"></i>
-                                        </th>
-                                        <th style="cursor: pointer;" onclick="sortAvailablePlayersTable(3)">
-                                            Draftable <i class="bi"></i>
-                                        </th>
-                                        <th>Details</th>
-                                        <th style="cursor: pointer;" onclick="sortAvailablePlayersTable(5)">
-                                            Starred <i class="bi"></i>
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for player in available_players %}
-                                    <tr>
-                                        <td><strong>{{ player.first_name }} {{ player.last_name }}</strong></td>
-                                        <td>{{ player.history|default:"-" }}</td>
-                                        <td>{{ player.conflict|default:"-" }}</td>
-                                        <td>
-                                            {% if player.draftable %}
-                                                <span class="badge bg-success">Yes</span>
-                                            {% else %}
-                                                <span class="badge bg-danger">No</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#availablePlayerModal{{ player.pk }}" title="View Details">
+
+                        <!-- My Starred Players Sub-Section -->
+                        <div class="mb-4">
+                            <h6 class="text-primary border-bottom pb-2 mb-3">
+                                <i class="bi bi-star-fill me-1"></i>My Starred Players
+                            </h6>
+                            {% if starred_players %}
+                            <div id="starredPlayersList">
+                                <ol class="list-group list-group-numbered" id="sortableStarredList">
+                                    {% for player in starred_players %}
+                                    <li class="list-group-item d-flex justify-content-between align-items-start" data-player-id="{{ player.id }}" style="cursor: move;">
+                                        <div class="ms-2 me-auto">
+                                            <div class="fw-bold">{{ player.first_name }} {{ player.last_name }}</div>
+                                            <small class="text-muted">
+                                                History: {{ player.history|default:"-" }} |
+                                                Conflict: {{ player.conflict|default:"-" }} |
+                                                Draftable: {% if player.draftable %}<span class="badge bg-success">Yes</span>{% else %}<span class="badge bg-danger">No</span>{% endif %}
+                                            </small>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#starredPlayerModal{{ player.pk }}" title="View Details">
                                                 <i class="bi bi-eye"></i>
                                             </button>
-                                        </td>
-                                        <td class="text-center">
-                                            <i class="bi {% if player.id in starred_player_ids %}bi-star-fill{% else %}bi-star{% endif %} star-icon"
+                                            <i class="bi bi-star-fill star-icon"
                                                data-player-id="{{ player.id }}"
-                                               style="cursor: pointer; color: {% if player.id in starred_player_ids %}#ffc107{% else %}#ddd{% endif %}; font-size: 1.2rem;"
-                                               title="{% if player.id in starred_player_ids %}Unstar player{% else %}Star player{% endif %}"></i>
-                                        </td>
-                                    </tr>
+                                               style="cursor: pointer; color: #ffc107; font-size: 1.2rem;"
+                                               title="Unstar player"></i>
+                                        </div>
+                                    </li>
                                     {% endfor %}
-                                </tbody>
-                            </table>
+                                </ol>
+                            </div>
+                            {% else %}
+                            <div class="alert alert-secondary mb-0" id="noStarredPlayersMessage">
+                                <i class="bi bi-info-circle me-2"></i>
+                                No starred players yet. Click the star icon next to a player below to add them here.
+                            </div>
+                            {% endif %}
                         </div>
-                        <p class="text-muted mt-3">
-                            <strong>Total Available Players:</strong> {{ available_players.count }}
-                        </p>
-                        {% else %}
-                        <div class="alert alert-info mb-0">
-                            <i class="bi bi-info-circle me-2"></i>
-                            No players available in the draft pool.
+
+                        <!-- All Undrafted Players Sub-Section -->
+                        <div>
+                            <h6 class="text-secondary border-bottom pb-2 mb-3">
+                                <i class="bi bi-people me-1"></i>All Undrafted Players
+                            </h6>
+                            {% if available_players %}
+                            <!-- Search Box -->
+                            <div class="mb-3">
+                                <input type="text" id="availablePlayersSearch" class="form-control" placeholder="Search by player name...">
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="availablePlayersTable">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th style="cursor: pointer;" onclick="sortAvailablePlayersTable(0)">
+                                                Name <i class="bi"></i>
+                                            </th>
+                                            <th style="cursor: pointer;" onclick="sortAvailablePlayersTable(1)">
+                                                History <i class="bi"></i>
+                                            </th>
+                                            <th style="cursor: pointer;" onclick="sortAvailablePlayersTable(2)">
+                                                Conflict <i class="bi"></i>
+                                            </th>
+                                            <th style="cursor: pointer;" onclick="sortAvailablePlayersTable(3)">
+                                                Draftable <i class="bi"></i>
+                                            </th>
+                                            <th>Details</th>
+                                            <th>Star</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for player in available_players %}
+                                        {% if player.id not in starred_player_ids %}
+                                        <tr data-player-id="{{ player.id }}">
+                                            <td><strong>{{ player.first_name }} {{ player.last_name }}</strong></td>
+                                            <td>{{ player.history|default:"-" }}</td>
+                                            <td>{{ player.conflict|default:"-" }}</td>
+                                            <td>
+                                                {% if player.draftable %}
+                                                    <span class="badge bg-success">Yes</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">No</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#availablePlayerModal{{ player.pk }}" title="View Details">
+                                                    <i class="bi bi-eye"></i>
+                                                </button>
+                                            </td>
+                                            <td class="text-center">
+                                                <i class="bi bi-star star-icon"
+                                                   data-player-id="{{ player.id }}"
+                                                   data-player-first-name="{{ player.first_name }}"
+                                                   data-player-last-name="{{ player.last_name }}"
+                                                   data-player-history="{{ player.history|default:'-' }}"
+                                                   data-player-conflict="{{ player.conflict|default:'-' }}"
+                                                   data-player-draftable="{{ player.draftable }}"
+                                                   data-player-pk="{{ player.pk }}"
+                                                   style="cursor: pointer; color: #ddd; font-size: 1.2rem;"
+                                                   title="Star player"></i>
+                                            </td>
+                                        </tr>
+                                        {% endif %}
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <p class="text-muted mt-3">
+                                <strong>Total Undrafted Players:</strong> <span id="undraftedPlayersCount">{{ available_players.count|add:starred_players|length|make_list|length }}</span>
+                            </p>
+                            {% else %}
+                            <div class="alert alert-info mb-0">
+                                <i class="bi bi-info-circle me-2"></i>
+                                No players available in the draft pool.
+                            </div>
+                            {% endif %}
                         </div>
-                        {% endif %}
                         </div>
                     </div>
                 </div>
@@ -411,6 +463,75 @@
             <div class="modal-content">
                 <div class="modal-header bg-info text-white">
                     <h5 class="modal-title" id="availablePlayerModalLabel{{ player.pk }}">
+                        <i class="bi bi-person-circle me-2"></i>{{ player.first_name }} {{ player.last_name }}
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted border-bottom pb-2 mb-3">Personal Information</h6>
+                            <p><strong>First Name:</strong> {{ player.first_name }}</p>
+                            <p><strong>Last Name:</strong> {{ player.last_name }}</p>
+                            <p><strong>Birthday:</strong> {{ player.birthday|default:"-" }}</p>
+                            <p><strong>School:</strong> {{ player.school|default:"-" }}</p>
+                            <p><strong>Jersey Size:</strong> {{ player.jersey_size|default:"-" }}</p>
+                            <p><strong>History:</strong> {{ player.history|default:"-" }}</p>
+                            <p><strong>Conflict:</strong> {{ player.conflict|default:"-" }}</p>
+                            <p><strong>Draftable:</strong>
+                                {% if player.draftable %}
+                                    <span class="badge bg-success">Yes</span>
+                                {% else %}
+                                    <span class="badge bg-danger">No</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted border-bottom pb-2 mb-3">Contact Information</h6>
+                            <p><strong>Parent 1 Name:</strong> {{ player.parent_name_1|default:"-" }}</p>
+                            <p><strong>Parent 1 Email:</strong> {{ player.parent_email_1|default:"-" }}</p>
+                            <p><strong>Parent 1 Phone:</strong> {{ player.parent_phone_1|default:"-" }}</p>
+                            <p class="mt-3"><strong>Parent 2 Name:</strong> {{ player.parent_name_2|default:"-" }}</p>
+                            <p><strong>Parent 2 Email:</strong> {{ player.parent_email_2|default:"-" }}</p>
+                            <p><strong>Parent 2 Phone:</strong> {{ player.parent_phone_2|default:"-" }}</p>
+                        </div>
+                    </div>
+                    {% if player.manager_volunteer_name or player.manager_volunteer_email or player.manager_volunteer_phone %}
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6 class="text-muted border-bottom pb-2 mb-3">Manager Volunteer Information</h6>
+                            <p><strong>Name:</strong> {{ player.manager_volunteer_name|default:"-" }}</p>
+                            <p><strong>Email:</strong> {{ player.manager_volunteer_email|default:"-" }}</p>
+                            <p><strong>Phone:</strong> {{ player.manager_volunteer_phone|default:"-" }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if player.coach_volunteer_name or player.coach_volunteer_email or player.coach_volunteer_phone %}
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6 class="text-muted border-bottom pb-2 mb-3">Coach Volunteer Information</h6>
+                            <p><strong>Name:</strong> {{ player.coach_volunteer_name|default:"-" }}</p>
+                            <p><strong>Email:</strong> {{ player.coach_volunteer_email|default:"-" }}</p>
+                            <p><strong>Phone:</strong> {{ player.coach_volunteer_phone|default:"-" }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <!-- Starred Player Detail Modals -->
+    {% for player in starred_players %}
+    <div class="modal fade" id="starredPlayerModal{{ player.pk }}" tabindex="-1" aria-labelledby="starredPlayerModalLabel{{ player.pk }}" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title" id="starredPlayerModalLabel{{ player.pk }}">
                         <i class="bi bi-person-circle me-2"></i>{{ player.first_name }} {{ player.last_name }}
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -830,46 +951,137 @@
                 });
             }
 
-            // Handle star clicks
-            const starIcons = document.querySelectorAll('.star-icon');
-            starIcons.forEach(icon => {
-                icon.addEventListener('click', function() {
-                    const playerId = this.getAttribute('data-player-id');
-                    const teamSecret = '{{ team.manager_secret }}';
+            // Handle star clicks - with section movement
+            function attachStarHandlers() {
+                const starIcons = document.querySelectorAll('.star-icon');
+                starIcons.forEach(icon => {
+                    // Remove existing listener by cloning
+                    const newIcon = icon.cloneNode(true);
+                    icon.parentNode.replaceChild(newIcon, icon);
 
-                    // Send AJAX request
-                    fetch(`/teams/${teamSecret}/toggle-star/`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                        body: `player_id=${playerId}`
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            // Toggle star appearance
-                            if (data.starred) {
-                                this.classList.remove('bi-star');
-                                this.classList.add('bi-star-fill');
-                                this.style.color = '#ffc107';
-                                this.setAttribute('title', 'Unstar player');
+                    newIcon.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const playerId = this.getAttribute('data-player-id');
+                        const teamSecret = '{{ team.manager_secret }}';
+                        const isStarred = this.classList.contains('bi-star-fill');
+
+                        // Send AJAX request
+                        fetch(`/teams/${teamSecret}/toggle-star/`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                            },
+                            body: `player_id=${playerId}`
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                if (data.starred) {
+                                    // Player was starred - move to starred section
+                                    movePlayerToStarred(this);
+                                } else {
+                                    // Player was unstarred - move to available section
+                                    movePlayerToAvailable(this);
+                                }
                             } else {
-                                this.classList.remove('bi-star-fill');
-                                this.classList.add('bi-star');
-                                this.style.color = '#ddd';
-                                this.setAttribute('title', 'Star player');
+                                alert('Error: ' + data.error);
                             }
-                        } else {
-                            alert('Error: ' + data.error);
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('Failed to toggle star');
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('Failed to toggle star');
+                        });
                     });
                 });
-            });
+            }
+
+            function movePlayerToStarred(starIcon) {
+                const playerId = starIcon.getAttribute('data-player-id');
+                const playerRow = starIcon.closest('tr');
+
+                // Get player data
+                const playerFirstName = starIcon.getAttribute('data-player-first-name');
+                const playerLastName = starIcon.getAttribute('data-player-last-name');
+                const playerHistory = starIcon.getAttribute('data-player-history');
+                const playerConflict = starIcon.getAttribute('data-player-conflict');
+                const playerDraftable = starIcon.getAttribute('data-player-draftable') === 'True';
+                const playerPk = starIcon.getAttribute('data-player-pk');
+
+                // Remove from available players table
+                playerRow.remove();
+
+                // Add to starred players list
+                const starredList = document.getElementById('sortableStarredList');
+                const noStarredMessage = document.getElementById('noStarredPlayersMessage');
+
+                // Hide "no starred players" message if it exists
+                if (noStarredMessage) {
+                    noStarredMessage.style.display = 'none';
+                }
+
+                // Create list item for starred section
+                const draftableBadge = playerDraftable ?
+                    '<span class="badge bg-success">Yes</span>' :
+                    '<span class="badge bg-danger">No</span>';
+
+                const listItem = document.createElement('li');
+                listItem.className = 'list-group-item d-flex justify-content-between align-items-start';
+                listItem.setAttribute('data-player-id', playerId);
+                listItem.style.cursor = 'move';
+                listItem.innerHTML = `
+                    <div class="ms-2 me-auto">
+                        <div class="fw-bold">${playerFirstName} ${playerLastName}</div>
+                        <small class="text-muted">
+                            History: ${playerHistory} |
+                            Conflict: ${playerConflict} |
+                            Draftable: ${draftableBadge}
+                        </small>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#starredPlayerModal${playerPk}" title="View Details">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        <i class="bi bi-star-fill star-icon"
+                           data-player-id="${playerId}"
+                           style="cursor: pointer; color: #ffc107; font-size: 1.2rem;"
+                           title="Unstar player"></i>
+                    </div>
+                `;
+
+                starredList.appendChild(listItem);
+
+                // Re-attach star handlers
+                attachStarHandlers();
+            }
+
+            function movePlayerToAvailable(starIcon) {
+                const playerId = starIcon.getAttribute('data-player-id');
+                const listItem = starIcon.closest('li');
+
+                // Get player name from the list item
+                const playerName = listItem.querySelector('.fw-bold').textContent;
+                const [playerFirstName, ...lastNameParts] = playerName.split(' ');
+                const playerLastName = lastNameParts.join(' ');
+
+                // Remove from starred list
+                listItem.remove();
+
+                // Check if starred list is now empty
+                const starredList = document.getElementById('sortableStarredList');
+                if (starredList.children.length === 0) {
+                    const noStarredMessage = document.getElementById('noStarredPlayersMessage');
+                    if (noStarredMessage) {
+                        noStarredMessage.style.display = 'block';
+                    }
+                }
+
+                // Note: Player data is already in the page, we need to reload
+                // For now, just reload the page to avoid complexity
+                location.reload();
+            }
+
+            // Initial attachment
+            attachStarHandlers();
 
             // WebSocket connection for real-time draft updates
             {% if portal_open %}
@@ -1088,6 +1300,46 @@
                 }, 5000);
             }
             {% endif %}
+
+            // Initialize SortableJS for starred players drag-and-drop
+            const starredList = document.getElementById('sortableStarredList');
+            if (starredList) {
+                const sortable = new Sortable(starredList, {
+                    animation: 150,
+                    handle: 'li',
+                    onEnd: function(evt) {
+                        // Get new order of player IDs
+                        const playerOrder = [];
+                        const listItems = starredList.querySelectorAll('li');
+                        listItems.forEach((item) => {
+                            playerOrder.push(item.getAttribute('data-player-id'));
+                        });
+
+                        // Send new order to backend
+                        const teamSecret = '{{ team.manager_secret }}';
+                        fetch(`/teams/${teamSecret}/save-starred-order/`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ player_order: playerOrder })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (!data.success) {
+                                console.error('Failed to save order:', data.error);
+                                alert('Failed to save player order');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error saving order:', error);
+                            alert('Failed to save player order');
+                        });
+                    }
+                });
+            }
         });
     </script>
+    <!-- SortableJS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 {% endblock %}

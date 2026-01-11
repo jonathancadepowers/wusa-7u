@@ -2085,6 +2085,7 @@ def team_detail_view(request, team_secret):
     available_players = []
     drafted_players = []
     starred_player_ids = set()
+    starred_players = []
     if portal_open:
         # Get all player IDs that have been drafted
         drafted_player_ids = DraftPick.objects.filter(player__isnull=False).values_list('player_id', flat=True)
@@ -2093,8 +2094,10 @@ def team_detail_view(request, team_secret):
         # Get players drafted by this team
         drafted_picks = DraftPick.objects.filter(team=team, player__isnull=False).select_related('player').order_by('round', 'pick')
         drafted_players = [pick.player for pick in drafted_picks]
-        # Get starred player IDs for this team
-        starred_player_ids = set(StarredDraftPick.objects.filter(team=team).values_list('player_id', flat=True))
+        # Get starred players for this team (in order)
+        starred_picks = StarredDraftPick.objects.filter(team=team).select_related('player').order_by('order')
+        starred_players = [pick.player for pick in starred_picks]
+        starred_player_ids = set(player.id for player in starred_players)
 
     # Calculate checklist status for this manager
     checklist_items = []
@@ -2189,7 +2192,8 @@ def team_detail_view(request, team_secret):
         'portal_open': portal_open,
         'available_players': available_players,
         'drafted_players': drafted_players,
-        'starred_player_ids': starred_player_ids
+        'starred_player_ids': starred_player_ids,
+        'starred_players': starred_players
     }
     return render(request, 'players/team_detail.html', context)
 
@@ -2213,14 +2217,52 @@ def toggle_star_player_view(request, team_secret):
                 starred.delete()
                 return JsonResponse({'success': True, 'starred': False})
             else:
-                # Star - create the record
-                StarredDraftPick.objects.create(team=team, player=player)
+                # Star - create the record at the end of the list
+                # Find the max order for this team
+                max_order = StarredDraftPick.objects.filter(team=team).aggregate(
+                    models.Max('order')
+                )['order__max']
+                next_order = (max_order or -1) + 1
+
+                StarredDraftPick.objects.create(team=team, player=player, order=next_order)
                 return JsonResponse({'success': True, 'starred': True})
 
         except Team.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'Team not found'}, status=404)
         except Player.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'Player not found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=400)
+
+
+@csrf_exempt
+def save_starred_order_view(request, team_secret):
+    """Save the order of starred players for a team"""
+    if request.method == 'POST':
+        try:
+            import json
+            data = json.loads(request.body)
+            player_order = data.get('player_order', [])
+
+            # Get the team
+            team = Team.objects.get(manager_secret=team_secret)
+
+            # Update the order for each starred player
+            for index, player_id in enumerate(player_order):
+                try:
+                    starred = StarredDraftPick.objects.get(team=team, player_id=player_id)
+                    starred.order = index
+                    starred.save()
+                except StarredDraftPick.DoesNotExist:
+                    # Player not starred by this team, skip
+                    continue
+
+            return JsonResponse({'success': True})
+
+        except Team.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Team not found'}, status=404)
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
