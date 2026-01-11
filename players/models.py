@@ -7,6 +7,7 @@ class Draft(models.Model):
     picks_per_round = models.IntegerField()
     order = models.TextField()
     final_round_draft_order = models.TextField(blank=True, null=True)
+    final_round_picks = models.IntegerField(null=True, blank=True)  # Number of picks in the final round
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

@@ -245,21 +245,25 @@
                                             {% endwith %}
                                         {% endfor %}
                                         {% if has_final_round %}
-                                            {% with team=pick_assignments|get_item:final_round_number|get_item:pick_num %}
-                                                {% if team %}
-                                                    {% with existing_pick=draft_picks_map|get_item:final_round_number|get_item:pick_num %}
-                                                        <td class="draft-cell hat-pick-round{% if existing_pick %} picked{% endif %}"
-                                                            data-practice-slot="{% if team.practice_slot %}{{ team.practice_slot.practice_slot }}{% else %}Not set{% endif %}"
-                                                            data-team-name="{{ team }}"
-                                                            {% if existing_pick %}data-player-id="{{ existing_pick.player_id }}" data-player-name="{{ existing_pick.player_name }}"{% endif %}>
-                                                            <span class="team-name">{% if existing_pick %}{{ existing_pick.player_name }}{% else %}{{ team }}{% endif %}</span>
-                                                            <i class="bi bi-plus-circle add-icon"></i>
-                                                        </td>
-                                                    {% endwith %}
-                                                {% else %}
-                                                    <td class="bg-light"></td>
-                                                {% endif %}
-                                            {% endwith %}
+                                            {% if pick_num <= final_round_picks %}
+                                                {% with team=pick_assignments|get_item:final_round_number|get_item:pick_num %}
+                                                    {% if team %}
+                                                        {% with existing_pick=draft_picks_map|get_item:final_round_number|get_item:pick_num %}
+                                                            <td class="draft-cell hat-pick-round{% if existing_pick %} picked{% endif %}"
+                                                                data-practice-slot="{% if team.practice_slot %}{{ team.practice_slot.practice_slot }}{% else %}Not set{% endif %}"
+                                                                data-team-name="{{ team }}"
+                                                                {% if existing_pick %}data-player-id="{{ existing_pick.player_id }}" data-player-name="{{ existing_pick.player_name }}"{% endif %}>
+                                                                <span class="team-name">{% if existing_pick %}{{ existing_pick.player_name }}{% else %}{{ team }}{% endif %}</span>
+                                                                <i class="bi bi-plus-circle add-icon"></i>
+                                                            </td>
+                                                        {% endwith %}
+                                                    {% else %}
+                                                        <td class="bg-light"></td>
+                                                    {% endif %}
+                                                {% endwith %}
+                                            {% else %}
+                                                <td class="bg-light"></td>
+                                            {% endif %}
                                         {% endif %}
                                     </tr>
                                 {% endfor %}

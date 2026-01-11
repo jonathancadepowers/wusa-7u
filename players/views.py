@@ -1264,6 +1264,19 @@ def edit_draft_view(request):
         total_nondraftable_pool = nondraftable_player_count + leftover_draftable_players
         nondraftable_rounds = math.ceil(total_nondraftable_pool / team_count) if team_count > 0 and total_nondraftable_pool > 0 else 0
 
+        # Calculate the number of picks in the final round
+        # This is critical to ensure we don't have more picks than players
+        total_rounds = draftable_rounds + nondraftable_rounds
+        if total_rounds > 0:
+            # Calculate picks in all full rounds (all rounds except the last)
+            full_rounds = total_rounds - 1
+            picks_in_full_rounds = full_rounds * team_count
+
+            # Final round gets whatever players are left
+            final_round_picks = player_count - picks_in_full_rounds
+        else:
+            final_round_picks = 0
+
         # Calculate total picks
         # Draftable rounds are full rounds, hat pick round (if exists) contains remaining players
         total_regular_picks = (draftable_rounds * picks_per_round) + total_nondraftable_pool
@@ -1287,6 +1300,7 @@ def edit_draft_view(request):
             draft.picks_per_round = picks_per_round
             draft.order = order
             draft.final_round_draft_order = final_round_draft_order
+            draft.final_round_picks = final_round_picks
             draft.save()
 
             from django.utils.safestring import mark_safe
@@ -1298,7 +1312,8 @@ def edit_draft_view(request):
                 rounds_nondraftable=nondraftable_rounds,
                 picks_per_round=picks_per_round,
                 order=order,
-                final_round_draft_order=final_round_draft_order
+                final_round_draft_order=final_round_draft_order,
+                final_round_picks=final_round_picks
             )
             draft.save()
 
@@ -3283,6 +3298,7 @@ def run_draft_view(request):
         'show_grid': True,
         'has_final_round': has_final_round,
         'final_round_number': final_round_number,
+        'final_round_picks': draft.final_round_picks if draft.final_round_picks else draft.picks_per_round,
         'portal_open': portal_open,
         'top_players': top_players,
         'managers_without_rankings': managers_without_rankings,
