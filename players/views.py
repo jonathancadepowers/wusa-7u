@@ -5652,17 +5652,18 @@ def set_draft_order_and_daughters_view(request):
 def get_draft_order_view(request):
     """Get current draft order with team details"""
     from .models import Draft, Team
-    
+    import traceback
+
     try:
         draft = Draft.objects.first()
         if not draft or not draft.order:
             return JsonResponse({
                 'error': 'No draft order has been configured yet'
             }, status=400)
-        
+
         # Parse the order (comma-separated team IDs)
         team_ids = [int(tid) for tid in draft.order.split(',') if tid]
-        
+
         # Get team details in the correct order
         teams_data = []
         for team_id in team_ids:
@@ -5675,13 +5676,17 @@ def get_draft_order_view(request):
                 })
             except Team.DoesNotExist:
                 continue
-        
+
         return JsonResponse({
             'teams': teams_data
         })
     except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error in get_draft_order_view: {str(e)}\n{traceback.format_exc()}")
         return JsonResponse({
-            'error': f'An error occurred: {str(e)}'
+            'error': f'An error occurred: {str(e)}',
+            'traceback': traceback.format_exc()
         }, status=500)
 
 

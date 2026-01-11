@@ -1464,7 +1464,10 @@
             fetch('/draft/get-draft-order/')
                 .then(response => {
                     if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
+                        // Return the response JSON even if not OK so we can get error details
+                        return response.json().then(data => {
+                            throw {status: response.status, data: data};
+                        });
                     }
                     return response.json();
                 })
@@ -1473,7 +1476,11 @@
 
                     if (data.error) {
                         // Show error from server
-                        document.getElementById('reorderErrorMessage').textContent = data.error;
+                        let errorMsg = data.error;
+                        if (data.traceback) {
+                            errorMsg += '\n\nTechnical details:\n' + data.traceback;
+                        }
+                        document.getElementById('reorderErrorMessage').textContent = errorMsg;
                         document.getElementById('reorderError').style.display = 'block';
                     } else {
                         // Populate the team list
@@ -1521,7 +1528,21 @@
                 .catch(error => {
                     console.error('Error loading draft order:', error);
                     document.getElementById('reorderLoading').style.display = 'none';
-                    document.getElementById('reorderErrorMessage').textContent = 'An error occurred while loading draft order: ' + error.message;
+
+                    // Check if we have detailed error info from the server
+                    let errorMsg;
+                    if (error.data && error.data.error) {
+                        errorMsg = error.data.error;
+                        if (error.data.traceback) {
+                            errorMsg += '\n\nTechnical details:\n' + error.data.traceback;
+                        }
+                    } else if (error.message) {
+                        errorMsg = 'An error occurred while loading draft order: ' + error.message;
+                    } else {
+                        errorMsg = 'An unexpected error occurred while loading draft order';
+                    }
+
+                    document.getElementById('reorderErrorMessage').textContent = errorMsg;
                     document.getElementById('reorderError').style.display = 'block';
                 });
         });
