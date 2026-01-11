@@ -125,19 +125,15 @@
 
 {% block navbar_actions %}
     <div class="d-flex gap-2">
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#configureDraftOrderModal">
-            <i class="bi bi-gear me-1"></i>Configure Draft Order
+        <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#configureDraftOrderModal">
+            Configure Draft Order
         </button>
         <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#reorderTeamsModal">
-            <i class="bi bi-arrow-down-up me-1"></i>Reorder Teams
-        </button>
-        <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#managerDaughterRankingsModal">
-            <i class="bi bi-people me-1"></i>Manager's Daughters Rankings
+            Reorder Teams
         </button>
         <form method="POST" action="{% url 'players:toggle_draft_portal' %}" class="d-inline">
             {% csrf_token %}
             <button type="submit" class="btn {% if portal_open %}btn-danger{% else %}btn-success{% endif %}">
-                <i class="bi {% if portal_open %}bi-lock-fill{% else %}bi-unlock-fill{% endif %} me-1"></i>
                 {% if portal_open %}Close Manager Draft Portal{% else %}Open Manager Draft Portal{% endif %}
             </button>
         </form>
