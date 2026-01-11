@@ -228,7 +228,6 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <!-- DEBUG: final_round_picks = {{ final_round_picks }} -->
                                 {% for pick_num in picks %}
                                     <tr>
                                         <td class="text-center"><strong>{{ pick_num }}</strong></td>
@@ -246,7 +245,8 @@
                                             {% endwith %}
                                         {% endfor %}
                                         {% if has_final_round %}
-                                            {% if pick_num <= final_round_picks %}
+                                            {% with show_pick=pick_num|add:"0" %}
+                                            {% if show_pick <= final_round_picks %}
                                                 {% with team=pick_assignments|get_item:final_round_number|get_item:pick_num %}
                                                     {% if team %}
                                                         {% with existing_pick=draft_picks_map|get_item:final_round_number|get_item:pick_num %}
@@ -265,6 +265,7 @@
                                             {% else %}
                                                 <td class="bg-light"></td>
                                             {% endif %}
+                                            {% endwith %}
                                         {% endif %}
                                     </tr>
                                 {% endfor %}
