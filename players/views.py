@@ -5645,3 +5645,103 @@ def set_draft_order_and_daughters_view(request):
             'error': f'An error occurred: {str(e)}',
             'traceback': traceback.format_exc()
         }, status=500)
+
+
+@require_http_methods(["GET"])
+@csrf_exempt
+def get_draft_order_view(request):
+    """Get current draft order with team details"""
+    from .models import Draft, Team
+    
+    try:
+        draft = Draft.objects.first()
+        if not draft or not draft.order:
+            return JsonResponse({
+                'error': 'No draft order has been configured yet'
+            }, status=400)
+        
+        # Parse the order (comma-separated team IDs)
+        team_ids = [int(tid) for tid in draft.order.split(',') if tid]
+        
+        # Get team details in the correct order
+        teams_data = []
+        for team_id in team_ids:
+            try:
+                team = Team.objects.select_related('manager').get(id=team_id)
+                teams_data.append({
+                    'id': team.id,
+                    'name': team.name,
+                    'manager_name': team.manager.name if team.manager else None
+                })
+            except Team.DoesNotExist:
+                continue
+        
+        return JsonResponse({
+            'teams': teams_data
+        })
+    except Exception as e:
+        return JsonResponse({
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
+@require_http_methods(["POST"])
+@csrf_exempt
+def save_draft_order_view(request):
+    """Save new draft order and recalculate empty pick positions"""
+    from .models import Draft, DraftPick, Team
+    import json
+    
+    try:
+        # Parse request body
+        data = json.loads(request.body)
+        team_order = data.get('team_order', [])
+        
+        if not team_order:
+            return JsonResponse({
+                'error': 'No team order provided'
+            }, status=400)
+        
+        # Update the draft order
+        draft = Draft.objects.first()
+        if not draft:
+            return JsonResponse({
+                'error': 'No draft found'
+            }, status=400)
+        
+        # Save the new order as comma-separated team IDs
+        draft.order = ','.join(str(tid) for tid in team_order)
+        draft.save()
+        
+        # Recalculate pick numbers for all EMPTY draft picks (those without players)
+        # Get all draft picks without players assigned
+        empty_picks = DraftPick.objects.filter(player__isnull=True).select_related('team')
+        
+        total_teams = len(team_order)
+        
+        for pick in empty_picks:
+            # Find the team's position in the new draft order (1-indexed)
+            try:
+                draft_position = team_order.index(str(pick.team.id)) + 1
+            except ValueError:
+                # Team not in order, skip this pick
+                continue
+            
+            # Calculate pick number based on snake draft logic
+            round_num = pick.round
+            if round_num % 2 == 1:  # Odd rounds
+                pick.pick = draft_position
+            else:  # Even rounds (reversed)
+                pick.pick = total_teams - draft_position + 1
+            
+            pick.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Draft order updated and {empty_picks.count()} empty picks recalculated'
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
