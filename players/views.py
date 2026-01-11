@@ -3347,6 +3347,9 @@ def run_draft_view(request):
     final_round_pick_count = draft.final_round_picks if draft.final_round_picks else draft.picks_per_round
     final_round_valid_picks = list(range(1, final_round_pick_count + 1))
 
+    # Check if any players are currently assigned to teams
+    players_with_teams_count = Player.objects.filter(team__isnull=False).count()
+
     context = {
         'draft': draft,
         'rounds': rounds,
@@ -3366,6 +3369,7 @@ def run_draft_view(request):
         'undrafted_daughters': undrafted_daughters,
         'total_daughters_count': total_daughters_count,
         'daughters_drafted_count': daughters_drafted_count,
+        'players_with_teams_count': players_with_teams_count,
     }
     return render(request, 'players/run_draft.html', context)
 

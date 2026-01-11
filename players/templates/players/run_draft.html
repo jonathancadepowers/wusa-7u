@@ -177,6 +177,17 @@
             </div>
         {% endif %}
 
+        {% if players_with_teams_count > 0 %}
+            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                <h5 class="alert-heading"><i class="bi bi-exclamation-triangle me-2"></i>Players Already Assigned to Teams</h5>
+                <p class="mb-0">
+                    <strong>{{ players_with_teams_count }}</strong> player{{ players_with_teams_count|pluralize }} {{ players_with_teams_count|pluralize:"is,are" }} currently assigned to teams.
+                    If you are starting a fresh draft, you may want to <a href="{% url 'players:list' %}" class="alert-link">reset teams</a> before beginning the draft.
+                </p>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endif %}
+
         <div class="card shadow">
             <div class="card-header bg-primary text-white">
                 <div class="d-flex justify-content-end align-items-center">
