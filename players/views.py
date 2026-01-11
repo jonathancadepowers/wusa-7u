@@ -3288,9 +3288,9 @@ def run_draft_view(request):
     total_daughters_count = managers_with_daughters.count()
     daughters_drafted_count = total_daughters_count - len(undrafted_daughters)
 
-    # Create a set of valid pick numbers for the final round
+    # Create a list of valid pick numbers for the final round
     final_round_pick_count = draft.final_round_picks if draft.final_round_picks else draft.picks_per_round
-    final_round_valid_picks = set(range(1, final_round_pick_count + 1))
+    final_round_valid_picks = list(range(1, final_round_pick_count + 1))
 
     context = {
         'draft': draft,
