@@ -3350,6 +3350,11 @@ def run_draft_view(request):
     # Check if any players are currently assigned to teams
     players_with_teams_count = Player.objects.filter(team__isnull=False).count()
 
+    # Get actual player counts for accurate display
+    total_players = Player.objects.count()
+    drafted_players_count = DraftPick.objects.filter(player__isnull=False).count()
+    remaining_players_count = total_players - drafted_players_count
+
     context = {
         'draft': draft,
         'rounds': rounds,
@@ -3370,6 +3375,9 @@ def run_draft_view(request):
         'total_daughters_count': total_daughters_count,
         'daughters_drafted_count': daughters_drafted_count,
         'players_with_teams_count': players_with_teams_count,
+        'total_players': total_players,
+        'drafted_players_count': drafted_players_count,
+        'remaining_players_count': remaining_players_count,
     }
     return render(request, 'players/run_draft.html', context)
 

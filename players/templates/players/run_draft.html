@@ -194,12 +194,12 @@
                     <div class="d-flex align-items-center gap-3">
                         <div class="text-white">
                             <small>
-                                <strong>Players Selected:</strong> <span id="playersSelected">0</span>
+                                <strong>Players Selected:</strong> <span id="playersSelected">{{ drafted_players_count }}</span>
                             </small>
                         </div>
                         <div class="text-white">
                             <small>
-                                <strong>Players Remaining:</strong> <span id="playersRemaining">0</span>
+                                <strong>Players Remaining:</strong> <span id="playersRemaining">{{ remaining_players_count }}</span>
                             </small>
                         </div>
                         <div class="text-white">
@@ -567,12 +567,13 @@
 
         // Helper function to update player counts
         function updatePlayerCounts() {
-            const totalCells = document.querySelectorAll('.draft-cell').length;
+            // Count actual drafted players (cells with player data), not draft slots
             const pickedCells = document.querySelectorAll('.draft-cell.picked').length;
-            const remainingCells = totalCells - pickedCells;
+            const totalPlayers = {{ total_players }};
+            const remainingPlayers = totalPlayers - pickedCells;
 
             document.getElementById('playersSelected').textContent = pickedCells;
-            document.getElementById('playersRemaining').textContent = remainingCells;
+            document.getElementById('playersRemaining').textContent = remainingPlayers;
         }
 
         // Helper function to update manager's daughters tracking
