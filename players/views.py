@@ -5720,33 +5720,38 @@ def save_draft_order_view(request):
         # Save the new order as comma-separated team IDs
         draft.order = ','.join(str(tid) for tid in team_order)
         draft.save()
-        
-        # Recalculate pick numbers for all EMPTY draft picks (those without players)
-        # Get all draft picks without players assigned
-        empty_picks = DraftPick.objects.filter(player__isnull=True).select_related('team')
-        
+
+        # Recalculate pick numbers for ALL draft picks to match new team positions
+        # This includes both empty picks and picks with players already assigned
+        all_picks = DraftPick.objects.all().select_related('team')
+
         total_teams = len(team_order)
-        
-        for pick in empty_picks:
+        updated_count = 0
+
+        for pick in all_picks:
             # Find the team's position in the new draft order (1-indexed)
             try:
                 draft_position = team_order.index(str(pick.team.id)) + 1
             except ValueError:
                 # Team not in order, skip this pick
                 continue
-            
+
             # Calculate pick number based on snake draft logic
             round_num = pick.round
             if round_num % 2 == 1:  # Odd rounds
-                pick.pick = draft_position
+                new_pick_number = draft_position
             else:  # Even rounds (reversed)
-                pick.pick = total_teams - draft_position + 1
-            
-            pick.save()
-        
+                new_pick_number = total_teams - draft_position + 1
+
+            # Only update if pick number changed
+            if pick.pick != new_pick_number:
+                pick.pick = new_pick_number
+                pick.save()
+                updated_count += 1
+
         return JsonResponse({
             'success': True,
-            'message': f'Draft order updated and {empty_picks.count()} empty picks recalculated'
+            'message': f'Draft order updated and {updated_count} picks recalculated'
         })
         
     except Exception as e:
