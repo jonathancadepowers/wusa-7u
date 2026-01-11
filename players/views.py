@@ -5669,10 +5669,13 @@ def get_draft_order_view(request):
         for team_id in team_ids:
             try:
                 team = Team.objects.select_related('manager').get(id=team_id)
+                manager_name = None
+                if team.manager:
+                    manager_name = f"{team.manager.first_name} {team.manager.last_name}"
                 teams_data.append({
                     'id': team.id,
                     'name': team.name,
-                    'manager_name': team.manager.name if team.manager else None
+                    'manager_name': manager_name
                 })
             except Team.DoesNotExist:
                 continue
