@@ -249,9 +249,8 @@
                             <h6 class="text-primary border-bottom pb-2 mb-3">
                                 <i class="bi bi-star-fill me-1"></i>My Starred Players
                             </h6>
-                            {% if starred_players %}
                             <div id="starredPlayersList">
-                                <ol class="list-group list-group-numbered" id="sortableStarredList">
+                                <ol class="list-group list-group-numbered" id="sortableStarredList" {% if not starred_players %}style="display: none;"{% endif %}>
                                     {% for player in starred_players %}
                                     <li class="list-group-item d-flex justify-content-between align-items-start" data-player-id="{{ player.id }}" style="cursor: move;">
                                         <div class="ms-2 me-auto">
@@ -275,12 +274,10 @@
                                     {% endfor %}
                                 </ol>
                             </div>
-                            {% else %}
-                            <div class="alert alert-secondary mb-0" id="noStarredPlayersMessage">
+                            <div class="alert alert-secondary mb-0" id="noStarredPlayersMessage" {% if starred_players %}style="display: none;"{% endif %}>
                                 <i class="bi bi-info-circle me-2"></i>
                                 No starred players yet. Click the star icon next to a player below to add them here.
                             </div>
-                            {% endif %}
                         </div>
 
                         <!-- All Undrafted Players Sub-Section -->
@@ -1019,7 +1016,10 @@
                 const starredList = document.getElementById('sortableStarredList');
                 const noStarredMessage = document.getElementById('noStarredPlayersMessage');
 
-                // Hide "no starred players" message if it exists
+                // Show the starred list and hide "no starred players" message
+                if (starredList) {
+                    starredList.style.display = '';
+                }
                 if (noStarredMessage) {
                     noStarredMessage.style.display = 'none';
                 }
@@ -1074,6 +1074,7 @@
                 // Check if starred list is now empty
                 const starredList = document.getElementById('sortableStarredList');
                 if (starredList.children.length === 0) {
+                    starredList.style.display = 'none';
                     const noStarredMessage = document.getElementById('noStarredPlayersMessage');
                     if (noStarredMessage) {
                         noStarredMessage.style.display = 'block';
