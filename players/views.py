@@ -3288,6 +3288,10 @@ def run_draft_view(request):
     total_daughters_count = managers_with_daughters.count()
     daughters_drafted_count = total_daughters_count - len(undrafted_daughters)
 
+    # Create a set of valid pick numbers for the final round
+    final_round_pick_count = draft.final_round_picks if draft.final_round_picks else draft.picks_per_round
+    final_round_valid_picks = set(range(1, final_round_pick_count + 1))
+
     context = {
         'draft': draft,
         'rounds': rounds,
@@ -3298,7 +3302,8 @@ def run_draft_view(request):
         'show_grid': True,
         'has_final_round': has_final_round,
         'final_round_number': final_round_number,
-        'final_round_picks': draft.final_round_picks if draft.final_round_picks else draft.picks_per_round,
+        'final_round_picks': final_round_pick_count,
+        'final_round_valid_picks': final_round_valid_picks,
         'portal_open': portal_open,
         'top_players': top_players,
         'managers_without_rankings': managers_without_rankings,
