@@ -285,6 +285,9 @@
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
+                        <div class="alert alert-info mb-2">
+                            <strong>Team:</strong> <span id="teamNameDisplay"></span>
+                        </div>
                         <strong id="pickInfo"></strong>
                     </div>
                     <div class="mb-3">
@@ -524,6 +527,7 @@
             const practiceSlot = cell.dataset.practiceSlot || 'Not set';
 
             // Update modal
+            document.getElementById('teamNameDisplay').textContent = teamName;
             document.getElementById('pickInfo').textContent = `Round ${currentRound}, Pick ${overallPick}`;
             document.getElementById('practiceSlotText').textContent = practiceSlot;
 
