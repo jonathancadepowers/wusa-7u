@@ -3174,16 +3174,29 @@ def run_draft_view(request):
     teams_dict = {team.id: team for team in Team.objects.filter(id__in=team_ids)}
     ordered_teams = [teams_dict[tid] for tid in team_ids]
 
+    # Determine how many picks are in the final round
+    final_round_pick_count = draft.final_round_picks if draft.final_round_picks else draft.picks_per_round
+    final_round_number_calc = draft.rounds_draftable + draft.rounds_nondraftable
+
     # Create a mapping of round -> pick -> team for snake draft
     pick_assignments = {}
     for round_num in rounds:
         pick_assignments[round_num] = {}
+
+        # Determine how many picks this round should have
+        if round_num == final_round_number_calc:
+            # Final round - only assign teams for the limited number of picks
+            picks_for_this_round = range(1, final_round_pick_count + 1)
+        else:
+            # Regular round - all picks
+            picks_for_this_round = picks
+
         if round_num % 2 == 1:  # Odd rounds: normal order
-            for pick_num in picks:
+            for pick_num in picks_for_this_round:
                 team_index = pick_num - 1
                 pick_assignments[round_num][pick_num] = ordered_teams[team_index]
         else:  # Even rounds: reversed order (snake draft)
-            for pick_num in picks:
+            for pick_num in picks_for_this_round:
                 team_index = len(ordered_teams) - pick_num
                 pick_assignments[round_num][pick_num] = ordered_teams[team_index]
 
