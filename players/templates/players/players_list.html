@@ -652,6 +652,14 @@
             const player1 = tradePlayersData[player1Id];
             const player2 = tradePlayersData[player2Id];
 
+            // Prevent selecting two players from the same team
+            if (player1.team_id === player2.team_id) {
+                tradePreview.style.display = 'none';
+                executeTradeBtn.disabled = true;
+                alert('Cannot trade players from the same team. Please select players from different teams.');
+                return;
+            }
+
             // Update Player 1 preview
             document.getElementById('preview1Player').textContent = player1.name;
             document.getElementById('preview1CurrentTeam').textContent = player1.team_name;
