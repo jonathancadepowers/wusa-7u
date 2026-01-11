@@ -3615,26 +3615,13 @@ def undrafted_daughters_api(request):
 def validate_draft_assignment_view(request):
     """Validate draft assignment and return warning counts"""
     try:
-        # Get the most recent draft
-        draft = Draft.objects.latest('created_at')
-
-        # Calculate total draft slots
-        total_rounds = draft.rounds_draftable + draft.rounds_nondraftable
-        total_slots = total_rounds * draft.picks_per_round
-
-        # Add final round picks if configured
-        if draft.final_round_draft_order:
-            final_round_team_ids = [int(tid) for tid in draft.final_round_draft_order.split(',') if tid]
-            total_slots += len(final_round_team_ids)
-
-        # Count how many slots have been filled (have a player assigned)
-        filled_slots = DraftPick.objects.filter(player__isnull=False).count()
-
-        # Warning 1: Count remaining unfilled draft slots
-        unfilled_slots = total_slots - filled_slots
-
         # Get all player IDs that have been drafted
         drafted_player_ids = set(DraftPick.objects.filter(player__isnull=False).values_list('player_id', flat=True))
+
+        # Warning 1: Count actual undrafted players (not draft slots)
+        total_players = Player.objects.count()
+        drafted_players_count = len(drafted_player_ids)
+        undrafted_players_count = total_players - drafted_players_count
 
         # Warning 2: Count players who:
         # - ARE assigned to a team (team is not null)
@@ -3647,7 +3634,7 @@ def validate_draft_assignment_view(request):
 
         return JsonResponse({
             'success': True,
-            'undrafted_count': unfilled_slots,
+            'undrafted_count': undrafted_players_count,
             'pre_assigned_count': pre_assigned_count,
             'already_assigned_count': already_assigned_count
         })
