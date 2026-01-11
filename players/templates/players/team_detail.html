@@ -1125,6 +1125,26 @@
                         });
                     }
 
+                    // Remove the drafted player from the starred players list
+                    const starredList = document.getElementById('sortableStarredList');
+                    if (starredList) {
+                        const starredItems = starredList.querySelectorAll('li');
+                        starredItems.forEach(item => {
+                            const playerId = item.getAttribute('data-player-id');
+                            if (playerId == data.player_id) {
+                                item.remove();
+                                // Check if starred list is now empty
+                                if (starredList.children.length === 0) {
+                                    starredList.style.display = 'none';
+                                    const noStarredMessage = document.getElementById('noStarredPlayersMessage');
+                                    if (noStarredMessage) {
+                                        noStarredMessage.style.display = 'block';
+                                    }
+                                }
+                            }
+                        });
+                    }
+
                     // If this team drafted the player, add to drafted players table
                     if (data.team_id === currentTeamId) {
                         addPlayerToDraftedTable(data);
@@ -1234,10 +1254,16 @@
 
                 const tbody = availableTable.querySelector('tbody');
                 const newRow = document.createElement('tr');
+                newRow.setAttribute('data-player-id', data.player_id);
 
                 const draftableBadge = data.player_draftable ?
                     '<span class="badge bg-success">Yes</span>' :
                     '<span class="badge bg-danger">No</span>';
+
+                // Split player name into first and last name
+                const nameParts = data.player_name.split(' ');
+                const firstName = nameParts[0];
+                const lastName = nameParts.slice(1).join(' ');
 
                 newRow.innerHTML = `
                     <td><strong>${data.player_name}</strong></td>
@@ -1252,12 +1278,21 @@
                     <td class="text-center">
                         <i class="bi bi-star star-icon"
                            data-player-id="${data.player_id}"
+                           data-player-first-name="${firstName}"
+                           data-player-last-name="${lastName}"
+                           data-player-history="${data.player_history || '-'}"
+                           data-player-conflict="${data.player_conflict || '-'}"
+                           data-player-draftable="${data.player_draftable}"
+                           data-player-pk="${data.player_id}"
                            style="cursor: pointer; color: #ddd; font-size: 1.2rem;"
                            title="Star player"></i>
                     </td>
                 `;
 
                 tbody.appendChild(newRow);
+
+                // Re-attach star handlers to the new row
+                attachStarHandlers();
             }
 
             function showDraftNotification(teamName, playerName, round, pick) {
