@@ -41,6 +41,9 @@
                     </div>
                     <div class="col-md-7 text-end">
                         <div class="d-flex gap-2 justify-content-end">
+                            <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#executeTradeModal">
+                                <i class="bi bi-arrow-left-right me-1"></i>Execute Trade
+                            </button>
                             <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#resetTeamsModal">
                                 Reset Teams
                             </button>
@@ -294,6 +297,75 @@
             </div>
         </div>
     </div>
+
+    <!-- Execute Trade Modal -->
+    <div class="modal fade" id="executeTradeModal" tabindex="-1" aria-labelledby="executeTradeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title" id="executeTradeModalLabel">
+                        <i class="bi bi-arrow-left-right me-2"></i>Execute Trade
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Player Selection -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="tradePlayer1Select" class="form-label"><strong>Player 1</strong></label>
+                            <select class="form-select" id="tradePlayer1Select">
+                                <option value="">Select Player 1...</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="tradePlayer2Select" class="form-label"><strong>Player 2</strong></label>
+                            <select class="form-select" id="tradePlayer2Select">
+                                <option value="">Select Player 2...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Trade Preview (shown when both players selected) -->
+                    <div id="tradePreview" style="display: none;">
+                        <hr>
+                        <h6 class="mb-3">Trade Preview</h6>
+                        <div class="row">
+                            <!-- Player 1 Side -->
+                            <div class="col-md-6">
+                                <div class="card border-primary">
+                                    <div class="card-body">
+                                        <div class="mb-2"><strong>Player:</strong> <span id="preview1Player"></span></div>
+                                        <div class="mb-2"><strong>Current Team:</strong> <span id="preview1CurrentTeam"></span></div>
+                                        <div class="mb-2"><strong>New Team:</strong> <span id="preview1NewTeam" class="text-success fw-bold"></span></div>
+                                        <div class="mb-2"><strong>Conflicts:</strong> <span id="preview1Conflicts"></span></div>
+                                        <div class="mb-0"><strong>New Team's Practice Slot:</strong> <span id="preview1PracticeSlot"></span></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Player 2 Side -->
+                            <div class="col-md-6">
+                                <div class="card border-primary">
+                                    <div class="card-body">
+                                        <div class="mb-2"><strong>Player:</strong> <span id="preview2Player"></span></div>
+                                        <div class="mb-2"><strong>Current Team:</strong> <span id="preview2CurrentTeam"></span></div>
+                                        <div class="mb-2"><strong>New Team:</strong> <span id="preview2NewTeam" class="text-success fw-bold"></span></div>
+                                        <div class="mb-2"><strong>Conflicts:</strong> <span id="preview2Conflicts"></span></div>
+                                        <div class="mb-0"><strong>New Team's Practice Slot:</strong> <span id="preview2PracticeSlot"></span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" id="executeTradeBtn" disabled>
+                        <i class="bi bi-arrow-left-right me-1"></i>Execute Trade
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}
 
 {% block extra_js %}
@@ -503,6 +575,143 @@
                 alert('Error: ' + error.message);
                 btn.disabled = false;
                 btn.innerHTML = originalHtml;
+            });
+        });
+
+        // Execute Trade Modal Logic
+        let tradePlayersData = {};
+        const executeTradeModal = document.getElementById('executeTradeModal');
+        const tradePlayer1Select = document.getElementById('tradePlayer1Select');
+        const tradePlayer2Select = document.getElementById('tradePlayer2Select');
+        const tradePreview = document.getElementById('tradePreview');
+        const executeTradeBtn = document.getElementById('executeTradeBtn');
+
+        // Load players with teams when modal opens
+        executeTradeModal.addEventListener('show.bs.modal', function() {
+            loadTradePlayers();
+        });
+
+        // Reset modal when closed
+        executeTradeModal.addEventListener('hidden.bs.modal', function() {
+            tradePlayer1Select.value = '';
+            tradePlayer2Select.value = '';
+            tradePreview.style.display = 'none';
+            executeTradeBtn.disabled = true;
+        });
+
+        function loadTradePlayers() {
+            fetch('/players/get-players-with-teams/')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        tradePlayersData = {};
+
+                        // Clear existing options except the first one
+                        tradePlayer1Select.innerHTML = '<option value="">Select Player 1...</option>';
+                        tradePlayer2Select.innerHTML = '<option value="">Select Player 2...</option>';
+
+                        // Populate both dropdowns with players
+                        data.players.forEach(player => {
+                            tradePlayersData[player.id] = player;
+
+                            const option1 = document.createElement('option');
+                            option1.value = player.id;
+                            option1.textContent = `${player.name} (${player.team_name})`;
+                            tradePlayer1Select.appendChild(option1);
+
+                            const option2 = document.createElement('option');
+                            option2.value = player.id;
+                            option2.textContent = `${player.name} (${player.team_name})`;
+                            tradePlayer2Select.appendChild(option2);
+                        });
+                    } else {
+                        alert('Error loading players: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error loading players');
+                });
+        }
+
+        // Handle player selection changes
+        tradePlayer1Select.addEventListener('change', updateTradePreview);
+        tradePlayer2Select.addEventListener('change', updateTradePreview);
+
+        function updateTradePreview() {
+            const player1Id = tradePlayer1Select.value;
+            const player2Id = tradePlayer2Select.value;
+
+            // Hide preview if either player not selected or same player selected
+            if (!player1Id || !player2Id || player1Id === player2Id) {
+                tradePreview.style.display = 'none';
+                executeTradeBtn.disabled = true;
+                return;
+            }
+
+            const player1 = tradePlayersData[player1Id];
+            const player2 = tradePlayersData[player2Id];
+
+            // Update Player 1 preview
+            document.getElementById('preview1Player').textContent = player1.name;
+            document.getElementById('preview1CurrentTeam').textContent = player1.team_name;
+            document.getElementById('preview1NewTeam').textContent = player2.team_name;
+            document.getElementById('preview1Conflicts').textContent = player1.conflict || 'None';
+            document.getElementById('preview1PracticeSlot').textContent = player2.practice_slot || 'Not set';
+
+            // Update Player 2 preview
+            document.getElementById('preview2Player').textContent = player2.name;
+            document.getElementById('preview2CurrentTeam').textContent = player2.team_name;
+            document.getElementById('preview2NewTeam').textContent = player1.team_name;
+            document.getElementById('preview2Conflicts').textContent = player2.conflict || 'None';
+            document.getElementById('preview2PracticeSlot').textContent = player1.practice_slot || 'Not set';
+
+            // Show preview and enable button
+            tradePreview.style.display = 'block';
+            executeTradeBtn.disabled = false;
+        }
+
+        // Handle execute trade button
+        executeTradeBtn.addEventListener('click', function() {
+            const player1Id = tradePlayer1Select.value;
+            const player2Id = tradePlayer2Select.value;
+
+            if (!player1Id || !player2Id || player1Id === player2Id) {
+                alert('Please select two different players');
+                return;
+            }
+
+            const btn = this;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Executing Trade...';
+
+            fetch('/players/execute-trade/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    player1_id: player1Id,
+                    player2_id: player2Id
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Close modal and reload page
+                    bootstrap.Modal.getInstance(executeTradeModal).hide();
+                    window.location.reload();
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown error'));
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-arrow-left-right me-1"></i>Execute Trade';
+                }
+            })
+            .catch(error => {
+                alert('Error: ' + error.message);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-arrow-left-right me-1"></i>Execute Trade';
             });
         });
     </script>

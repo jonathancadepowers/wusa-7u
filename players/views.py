@@ -5829,8 +5829,82 @@ def save_draft_order_view(request):
             'success': True,
             'message': f'Draft order updated and {updated_count} picks recalculated'
         })
-        
+
     except Exception as e:
         return JsonResponse({
             'error': f'An error occurred: {str(e)}'
         }, status=500)
+
+
+def get_players_with_teams_view(request):
+    """Get all players that are assigned to a team for trade modal"""
+    try:
+        players = Player.objects.filter(team__isnull=False).select_related('team', 'team__practice_slot').order_by('last_name', 'first_name')
+
+        players_data = []
+        for player in players:
+            players_data.append({
+                'id': player.id,
+                'name': f"{player.first_name} {player.last_name}",
+                'team_id': player.team.id,
+                'team_name': player.team.name,
+                'conflict': player.conflict or '',
+                'practice_slot': player.team.practice_slot.practice_slot if player.team.practice_slot else 'Not set'
+            })
+
+        return JsonResponse({
+            'success': True,
+            'players': players_data
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@csrf_exempt
+def execute_trade_view(request):
+    """Execute a trade between two players"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=400)
+
+    try:
+        import json
+        data = json.loads(request.body)
+        player1_id = data.get('player1_id')
+        player2_id = data.get('player2_id')
+
+        if not player1_id or not player2_id:
+            return JsonResponse({'success': False, 'error': 'Both players must be selected'}, status=400)
+
+        if player1_id == player2_id:
+            return JsonResponse({'success': False, 'error': 'Cannot trade a player with themselves'}, status=400)
+
+        # Get both players
+        player1 = Player.objects.select_related('team').get(id=player1_id)
+        player2 = Player.objects.select_related('team').get(id=player2_id)
+
+        # Ensure both players have teams
+        if not player1.team or not player2.team:
+            return JsonResponse({'success': False, 'error': 'Both players must be assigned to teams'}, status=400)
+
+        # Swap the teams
+        team1 = player1.team
+        team2 = player2.team
+
+        player1.team = team2
+        player2.team = team1
+
+        player1.save()
+        player2.save()
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Trade executed successfully: {player1.first_name} {player1.last_name} ↔ {player2.first_name} {player2.last_name}'
+        })
+
+    except Player.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Player not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
