@@ -228,19 +228,18 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <!-- DEBUG: final_round_valid_picks = {{ final_round_valid_picks|join:", " }} -->
                                 {% for pick_num in picks %}
                                     <tr>
                                         <td class="text-center"><strong>{{ pick_num }}</strong></td>
                                         {% for round_num in rounds %}
                                             {% with team=pick_assignments|get_item:round_num|get_item:pick_num %}
                                                 {% with existing_pick=draft_picks_map|get_item:round_num|get_item:pick_num %}
-                                                    <td class="draft-cell{% if existing_pick %} picked{% endif %}{% if round_num in hat_pick_rounds %} hat-pick-round{% endif %}"
-                                                        data-practice-slot="{% if team.practice_slot %}{{ team.practice_slot.practice_slot }}{% else %}Not set{% endif %}"
-                                                        data-team-name="{{ team }}"
+                                                    <td class="draft-cell{% if existing_pick %} picked{% endif %}{% if round_num in hat_pick_rounds %} hat-pick-round{% endif %}{% if not team %} bg-light{% endif %}"
+                                                        {% if team %}data-practice-slot="{% if team.practice_slot %}{{ team.practice_slot.practice_slot }}{% else %}Not set{% endif %}"
+                                                        data-team-name="{{ team }}"{% endif %}
                                                         {% if existing_pick %}data-player-id="{{ existing_pick.player_id }}" data-player-name="{{ existing_pick.player_name }}"{% endif %}>
-                                                        <span class="team-name">{% if existing_pick %}{{ existing_pick.player_name }}{% else %}{{ team }}{% endif %}</span>
-                                                        <i class="bi bi-plus-circle add-icon"></i>
+                                                        {% if team %}<span class="team-name">{% if existing_pick %}{{ existing_pick.player_name }}{% else %}{{ team }}{% endif %}</span>
+                                                        <i class="bi bi-plus-circle add-icon"></i>{% endif %}
                                                     </td>
                                                 {% endwith %}
                                             {% endwith %}
