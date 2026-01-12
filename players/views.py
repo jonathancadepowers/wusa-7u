@@ -5496,15 +5496,20 @@ def move_event_date_view(request):
 
         # Parse the existing timestamp to preserve the time
         existing_dt = event.timestamp.astimezone(tz)
+        existing_time = existing_dt.time()
 
         # Parse the new date (YYYY-MM-DD format)
-        new_date_obj = datetime.strptime(new_date, '%Y-%m-%d')
+        new_date_obj = datetime.strptime(new_date, '%Y-%m-%d').date()
 
-        # Combine new date with existing time
-        new_dt = tz.localize(datetime.combine(
-            new_date_obj.date(),
-            existing_dt.time()
-        ))
+        # Combine new date with existing time in the correct timezone
+        naive_dt = datetime.combine(new_date_obj, existing_time)
+
+        # Try to localize, handling DST ambiguity
+        try:
+            new_dt = tz.localize(naive_dt, is_dst=None)
+        except:
+            # If ambiguous, use is_dst=False (standard time)
+            new_dt = tz.localize(naive_dt, is_dst=False)
 
         # Update the event timestamp
         event.timestamp = new_dt
