@@ -57,7 +57,7 @@
                                         {% for event_day, event_list in events_by_day.items %}
                                             {% if event_day == day %}
                                                 {% for event_data in event_list %}
-                                                    {% if forloop.counter <= 3 %}
+                                                    {% if forloop.counter <= 2 %}
                                                     <div class="event-badge text-white {% if needs_master_password_challenge == False %}event-editable{% endif %}"
                                                          style="background-color: {% if event_data.event.event_type %}{{ event_data.event.event_type.color }}{% else %}#0d6efd{% endif %};"
                                                          data-event-id="{{ event_data.event.id }}"
@@ -74,9 +74,9 @@
                                                     </div>
                                                     {% endif %}
                                                 {% endfor %}
-                                                {% if event_list|length > 3 %}
+                                                {% if event_list|length > 2 %}
                                                 <div class="more-events-link" onclick="event.stopPropagation(); showDayEvents({{ day }}, '{{ month_name }}', {{ year }});">
-                                                    +{{ event_list|length|add:"-3" }} more...
+                                                    +{{ event_list|length|add:"-2" }} more...
                                                 </div>
                                                 {% endif %}
                                             {% endif %}
@@ -153,8 +153,9 @@
 .events-container {
     font-size: 0.85rem;
     max-height: 110px;
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow: visible;
+    display: flex;
+    flex-direction: column;
 }
 
 .event-badge {
@@ -203,10 +204,16 @@
     cursor: pointer;
     padding: 0.25rem 0.5rem;
     text-decoration: underline;
+    font-weight: 600;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 0.25rem;
+    margin-top: 0.25rem;
+    display: inline-block;
 }
 
 .more-events-link:hover {
     color: #0a58ca;
+    background-color: rgba(13, 110, 253, 0.1);
 }
 </style>
 
