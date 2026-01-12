@@ -1208,12 +1208,18 @@ function enableEventDragDrop() {
         });
 
         day.addEventListener('drop', async function(e) {
+            console.log('Drop event fired');
             e.preventDefault();
             e.stopPropagation();
             this.style.backgroundColor = '';
 
             const eventId = e.dataTransfer.getData('eventId');
-            if (!eventId) return;
+            console.log('Dropped event ID:', eventId);
+
+            if (!eventId) {
+                console.log('No event ID found in dataTransfer');
+                return;
+            }
 
             // Extract day, month, year from the cell
             const dayNumber = this.querySelector('.day-number').textContent.trim();
@@ -1225,12 +1231,15 @@ function enableEventDragDrop() {
             const dayStr = String(dayNumber).padStart(2, '0');
             const newDate = `${year}-${monthStr}-${dayStr}`;
 
+            console.log('Moving event', eventId, 'to', newDate);
+
             // Update event date via API
             try {
                 const formData = new FormData();
                 formData.append('event_id', eventId);
                 formData.append('new_date', newDate);
 
+                console.log('Sending request to move event...');
                 const response = await fetch('{% url "players:move_event_date" %}', {
                     method: 'POST',
                     headers: {
@@ -1239,17 +1248,21 @@ function enableEventDragDrop() {
                     body: formData
                 });
 
+                console.log('Response status:', response.status);
                 const result = await response.json();
+                console.log('Response result:', result);
 
                 if (response.ok && result.success) {
+                    console.log('Success! Reloading page...');
                     // Reload the page to show updated calendar
                     window.location.reload();
                 } else {
+                    console.error('Failed to move event:', result.error);
                     alert('Failed to move event: ' + (result.error || 'Unknown error'));
                 }
             } catch (error) {
-                alert('An error occurred while moving the event.');
-                console.error(error);
+                console.error('Error during move operation:', error);
+                alert('An error occurred while moving the event: ' + error.message);
             }
         });
     });
