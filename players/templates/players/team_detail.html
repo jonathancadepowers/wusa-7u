@@ -376,9 +376,16 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="text-muted">All parent email addresses for {{ team.name }}:</p>
+                    <div class="alert alert-info mb-3">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>How to use:</strong> Click the "Copy to Clipboard" button below to copy all email addresses.
+                        You can then paste them directly into the BCC field of your email program to send a message to all team parents.
+                    </div>
+                    <p class="mb-2"><strong>All parent email addresses for {{ team.name }}:</strong></p>
                     <div class="mb-3">
-                        <textarea class="form-control" id="emailList" rows="8" readonly>{% for player in players %}{% if player.parent_email_1 %}{{ player.parent_email_1 }}{% if player.parent_email_2 %}, {{ player.parent_email_2 }}{% endif %}{% if not forloop.last %}, {% endif %}{% elif player.parent_email_2 %}{{ player.parent_email_2 }}{% if not forloop.last %}, {% endif %}{% endif %}{% endfor %}</textarea>
+                        <textarea class="form-control" id="emailList" rows="10" readonly>{% for player in players %}{% if player.parent_email_1 %}{{ player.parent_email_1 }}
+{% endif %}{% if player.parent_email_2 %}{{ player.parent_email_2 }}
+{% endif %}{% endfor %}</textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
