@@ -2223,6 +2223,40 @@ def team_detail_view(request, team_secret):
     return render(request, 'players/team_detail.html', context)
 
 
+def export_team_roster_csv(request, team_secret):
+    """Export team roster to CSV with same structure as the Team Roster table"""
+    import csv
+    from django.http import HttpResponse, Http404
+
+    try:
+        team = Team.objects.get(manager_secret=team_secret)
+    except Team.DoesNotExist:
+        raise Http404("Team not found")
+
+    # Create the HttpResponse object with CSV header
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="{team.name}_roster.csv"'
+
+    writer = csv.writer(response)
+    # Write header row matching the Team Roster table columns
+    writer.writerow(['Name', 'Birthday', 'School', 'History', 'Parent Email', 'Parent Phone'])
+
+    # Get all players assigned to this team, ordered alphabetically by last name
+    players = team.players.all().order_by('last_name', 'first_name')
+
+    # Write data rows
+    for player in players:
+        full_name = f"{player.first_name} {player.last_name}"
+        birthday = player.birthday if player.birthday else '-'
+        school = player.school if player.school else '-'
+        history = player.history if player.history else '-'
+        parent_email = player.parent_email_1 if player.parent_email_1 else ''
+        parent_phone = player.parent_phone_1 if player.parent_phone_1 else ''
+        writer.writerow([full_name, birthday, school, history, parent_email, parent_phone])
+
+    return response
+
+
 @csrf_exempt
 def toggle_star_player_view(request, team_secret):
     """Toggle starring a player for a team"""

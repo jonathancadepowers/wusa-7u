@@ -50,6 +50,7 @@ urlpatterns = [
     path('teams/<int:pk>/', views.team_edit_view, name='team_edit'),
     path('teams/<int:pk>/delete/', views.team_delete_view, name='team_delete'),
     path('teams/<str:team_secret>/', views.team_detail_view, name='team_detail'),
+    path('teams/<str:team_secret>/export-roster/', views.export_team_roster_csv, name='export_team_roster_csv'),
     path('teams/<str:team_secret>/toggle-star/', views.toggle_star_player_view, name='toggle_star_player'),
     path('teams/<str:team_secret>/save-starred-order/', views.save_starred_order_view, name='save_starred_order'),
     path('managers/', views.managers_list_view, name='managers_list'),
