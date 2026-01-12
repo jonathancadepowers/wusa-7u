@@ -449,8 +449,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Show admin buttons if master password cookie exists
-    if (getCookie('master_password')) {
+    const hasMasterPassword = !!getCookie('master_password');
+    if (hasMasterPassword) {
         document.getElementById('adminButtons').style.display = 'block';
+
+        // Enable drag-and-drop for events
+        enableEventDragDrop();
     }
 
     // Handle color swatch selection for new event types
@@ -1131,5 +1135,90 @@ document.getElementById('deleteEventBtn').addEventListener('click', async functi
         btn.innerHTML = originalHTML;
     }
 });
+
+// Enable drag-and-drop for calendar events
+function enableEventDragDrop() {
+    const eventBadges = document.querySelectorAll('.event-badge');
+    const calendarDays = document.querySelectorAll('.calendar-day:not(.empty-day)');
+
+    // Make event badges draggable
+    eventBadges.forEach(badge => {
+        badge.setAttribute('draggable', 'true');
+        badge.style.cursor = 'move';
+
+        badge.addEventListener('dragstart', function(e) {
+            e.stopPropagation();
+            // Store event ID in the drag data
+            const eventId = this.getAttribute('onclick').match(/openEditEventModal\((\d+)\)/)[1];
+            e.dataTransfer.setData('eventId', eventId);
+            e.dataTransfer.effectAllowed = 'move';
+            this.style.opacity = '0.5';
+        });
+
+        badge.addEventListener('dragend', function(e) {
+            this.style.opacity = '1';
+        });
+    });
+
+    // Make calendar days drop targets
+    calendarDays.forEach(day => {
+        day.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.dataTransfer.dropEffect = 'move';
+            this.style.backgroundColor = '#d0e8ff';
+        });
+
+        day.addEventListener('dragleave', function(e) {
+            this.style.backgroundColor = '';
+        });
+
+        day.addEventListener('drop', async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            this.style.backgroundColor = '';
+
+            const eventId = e.dataTransfer.getData('eventId');
+            if (!eventId) return;
+
+            // Extract day, month, year from the cell
+            const dayNumber = this.querySelector('.day-number').textContent.trim();
+            const month = {{ month }};
+            const year = {{ year }};
+
+            // Format date as YYYY-MM-DD
+            const monthStr = String(month).padStart(2, '0');
+            const dayStr = String(dayNumber).padStart(2, '0');
+            const newDate = `${year}-${monthStr}-${dayStr}`;
+
+            // Update event date via API
+            try {
+                const formData = new FormData();
+                formData.append('event_id', eventId);
+                formData.append('new_date', newDate);
+
+                const response = await fetch('{% url "players:move_event_date" %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    // Reload the page to show updated calendar
+                    window.location.reload();
+                } else {
+                    alert('Failed to move event: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                alert('An error occurred while moving the event.');
+                console.error(error);
+            }
+        });
+    });
+}
 </script>
 {% endblock %}

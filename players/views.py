@@ -5460,6 +5460,68 @@ def delete_event_view(request):
         }, status=500)
 
 
+@require_http_methods(["POST"])
+@csrf_exempt
+def move_event_date_view(request):
+    """Move an event to a new date (via drag-and-drop)"""
+    from .models import Event, GeneralSetting
+    from datetime import datetime
+    import pytz
+
+    try:
+        event_id = request.POST.get('event_id', '').strip()
+        new_date = request.POST.get('new_date', '').strip()
+
+        if not event_id or not new_date:
+            return JsonResponse({
+                'success': False,
+                'error': 'Event ID and new date are required.'
+            }, status=400)
+
+        # Get the event
+        try:
+            event = Event.objects.get(id=event_id)
+        except Event.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': 'Event not found.'
+            }, status=404)
+
+        # Get the timezone setting
+        try:
+            tz_setting = GeneralSetting.objects.get(key='timezone')
+            tz = pytz.timezone(tz_setting.value)
+        except (GeneralSetting.DoesNotExist, pytz.exceptions.UnknownTimeZoneError):
+            tz = pytz.UTC
+
+        # Parse the existing timestamp to preserve the time
+        existing_dt = event.timestamp.astimezone(tz)
+
+        # Parse the new date (YYYY-MM-DD format)
+        new_date_obj = datetime.strptime(new_date, '%Y-%m-%d')
+
+        # Combine new date with existing time
+        new_dt = tz.localize(datetime.combine(
+            new_date_obj.date(),
+            existing_dt.time()
+        ))
+
+        # Update the event timestamp
+        event.timestamp = new_dt
+        event.save()
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Event "{event.name}" moved to {new_date} successfully!'
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
 @require_http_methods(["GET"])
 def get_timezone_info_view(request):
     """Get list of available timezones and current timezone setting"""
