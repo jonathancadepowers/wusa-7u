@@ -59,12 +59,11 @@
                                                 {% for event_data in event_list %}
                                                     {% if forloop.counter <= 3 %}
                                                     <div class="event-badge text-white {% if needs_master_password_challenge == False %}event-editable{% endif %}"
-                                                         style="background-color: {% if event_data.event.event_type %}{{ event_data.event.event_type.color }}{% else %}#0d6efd{% endif %}; {% if needs_master_password_challenge == False %}cursor: pointer;{% endif %}"
+                                                         style="background-color: {% if event_data.event.event_type %}{{ event_data.event.event_type.color }}{% else %}#0d6efd{% endif %};"
                                                          data-event-id="{{ event_data.event.id }}"
                                                          data-bs-toggle="tooltip"
                                                          data-bs-placement="top"
                                                          data-bs-html="true"
-                                                         onclick="event.stopPropagation(); {% if needs_master_password_challenge == False %}openEditEventModal({{ event_data.event.id }});{% endif %}"
                                                          title="<strong>{{ event_data.event.name }}</strong><br>
                                                                 {% if event_data.event.event_type %}<i class='bi {{ event_data.event.event_type.bootstrap_icon_id }}'></i> {{ event_data.event.event_type.name }}<br>{% endif %}
                                                                 {% if event_data.has_time %}<i class='bi bi-clock'></i> {{ event_data.local_time|date:'g:i A' }}<br>{% endif %}
@@ -1146,6 +1145,15 @@ function enableEventDragDrop() {
     eventBadges.forEach(badge => {
         badge.setAttribute('draggable', 'true');
         badge.style.cursor = 'move';
+
+        // Add click handler for editing
+        badge.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const eventId = this.getAttribute('data-event-id');
+            if (eventId) {
+                openEditEventModal(eventId);
+            }
+        });
 
         badge.addEventListener('dragstart', function(e) {
             e.stopPropagation();
