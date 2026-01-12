@@ -5510,22 +5510,23 @@ def move_event_date_view(request):
         except (GeneralSetting.DoesNotExist, pytz.exceptions.UnknownTimeZoneError):
             tz = pytz.UTC
 
-        # Parse the existing timestamp to preserve the time
+        # Parse the existing timestamp to get the time in the display timezone
         existing_dt = event.timestamp.astimezone(tz)
         existing_time = existing_dt.time()
 
         # Log original timestamp
         import logging
         logger = logging.getLogger(__name__)
-        logger.info(f"Moving event {event.id}: Original timestamp: {event.timestamp}, Timezone: {tz}")
+        logger.info(f"Moving event {event.id}: Original timestamp UTC: {event.timestamp}, Display TZ: {tz}, Local time: {existing_dt}")
 
         # Parse the new date (YYYY-MM-DD format)
         new_date_obj = datetime.strptime(new_date, '%Y-%m-%d').date()
-        logger.info(f"New date parsed: {new_date_obj}, Existing time: {existing_time}")
+        logger.info(f"New date parsed: {new_date_obj}, Existing time in display TZ: {existing_time}")
 
-        # Combine new date with existing time in the correct timezone
+        # Combine new date with existing time in the display timezone
+        # This creates a naive datetime representing the local time
         naive_dt = datetime.combine(new_date_obj, existing_time)
-        logger.info(f"Combined naive datetime: {naive_dt}")
+        logger.info(f"Combined naive datetime (to be interpreted as {tz}): {naive_dt}")
 
         # Try to localize, handling DST ambiguity
         try:
@@ -5534,7 +5535,8 @@ def move_event_date_view(request):
             # If ambiguous, use is_dst=False (standard time)
             new_dt = tz.localize(naive_dt, is_dst=False)
 
-        logger.info(f"Localized datetime: {new_dt}, UTC: {new_dt.astimezone(pytz.UTC)}")
+        logger.info(f"Localized datetime in {tz}: {new_dt}")
+        logger.info(f"Converting to UTC: {new_dt.astimezone(pytz.UTC)}")
 
         # Update the event timestamp
         event.timestamp = new_dt
@@ -5542,7 +5544,9 @@ def move_event_date_view(request):
 
         # Verify what was saved
         event.refresh_from_db()
-        logger.info(f"Saved timestamp in DB: {event.timestamp}")
+        logger.info(f"Saved timestamp in DB (UTC): {event.timestamp}")
+        logger.info(f"Saved timestamp in display TZ ({tz}): {event.timestamp.astimezone(tz)}")
+        logger.info(f"Day extracted from display TZ: {event.timestamp.astimezone(tz).day}")
 
         return JsonResponse({
             'success': True,
