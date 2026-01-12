@@ -41,6 +41,9 @@
                     </div>
                     <div class="col-md-7 text-end">
                         <div class="d-flex gap-2 justify-content-end">
+                            <a href="{% url 'players:export_players_csv' %}" class="btn btn-info">
+                                <i class="bi bi-download me-1"></i>Export
+                            </a>
                             <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#executeTradeModal">
                                 <i class="bi bi-arrow-left-right me-1"></i>Execute Trade
                             </button>

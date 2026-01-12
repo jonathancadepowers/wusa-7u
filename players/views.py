@@ -1637,6 +1637,31 @@ def players_list_view(request):
     return render(request, 'players/players_list.html', context)
 
 
+def export_players_csv(request):
+    """Export all players to CSV with full name and assigned team"""
+    import csv
+    from django.http import HttpResponse
+
+    # Create the HttpResponse object with CSV header
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="players_export.csv"'
+
+    writer = csv.writer(response)
+    # Write header row
+    writer.writerow(['Player Full Name', 'Assigned Team'])
+
+    # Get all players ordered by last name, first name
+    players = Player.objects.select_related('team').order_by('last_name', 'first_name')
+
+    # Write data rows
+    for player in players:
+        full_name = f"{player.first_name} {player.last_name}"
+        team_name = player.team.name if player.team else ''
+        writer.writerow([full_name, team_name])
+
+    return response
+
+
 def player_detail_view(request, pk):
     """View and edit a single player"""
     player = get_object_or_404(Player, pk=pk)
