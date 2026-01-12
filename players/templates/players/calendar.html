@@ -1148,15 +1148,6 @@ function enableEventDragDrop() {
         badge.setAttribute('draggable', 'true');
         badge.style.cursor = 'move';
 
-        // Disable Bootstrap tooltip during drag to prevent interference
-        badge.addEventListener('mousedown', function(e) {
-            // Dispose tooltip if it exists
-            const tooltip = bootstrap.Tooltip.getInstance(this);
-            if (tooltip) {
-                tooltip.dispose();
-            }
-        });
-
         // Add click handler for editing (only if not dragging)
         let isDragging = false;
         badge.addEventListener('click', function(e) {
@@ -1171,6 +1162,13 @@ function enableEventDragDrop() {
         });
 
         badge.addEventListener('dragstart', function(e) {
+            // Hide and dispose tooltip during drag to prevent it from getting stuck
+            const tooltip = bootstrap.Tooltip.getInstance(this);
+            if (tooltip) {
+                tooltip.hide();
+                tooltip.dispose();
+            }
+
             isDragging = true;
             e.stopPropagation();
             // Store event ID in the drag data
@@ -1187,10 +1185,7 @@ function enableEventDragDrop() {
 
         badge.addEventListener('dragend', function(e) {
             this.style.opacity = '1';
-            // Reinitialize tooltip after drag
-            setTimeout(() => {
-                new bootstrap.Tooltip(this);
-            }, 100);
+            // Don't recreate tooltip here - it will be created when needed after drop
         });
     });
 
@@ -1258,16 +1253,21 @@ function enableEventDragDrop() {
                     // Find the dragged element
                     const draggedBadge = document.querySelector(`[data-event-id="${eventId}"]`);
                     if (draggedBadge) {
+                        // Dispose of the old tooltip before removing the element
+                        const oldTooltip = bootstrap.Tooltip.getInstance(draggedBadge);
+                        if (oldTooltip) {
+                            oldTooltip.dispose();
+                        }
+
+                        // Clone BEFORE removing (so we can reuse it)
+                        const newBadge = draggedBadge.cloneNode(true);
+
                         // Remove from old location
-                        const oldContainer = draggedBadge.closest('.events-container');
                         draggedBadge.remove();
 
                         // Add to new location
                         const newDayEventsContainer = this.querySelector('.events-container');
                         if (newDayEventsContainer) {
-                            // Clone the badge and add it to the new day
-                            const newBadge = draggedBadge.cloneNode(true);
-
                             // Get the list element (ol or div)
                             const existingBadges = newDayEventsContainer.querySelectorAll('.event-badge');
                             if (existingBadges.length > 0) {
@@ -1284,6 +1284,13 @@ function enableEventDragDrop() {
 
                             // Add event listeners to new badge
                             newBadge.addEventListener('dragstart', function(e) {
+                                // Dispose tooltip during drag to prevent it from getting stuck
+                                const tooltip = bootstrap.Tooltip.getInstance(this);
+                                if (tooltip) {
+                                    tooltip.hide();
+                                    tooltip.dispose();
+                                }
+
                                 isDragging = true;
                                 e.stopPropagation();
                                 const eventId = this.getAttribute('data-event-id');
@@ -1299,9 +1306,7 @@ function enableEventDragDrop() {
 
                             newBadge.addEventListener('dragend', function(e) {
                                 this.style.opacity = '1';
-                                setTimeout(() => {
-                                    new bootstrap.Tooltip(this);
-                                }, 100);
+                                // Don't create a new tooltip here - it's already created below
                             });
 
                             newBadge.addEventListener('click', function(e) {
@@ -1315,7 +1320,7 @@ function enableEventDragDrop() {
                                 isDragging = false;
                             });
 
-                            // Initialize tooltip
+                            // Initialize tooltip on the new badge (only once)
                             new bootstrap.Tooltip(newBadge);
                         }
 
