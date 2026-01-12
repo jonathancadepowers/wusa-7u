@@ -60,6 +60,7 @@
                                                     {% if forloop.counter <= 3 %}
                                                     <div class="event-badge text-white {% if needs_master_password_challenge == False %}event-editable{% endif %}"
                                                          style="background-color: {% if event_data.event.event_type %}{{ event_data.event.event_type.color }}{% else %}#0d6efd{% endif %}; {% if needs_master_password_challenge == False %}cursor: pointer;{% endif %}"
+                                                         data-event-id="{{ event_data.event.id }}"
                                                          data-bs-toggle="tooltip"
                                                          data-bs-placement="top"
                                                          data-bs-html="true"
@@ -1149,7 +1150,11 @@ function enableEventDragDrop() {
         badge.addEventListener('dragstart', function(e) {
             e.stopPropagation();
             // Store event ID in the drag data
-            const eventId = this.getAttribute('onclick').match(/openEditEventModal\((\d+)\)/)[1];
+            const eventId = this.getAttribute('data-event-id');
+            if (!eventId) {
+                e.preventDefault();
+                return;
+            }
             e.dataTransfer.setData('eventId', eventId);
             e.dataTransfer.effectAllowed = 'move';
             this.style.opacity = '0.5';
