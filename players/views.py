@@ -5056,10 +5056,26 @@ def calendar_view(request):
     display_tz = get_display_timezone()
     display_timezone_name = str(display_tz)
 
-    # Get all events for this month
+    # Get all events for this month and adjacent days (to handle timezone conversion)
+    # We fetch a wider range and then filter by display timezone to handle edge cases
+    from datetime import datetime
+    import pytz
+
+    # Create start and end of month in display timezone
+    start_of_month = display_tz.localize(datetime(year, month, 1, 0, 0, 0))
+    if month == 12:
+        end_of_month = display_tz.localize(datetime(year + 1, 1, 1, 0, 0, 0))
+    else:
+        end_of_month = display_tz.localize(datetime(year, month + 1, 1, 0, 0, 0))
+
+    # Convert to UTC for database query
+    start_utc = start_of_month.astimezone(pytz.UTC)
+    end_utc = end_of_month.astimezone(pytz.UTC)
+
+    # Fetch events that fall within this month in display timezone
     events = Event.objects.filter(
-        timestamp__year=year,
-        timestamp__month=month
+        timestamp__gte=start_utc,
+        timestamp__lt=end_utc
     ).select_related('event_type')
 
     # Organize events by day (convert UTC timestamps to display timezone)
