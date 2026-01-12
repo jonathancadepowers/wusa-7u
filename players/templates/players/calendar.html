@@ -1141,24 +1141,41 @@ function enableEventDragDrop() {
     const eventBadges = document.querySelectorAll('.event-badge');
     const calendarDays = document.querySelectorAll('.calendar-day:not(.empty-day)');
 
+    console.log('Enabling drag-drop for', eventBadges.length, 'event badges');
+
     // Make event badges draggable
     eventBadges.forEach(badge => {
         badge.setAttribute('draggable', 'true');
         badge.style.cursor = 'move';
 
-        // Add click handler for editing
-        badge.addEventListener('click', function(e) {
-            e.stopPropagation();
-            const eventId = this.getAttribute('data-event-id');
-            if (eventId) {
-                openEditEventModal(eventId);
+        // Disable Bootstrap tooltip during drag to prevent interference
+        badge.addEventListener('mousedown', function(e) {
+            // Dispose tooltip if it exists
+            const tooltip = bootstrap.Tooltip.getInstance(this);
+            if (tooltip) {
+                tooltip.dispose();
             }
         });
 
+        // Add click handler for editing (only if not dragging)
+        let isDragging = false;
+        badge.addEventListener('click', function(e) {
+            if (!isDragging) {
+                e.stopPropagation();
+                const eventId = this.getAttribute('data-event-id');
+                if (eventId) {
+                    openEditEventModal(eventId);
+                }
+            }
+            isDragging = false;
+        });
+
         badge.addEventListener('dragstart', function(e) {
+            isDragging = true;
             e.stopPropagation();
             // Store event ID in the drag data
             const eventId = this.getAttribute('data-event-id');
+            console.log('Drag started for event ID:', eventId);
             if (!eventId) {
                 e.preventDefault();
                 return;
@@ -1170,6 +1187,10 @@ function enableEventDragDrop() {
 
         badge.addEventListener('dragend', function(e) {
             this.style.opacity = '1';
+            // Reinitialize tooltip after drag
+            setTimeout(() => {
+                new bootstrap.Tooltip(this);
+            }, 100);
         });
     });
 
