@@ -1253,9 +1253,74 @@ function enableEventDragDrop() {
                 console.log('Response result:', result);
 
                 if (response.ok && result.success) {
-                    console.log('Success! Reloading page...');
-                    // Reload the page to show updated calendar
-                    window.location.reload();
+                    console.log('Success! Updating DOM without reload...');
+
+                    // Find the dragged element
+                    const draggedBadge = document.querySelector(`[data-event-id="${eventId}"]`);
+                    if (draggedBadge) {
+                        // Remove from old location
+                        const oldContainer = draggedBadge.closest('.events-container');
+                        draggedBadge.remove();
+
+                        // Add to new location
+                        const newDayEventsContainer = this.querySelector('.events-container');
+                        if (newDayEventsContainer) {
+                            // Clone the badge and add it to the new day
+                            const newBadge = draggedBadge.cloneNode(true);
+
+                            // Get the list element (ol or div)
+                            const existingBadges = newDayEventsContainer.querySelectorAll('.event-badge');
+                            if (existingBadges.length > 0) {
+                                // Add after existing badges
+                                existingBadges[existingBadges.length - 1].parentNode.insertBefore(newBadge, existingBadges[existingBadges.length - 1].nextSibling);
+                            } else {
+                                // First badge in this day
+                                newDayEventsContainer.appendChild(newBadge);
+                            }
+
+                            // Re-enable drag on the new badge
+                            newBadge.setAttribute('draggable', 'true');
+                            newBadge.style.cursor = 'move';
+
+                            // Add event listeners to new badge
+                            newBadge.addEventListener('dragstart', function(e) {
+                                isDragging = true;
+                                e.stopPropagation();
+                                const eventId = this.getAttribute('data-event-id');
+                                console.log('Drag started for event ID:', eventId);
+                                if (!eventId) {
+                                    e.preventDefault();
+                                    return;
+                                }
+                                e.dataTransfer.setData('eventId', eventId);
+                                e.dataTransfer.effectAllowed = 'move';
+                                this.style.opacity = '0.5';
+                            });
+
+                            newBadge.addEventListener('dragend', function(e) {
+                                this.style.opacity = '1';
+                                setTimeout(() => {
+                                    new bootstrap.Tooltip(this);
+                                }, 100);
+                            });
+
+                            newBadge.addEventListener('click', function(e) {
+                                if (!isDragging) {
+                                    e.stopPropagation();
+                                    const eventId = this.getAttribute('data-event-id');
+                                    if (eventId) {
+                                        openEditEventModal(eventId);
+                                    }
+                                }
+                                isDragging = false;
+                            });
+
+                            // Initialize tooltip
+                            new bootstrap.Tooltip(newBadge);
+                        }
+
+                        console.log('Event moved successfully in DOM');
+                    }
                 } else {
                     console.error('Failed to move event:', result.error);
                     alert('Failed to move event: ' + (result.error || 'Unknown error'));
