@@ -5226,7 +5226,7 @@ def calendar_view(request):
         'event_types': event_types,
         'display_timezone_name': display_timezone_name,
         'events_by_day': events_by_day,
-        'events_by_day_json': json.dumps(events_by_day_json),
+        'events_by_day_json': events_by_day_json,  # Pass raw dict, not JSON string
     }
 
     return render(request, 'players/calendar.html', context)
