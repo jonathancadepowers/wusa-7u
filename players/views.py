@@ -5086,7 +5086,70 @@ def practice_slot_delete_view(request, pk):
 
 
 def calendar_view(request):
-    """Display a monthly calendar with events"""
+    """Display calendar with FullCalendar"""
+    from .models import EventType
+
+    # Get all event types for the modal dropdown
+    event_types = EventType.objects.all().order_by('name')
+
+    context = {
+        'event_types': event_types,
+    }
+
+    return render(request, 'players/calendar.html', context)
+
+
+def calendar_events_api(request):
+    """API endpoint that returns events in FullCalendar JSON format"""
+    from .models import Event, GeneralSetting
+    import pytz
+    from datetime import datetime
+
+    # Get display timezone
+    tz_setting = GeneralSetting.objects.filter(key='timezone').first()
+    timezone_str = tz_setting.value if tz_setting else 'UTC'
+    display_tz = pytz.timezone(timezone_str)
+
+    # Get all events
+    events = Event.objects.select_related('event_type').all()
+
+    # Convert to FullCalendar format
+    events_data = []
+    for event in events:
+        # Convert to display timezone
+        local_time = event.timestamp.astimezone(display_tz)
+
+        # Determine if event has a time component
+        has_time = not (local_time.hour == 0 and local_time.minute == 0 and local_time.second == 0)
+
+        event_dict = {
+            'id': event.id,
+            'title': event.name,
+            'start': event.timestamp.isoformat(),
+            'allDay': not has_time,
+        }
+
+        # Add end date if multi-day event
+        if event.end_date:
+            # For all-day multi-day events, end date should be day AFTER last day (FullCalendar format)
+            from datetime import timedelta
+            end_datetime = datetime.combine(event.end_date + timedelta(days=1), datetime.min.time())
+            event_dict['end'] = display_tz.localize(end_datetime).isoformat()
+            event_dict['allDay'] = True
+
+        # Add color from event type
+        if event.event_type:
+            event_dict['backgroundColor'] = event.event_type.color
+            event_dict['borderColor'] = event.event_type.color
+
+        events_data.append(event_dict)
+
+    return JsonResponse(events_data, safe=False)
+
+
+# Keep the old calendar view for reference (can delete later)
+def old_calendar_view(request):
+    """OLD Display a monthly calendar with events"""
     import calendar
     from datetime import date
     from dateutil.relativedelta import relativedelta

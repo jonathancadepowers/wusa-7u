@@ -98,6 +98,7 @@ urlpatterns = [
     path('practice_slots/assign/', views.assign_practice_slots_to_teams_view, name='assign_practice_slots_to_teams'),
     # Calendar
     path('calendar/', views.calendar_view, name='calendar'),
+    path('calendar/api/events/', views.calendar_events_api, name='calendar_events_api'),
     path('calendar/get-event/', views.get_event_view, name='get_event'),
     path('calendar/create-event/', views.create_event_view, name='create_event'),
     path('calendar/update-event/', views.update_event_view, name='update_event'),
