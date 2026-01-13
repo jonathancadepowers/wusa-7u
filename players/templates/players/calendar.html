@@ -65,18 +65,18 @@
                                                          data-bs-toggle="tooltip"
                                                          data-bs-placement="top"
                                                          data-bs-html="true"
-                                                         title="<strong>{{ event_data.event.name }}</strong><br>
-                                                                {% if event_data.event.event_type %}<i class='bi {{ event_data.event.event_type.bootstrap_icon_id }}'></i> {{ event_data.event.event_type.name }}<br>{% endif %}
+                                                         title="<strong>{{ event_data.event.name|escapejs }}</strong><br>
+                                                                {% if event_data.event.event_type %}<i class='bi {{ event_data.event.event_type.bootstrap_icon_id }}'></i> {{ event_data.event.event_type.name|escapejs }}<br>{% endif %}
                                                                 {% if event_data.has_time %}<i class='bi bi-clock'></i> {{ event_data.local_time|date:'g:i A' }}<br>{% endif %}
-                                                                {% if event_data.event.location %}<i class='bi bi-geo-alt'></i> {{ event_data.event.location }}<br>{% endif %}
-                                                                {% if event_data.event.description %}{{ event_data.event.description|truncatewords:20 }}{% endif %}">
+                                                                {% if event_data.event.location %}<i class='bi bi-geo-alt'></i> {{ event_data.event.location|escapejs }}<br>{% endif %}
+                                                                {% if event_data.event.description %}{{ event_data.event.description|truncatewords:20|escapejs }}{% endif %}">
                                                         <i class="bi {% if event_data.event.event_type %}{{ event_data.event.event_type.bootstrap_icon_id }}{% else %}bi-calendar-event{% endif %}"></i>
                                                         {{ event_data.event.name|truncatewords:3 }}
                                                     </div>
                                                     {% endif %}
                                                 {% endfor %}
                                                 {% if event_list|length > 2 %}
-                                                <div class="more-events-link" onclick="event.stopPropagation(); showDayEvents({{ day }}, '{{ month_name }}', {{ year }});">
+                                                <div class="more-events-link" onclick="event.stopPropagation(); showDayEvents({{ day }}, '{{ month_name|escapejs }}', {{ year }});">
                                                     +{{ event_list|length|add:"-2" }} more...
                                                 </div>
                                                 {% endif %}
