@@ -968,7 +968,7 @@ function showDayEvents(day, monthName, year) {
     modalTitle.textContent = `Events for ${monthName} ${day}, ${year}`;
 
     // Get all events for this day from the template data
-    const eventsData = {{ events_by_day_json|safe }};
+    const eventsData = JSON.parse('{{ events_by_day_json|escapejs }}');
     const dayEvents = eventsData[day] || [];
 
     if (dayEvents.length === 0) {
