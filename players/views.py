@@ -5104,6 +5104,9 @@ def calendar_view(request):
     prev_month = current_date - relativedelta(months=1)
     next_month = current_date + relativedelta(months=1)
 
+    # Set Sunday as first day of week (US calendar format)
+    calendar.setfirstweekday(calendar.SUNDAY)
+
     # Get calendar data for the month
     cal = calendar.monthcalendar(year, month)
     month_name = calendar.month_name[month]
