@@ -95,7 +95,6 @@
     </div>
 </div>
 
-{{ events_by_day_json|json_script:"events-data" }}
 
 <style>
 .calendar-table {
@@ -971,8 +970,31 @@ function showDayEvents(day, monthName, year) {
     modalTitle.textContent = `Events for ${monthName} ${day}, ${year}`;
 
     // Get all events for this day from the template data
-    const eventsData = JSON.parse(document.getElementById('events-data').textContent);
-    const dayEvents = eventsData[day] || [];
+    const eventsDataMap = {
+        {% for event_day, event_list in events_by_day.items %}
+        {{ event_day }}: [
+            {% for event_data in event_list %}
+            {
+                event: {
+                    id: {{ event_data.event.id }},
+                    name: '{{ event_data.event.name|escapejs }}',
+                    description: '{{ event_data.event.description|default:""|escapejs }}',
+                    location: '{{ event_data.event.location|default:""|escapejs }}',
+                    event_type: {% if event_data.event.event_type %}{
+                        name: '{{ event_data.event.event_type.name|escapejs }}',
+                        bootstrap_icon_id: '{{ event_data.event.event_type.bootstrap_icon_id|escapejs }}',
+                        color: '{{ event_data.event.event_type.color|escapejs }}'
+                    }{% else %}null{% endif %}
+                },
+                local_time: '{{ event_data.local_time.isoformat }}',
+                has_time: {{ event_data.has_time|lower }},
+                is_multi_day: {{ event_data.is_multi_day|lower }}
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ]{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    };
+    const dayEvents = eventsDataMap[day] || [];
 
     if (dayEvents.length === 0) {
         contentDiv.innerHTML = '<p class="text-muted">No events for this day.</p>';
