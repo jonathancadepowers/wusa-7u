@@ -5141,20 +5141,48 @@ def calendar_view(request):
     ).select_related('event_type')
 
     # Organize events by day (convert UTC timestamps to display timezone)
+    # For multi-day events, duplicate them across all days they span
+    from datetime import timedelta
     events_by_day = {}
     for event in events:
         # Convert UTC timestamp to display timezone
         local_time = event.timestamp.astimezone(display_tz)
-        day = local_time.day
+        start_day = local_time.day
+
         # Check if event has a specific time (not midnight in local timezone)
+        # Multi-day events (with end_date) should never have a time
         has_time = not (local_time.hour == 0 and local_time.minute == 0 and local_time.second == 0)
-        if day not in events_by_day:
-            events_by_day[day] = []
-        events_by_day[day].append({
-            'event': event,
-            'local_time': local_time,
-            'has_time': has_time
-        })
+
+        # If event has end_date, it spans multiple days
+        if event.end_date:
+            has_time = False  # Multi-day events don't show time
+            # Get start date (just the date part of timestamp)
+            start_date = local_time.date()
+            # Iterate through all days from start to end
+            current_date = start_date
+            while current_date <= event.end_date:
+                # Only add if current_date is in the current month
+                if current_date.year == year and current_date.month == month:
+                    day = current_date.day
+                    if day not in events_by_day:
+                        events_by_day[day] = []
+                    events_by_day[day].append({
+                        'event': event,
+                        'local_time': local_time,
+                        'has_time': has_time,
+                        'is_multi_day': True
+                    })
+                current_date += timedelta(days=1)
+        else:
+            # Single day event
+            if start_day not in events_by_day:
+                events_by_day[start_day] = []
+            events_by_day[start_day].append({
+                'event': event,
+                'local_time': local_time,
+                'has_time': has_time,
+                'is_multi_day': False
+            })
 
     # Sort events within each day by local_time (chronological order)
     for day in events_by_day:
@@ -5172,6 +5200,7 @@ def calendar_view(request):
                     'name': event_data['event'].name,
                     'description': event_data['event'].description,
                     'location': event_data['event'].location,
+                    'end_date': event_data['event'].end_date.isoformat() if event_data['event'].end_date else None,
                     'event_type': {
                         'name': event_data['event'].event_type.name,
                         'bootstrap_icon_id': event_data['event'].event_type.bootstrap_icon_id,
@@ -5180,6 +5209,7 @@ def calendar_view(request):
                 },
                 'local_time': event_data['local_time'].isoformat(),
                 'has_time': event_data['has_time'],
+                'is_multi_day': event_data['is_multi_day'],
             }
             events_by_day_json[day].append(event_dict)
 
@@ -5251,6 +5281,7 @@ def create_event_view(request):
         event_type_id = request.POST.get('event_type_id', '').strip()
         location = request.POST.get('location', '').strip()
         timestamp_str = request.POST.get('timestamp', '').strip()
+        end_date_str = request.POST.get('end_date', '').strip()
         description = request.POST.get('description', '').strip()
 
         if not name or not event_type_id or not timestamp_str:
@@ -5285,12 +5316,25 @@ def create_event_view(request):
                 'error': 'Invalid timestamp format.'
             }, status=400)
 
+        # Parse end_date if provided
+        end_date = None
+        if end_date_str:
+            try:
+                from datetime import date
+                end_date = date.fromisoformat(end_date_str)
+            except ValueError:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Invalid end date format.'
+                }, status=400)
+
         # Create the event
         event = Event.objects.create(
             name=name,
             event_type=event_type,
             location=location if location else None,
             timestamp=timestamp,
+            end_date=end_date,
             description=description if description else None
         )
 
@@ -5391,6 +5435,7 @@ def update_event_view(request):
         event_type_id = request.POST.get('event_type', '').strip()
         location = request.POST.get('location', '').strip()
         timestamp_str = request.POST.get('timestamp', '').strip()
+        end_date_str = request.POST.get('end_date', '').strip()
         description = request.POST.get('description', '').strip()
 
         if not event_id or not name or not timestamp_str:
@@ -5436,11 +5481,24 @@ def update_event_view(request):
                 'error': 'Invalid timestamp format.'
             }, status=400)
 
+        # Parse end_date if provided
+        end_date = None
+        if end_date_str:
+            try:
+                from datetime import date
+                end_date = date.fromisoformat(end_date_str)
+            except ValueError:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Invalid end date format.'
+                }, status=400)
+
         # Update the event
         event.name = name
         event.event_type = event_type
         event.location = location if location else None
         event.timestamp = timestamp
+        event.end_date = end_date
         event.description = description if description else None
         event.save()
 
@@ -5488,6 +5546,7 @@ def get_event_view(request):
                 'event_type_id': event.event_type.id if event.event_type else None,
                 'location': event.location or '',
                 'timestamp': event.timestamp.isoformat(),
+                'end_date': event.end_date.isoformat() if event.end_date else '',
                 'description': event.description or ''
             }
         })

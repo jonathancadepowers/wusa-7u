@@ -296,6 +296,7 @@ class Event(models.Model):
     description = models.TextField(blank=True, null=True)
     location = models.CharField(max_length=200, blank=True, null=True)
     timestamp = models.DateTimeField()
+    end_date = models.DateField(blank=True, null=True)  # For multi-day events
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

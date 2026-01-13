@@ -250,7 +250,7 @@
                     </div>
                     <div class="mb-3">
                         <label for="eventDate" class="form-label">
-                            Date
+                            Start Date
                             <i class="bi bi-info-circle text-muted"
                                data-bs-toggle="tooltip"
                                data-bs-placement="right"
@@ -259,8 +259,19 @@
                         <input type="date" class="form-control" id="eventDate" required>
                     </div>
                     <div class="mb-3">
+                        <label for="eventEndDate" class="form-label">
+                            End Date (Optional - for multi-day events)
+                            <i class="bi bi-info-circle text-muted"
+                               data-bs-toggle="tooltip"
+                               data-bs-placement="right"
+                               title="Leave empty for single-day event. Multi-day events cannot have a time."></i>
+                        </label>
+                        <input type="date" class="form-control" id="eventEndDate">
+                    </div>
+                    <div class="mb-3">
                         <label for="eventTime" class="form-label">Time (Optional)</label>
                         <input type="time" class="form-control" id="eventTime">
+                        <small class="form-text text-muted">Time cannot be set for multi-day events</small>
                     </div>
                     <div class="mb-3">
                         <label for="eventDescription" class="form-label">Description (Optional)</label>
@@ -415,7 +426,7 @@
                     </div>
                     <div class="mb-3">
                         <label for="editEventDate" class="form-label">
-                            Date
+                            Start Date
                             <i class="bi bi-info-circle text-muted"
                                data-bs-toggle="tooltip"
                                data-bs-placement="right"
@@ -424,8 +435,19 @@
                         <input type="date" class="form-control" id="editEventDate" required>
                     </div>
                     <div class="mb-3">
+                        <label for="editEventEndDate" class="form-label">
+                            End Date (Optional - for multi-day events)
+                            <i class="bi bi-info-circle text-muted"
+                               data-bs-toggle="tooltip"
+                               data-bs-placement="right"
+                               title="Leave empty for single-day event. Multi-day events cannot have a time."></i>
+                        </label>
+                        <input type="date" class="form-control" id="editEventEndDate">
+                    </div>
+                    <div class="mb-3">
                         <label for="editEventTime" class="form-label">Time (Optional)</label>
                         <input type="time" class="form-control" id="editEventTime">
+                        <small class="form-text text-muted">Time cannot be set for multi-day events</small>
                     </div>
                     <div class="mb-3">
                         <label for="editEventDescription" class="form-label">Description (Optional)</label>
@@ -761,6 +783,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const eventType = document.getElementById('eventType').value;
         const location = document.getElementById('eventLocation').value.trim();
         const eventDate = document.getElementById('eventDate').value;
+        const eventEndDate = document.getElementById('eventEndDate').value;
         const eventTime = document.getElementById('eventTime').value;
         const description = document.getElementById('eventDescription').value.trim();
         const errorDiv = document.getElementById('createEventError');
@@ -776,18 +799,26 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        // Validate: cannot have both time and end_date
+        if (eventTime && eventEndDate) {
+            errorDiv.textContent = 'Multi-day events cannot have a specific time.';
+            errorDiv.classList.remove('d-none');
+            return;
+        }
+
         // Combine date and time - if no time provided, use midnight
         const timestamp = eventTime ? `${eventDate}T${eventTime}` : `${eventDate}T00:00`;
 
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating...';
 
-        try {
+        try:
             const formData = new FormData();
             formData.append('name', name);
             formData.append('event_type_id', eventType);
             formData.append('location', location);
             formData.append('timestamp', timestamp);
+            formData.append('end_date', eventEndDate);
             formData.append('description', description);
 
             const response = await fetch('{% url "players:create_event" %}', {
@@ -901,8 +932,9 @@ function openCreateEventModal(year, month, day) {
     // Set the date input value
     document.getElementById('eventDate').value = dateStr;
 
-    // Clear time field (make it optional)
+    // Clear time and end date fields (make them optional)
     document.getElementById('eventTime').value = '';
+    document.getElementById('eventEndDate').value = '';
 
     // Clear other fields
     document.getElementById('eventName').value = '';
@@ -998,8 +1030,10 @@ async function openEditEventModal(eventId) {
         // Split timestamp into date and time
         const timestampParts = event.timestamp.split('T');
         document.getElementById('editEventDate').value = timestampParts[0];
-        // Only set time if it's not midnight (00:00:00)
-        if (timestampParts[1] && !timestampParts[1].startsWith('00:00')) {
+        // Set end_date if exists
+        document.getElementById('editEventEndDate').value = event.end_date || '';
+        // Only set time if it's not midnight (00:00:00) AND no end_date (single-day event)
+        if (!event.end_date && timestampParts[1] && !timestampParts[1].startsWith('00:00')) {
             document.getElementById('editEventTime').value = timestampParts[1].substring(0, 5); // HH:MM
         } else {
             document.getElementById('editEventTime').value = '';
@@ -1033,11 +1067,19 @@ document.getElementById('updateEventBtn').addEventListener('click', async functi
     const eventType = document.getElementById('editEventType').value;
     const location = document.getElementById('editEventLocation').value.trim();
     const eventDate = document.getElementById('editEventDate').value;
+    const eventEndDate = document.getElementById('editEventEndDate').value;
     const eventTime = document.getElementById('editEventTime').value;
     const description = document.getElementById('editEventDescription').value.trim();
 
     if (!name || !eventDate) {
         errorDiv.textContent = 'Event name and date are required.';
+        errorDiv.classList.remove('d-none');
+        return;
+    }
+
+    // Validate: cannot have both time and end_date
+    if (eventTime && eventEndDate) {
+        errorDiv.textContent = 'Multi-day events cannot have a specific time.';
         errorDiv.classList.remove('d-none');
         return;
     }
@@ -1056,6 +1098,7 @@ document.getElementById('updateEventBtn').addEventListener('click', async functi
         formData.append('event_type', eventType);
         formData.append('location', location);
         formData.append('timestamp', timestamp);
+        formData.append('end_date', eventEndDate);
         formData.append('description', description);
 
         const response = await fetch('{% url "players:update_event" %}', {
