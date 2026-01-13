@@ -21,6 +21,7 @@ urlpatterns = [
     path('draft/create/', views.create_draft_view, name='create_draft'),
     path('draft/edit/', views.edit_draft_view, name='edit_draft'),
     path('draft/run/', views.run_draft_view, name='run_draft'),
+    path('draft/export/', views.export_draft_board, name='export_draft_board'),
     path('draft/toggle-portal/', views.toggle_draft_portal_view, name='toggle_draft_portal'),
     path('draft/available-players/', views.available_players_view, name='available_players'),
     path('draft/make-pick/', views.make_pick_view, name='make_pick'),

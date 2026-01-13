@@ -3441,6 +3441,156 @@ def run_draft_view(request):
     return render(request, 'players/run_draft.html', context)
 
 
+def export_draft_board(request):
+    """Export draft board to CSV in exact same order and structure as displayed"""
+    import csv
+    from django.http import HttpResponse
+
+    # Get the most recent draft
+    try:
+        draft = Draft.objects.latest('created_at')
+    except Draft.DoesNotExist:
+        messages.error(request, 'No draft found. Please create a draft first.')
+        return redirect('players:edit_draft')
+
+    # Create ranges for rounds and picks
+    total_rounds = draft.rounds_draftable + draft.rounds_nondraftable
+    rounds = list(range(1, total_rounds + 1))
+    picks = list(range(1, draft.picks_per_round + 1))
+
+    # Parse the order field to get team objects
+    order_data = draft.order.strip()
+    if order_data.startswith('['):
+        team_ids = json.loads(order_data)
+    else:
+        team_ids = [int(tid.strip()) for tid in order_data.split(',') if tid.strip()]
+
+    # Get team objects in order
+    teams_dict = {team.id: team for team in Team.objects.filter(id__in=team_ids)}
+    ordered_teams = [teams_dict[tid] for tid in team_ids]
+
+    # Determine how many picks are in the final round
+    final_round_pick_count = draft.final_round_picks if draft.final_round_picks else draft.picks_per_round
+    final_round_number_calc = draft.rounds_draftable + draft.rounds_nondraftable
+
+    # Create a mapping of round -> pick -> team for snake draft
+    pick_assignments = {}
+    for round_num in rounds:
+        pick_assignments[round_num] = {}
+
+        # Determine how many picks this round should have
+        if round_num == final_round_number_calc:
+            picks_for_this_round = range(1, final_round_pick_count + 1)
+        else:
+            picks_for_this_round = picks
+
+        if round_num % 2 == 1:  # Odd rounds: normal order
+            for pick_num in picks_for_this_round:
+                team_index = pick_num - 1
+                pick_assignments[round_num][pick_num] = ordered_teams[team_index]
+        else:  # Even rounds: reversed order (snake draft)
+            for pick_num in picks_for_this_round:
+                team_index = len(ordered_teams) - pick_num
+                pick_assignments[round_num][pick_num] = ordered_teams[team_index]
+
+    # Load existing draft picks
+    existing_picks = DraftPick.objects.select_related('player', 'team').all()
+    draft_picks_map = {}
+    for draft_pick in existing_picks:
+        if draft_pick.round not in draft_picks_map:
+            draft_picks_map[draft_pick.round] = {}
+        if draft_pick.player:
+            draft_picks_map[draft_pick.round][draft_pick.pick] = {
+                'player_name': f"{draft_pick.player.first_name} {draft_pick.player.last_name}",
+                'player_id': draft_pick.player.id
+            }
+
+    # Check if there's a final round with partial picks
+    has_final_round = False
+    final_round_number = 0
+
+    if draft.final_round_draft_order:
+        has_final_round = True
+        total_rounds = draft.rounds_draftable + draft.rounds_nondraftable
+        final_round_number = total_rounds + 1
+
+        # Parse final round team IDs
+        final_round_team_ids = [int(tid) for tid in draft.final_round_draft_order.split(',') if tid]
+
+        # Get team objects for final round
+        final_teams_dict = {team.id: team for team in Team.objects.filter(id__in=final_round_team_ids)}
+
+        # Add final round to pick_assignments
+        pick_assignments[final_round_number] = {}
+        for pick_num, team_id in enumerate(final_round_team_ids, start=1):
+            pick_assignments[final_round_number][pick_num] = final_teams_dict[team_id]
+
+    # Determine which rounds are hat pick rounds
+    hat_pick_rounds = set(range(draft.rounds_draftable + 1, total_rounds + 1))
+
+    # Create CSV response
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="draft_board_export.csv"'
+
+    writer = csv.writer(response)
+
+    # Write header row
+    header = ['Pick']
+    for round_num in rounds:
+        if round_num in hat_pick_rounds:
+            header.append(f'Round {round_num} (Hat Pick)')
+        else:
+            header.append(f'Round {round_num}')
+    if has_final_round:
+        header.append(f'Round {final_round_number} (Hat Pick)')
+    writer.writerow(header)
+
+    # Write data rows
+    final_round_pick_count = draft.final_round_picks if draft.final_round_picks else draft.picks_per_round
+    final_round_valid_picks = list(range(1, final_round_pick_count + 1))
+
+    for pick_num in picks:
+        row = [str(pick_num)]
+
+        # Add cells for each regular round
+        for round_num in rounds:
+            team = pick_assignments.get(round_num, {}).get(pick_num)
+            existing_pick = draft_picks_map.get(round_num, {}).get(pick_num)
+
+            if team:
+                if existing_pick:
+                    # Player has been drafted
+                    cell_value = f"{existing_pick['player_name']} - {team.name}"
+                else:
+                    # Team assigned but no player drafted yet
+                    cell_value = team.name
+            else:
+                # No team assigned (shouldn't happen in normal rounds)
+                cell_value = ''
+
+            row.append(cell_value)
+
+        # Add cell for final round if it exists
+        if has_final_round:
+            if pick_num in final_round_valid_picks:
+                team = pick_assignments.get(final_round_number, {}).get(pick_num)
+                if team:
+                    existing_pick = draft_picks_map.get(final_round_number, {}).get(pick_num)
+                    if existing_pick:
+                        cell_value = f"{existing_pick['player_name']} - {team.name}"
+                    else:
+                        cell_value = team.name
+                else:
+                    cell_value = ''
+            else:
+                cell_value = ''
+            row.append(cell_value)
+
+        writer.writerow(row)
+
+    return response
+
+
 def toggle_draft_portal_view(request):
     """Toggle the open_draft_portal_to_managers setting"""
     if request.method == 'POST':

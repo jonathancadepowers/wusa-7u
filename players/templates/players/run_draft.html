@@ -125,6 +125,9 @@
 
 {% block navbar_actions %}
     <div class="d-flex gap-2">
+        <a href="{% url 'players:export_draft_board' %}" class="btn btn-success">
+            <i class="bi bi-download"></i> Export
+        </a>
         <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#configureDraftOrderModal">
             Configure Draft Order
         </button>
