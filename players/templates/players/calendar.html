@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Calendar - WUSA 7U{% endblock %}
 
@@ -93,6 +94,8 @@
         </div>
     </div>
 </div>
+
+{{ events_by_day_json|json_script:"events-data" }}
 
 <style>
 .calendar-table {
@@ -968,7 +971,7 @@ function showDayEvents(day, monthName, year) {
     modalTitle.textContent = `Events for ${monthName} ${day}, ${year}`;
 
     // Get all events for this day from the template data
-    const eventsData = JSON.parse('{{ events_by_day_json|escapejs }}');
+    const eventsData = JSON.parse(document.getElementById('events-data').textContent);
     const dayEvents = eventsData[day] || [];
 
     if (dayEvents.length === 0) {
