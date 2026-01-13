@@ -1293,7 +1293,9 @@ function enableEventDragDrop() {
                             newBadge.setAttribute('draggable', 'true');
                             newBadge.style.cursor = 'pointer';
 
-                            // Add event listeners to new badge
+                            // Add event listeners to new badge with its own isDragging variable
+                            let newBadgeIsDragging = false;
+
                             newBadge.addEventListener('dragstart', function(e) {
                                 // Dispose tooltip during drag to prevent it from getting stuck
                                 const tooltip = bootstrap.Tooltip.getInstance(this);
@@ -1302,7 +1304,7 @@ function enableEventDragDrop() {
                                     tooltip.dispose();
                                 }
 
-                                isDragging = true;
+                                newBadgeIsDragging = true;
                                 e.stopPropagation();
                                 const eventId = this.getAttribute('data-event-id');
                                 console.log('Drag started for event ID:', eventId);
@@ -1321,14 +1323,14 @@ function enableEventDragDrop() {
                             });
 
                             newBadge.addEventListener('click', function(e) {
-                                if (!isDragging) {
+                                if (!newBadgeIsDragging) {
                                     e.stopPropagation();
                                     const eventId = this.getAttribute('data-event-id');
                                     if (eventId) {
                                         openEditEventModal(eventId);
                                     }
                                 }
-                                isDragging = false;
+                                newBadgeIsDragging = false;
                             });
 
                             // Initialize tooltip on the new badge (only once)
