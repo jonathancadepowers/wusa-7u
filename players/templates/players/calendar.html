@@ -1157,7 +1157,7 @@ function enableEventDragDrop() {
     // Make event badges draggable
     eventBadges.forEach(badge => {
         badge.setAttribute('draggable', 'true');
-        badge.style.cursor = 'move';
+        badge.style.cursor = 'pointer';
 
         // Add click handler for editing (only if not dragging)
         let isDragging = false;
