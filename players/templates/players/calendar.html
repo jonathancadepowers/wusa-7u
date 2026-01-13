@@ -496,37 +496,39 @@ document.addEventListener('DOMContentLoaded', function() {
     const newCustomColorToggle = document.getElementById('newCustomColorToggle');
     const newCustomColorInput = document.getElementById('newCustomColorInput');
 
-    newColorSwatches.forEach(swatch => {
-        swatch.addEventListener('click', function() {
-            if (!newCustomColorToggle.checked) {
+    if (newColorSwatches.length > 0 && newEventTypeColorInput && newCustomColorToggle && newCustomColorInput) {
+        newColorSwatches.forEach(swatch => {
+            swatch.addEventListener('click', function() {
+                if (!newCustomColorToggle.checked) {
+                    newColorSwatches.forEach(s => s.classList.remove('selected'));
+                    this.classList.add('selected');
+                    newEventTypeColorInput.value = this.dataset.color;
+                }
+            });
+        });
+
+        // Select first color by default
+        newColorSwatches[0].classList.add('selected');
+
+        newCustomColorToggle.addEventListener('change', function() {
+            if (this.checked) {
                 newColorSwatches.forEach(s => s.classList.remove('selected'));
-                this.classList.add('selected');
-                newEventTypeColorInput.value = this.dataset.color;
+                newCustomColorInput.classList.remove('d-none');
+                newCustomColorInput.required = true;
+            } else {
+                newCustomColorInput.classList.add('d-none');
+                newCustomColorInput.required = false;
+                newColorSwatches[0].classList.add('selected');
+                newEventTypeColorInput.value = newColorSwatches[0].dataset.color;
             }
         });
-    });
 
-    // Select first color by default
-    newColorSwatches[0].classList.add('selected');
-
-    newCustomColorToggle.addEventListener('change', function() {
-        if (this.checked) {
-            newColorSwatches.forEach(s => s.classList.remove('selected'));
-            newCustomColorInput.classList.remove('d-none');
-            newCustomColorInput.required = true;
-        } else {
-            newCustomColorInput.classList.add('d-none');
-            newCustomColorInput.required = false;
-            newColorSwatches[0].classList.add('selected');
-            newEventTypeColorInput.value = newColorSwatches[0].dataset.color;
-        }
-    });
-
-    newCustomColorInput.addEventListener('input', function() {
-        if (this.value.match(/^#[0-9A-Fa-f]{6}$/)) {
-            newEventTypeColorInput.value = this.value;
-        }
-    });
+        newCustomColorInput.addEventListener('input', function() {
+            if (this.value.match(/^#[0-9A-Fa-f]{6}$/)) {
+                newEventTypeColorInput.value = this.value;
+            }
+        });
+    }
 
     // Function to refresh event types dropdown in Create Event modal
     async function refreshEventTypesDropdown() {
@@ -561,7 +563,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Load event types when modal is opened
     const modifyEventTypesModal = document.getElementById('modifyEventTypesModal');
-    modifyEventTypesModal.addEventListener('show.bs.modal', loadEventTypes);
+    if (modifyEventTypesModal) {
+        modifyEventTypesModal.addEventListener('show.bs.modal', loadEventTypes);
+    }
 
     async function loadEventTypes() {
         const listContainer = document.getElementById('existingEventTypesList');
