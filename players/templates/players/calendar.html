@@ -7,7 +7,7 @@
 {% block content %}
 <div class="container mt-4">
     <!-- Admin Action Buttons (only shown if master password cookie exists) -->
-    <div id="adminButtons" class="mb-3 d-flex justify-content-end" style="display: none !important;">
+    <div id="adminButtons" class="mb-3 d-flex justify-content-end" style="display: none;">
         <button type="button" class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#createEventModal">
             <i class="bi bi-plus-circle me-1"></i>Create Event
         </button>
@@ -709,7 +709,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Create New Event Type
-    document.getElementById('createNewEventTypeBtn').addEventListener('click', async function() {
+    const createNewEventTypeBtn = document.getElementById('createNewEventTypeBtn');
+    if (createNewEventTypeBtn) {
+        createNewEventTypeBtn.addEventListener('click', async function() {
         const name = document.getElementById('newEventTypeName').value.trim();
         const icon = document.getElementById('newEventTypeIcon').value.trim();
         const color = document.getElementById('newEventTypeColor').value;
@@ -772,14 +774,17 @@ document.addEventListener('DOMContentLoaded', function() {
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-plus-circle me-1"></i>Create Event Type';
         }
-    });
+        });
+    }
 
     // Hide error messages when user interacts with form
     const createEventForm = document.getElementById('createEventForm');
-    createEventForm.addEventListener('input', function() {
-        const errorDiv = document.getElementById('createEventError');
-        errorDiv.classList.add('d-none');
-    });
+    if (createEventForm) {
+        createEventForm.addEventListener('input', function() {
+            const errorDiv = document.getElementById('createEventError');
+            errorDiv.classList.add('d-none');
+        });
+    }
 
     // Create Event
     document.getElementById('saveEventBtn').addEventListener('click', async function() {
