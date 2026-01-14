@@ -263,7 +263,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load event for editing
     async function loadEventForEdit(eventId) {
         try {
-            const response = await fetch(`/players/calendar/get-event/?event_id=${eventId}`);
+            const response = await fetch(`{% url "players:get_event" %}?event_id=${eventId}`);
             const result = await response.json();
 
             if (result.success) {
