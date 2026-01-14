@@ -1570,7 +1570,11 @@
         });
 
         // Quick Link Management
+        let isEditingQuickLink = false;
+
         function editQuickLink(id, name, url, icon, displayOrder) {
+            isEditingQuickLink = true;
+
             document.getElementById('quickLinkId').value = id;
             document.getElementById('quickLinkName').value = name;
             document.getElementById('quickLinkUrl').value = url;
@@ -1586,7 +1590,7 @@
 
         // Reset modal when opening for new link
         document.getElementById('addQuickLinkModal').addEventListener('show.bs.modal', function (event) {
-            if (!event.relatedTarget || !event.relatedTarget.onclick) {
+            if (!isEditingQuickLink) {
                 // Opening for new link (not edit)
                 document.getElementById('quickLinkForm').reset();
                 document.getElementById('quickLinkId').value = '';
@@ -1595,6 +1599,11 @@
             }
             document.getElementById('quickLinkSuccess').classList.add('d-none');
             document.getElementById('quickLinkError').classList.add('d-none');
+        });
+
+        // Reset flag when modal is hidden
+        document.getElementById('addQuickLinkModal').addEventListener('hidden.bs.modal', function (event) {
+            isEditingQuickLink = false;
         });
 
         // Save Quick Link
