@@ -9,10 +9,10 @@
 <div class="container-fluid mt-4">
     <!-- Admin Action Buttons (only shown if master password cookie exists) -->
     <div id="adminButtons" class="mb-3 d-flex justify-content-end" style="display: none;">
-        <button type="button" class="btn btn-primary me-2" onclick="$('#createEventModal').modal('show')">
+        <button type="button" class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#createEventModal">
             <i class="bi bi-plus-circle"></i> Create Event
         </button>
-        <button type="button" class="btn btn-secondary" onclick="$('#modifyEventTypesModal').modal('show')">
+        <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#modifyEventTypesModal">
             <i class="bi bi-tags"></i> Manage Event Types
         </button>
     </div>
@@ -180,11 +180,12 @@ document.addEventListener('DOMContentLoaded', function() {
         selectable: masterPasswordCookie ? true : false,
         selectMirror: true,
         dayMaxEvents: true,
-        events: '/players/calendar/api/events/',
+        events: '{% url "players:calendar_events_api" %}',
 
         // When user clicks on a date (creates new event)
         select: function(info) {
-            $('#createEventModal').modal('show');
+            const modal = new bootstrap.Modal(document.getElementById('createEventModal'));
+            modal.show();
             document.getElementById('eventStartDate').value = info.startStr;
             if (info.endStr && info.endStr !== info.startStr) {
                 // Multi-day selection
@@ -246,7 +247,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const result = await response.json();
             if (result.success) {
-                $('#createEventModal').modal('hide');
+                const modal = bootstrap.Modal.getInstance(document.getElementById('createEventModal'));
+                modal.hide();
                 calendar.refetchEvents();
                 document.getElementById('createEventForm').reset();
             } else {
@@ -281,7 +283,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('editEventEndDate').value = event.end_date || '';
                 document.getElementById('editEventDescription').value = event.description || '';
 
-                $('#editEventModal').modal('show');
+                const modal = new bootstrap.Modal(document.getElementById('editEventModal'));
+                modal.show();
             }
         } catch (error) {
             alert('Error loading event: ' + error.message);
@@ -317,7 +320,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const result = await response.json();
             if (result.success) {
-                $('#editEventModal').modal('hide');
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editEventModal'));
+                modal.hide();
                 calendar.refetchEvents();
             } else {
                 document.getElementById('editEventError').textContent = result.error;
@@ -345,7 +349,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const result = await response.json();
             if (result.success) {
-                $('#editEventModal').modal('hide');
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editEventModal'));
+                modal.hide();
                 calendar.refetchEvents();
             } else {
                 alert('Error deleting event: ' + result.error);
