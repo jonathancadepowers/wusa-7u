@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Player, Team, Manager, Draft, PlayerRanking, ManagerDaughterRanking, SiblingRanking, DraftPick, TeamPreference, PracticeSlot, PracticeSlotRanking, GeneralSetting, ValidationCode, StarredDraftPick, DivisionValidationRegistry, Event, EventType
+from .models import Player, Team, Manager, Draft, PlayerRanking, ManagerDaughterRanking, SiblingRanking, DraftPick, TeamPreference, PracticeSlot, PracticeSlotRanking, GeneralSetting, ValidationCode, StarredDraftPick, DivisionValidationRegistry, Event, EventType, BackgroundCheck
 
 
 @admin.register(Draft)
@@ -266,6 +266,25 @@ class EventAdmin(admin.ModelAdmin):
     fieldsets = (
         ('Event Information', {
             'fields': ('name', 'event_type', 'location', 'timestamp', 'description')
+        }),
+        ('Metadata', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(BackgroundCheck)
+class BackgroundCheckAdmin(admin.ModelAdmin):
+    list_display = ['first_name', 'last_name', 'team', 'player', 'clearance_date', 'is_valid', 'created_at', 'updated_at']
+    list_filter = ['team', 'clearance_date']
+    search_fields = ['first_name', 'last_name', 'team__name', 'player__first_name', 'player__last_name']
+    readonly_fields = ['created_at', 'updated_at']
+    date_hierarchy = 'clearance_date'
+
+    fieldsets = (
+        ('Background Check Information', {
+            'fields': ('first_name', 'last_name', 'player', 'team', 'clearance_date', 'comments')
         }),
         ('Metadata', {
             'fields': ('created_at', 'updated_at'),

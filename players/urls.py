@@ -119,4 +119,7 @@ urlpatterns = [
     path('api/set-timezone/', views.set_timezone_view, name='set_timezone'),
     # Draft Settings
     path('api/clear-draft-stars/', views.clear_draft_stars_view, name='clear_draft_stars'),
+    # Background Checks
+    path('background-checks/create/', views.create_background_check_view, name='create_background_check'),
+    path('background-checks/<int:background_check_id>/update/', views.update_background_check_view, name='update_background_check'),
 ]

@@ -2447,6 +2447,10 @@ def team_detail_view(request, team_secret):
         logging.error(f"Error calculating checklist: {e}")
         checklist_items = []
 
+    # Get background checks for this team
+    from .models import BackgroundCheck
+    background_checks = BackgroundCheck.objects.filter(team=team).select_related('player').order_by('last_name', 'first_name')
+
     # Get visibility settings
     show_preseason = GeneralSetting.objects.filter(key='show_preseason_items').first()
     show_testing = GeneralSetting.objects.filter(key='show_testing_items').first()
@@ -2460,6 +2464,7 @@ def team_detail_view(request, team_secret):
         'drafted_players': drafted_players,
         'starred_player_ids': starred_player_ids,
         'starred_players': starred_players,
+        'background_checks': background_checks,
         'show_preseason_items': show_preseason.value.lower() == 'true' if show_preseason else True,
         'show_testing_items': show_testing.value.lower() == 'true' if show_testing else True,
     }
@@ -6602,5 +6607,113 @@ def execute_trade_view(request):
 
     except Player.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Player not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@csrf_exempt
+def create_background_check_view(request):
+    """Create a new background check record"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=400)
+
+    try:
+        import json
+        from .models import BackgroundCheck
+
+        data = json.loads(request.body)
+        team_secret = data.get('team_secret')
+        first_name = data.get('first_name')
+        last_name = data.get('last_name')
+        player_id = data.get('player_id')
+        clearance_date = data.get('clearance_date')
+        comments = data.get('comments', '')
+
+        # Validate required fields
+        if not all([team_secret, first_name, last_name, clearance_date]):
+            return JsonResponse({'success': False, 'error': 'Missing required fields'}, status=400)
+
+        # Get the team
+        try:
+            team = Team.objects.get(manager_secret=team_secret)
+        except Team.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Team not found'}, status=404)
+
+        # Get the player if provided
+        player = None
+        if player_id:
+            try:
+                player = Player.objects.get(id=player_id, team=team)
+            except Player.DoesNotExist:
+                return JsonResponse({'success': False, 'error': 'Player not found or does not belong to this team'}, status=404)
+
+        # Create the background check
+        background_check = BackgroundCheck.objects.create(
+            first_name=first_name,
+            last_name=last_name,
+            player=player,
+            clearance_date=clearance_date,
+            comments=comments,
+            team=team
+        )
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Background check created successfully',
+            'background_check_id': background_check.id
+        })
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@csrf_exempt
+def update_background_check_view(request, background_check_id):
+    """Update an existing background check record"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=400)
+
+    try:
+        import json
+        from .models import BackgroundCheck
+
+        data = json.loads(request.body)
+        first_name = data.get('first_name')
+        last_name = data.get('last_name')
+        player_id = data.get('player_id')
+        clearance_date = data.get('clearance_date')
+        comments = data.get('comments', '')
+
+        # Validate required fields
+        if not all([first_name, last_name, clearance_date]):
+            return JsonResponse({'success': False, 'error': 'Missing required fields'}, status=400)
+
+        # Get the background check
+        try:
+            background_check = BackgroundCheck.objects.get(id=background_check_id)
+        except BackgroundCheck.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Background check not found'}, status=404)
+
+        # Get the player if provided
+        player = None
+        if player_id:
+            try:
+                player = Player.objects.get(id=player_id, team=background_check.team)
+            except Player.DoesNotExist:
+                return JsonResponse({'success': False, 'error': 'Player not found or does not belong to this team'}, status=404)
+
+        # Update the background check
+        background_check.first_name = first_name
+        background_check.last_name = last_name
+        background_check.player = player
+        background_check.clearance_date = clearance_date
+        background_check.comments = comments
+        background_check.save()
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Background check updated successfully'
+        })
+
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)

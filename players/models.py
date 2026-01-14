@@ -331,3 +331,29 @@ class QuickLink(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class BackgroundCheck(models.Model):
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
+    player = models.ForeignKey('Player', on_delete=models.SET_NULL, null=True, blank=True, related_name='background_checks')
+    clearance_date = models.DateField()
+    comments = models.TextField(blank=True, null=True)
+    team = models.ForeignKey('Team', on_delete=models.CASCADE, related_name='background_checks')
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'background_checks'
+        ordering = ['last_name', 'first_name']
+        verbose_name = 'Background Check'
+        verbose_name_plural = 'Background Checks'
+
+    def __str__(self):
+        return f"{self.first_name} {self.last_name} - {self.team.name if self.team else 'No Team'}"
+
+    def is_valid(self):
+        """Check if background check clearance date is valid (not expired)"""
+        from datetime import date
+        return self.clearance_date > date.today()
