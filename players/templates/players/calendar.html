@@ -7,16 +7,6 @@
 
 {% block content %}
 <div class="container-fluid mt-4">
-    <!-- Admin Action Buttons (only shown if master password cookie exists) -->
-    <div id="adminButtons" class="mb-3 d-flex justify-content-end" style="display: none;">
-        <button type="button" class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#createEventModal">
-            <i class="bi bi-plus-circle"></i> Create Event
-        </button>
-        <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#modifyEventTypesModal">
-            <i class="bi bi-tags"></i> Manage Event Types
-        </button>
-    </div>
-
     <!-- FullCalendar Container -->
     <div id="calendar"></div>
 </div>
@@ -247,7 +237,29 @@ document.addEventListener('DOMContentLoaded', function() {
         headerToolbar: {
             left: 'prev,next today',
             center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            right: masterPasswordCookie ? 'createEvent,manageEventTypes dayGridMonth,timeGridWeek,timeGridDay' : 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        customButtons: {
+            createEvent: {
+                text: 'Create Event',
+                click: function() {
+                    const modal = new bootstrap.Modal(document.getElementById('createEventModal'));
+                    modal.show();
+                }
+            },
+            manageEventTypes: {
+                text: 'Manage Event Types',
+                click: function() {
+                    const modal = new bootstrap.Modal(document.getElementById('modifyEventTypesModal'));
+                    modal.show();
+                }
+            }
+        },
+        buttonText: {
+            today: 'Today',
+            month: 'Month',
+            week: 'Week',
+            day: 'Day'
         },
         editable: masterPasswordCookie ? true : false,
         selectable: masterPasswordCookie ? true : false,
