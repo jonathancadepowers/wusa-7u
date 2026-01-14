@@ -336,7 +336,7 @@ class QuickLink(models.Model):
 class BackgroundCheck(models.Model):
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
-    player = models.ForeignKey('Player', on_delete=models.SET_NULL, null=True, blank=True, related_name='background_checks')
+    player = models.ForeignKey('Player', on_delete=models.CASCADE, related_name='background_checks')
     clearance_date = models.DateField()
     comments = models.TextField(blank=True, null=True)
     team = models.ForeignKey('Team', on_delete=models.CASCADE, related_name='background_checks')

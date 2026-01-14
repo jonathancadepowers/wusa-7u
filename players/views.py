@@ -6630,7 +6630,7 @@ def create_background_check_view(request):
         comments = data.get('comments', '')
 
         # Validate required fields
-        if not all([team_secret, first_name, last_name, clearance_date]):
+        if not all([team_secret, first_name, last_name, player_id, clearance_date]):
             return JsonResponse({'success': False, 'error': 'Missing required fields'}, status=400)
 
         # Get the team
@@ -6639,13 +6639,11 @@ def create_background_check_view(request):
         except Team.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'Team not found'}, status=404)
 
-        # Get the player if provided
-        player = None
-        if player_id:
-            try:
-                player = Player.objects.get(id=player_id, team=team)
-            except Player.DoesNotExist:
-                return JsonResponse({'success': False, 'error': 'Player not found or does not belong to this team'}, status=404)
+        # Get the player
+        try:
+            player = Player.objects.get(id=player_id, team=team)
+        except Player.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Player not found or does not belong to this team'}, status=404)
 
         # Create the background check
         background_check = BackgroundCheck.objects.create(
@@ -6685,7 +6683,7 @@ def update_background_check_view(request, background_check_id):
         comments = data.get('comments', '')
 
         # Validate required fields
-        if not all([first_name, last_name, clearance_date]):
+        if not all([first_name, last_name, player_id, clearance_date]):
             return JsonResponse({'success': False, 'error': 'Missing required fields'}, status=400)
 
         # Get the background check
@@ -6694,13 +6692,11 @@ def update_background_check_view(request, background_check_id):
         except BackgroundCheck.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'Background check not found'}, status=404)
 
-        # Get the player if provided
-        player = None
-        if player_id:
-            try:
-                player = Player.objects.get(id=player_id, team=background_check.team)
-            except Player.DoesNotExist:
-                return JsonResponse({'success': False, 'error': 'Player not found or does not belong to this team'}, status=404)
+        # Get the player
+        try:
+            player = Player.objects.get(id=player_id, team=background_check.team)
+        except Player.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Player not found or does not belong to this team'}, status=404)
 
         # Update the background check
         background_check.first_name = first_name
@@ -6713,6 +6709,33 @@ def update_background_check_view(request, background_check_id):
         return JsonResponse({
             'success': True,
             'message': 'Background check updated successfully'
+        })
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@csrf_exempt
+def delete_background_check_view(request, background_check_id):
+    """Delete a background check record"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=400)
+
+    try:
+        from .models import BackgroundCheck
+
+        # Get the background check
+        try:
+            background_check = BackgroundCheck.objects.get(id=background_check_id)
+        except BackgroundCheck.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Background check not found'}, status=404)
+
+        # Delete the background check
+        background_check.delete()
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Background check deleted successfully'
         })
 
     except Exception as e:
