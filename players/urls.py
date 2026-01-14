@@ -12,6 +12,7 @@ urlpatterns = [
     path('api/update-manager/', views.update_manager_api_view, name='update_manager_api'),
     path('api/component-categories/', views.get_component_categories_api_view, name='get_component_categories'),
     path('api/toggle-component-visibility/', views.toggle_component_visibility_api_view, name='toggle_component_visibility'),
+    path('api/component-items/', views.get_component_items_api_view, name='get_component_items'),
     path('admin_dashboard/', views.admin_dashboard_view, name='admin_dashboard'),
     path('settings/', views.settings_view, name='settings'),
     path('quick-links/create/', views.create_quick_link, name='create_quick_link'),

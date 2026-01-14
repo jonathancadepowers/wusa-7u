@@ -1810,6 +1810,94 @@ def toggle_component_visibility_api_view(request):
         }, status=500)
 
 
+def get_component_items_api_view(request):
+    """API endpoint to get all UI items affected by a component category"""
+    import os
+    import re
+    from django.conf import settings
+
+    category = request.GET.get('category', '')
+
+    # Map category to CSS class
+    class_map = {
+        'preseason': 'preseason-component',
+        'testing': 'testing-component'
+    }
+
+    css_class = class_map.get(category)
+    if not css_class:
+        return JsonResponse({
+            'success': False,
+            'error': 'Invalid category'
+        }, status=400)
+
+    # Define component items manually - more reliable than parsing HTML
+    component_items = {
+        'preseason': [
+            {
+                'page': 'Team Detail',
+                'description': 'Practice Slot Selector section',
+                'type': 'Section'
+            }
+        ],
+        'testing': [
+            {
+                'page': 'Players List',
+                'description': 'Reset Teams button',
+                'type': 'Button'
+            },
+            {
+                'page': 'Players List',
+                'description': 'Delete All Players button',
+                'type': 'Button'
+            },
+            {
+                'page': 'Players List',
+                'description': 'Add Player button',
+                'type': 'Button'
+            },
+            {
+                'page': 'Teams List',
+                'description': 'Unassign Practice Slots button',
+                'type': 'Button'
+            },
+            {
+                'page': 'Run Draft',
+                'description': 'Simulate Draft button',
+                'type': 'Button'
+            },
+            {
+                'page': 'Run Draft',
+                'description': 'Reset Draft button',
+                'type': 'Button'
+            },
+            {
+                'page': 'Managers List',
+                'description': 'Randomly Assign Managers button',
+                'type': 'Button'
+            },
+            {
+                'page': 'Managers List',
+                'description': 'Randomly Assign Daughters button',
+                'type': 'Button'
+            },
+            {
+                'page': 'Managers List',
+                'description': 'Unassign All Managers button',
+                'type': 'Button'
+            }
+        ]
+    }
+
+    items = component_items.get(category, [])
+
+    return JsonResponse({
+        'success': True,
+        'items': items,
+        'count': len(items)
+    })
+
+
 def players_list_view(request):
     """List all players with search, sorting, and pagination"""
     search_query = request.GET.get('search', '')
