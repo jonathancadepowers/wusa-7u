@@ -1770,7 +1770,7 @@
             container.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
 
             try {
-                // Get quick links from the page context
+                // Get quick links from the page context (only active links)
                 quickLinksData = [
                     {% for link in quick_links %}
                     {
@@ -1781,7 +1781,7 @@
                         is_active: {{ link.is_active|lower }}
                     }{% if not forloop.last %},{% endif %}
                     {% endfor %}
-                ];
+                ].filter(link => link.is_active);
 
                 renderSortableQuickLinks();
             } catch (error) {
@@ -1801,7 +1801,7 @@
                 <div class="list-group-item sortable-item d-flex align-items-center" data-id="${link.id}" draggable="true">
                     <i class="bi bi-grip-vertical me-3 drag-handle text-muted"></i>
                     <i class="bi ${link.icon} me-3"></i>
-                    <span class="flex-grow-1">${link.name}${!link.is_active ? ' <span class="badge bg-secondary">Inactive</span>' : ''}</span>
+                    <span class="flex-grow-1">${link.name}</span>
                 </div>
             `).join('');
 
