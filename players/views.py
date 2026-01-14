@@ -6222,9 +6222,12 @@ def move_event_date_view(request):
         logger.info(f"Saved timestamp in display TZ ({tz}): {event.timestamp.astimezone(tz)}")
         logger.info(f"Day extracted from display TZ: {event.timestamp.astimezone(tz).day}")
 
+        # Format date for success message
+        display_date = event.timestamp.astimezone(tz).strftime('%Y-%m-%d')
+
         return JsonResponse({
             'success': True,
-            'message': f'Event "{event.name}" moved to {new_date} successfully!'
+            'message': f'Event "{event.name}" moved to {display_date} successfully!'
         })
 
     except Exception as e:
