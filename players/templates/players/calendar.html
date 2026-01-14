@@ -317,9 +317,22 @@ document.addEventListener('DOMContentLoaded', function() {
         dayMaxEvents: true,
         events: '{% url "players:calendar_events_api" %}',
 
-        // Custom event content to display icons
+        // Custom event content to display icons and times
         eventContent: function(arg) {
             let arrayOfDomNodes = [];
+
+            // Add time if event has specific start time (not all-day)
+            if (arg.event.start && !arg.event.allDay) {
+                let timeEl = document.createElement('span');
+                timeEl.className = 'me-1 fw-bold';
+                let time = arg.event.start.toLocaleTimeString('en-US', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                });
+                timeEl.innerHTML = time;
+                arrayOfDomNodes.push(timeEl);
+            }
 
             // Create icon element if icon exists
             if (arg.event.extendedProps.icon) {
@@ -334,6 +347,78 @@ document.addEventListener('DOMContentLoaded', function() {
             arrayOfDomNodes.push(titleEl);
 
             return { domNodes: arrayOfDomNodes };
+        },
+
+        // Show tooltip on mouse enter
+        eventMouseEnter: function(info) {
+            const event = info.event;
+            let tooltipContent = `<strong>${event.title}</strong>`;
+
+            // Add start time
+            if (event.start) {
+                const startTime = event.start.toLocaleString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                });
+                tooltipContent += `<br><i class="bi bi-clock me-1"></i>${startTime}`;
+            }
+
+            // Add end date if different from start
+            if (event.end && event.end.toDateString() !== event.start.toDateString()) {
+                const endTime = event.end.toLocaleString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric'
+                });
+                tooltipContent += `<br><i class="bi bi-calendar-check me-1"></i>Ends: ${endTime}`;
+            }
+
+            // Add location if exists
+            if (event.extendedProps.location) {
+                tooltipContent += `<br><i class="bi bi-geo-alt me-1"></i>${event.extendedProps.location}`;
+            }
+
+            // Add description if exists
+            if (event.extendedProps.description) {
+                tooltipContent += `<br><i class="bi bi-info-circle me-1"></i>${event.extendedProps.description}`;
+            }
+
+            // Create tooltip element
+            const tooltip = document.createElement('div');
+            tooltip.className = 'event-tooltip';
+            tooltip.innerHTML = tooltipContent;
+            tooltip.style.position = 'absolute';
+            tooltip.style.zIndex = '10000';
+            tooltip.style.backgroundColor = 'rgba(0, 0, 0, 0.9)';
+            tooltip.style.color = 'white';
+            tooltip.style.padding = '10px';
+            tooltip.style.borderRadius = '6px';
+            tooltip.style.fontSize = '13px';
+            tooltip.style.lineHeight = '1.6';
+            tooltip.style.maxWidth = '300px';
+            tooltip.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+            tooltip.style.pointerEvents = 'none';
+
+            // Position tooltip near the event
+            const rect = info.el.getBoundingClientRect();
+            tooltip.style.left = (rect.left + window.scrollX) + 'px';
+            tooltip.style.top = (rect.bottom + window.scrollY + 5) + 'px';
+
+            // Store tooltip on element for removal
+            info.el.tooltip = tooltip;
+            document.body.appendChild(tooltip);
+        },
+
+        // Remove tooltip on mouse leave
+        eventMouseLeave: function(info) {
+            if (info.el.tooltip) {
+                info.el.tooltip.remove();
+                info.el.tooltip = null;
+            }
         },
 
         // When user clicks on a date (creates new event)

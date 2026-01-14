@@ -5647,6 +5647,12 @@ def calendar_events_api(request):
             event_dict['borderColor'] = event.event_type.color
             event_dict['icon'] = event.event_type.bootstrap_icon_id
 
+        # Add location and description for tooltips
+        if event.location:
+            event_dict['location'] = event.location
+        if event.description:
+            event_dict['description'] = event.description
+
         events_data.append(event_dict)
 
     return JsonResponse(events_data, safe=False)
