@@ -1475,13 +1475,14 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
+                    <div id="addBackgroundCheckAlert" class="alert d-none mb-3" role="alert"></div>
                     <form id="addBackgroundCheckForm">
                         <div class="mb-3">
-                            <label for="addFirstName" class="form-label">First Name <span class="text-danger">*</span></label>
+                            <label for="addFirstName" class="form-label">Guardian's First Name <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="addFirstName" required>
                         </div>
                         <div class="mb-3">
-                            <label for="addLastName" class="form-label">Last Name <span class="text-danger">*</span></label>
+                            <label for="addLastName" class="form-label">Guardian's Last Name <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="addLastName" required>
                         </div>
                         <div class="mb-3">
@@ -1535,13 +1536,14 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
+                    <div id="editBackgroundCheckAlert{{ check.pk }}" class="alert d-none mb-3" role="alert"></div>
                     <form id="editBackgroundCheckForm{{ check.pk }}">
                         <div class="mb-3">
-                            <label for="editFirstName{{ check.pk }}" class="form-label">First Name <span class="text-danger">*</span></label>
+                            <label for="editFirstName{{ check.pk }}" class="form-label">Guardian's First Name <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="editFirstName{{ check.pk }}" value="{{ check.first_name }}" required>
                         </div>
                         <div class="mb-3">
-                            <label for="editLastName{{ check.pk }}" class="form-label">Last Name <span class="text-danger">*</span></label>
+                            <label for="editLastName{{ check.pk }}" class="form-label">Guardian's Last Name <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="editLastName{{ check.pk }}" value="{{ check.last_name }}" required>
                         </div>
                         <div class="mb-3">
@@ -1588,9 +1590,12 @@
             const playerId = document.getElementById('addPlayer').value;
             const clearanceDate = document.getElementById('addClearanceDate').value;
             const comments = document.getElementById('addComments').value;
+            const alertDiv = document.getElementById('addBackgroundCheckAlert');
 
             if (!firstName || !lastName || !playerId || !clearanceDate) {
-                alert('Please fill in all required fields');
+                alertDiv.className = 'alert alert-danger mb-3';
+                alertDiv.textContent = 'Please fill in all required fields';
+                alertDiv.classList.remove('d-none');
                 return;
             }
 
@@ -1613,15 +1618,30 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert('Background check created successfully');
-                    window.location.reload();
+                    // Show success message
+                    alertDiv.className = 'alert alert-success mb-3';
+                    alertDiv.textContent = 'Background check created successfully';
+                    alertDiv.classList.remove('d-none');
+
+                    // Store the state to expand the section after reload
+                    sessionStorage.setItem('expandBackgroundChecks', 'true');
+
+                    // Close modal and reload after 1.5 seconds
+                    setTimeout(() => {
+                        bootstrap.Modal.getInstance(document.getElementById('addBackgroundCheckModal')).hide();
+                        window.location.reload();
+                    }, 1500);
                 } else {
-                    alert('Error: ' + data.error);
+                    alertDiv.className = 'alert alert-danger mb-3';
+                    alertDiv.textContent = 'Error: ' + data.error;
+                    alertDiv.classList.remove('d-none');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Failed to create background check');
+                alertDiv.className = 'alert alert-danger mb-3';
+                alertDiv.textContent = 'Failed to create background check';
+                alertDiv.classList.remove('d-none');
             });
         }
 
@@ -1631,9 +1651,12 @@
             const playerId = document.getElementById('editPlayer' + checkId).value;
             const clearanceDate = document.getElementById('editClearanceDate' + checkId).value;
             const comments = document.getElementById('editComments' + checkId).value;
+            const alertDiv = document.getElementById('editBackgroundCheckAlert' + checkId);
 
             if (!firstName || !lastName || !playerId || !clearanceDate) {
-                alert('Please fill in all required fields');
+                alertDiv.className = 'alert alert-danger mb-3';
+                alertDiv.textContent = 'Please fill in all required fields';
+                alertDiv.classList.remove('d-none');
                 return;
             }
 
@@ -1655,15 +1678,30 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert('Background check updated successfully');
-                    window.location.reload();
+                    // Show success message
+                    alertDiv.className = 'alert alert-success mb-3';
+                    alertDiv.textContent = 'Background check updated successfully';
+                    alertDiv.classList.remove('d-none');
+
+                    // Store the state to expand the section after reload
+                    sessionStorage.setItem('expandBackgroundChecks', 'true');
+
+                    // Close modal and reload after 1.5 seconds
+                    setTimeout(() => {
+                        bootstrap.Modal.getInstance(document.getElementById('editBackgroundCheckModal' + checkId)).hide();
+                        window.location.reload();
+                    }, 1500);
                 } else {
-                    alert('Error: ' + data.error);
+                    alertDiv.className = 'alert alert-danger mb-3';
+                    alertDiv.textContent = 'Error: ' + data.error;
+                    alertDiv.classList.remove('d-none');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Failed to update background check');
+                alertDiv.className = 'alert alert-danger mb-3';
+                alertDiv.textContent = 'Failed to update background check';
+                alertDiv.classList.remove('d-none');
             });
         }
 
@@ -1692,6 +1730,22 @@
                 alert('Failed to delete background check');
             });
         }
+
+        // Check if we should expand the Background Checks section after page load
+        document.addEventListener('DOMContentLoaded', function() {
+            if (sessionStorage.getItem('expandBackgroundChecks') === 'true') {
+                // Clear the flag
+                sessionStorage.removeItem('expandBackgroundChecks');
+
+                // Expand the Background Checks section
+                const backgroundChecksCollapse = document.getElementById('backgroundChecksCollapse');
+                if (backgroundChecksCollapse) {
+                    const bsCollapse = new bootstrap.Collapse(backgroundChecksCollapse, {
+                        toggle: true
+                    });
+                }
+            }
+        });
     </script>
 
     <!-- SortableJS Library -->
