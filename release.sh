@@ -10,3 +10,6 @@ python manage.py migrate players 0056 --fake --noinput 2>/dev/null || true
 
 # Run normal migrations
 python manage.py migrate --noinput
+
+# Run the is_fixed column fix script
+python fix_is_fixed_column.py 2>/dev/null || true
