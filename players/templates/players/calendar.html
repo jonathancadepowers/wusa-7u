@@ -458,6 +458,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
     calendar.render();
 
+    // Force Today button to use the same active color as other buttons
+    // This needs to happen after render and on any view change
+    function forceButtonColors() {
+        const todayButton = document.querySelector('.fc-today-button');
+        if (todayButton && todayButton.classList.contains('fc-button-active')) {
+            todayButton.style.backgroundColor = '#1a252f';
+            todayButton.style.borderColor = '#1a252f';
+        }
+    }
+
+    // Apply immediately after render
+    setTimeout(forceButtonColors, 100);
+
+    // Reapply when calendar changes views
+    const observer = new MutationObserver(forceButtonColors);
+    observer.observe(calendarEl, { childList: true, subtree: true, attributes: true });
+
     // Create Event
     document.getElementById('createEventBtn').addEventListener('click', async function() {
         const name = document.getElementById('eventName').value;
