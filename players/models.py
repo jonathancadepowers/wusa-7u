@@ -318,6 +318,7 @@ class QuickLink(models.Model):
     icon = models.CharField(max_length=100)  # Bootstrap icon class (e.g., "bi-clipboard-check")
     display_order = models.IntegerField(default=0)
     is_active = models.BooleanField(default=True)
+    is_fixed = models.BooleanField(default=False)  # Fixed links can't be deleted/edited and have fixed positions
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

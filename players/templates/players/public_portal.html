@@ -27,8 +27,9 @@
                     <div class="row g-3">
                         {% for link in quick_links %}
                         <div class="col-md-6">
-                            <a href="{% if link.url == '#' %}#{% else %}{{ link.url }}{% endif %}"
-                               {% if link.name == "Manager Data" %}onclick="showManagerDataModal(); return false;"
+                            <a href="{% if link.url == '#all-division-players' %}#{% elif link.url == '#manager-contact-info' %}#{% elif link.url == '#' %}#{% else %}{{ link.url }}{% endif %}"
+                               {% if link.url == '#all-division-players' %}data-bs-toggle="modal" data-bs-target="#allDivisionPlayersModal"
+                               {% elif link.url == '#manager-contact-info' %}data-bs-toggle="modal" data-bs-target="#managerContactInfoModal"
                                {% elif "http" in link.url %}target="_blank"{% endif %}
                                class="text-decoration-none">
                                 <div class="card h-100 shadow-sm hover-card">
@@ -154,6 +155,76 @@
                                 </tbody>
                             </table>
                         </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- All Division Players Modal -->
+    <div class="modal fade" id="allDivisionPlayersModal" tabindex="-1" aria-labelledby="allDivisionPlayersModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="allDivisionPlayersModalLabel">All Division Players</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <input type="text" class="form-control" id="playerSearchInput" placeholder="Search players...">
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover" id="allPlayersTable">
+                            <thead>
+                                <tr>
+                                    <th style="cursor: pointer;" onclick="sortPlayersTable(0)">Team <i class="bi bi-arrow-down-up"></i></th>
+                                    <th style="cursor: pointer;" onclick="sortPlayersTable(1)">Player Name <i class="bi bi-arrow-down-up"></i></th>
+                                    <th style="cursor: pointer;" onclick="sortPlayersTable(2)">Birthday <i class="bi bi-arrow-down-up"></i></th>
+                                    <th style="cursor: pointer;" onclick="sortPlayersTable(3)">School <i class="bi bi-arrow-down-up"></i></th>
+                                </tr>
+                            </thead>
+                            <tbody id="allPlayersTableBody">
+                                <!-- Players will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manager Contact Info Modal -->
+    <div class="modal fade" id="managerContactInfoModal" tabindex="-1" aria-labelledby="managerContactInfoModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="managerContactInfoModalLabel">Manager Contact Information</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <input type="text" class="form-control" id="managerSearchInput" placeholder="Search managers...">
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover" id="managersTable">
+                            <thead>
+                                <tr>
+                                    <th style="cursor: pointer;" onclick="sortManagersTable(0)">Team <i class="bi bi-arrow-down-up"></i></th>
+                                    <th style="cursor: pointer;" onclick="sortManagersTable(1)">Manager Name <i class="bi bi-arrow-down-up"></i></th>
+                                    <th style="cursor: pointer;" onclick="sortManagersTable(2)">Email <i class="bi bi-arrow-down-up"></i></th>
+                                    <th style="cursor: pointer;" onclick="sortManagersTable(3)">Phone <i class="bi bi-arrow-down-up"></i></th>
+                                </tr>
+                            </thead>
+                            <tbody id="managersTableBody">
+                                <!-- Managers will be loaded here -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -366,5 +437,151 @@
                 alert('Error saving changes. Please try again.');
             }
         }
+
+        // All Division Players Modal Functions
+        let allPlayersData = [];
+        let allPlayersSortColumn = 0;
+        let allPlayersSortAsc = true;
+
+        document.getElementById('allDivisionPlayersModal').addEventListener('show.bs.modal', async function () {
+            await loadAllPlayers();
+        });
+
+        async function loadAllPlayers() {
+            const tbody = document.getElementById('allPlayersTableBody');
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center"><div class="spinner-border" role="status"></div></td></tr>';
+
+            try {
+                const response = await fetch('/api/players/');
+                const players = await response.json();
+
+                allPlayersData = players.map(p => ({
+                    team: p.team || 'Unassigned',
+                    name: `${p.first_name} ${p.last_name}`,
+                    birthday: p.birthday || 'N/A',
+                    school: p.school || 'N/A'
+                }));
+
+                renderAllPlayersTable();
+            } catch (error) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error loading players</td></tr>';
+            }
+        }
+
+        function renderAllPlayersTable() {
+            const tbody = document.getElementById('allPlayersTableBody');
+            const searchTerm = document.getElementById('playerSearchInput').value.toLowerCase();
+
+            let filtered = allPlayersData.filter(p =>
+                p.team.toLowerCase().includes(searchTerm) ||
+                p.name.toLowerCase().includes(searchTerm) ||
+                p.birthday.toLowerCase().includes(searchTerm) ||
+                p.school.toLowerCase().includes(searchTerm)
+            );
+
+            tbody.innerHTML = filtered.map(p => `
+                <tr>
+                    <td>${p.team}</td>
+                    <td>${p.name}</td>
+                    <td>${p.birthday}</td>
+                    <td>${p.school}</td>
+                </tr>
+            `).join('');
+        }
+
+        function sortPlayersTable(column) {
+            if (allPlayersSortColumn === column) {
+                allPlayersSortAsc = !allPlayersSortAsc;
+            } else {
+                allPlayersSortColumn = column;
+                allPlayersSortAsc = true;
+            }
+
+            const columns = ['team', 'name', 'birthday', 'school'];
+            const key = columns[column];
+
+            allPlayersData.sort((a, b) => {
+                const aVal = a[key].toLowerCase();
+                const bVal = b[key].toLowerCase();
+                return allPlayersSortAsc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+            });
+
+            renderAllPlayersTable();
+        }
+
+        document.getElementById('playerSearchInput').addEventListener('input', renderAllPlayersTable);
+
+        // Manager Contact Info Modal Functions
+        let managersData = [];
+        let managersSortColumn = 0;
+        let managersSortAsc = true;
+
+        document.getElementById('managerContactInfoModal').addEventListener('show.bs.modal', async function () {
+            await loadManagers();
+        });
+
+        async function loadManagers() {
+            const tbody = document.getElementById('managersTableBody');
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center"><div class="spinner-border" role="status"></div></td></tr>';
+
+            try {
+                const response = await fetch('/api/managers-list/');
+                const managers = await response.json();
+
+                managersData = managers.map(m => ({
+                    team: m.team || 'Unassigned',
+                    name: `${m.first_name} ${m.last_name}`,
+                    email: m.email || 'N/A',
+                    phone: m.phone || 'N/A'
+                }));
+
+                renderManagersTable();
+            } catch (error) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error loading managers</td></tr>';
+            }
+        }
+
+        function renderManagersTable() {
+            const tbody = document.getElementById('managersTableBody');
+            const searchTerm = document.getElementById('managerSearchInput').value.toLowerCase();
+
+            let filtered = managersData.filter(m =>
+                m.team.toLowerCase().includes(searchTerm) ||
+                m.name.toLowerCase().includes(searchTerm) ||
+                m.email.toLowerCase().includes(searchTerm) ||
+                m.phone.toLowerCase().includes(searchTerm)
+            );
+
+            tbody.innerHTML = filtered.map(m => `
+                <tr>
+                    <td>${m.team}</td>
+                    <td>${m.name}</td>
+                    <td>${m.email}</td>
+                    <td>${m.phone}</td>
+                </tr>
+            `).join('');
+        }
+
+        function sortManagersTable(column) {
+            if (managersSortColumn === column) {
+                managersSortAsc = !managersSortAsc;
+            } else {
+                managersSortColumn = column;
+                managersSortAsc = true;
+            }
+
+            const columns = ['team', 'name', 'email', 'phone'];
+            const key = columns[column];
+
+            managersData.sort((a, b) => {
+                const aVal = a[key].toLowerCase();
+                const bVal = b[key].toLowerCase();
+                return managersSortAsc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+            });
+
+            renderManagersTable();
+        }
+
+        document.getElementById('managerSearchInput').addEventListener('input', renderManagersTable);
     </script>
 {% endblock %}

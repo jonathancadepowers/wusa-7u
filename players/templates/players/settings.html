@@ -182,9 +182,15 @@
                         <div id="quickLinksContainer" class="row g-2">
                             {% for link in quick_links %}
                             <div class="col-auto">
-                                <button type="button" class="btn btn-outline-primary{% if not link.is_active %} opacity-50{% endif %}" onclick="editQuickLink({{ link.id }}, '{{ link.name|escapejs }}', '{{ link.url|escapejs }}', '{{ link.icon|escapejs }}', {{ link.display_order }}, {{ link.is_active|lower }})">
+                                {% if link.is_fixed %}
+                                <button type="button" class="btn btn-outline-secondary" disabled>
+                                    <i class="bi {{ link.icon }} me-2"></i>{{ link.name }} <span class="badge bg-info ms-1">Fixed</span>
+                                </button>
+                                {% else %}
+                                <button type="button" class="btn btn-outline-primary{% if not link.is_active %} opacity-50{% endif %}" onclick="editQuickLink({{ link.id }}, '{{ link.name|escapejs }}', '{{ link.url|escapejs }}', '{{ link.icon|escapejs }}', {{ link.display_order }}, {{ link.is_active|lower }}, {{ link.is_fixed|lower }})">
                                     <i class="bi {{ link.icon }} me-2"></i>{{ link.name }}{% if not link.is_active %} (Inactive){% endif %}
                                 </button>
+                                {% endif %}
                             </div>
                             {% empty %}
                             <div class="col-12">
@@ -417,6 +423,76 @@
                     <button type="button" class="btn btn-primary" id="saveQuickLinkOrderBtn">
                         <i class="bi bi-save me-2"></i>Save Order
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- All Division Players Modal -->
+    <div class="modal fade" id="allDivisionPlayersModal" tabindex="-1" aria-labelledby="allDivisionPlayersModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="allDivisionPlayersModalLabel">All Division Players</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <input type="text" class="form-control" id="playerSearchInput" placeholder="Search players...">
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover" id="allPlayersTable">
+                            <thead>
+                                <tr>
+                                    <th style="cursor: pointer;" onclick="sortPlayersTable(0)">Team <i class="bi bi-arrow-down-up"></i></th>
+                                    <th style="cursor: pointer;" onclick="sortPlayersTable(1)">Player Name <i class="bi bi-arrow-down-up"></i></th>
+                                    <th style="cursor: pointer;" onclick="sortPlayersTable(2)">Birthday <i class="bi bi-arrow-down-up"></i></th>
+                                    <th style="cursor: pointer;" onclick="sortPlayersTable(3)">School <i class="bi bi-arrow-down-up"></i></th>
+                                </tr>
+                            </thead>
+                            <tbody id="allPlayersTableBody">
+                                <!-- Players will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manager Contact Info Modal -->
+    <div class="modal fade" id="managerContactInfoModal" tabindex="-1" aria-labelledby="managerContactInfoModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="managerContactInfoModalLabel">Manager Contact Information</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <input type="text" class="form-control" id="managerSearchInput" placeholder="Search managers...">
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover" id="managersTable">
+                            <thead>
+                                <tr>
+                                    <th style="cursor: pointer;" onclick="sortManagersTable(0)">Team <i class="bi bi-arrow-down-up"></i></th>
+                                    <th style="cursor: pointer;" onclick="sortManagersTable(1)">Manager Name <i class="bi bi-arrow-down-up"></i></th>
+                                    <th style="cursor: pointer;" onclick="sortManagersTable(2)">Email <i class="bi bi-arrow-down-up"></i></th>
+                                    <th style="cursor: pointer;" onclick="sortManagersTable(3)">Phone <i class="bi bi-arrow-down-up"></i></th>
+                                </tr>
+                            </thead>
+                            <tbody id="managersTableBody">
+                                <!-- Managers will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
@@ -1622,7 +1698,12 @@
         // Quick Link Management
         let isEditingQuickLink = false;
 
-        function editQuickLink(id, name, url, icon, displayOrder, isActive) {
+        function editQuickLink(id, name, url, icon, displayOrder, isActive, isFixed) {
+            // Don't allow editing fixed links
+            if (isFixed) {
+                return;
+            }
+
             isEditingQuickLink = true;
 
             document.getElementById('quickLinkId').value = id;
@@ -1770,7 +1851,7 @@
             container.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
 
             try {
-                // Get quick links from the page context (only active links)
+                // Get quick links from the page context (only active and non-fixed links)
                 quickLinksData = [
                     {% for link in quick_links %}
                     {
@@ -1778,10 +1859,11 @@
                         name: '{{ link.name|escapejs }}',
                         icon: '{{ link.icon|escapejs }}',
                         display_order: {{ link.display_order }},
-                        is_active: {{ link.is_active|lower }}
+                        is_active: {{ link.is_active|lower }},
+                        is_fixed: {{ link.is_fixed|lower }}
                     }{% if not forloop.last %},{% endif %}
                     {% endfor %}
-                ].filter(link => link.is_active);
+                ].filter(link => link.is_active && !link.is_fixed);
 
                 renderSortableQuickLinks();
             } catch (error) {

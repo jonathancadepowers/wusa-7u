@@ -34,7 +34,7 @@ def settings_view(request):
     # Check if there's an existing draft
     draft_exists = Draft.objects.exists()
 
-    # Get all quick links
+    # Get all quick links (fixed links are always shown first)
     quick_links = QuickLink.objects.all().order_by('display_order', 'name')
 
     context = {
@@ -86,6 +86,13 @@ def update_quick_link(request, link_id):
             data = json.loads(request.body)
             quick_link = QuickLink.objects.get(id=link_id)
 
+            # Prevent modification of fixed links
+            if quick_link.is_fixed:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Cannot modify fixed quick links'
+                })
+
             quick_link.name = data.get('name', quick_link.name)
             quick_link.url = data.get('url', quick_link.url)
             quick_link.icon = data.get('icon', quick_link.icon)
@@ -116,6 +123,14 @@ def delete_quick_link(request, link_id):
             from .models import QuickLink
 
             quick_link = QuickLink.objects.get(id=link_id)
+
+            # Prevent deletion of fixed links
+            if quick_link.is_fixed:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Cannot delete fixed quick links'
+                })
+
             quick_link.delete()
 
             return JsonResponse({'success': True})
@@ -135,7 +150,7 @@ def delete_quick_link(request, link_id):
 
 @csrf_exempt
 def set_quick_link_order(request):
-    """Set the display order for quick links"""
+    """Set the display order for quick links (only non-fixed links)"""
     if request.method == 'POST':
         try:
             import json
@@ -144,14 +159,20 @@ def set_quick_link_order(request):
             data = json.loads(request.body)
             order_data = data.get('order', [])
 
-            # Update each quick link's display_order
-            for item in order_data:
+            # Fixed links always start at position 0, 1, etc.
+            # Count fixed links to know where to start ordering non-fixed links
+            fixed_count = QuickLink.objects.filter(is_fixed=True).count()
+
+            # Update each non-fixed quick link's display_order
+            for index, item in enumerate(order_data):
                 link_id = item.get('id')
-                display_order = item.get('display_order')
 
                 quick_link = QuickLink.objects.get(id=link_id)
-                quick_link.display_order = display_order
-                quick_link.save()
+
+                # Skip fixed links (they shouldn't be in the list, but just in case)
+                if not quick_link.is_fixed:
+                    quick_link.display_order = fixed_count + index
+                    quick_link.save()
 
             return JsonResponse({'success': True})
         except Exception as e:
