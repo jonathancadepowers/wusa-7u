@@ -443,10 +443,28 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         },
 
+        // When user starts dragging an event
+        eventDragStart: function(info) {
+            // Remove any existing tooltips
+            if (info.el.tooltip) {
+                info.el.tooltip.remove();
+                info.el.tooltip = null;
+            }
+        },
+
         // When user drags an event to a new date/time
         eventDrop: function(info) {
             console.log('Event dropped:', info.event.id);
             updateEventDateTime(info.event);
+        },
+
+        // When user starts resizing an event
+        eventResizeStart: function(info) {
+            // Remove any existing tooltips
+            if (info.el.tooltip) {
+                info.el.tooltip.remove();
+                info.el.tooltip = null;
+            }
         },
 
         // When user resizes an event
