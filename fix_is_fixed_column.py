@@ -52,6 +52,17 @@ def main():
                 VALUES ('Manager Data', '#manager-contact-info', 'bi-person-lines-fill', 1, TRUE, TRUE, NOW(), NOW())
             """)
 
+        # Update all non-fixed links to have display_order >= 2
+        print("Updating non-fixed link display orders...")
+        cursor.execute("""
+            UPDATE quick_links
+            SET display_order = CASE
+                WHEN display_order < 2 THEN display_order + 2
+                ELSE display_order
+            END
+            WHERE is_fixed = FALSE
+        """)
+
         print("Success! is_fixed column added and data updated.")
 
 if __name__ == '__main__':
