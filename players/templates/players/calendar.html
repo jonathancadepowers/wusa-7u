@@ -442,6 +442,180 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         return cookieValue;
     }
+
+    // Event Types Management
+    const modifyEventTypesModal = document.getElementById('modifyEventTypesModal');
+
+    // Load event types when modal is opened
+    modifyEventTypesModal.addEventListener('show.bs.modal', function() {
+        loadEventTypes();
+    });
+
+    // Load and display event types
+    async function loadEventTypes() {
+        try {
+            const response = await fetch('{% url "players:get_event_types" %}');
+            const result = await response.json();
+
+            if (result.success) {
+                displayEventTypes(result.event_types);
+            }
+        } catch (error) {
+            console.error('Error loading event types:', error);
+        }
+    }
+
+    // Display event types in the list
+    function displayEventTypes(eventTypes) {
+        const listContainer = document.getElementById('eventTypesList');
+        listContainer.innerHTML = '';
+
+        if (eventTypes.length === 0) {
+            listContainer.innerHTML = '<p class="text-muted">No event types found. Create one to get started.</p>';
+            return;
+        }
+
+        eventTypes.forEach(eventType => {
+            const card = document.createElement('div');
+            card.className = 'card mb-2';
+            card.innerHTML = `
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <div class="d-flex align-items-center">
+                                ${eventType.bootstrap_icon_id ? `<i class="bi bi-${eventType.bootstrap_icon_id} me-2" style="font-size: 1.5rem; color: ${eventType.color}"></i>` : ''}
+                                <div>
+                                    <h6 class="mb-0">${eventType.name}</h6>
+                                    <small class="text-muted">
+                                        Color: <span class="badge" style="background-color: ${eventType.color}">&nbsp;&nbsp;&nbsp;</span> ${eventType.color}
+                                        ${eventType.bootstrap_icon_id ? `| Icon: ${eventType.bootstrap_icon_id}` : ''}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <button class="btn btn-sm btn-primary" onclick="editEventType(${eventType.id})">
+                                <i class="bi bi-pencil"></i> Edit
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            listContainer.appendChild(card);
+        });
+    }
+
+    // Create New Event Type button
+    document.getElementById('createNewEventTypeBtn').addEventListener('click', function() {
+        showEventTypeForm();
+    });
+
+    // Show event type form for creating/editing
+    function showEventTypeForm(eventType = null) {
+        const listContainer = document.getElementById('eventTypesList');
+
+        const formHtml = `
+            <div class="card border-primary" id="eventTypeFormCard">
+                <div class="card-header bg-primary text-white">
+                    ${eventType ? 'Edit Event Type' : 'Create New Event Type'}
+                </div>
+                <div class="card-body">
+                    <form id="eventTypeForm">
+                        <input type="hidden" id="eventTypeId" value="${eventType ? eventType.id : ''}">
+                        <div class="mb-3">
+                            <label for="eventTypeName" class="form-label">Name *</label>
+                            <input type="text" class="form-control" id="eventTypeName" required value="${eventType ? eventType.name : ''}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="eventTypeColor" class="form-label">Color *</label>
+                            <input type="color" class="form-control" id="eventTypeColor" required value="${eventType ? eventType.color : '#0d6efd'}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="eventTypeIcon" class="form-label">Bootstrap Icon ID</label>
+                            <input type="text" class="form-control" id="eventTypeIcon" value="${eventType ? eventType.bootstrap_icon_id : ''}" placeholder="e.g., calendar-event, trophy, flag">
+                            <small class="form-text text-muted">Browse icons at <a href="https://icons.getbootstrap.com/" target="_blank">icons.getbootstrap.com</a></small>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-check-lg"></i> ${eventType ? 'Update' : 'Create'}
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="loadEventTypes()">
+                                <i class="bi bi-x-lg"></i> Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        `;
+
+        listContainer.innerHTML = formHtml;
+
+        document.getElementById('eventTypeForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            await saveEventType(eventType ? eventType.id : null);
+        });
+    }
+
+    // Edit event type
+    window.editEventType = async function(eventTypeId) {
+        try {
+            const response = await fetch('{% url "players:get_event_types" %}');
+            const result = await response.json();
+
+            if (result.success) {
+                const eventType = result.event_types.find(et => et.id === eventTypeId);
+                if (eventType) {
+                    showEventTypeForm(eventType);
+                }
+            }
+        } catch (error) {
+            alert('Error loading event type: ' + error.message);
+        }
+    };
+
+    // Save event type (create or update)
+    async function saveEventType(eventTypeId) {
+        const name = document.getElementById('eventTypeName').value.trim();
+        const color = document.getElementById('eventTypeColor').value;
+        const icon = document.getElementById('eventTypeIcon').value.trim();
+
+        if (!name) {
+            alert('Please enter a name');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('name', name);
+        formData.append('color', color);
+        formData.append('bootstrap_icon_id', icon);
+
+        const url = eventTypeId
+            ? '{% url "players:update_event_type" %}'
+            : '{% url "players:create_event_type" %}';
+
+        if (eventTypeId) {
+            formData.append('event_type_id', eventTypeId);
+        }
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {'X-CSRFToken': getCookie('csrftoken')},
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                loadEventTypes();
+                calendar.refetchEvents(); // Refresh calendar to show updated colors/icons
+            } else {
+                alert('Error: ' + result.error);
+            }
+        } catch (error) {
+            alert('Error saving event type: ' + error.message);
+        }
+    }
 });
 </script>
 {% endblock %}
