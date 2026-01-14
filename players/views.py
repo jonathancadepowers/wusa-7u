@@ -1632,7 +1632,7 @@ def validate_team_secret_view(request):
 
 def players_api_view(request):
     """API endpoint to get list of all players"""
-    players = Player.objects.all().order_by('last_name', 'first_name')
+    players = Player.objects.select_related('team').all().order_by('last_name', 'first_name')
 
     players_data = []
     for player in players:
@@ -1641,6 +1641,9 @@ def players_api_view(request):
             'first_name': player.first_name,
             'last_name': player.last_name,
             'draftable': player.draftable,
+            'team': player.team.name if player.team else None,
+            'birthday': player.birthday.strftime('%Y-%m-%d') if player.birthday else None,
+            'school': player.school,
         })
 
     return JsonResponse(players_data, safe=False)
