@@ -163,6 +163,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Check for master password and show admin buttons
     const masterPasswordCookie = document.cookie.split('; ').find(row => row.startsWith('master_password_verified='));
+    console.log('Master password cookie:', masterPasswordCookie);
     if (masterPasswordCookie) {
         document.getElementById('adminButtons').style.display = 'flex';
     }
@@ -184,6 +185,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // When user clicks on a date (creates new event)
         select: function(info) {
+            console.log('Select event triggered:', info);
             const modal = new bootstrap.Modal(document.getElementById('createEventModal'));
             modal.show();
             document.getElementById('eventStartDate').value = info.startStr;
@@ -197,6 +199,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // When user clicks on an existing event
         eventClick: function(info) {
+            console.log('Event clicked:', info.event.id, 'Has master password:', !!masterPasswordCookie);
             if (masterPasswordCookie) {
                 loadEventForEdit(info.event.id);
             }
@@ -204,11 +207,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // When user drags an event to a new date/time
         eventDrop: function(info) {
+            console.log('Event dropped:', info.event.id);
             updateEventDateTime(info.event);
         },
 
         // When user resizes an event
         eventResize: function(info) {
+            console.log('Event resized:', info.event.id);
             updateEventDateTime(info.event);
         }
     });
@@ -263,8 +268,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load event for editing
     async function loadEventForEdit(eventId) {
         try {
+            console.log('Loading event for edit:', eventId);
             const response = await fetch(`{% url "players:get_event" %}?id=${eventId}`);
             const result = await response.json();
+            console.log('Get event result:', result);
 
             if (result.success) {
                 const event = result.event;
