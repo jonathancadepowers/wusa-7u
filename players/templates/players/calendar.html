@@ -156,6 +156,18 @@
     max-width: 1200px;
     margin: 0 auto;
 }
+
+/* Remove underlines from day headers and day numbers */
+.fc .fc-col-header-cell-cushion,
+.fc .fc-daygrid-day-number {
+    text-decoration: none !important;
+}
+
+/* Remove underline on hover too */
+.fc .fc-col-header-cell-cushion:hover,
+.fc .fc-daygrid-day-number:hover {
+    text-decoration: none !important;
+}
 </style>
 
 <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
