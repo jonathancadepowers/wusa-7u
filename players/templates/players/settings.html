@@ -150,6 +150,31 @@
 
                         <hr class="my-4">
 
+                        <h5 class="card-title">Quick Links</h5>
+                        <p class="text-muted">Manage quick links that appear on the public portal.</p>
+
+                        <div class="mb-3">
+                            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addQuickLinkModal">
+                                <i class="bi bi-plus-circle me-2"></i>Add Quick Link
+                            </button>
+                        </div>
+
+                        <div id="quickLinksContainer" class="row g-2">
+                            {% for link in quick_links %}
+                            <div class="col-auto">
+                                <button type="button" class="btn btn-outline-primary" onclick="editQuickLink({{ link.id }}, '{{ link.name|escapejs }}', '{{ link.url|escapejs }}', '{{ link.icon|escapejs }}', {{ link.display_order }})">
+                                    <i class="bi {{ link.icon }} me-2"></i>{{ link.name }}
+                                </button>
+                            </div>
+                            {% empty %}
+                            <div class="col-12">
+                                <p class="text-muted">No quick links configured yet.</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <hr class="my-4">
+
                         <h5 class="card-title">Developer Settings</h5>
                         <p class="text-muted">Advanced settings for developers and administrators.</p>
 
@@ -290,6 +315,58 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Quick Link Modal -->
+    <div class="modal fade" id="addQuickLinkModal" tabindex="-1" aria-labelledby="addQuickLinkModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addQuickLinkModalLabel">Add Quick Link</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="quickLinkForm">
+                        <input type="hidden" id="quickLinkId" value="">
+
+                        <div class="mb-3">
+                            <label for="quickLinkName" class="form-label">Name *</label>
+                            <input type="text" class="form-control" id="quickLinkName" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="quickLinkUrl" class="form-label">URL *</label>
+                            <input type="text" class="form-control" id="quickLinkUrl" placeholder="https://example.com" required>
+                            <div class="form-text">Full URL including http:// or https://</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="quickLinkIcon" class="form-label">Icon *</label>
+                            <input type="text" class="form-control" id="quickLinkIcon" placeholder="bi-link-45deg" required>
+                            <div class="form-text">Bootstrap icon class (e.g., bi-clipboard-check). See <a href="https://icons.getbootstrap.com/" target="_blank">Bootstrap Icons</a></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="quickLinkOrder" class="form-label">Display Order</label>
+                            <input type="number" class="form-control" id="quickLinkOrder" value="0">
+                            <div class="form-text">Lower numbers appear first</div>
+                        </div>
+
+                        <div class="alert alert-success d-none" id="quickLinkSuccess"></div>
+                        <div class="alert alert-danger d-none" id="quickLinkError"></div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger d-none" id="deleteQuickLinkBtn">
+                        <i class="bi bi-trash me-2"></i>Delete
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveQuickLinkBtn">
+                        <i class="bi bi-save me-2"></i>Save Link
+                    </button>
                 </div>
             </div>
         </div>
@@ -1486,6 +1563,135 @@
             } catch (error) {
                 errorDiv.textContent = 'An error occurred. Please try again.';
                 errorDiv.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+            }
+        });
+
+        // Quick Link Management
+        function editQuickLink(id, name, url, icon, displayOrder) {
+            document.getElementById('quickLinkId').value = id;
+            document.getElementById('quickLinkName').value = name;
+            document.getElementById('quickLinkUrl').value = url;
+            document.getElementById('quickLinkIcon').value = icon;
+            document.getElementById('quickLinkOrder').value = displayOrder;
+
+            document.getElementById('addQuickLinkModalLabel').textContent = 'Edit Quick Link';
+            document.getElementById('deleteQuickLinkBtn').classList.remove('d-none');
+
+            const modal = new bootstrap.Modal(document.getElementById('addQuickLinkModal'));
+            modal.show();
+        }
+
+        // Reset modal when opening for new link
+        document.getElementById('addQuickLinkModal').addEventListener('show.bs.modal', function (event) {
+            if (!event.relatedTarget || !event.relatedTarget.onclick) {
+                // Opening for new link (not edit)
+                document.getElementById('quickLinkForm').reset();
+                document.getElementById('quickLinkId').value = '';
+                document.getElementById('addQuickLinkModalLabel').textContent = 'Add Quick Link';
+                document.getElementById('deleteQuickLinkBtn').classList.add('d-none');
+            }
+            document.getElementById('quickLinkSuccess').classList.add('d-none');
+            document.getElementById('quickLinkError').classList.add('d-none');
+        });
+
+        // Save Quick Link
+        document.getElementById('saveQuickLinkBtn').addEventListener('click', async function() {
+            const btn = this;
+            const originalHTML = btn.innerHTML;
+            const linkId = document.getElementById('quickLinkId').value;
+            const isEdit = linkId !== '';
+
+            const data = {
+                name: document.getElementById('quickLinkName').value,
+                url: document.getElementById('quickLinkUrl').value,
+                icon: document.getElementById('quickLinkIcon').value,
+                display_order: document.getElementById('quickLinkOrder').value
+            };
+
+            if (!data.name || !data.url || !data.icon) {
+                document.getElementById('quickLinkError').textContent = 'Please fill in all required fields.';
+                document.getElementById('quickLinkError').classList.remove('d-none');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+
+            try {
+                const url = isEdit ? `/players/quick-links/${linkId}/update/` : '/players/quick-links/create/';
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    document.getElementById('quickLinkSuccess').textContent = isEdit ? 'Quick link updated successfully!' : 'Quick link created successfully!';
+                    document.getElementById('quickLinkSuccess').classList.remove('d-none');
+                    document.getElementById('quickLinkError').classList.add('d-none');
+
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    document.getElementById('quickLinkError').textContent = result.error || 'Failed to save quick link.';
+                    document.getElementById('quickLinkError').classList.remove('d-none');
+                }
+            } catch (error) {
+                document.getElementById('quickLinkError').textContent = 'An error occurred. Please try again.';
+                document.getElementById('quickLinkError').classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+            }
+        });
+
+        // Delete Quick Link
+        document.getElementById('deleteQuickLinkBtn').addEventListener('click', async function() {
+            if (!confirm('Are you sure you want to delete this quick link?')) {
+                return;
+            }
+
+            const btn = this;
+            const originalHTML = btn.innerHTML;
+            const linkId = document.getElementById('quickLinkId').value;
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Deleting...';
+
+            try {
+                const response = await fetch(`/players/quick-links/${linkId}/delete/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    document.getElementById('quickLinkSuccess').textContent = 'Quick link deleted successfully!';
+                    document.getElementById('quickLinkSuccess').classList.remove('d-none');
+                    document.getElementById('quickLinkError').classList.add('d-none');
+
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    document.getElementById('quickLinkError').textContent = result.error || 'Failed to delete quick link.';
+                    document.getElementById('quickLinkError').classList.remove('d-none');
+                }
+            } catch (error) {
+                document.getElementById('quickLinkError').textContent = 'An error occurred. Please try again.';
+                document.getElementById('quickLinkError').classList.remove('d-none');
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = originalHTML;

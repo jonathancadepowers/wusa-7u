@@ -310,3 +310,22 @@ class Event(models.Model):
     def __str__(self):
         type_name = self.event_type.name if self.event_type else 'No Type'
         return f"{self.name} ({type_name}) - {self.timestamp.strftime('%Y-%m-%d %H:%M')}"
+
+
+class QuickLink(models.Model):
+    name = models.CharField(max_length=200)
+    url = models.CharField(max_length=500)
+    icon = models.CharField(max_length=100)  # Bootstrap icon class (e.g., "bi-clipboard-check")
+    display_order = models.IntegerField(default=0)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'quick_links'
+        ordering = ['display_order', 'name']
+        verbose_name = 'Quick Link'
+        verbose_name_plural = 'Quick Links'
+
+    def __str__(self):
+        return self.name

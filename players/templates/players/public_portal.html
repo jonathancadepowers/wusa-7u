@@ -25,102 +25,31 @@
                 <div class="mb-4">
                     <h5 class="mb-3"><i class="bi bi-link-45deg me-2"></i>Quick Links</h5>
                     <div class="row g-3">
+                        {% for link in quick_links %}
                         <div class="col-md-6">
-                            <a href="{% url 'players:team_preferences' %}" class="text-decoration-none">
+                            <a href="{% if link.url == '#' %}#{% else %}{{ link.url }}{% endif %}"
+                               {% if link.name == "Manager Data" %}onclick="showManagerDataModal(); return false;"
+                               {% elif "http" in link.url %}target="_blank"{% endif %}
+                               class="text-decoration-none">
                                 <div class="card h-100 shadow-sm hover-card">
                                     <div class="card-body py-2">
                                         <div class="d-flex align-items-center">
                                             <div class="text-primary me-3" style="font-size: 2rem;">
-                                                <i class="bi bi-clipboard-check"></i>
+                                                <i class="bi {{ link.icon }}"></i>
                                             </div>
                                             <div>
-                                                <h6 class="mb-0">Submit Team Preferences</h6>
+                                                <h6 class="mb-0">{{ link.name }}</h6>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </a>
                         </div>
-                        <div class="col-md-6">
-                            <a href="#" onclick="showManagerDataModal(); return false;" class="text-decoration-none">
-                                <div class="card h-100 shadow-sm hover-card">
-                                    <div class="card-body py-2">
-                                        <div class="d-flex align-items-center">
-                                            <div class="text-primary me-3" style="font-size: 2rem;">
-                                                <i class="bi bi-people-fill"></i>
-                                            </div>
-                                            <div>
-                                                <h6 class="mb-0">Manager Data</h6>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </a>
+                        {% empty %}
+                        <div class="col-12">
+                            <p class="text-muted">No quick links configured yet.</p>
                         </div>
-                        <div class="col-md-6">
-                            <a href="https://docs.google.com/presentation/d/1NdUP0QAdI8vp_TmofHwIEyrsXc5GKPEP8b_yEoDk1VQ/edit?usp=sharing" target="_blank" class="text-decoration-none">
-                                <div class="card h-100 shadow-sm hover-card">
-                                    <div class="card-body py-2">
-                                        <div class="d-flex align-items-center">
-                                            <div class="text-primary me-3" style="font-size: 2rem;">
-                                                <i class="bi bi-file-earmark-slides"></i>
-                                            </div>
-                                            <div>
-                                                <h6 class="mb-0">Pre-Season Info Deck</h6>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        <div class="col-md-6">
-                            <a href="https://docs.google.com/spreadsheets/d/1eo7L0w6liR51sMMBjkwuxvdPCPKYLsFR/edit?usp=sharing&ouid=106177974752139787465&rtpof=true&sd=true" target="_blank" class="text-decoration-none">
-                                <div class="card h-100 shadow-sm hover-card">
-                                    <div class="card-body py-2">
-                                        <div class="d-flex align-items-center">
-                                            <div class="text-primary me-3" style="font-size: 2rem;">
-                                                <i class="bi bi-table"></i>
-                                            </div>
-                                            <div>
-                                                <h6 class="mb-0">Player Data & Eval Template</h6>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        <div class="col-md-6">
-                            <a href="https://docs.google.com/spreadsheets/d/1Kdw5pIWtB9i2cjqwVGx6Iry5fJgojsUj/edit?usp=sharing&ouid=106177974752139787465&rtpof=true&sd=true" target="_blank" class="text-decoration-none">
-                                <div class="card h-100 shadow-sm hover-card">
-                                    <div class="card-body py-2">
-                                        <div class="d-flex align-items-center">
-                                            <div class="text-primary me-3" style="font-size: 2rem;">
-                                                <i class="bi bi-clipboard-data"></i>
-                                            </div>
-                                            <div>
-                                                <h6 class="mb-0">Try Out Registrations</h6>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                        <div class="col-md-6">
-                            <a href="https://www.wusa.org/locations" target="_blank" class="text-decoration-none">
-                                <div class="card h-100 shadow-sm hover-card">
-                                    <div class="card-body py-2">
-                                        <div class="d-flex align-items-center">
-                                            <div class="text-primary me-3" style="font-size: 2rem;">
-                                                <i class="bi bi-geo-alt"></i>
-                                            </div>
-                                            <div>
-                                                <h6 class="mb-0">WUSA Field Locations</h6>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
+                        {% endfor %}
                     </div>
                 </div>
 

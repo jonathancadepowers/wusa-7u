@@ -29,15 +29,106 @@ def get_display_timezone():
 
 def settings_view(request):
     """Main settings page"""
-    from .models import Draft
+    from .models import Draft, QuickLink
 
     # Check if there's an existing draft
     draft_exists = Draft.objects.exists()
 
+    # Get all quick links
+    quick_links = QuickLink.objects.all().order_by('display_order', 'name')
+
     context = {
-        'draft_exists': draft_exists
+        'draft_exists': draft_exists,
+        'quick_links': quick_links
     }
     return render(request, 'players/settings.html', context)
+
+
+@csrf_exempt
+def create_quick_link(request):
+    """Create a new quick link"""
+    if request.method == 'POST':
+        try:
+            import json
+            from .models import QuickLink
+
+            data = json.loads(request.body)
+
+            quick_link = QuickLink.objects.create(
+                name=data.get('name'),
+                url=data.get('url'),
+                icon=data.get('icon'),
+                display_order=data.get('display_order', 0)
+            )
+
+            return JsonResponse({
+                'success': True,
+                'id': quick_link.id
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            })
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+
+@csrf_exempt
+def update_quick_link(request, link_id):
+    """Update an existing quick link"""
+    if request.method == 'POST':
+        try:
+            import json
+            from .models import QuickLink
+
+            data = json.loads(request.body)
+            quick_link = QuickLink.objects.get(id=link_id)
+
+            quick_link.name = data.get('name', quick_link.name)
+            quick_link.url = data.get('url', quick_link.url)
+            quick_link.icon = data.get('icon', quick_link.icon)
+            quick_link.display_order = data.get('display_order', quick_link.display_order)
+            quick_link.save()
+
+            return JsonResponse({'success': True})
+        except QuickLink.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': 'Quick link not found'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            })
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+
+@csrf_exempt
+def delete_quick_link(request, link_id):
+    """Delete a quick link"""
+    if request.method == 'POST':
+        try:
+            from .models import QuickLink
+
+            quick_link = QuickLink.objects.get(id=link_id)
+            quick_link.delete()
+
+            return JsonResponse({'success': True})
+        except QuickLink.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': 'Quick link not found'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            })
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
 
 def export_division_configuration(request):
@@ -1422,9 +1513,14 @@ def admin_dashboard_view(request):
 
 def public_portal_view(request):
     """Public portal listing all teams"""
+    from .models import QuickLink
+
     teams = Team.objects.all().order_by('name')
+    quick_links = QuickLink.objects.all().order_by('display_order', 'name')
+
     context = {
-        'teams': teams
+        'teams': teams,
+        'quick_links': quick_links
     }
     return render(request, 'players/public_portal.html', context)
 
