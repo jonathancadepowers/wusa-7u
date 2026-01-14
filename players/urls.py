@@ -115,6 +115,7 @@ urlpatterns = [
     path('calendar/create-event-type/', views.create_event_type_view, name='create_event_type'),
     path('calendar/get-event-types/', views.get_event_types_view, name='get_event_types'),
     path('calendar/update-event-type/', views.update_event_type_view, name='update_event_type'),
+    path('calendar/delete-event-type/', views.delete_event_type_view, name='delete_event_type'),
     # Timezone Settings
     path('api/get-timezone-info/', views.get_timezone_info_view, name='get_timezone_info'),
     path('api/set-timezone/', views.set_timezone_view, name='set_timezone'),

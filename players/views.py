@@ -5998,6 +5998,50 @@ def update_event_type_view(request):
 
 @require_http_methods(["POST"])
 @csrf_exempt
+def delete_event_type_view(request):
+    """Delete an event type and remove it from all events"""
+    from .models import EventType, Event
+
+    try:
+        event_type_id = request.POST.get('event_type_id', '').strip()
+
+        if not event_type_id:
+            return JsonResponse({
+                'success': False,
+                'error': 'Event type ID is required.'
+            }, status=400)
+
+        # Get the event type
+        try:
+            event_type = EventType.objects.get(id=event_type_id)
+        except EventType.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': 'Event type not found.'
+            }, status=404)
+
+        event_type_name = event_type.name
+
+        # Remove this event type from all events
+        Event.objects.filter(event_type=event_type).update(event_type=None)
+
+        # Delete the event type
+        event_type.delete()
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Event type "{event_type_name}" deleted successfully!'
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
+@require_http_methods(["POST"])
+@csrf_exempt
 def update_event_view(request):
     """Update an existing event"""
     from .models import Event, EventType
