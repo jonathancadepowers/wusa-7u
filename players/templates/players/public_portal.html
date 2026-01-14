@@ -533,14 +533,24 @@
 
             try {
                 const response = await fetch('/api/managers-list/');
-                const managers = await response.json();
+                const data = await response.json();
+
+                // Extract managers array from response
+                const managers = data.managers || [];
 
                 managersData = managers.map(m => ({
                     team: m.team || 'Unassigned',
-                    name: `${m.first_name} ${m.last_name}`,
+                    name: m.name || 'N/A',
                     email: m.email || 'N/A',
                     phone: m.phone || 'N/A'
                 }));
+
+                // Sort by team (column 0) in ascending order by default
+                managersData.sort((a, b) => {
+                    const aVal = a.team.toLowerCase();
+                    const bVal = b.team.toLowerCase();
+                    return aVal.localeCompare(bVal);
+                });
 
                 renderManagersTable();
             } catch (error) {
