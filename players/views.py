@@ -5997,9 +5997,9 @@ def update_event_view(request):
     from datetime import datetime
 
     try:
-        event_id = request.POST.get('id', '').strip()
+        event_id = request.POST.get('event_id', '').strip()
         name = request.POST.get('name', '').strip()
-        event_type_id = request.POST.get('event_type', '').strip()
+        event_type_id = request.POST.get('event_type_id', '').strip()
         location = request.POST.get('location', '').strip()
         timestamp_str = request.POST.get('timestamp', '').strip()
         end_date_str = request.POST.get('end_date', '').strip()
@@ -6132,7 +6132,7 @@ def delete_event_view(request):
     from .models import Event
 
     try:
-        event_id = request.POST.get('id', '').strip()
+        event_id = request.POST.get('event_id', '').strip()
 
         if not event_id:
             return JsonResponse({
@@ -6174,12 +6174,13 @@ def move_event_date_view(request):
 
     try:
         event_id = request.POST.get('event_id', '').strip()
-        new_date = request.POST.get('new_date', '').strip()
+        timestamp_str = request.POST.get('timestamp', '').strip()
+        end_date_str = request.POST.get('end_date', '').strip()
 
-        if not event_id or not new_date:
+        if not event_id or not timestamp_str:
             return JsonResponse({
                 'success': False,
-                'error': 'Event ID and new date are required.'
+                'error': 'Event ID and timestamp are required.'
             }, status=400)
 
         # Get the event
@@ -6194,36 +6195,25 @@ def move_event_date_view(request):
         # Get the timezone setting
         tz = get_display_timezone()
 
-        # Parse the existing timestamp to get the time in the display timezone
-        existing_dt = event.timestamp.astimezone(tz)
-        existing_time = existing_dt.time()
-
-        # Log original timestamp
+        # Parse the ISO timestamp from FullCalendar
+        # It comes as ISO string like "2025-01-15T10:00:00-06:00"
         import logging
         logger = logging.getLogger(__name__)
-        logger.info(f"Moving event {event.id}: Original timestamp UTC: {event.timestamp}, Display TZ: {tz}, Local time: {existing_dt}")
+        logger.info(f"Moving event {event.id}: New timestamp: {timestamp_str}")
 
-        # Parse the new date (YYYY-MM-DD format)
-        new_date_obj = datetime.strptime(new_date, '%Y-%m-%d').date()
-        logger.info(f"New date parsed: {new_date_obj}, Existing time in display TZ: {existing_time}")
-
-        # Combine new date with existing time in the display timezone
-        # This creates a naive datetime representing the local time
-        naive_dt = datetime.combine(new_date_obj, existing_time)
-        logger.info(f"Combined naive datetime (to be interpreted as {tz}): {naive_dt}")
-
-        # Try to localize, handling DST ambiguity
-        try:
-            new_dt = tz.localize(naive_dt, is_dst=None)
-        except:
-            # If ambiguous, use is_dst=False (standard time)
-            new_dt = tz.localize(naive_dt, is_dst=False)
-
-        logger.info(f"Localized datetime in {tz}: {new_dt}")
-        logger.info(f"Converting to UTC: {new_dt.astimezone(pytz.UTC)}")
+        # Parse the timestamp (it's in ISO format with timezone)
+        new_dt = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
 
         # Update the event timestamp
         event.timestamp = new_dt
+
+        # Update end_date if provided
+        if end_date_str:
+            from datetime import date
+            event.end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+        else:
+            event.end_date = None
+
         event.save()
 
         # Verify what was saved
