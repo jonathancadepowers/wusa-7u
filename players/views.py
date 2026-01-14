@@ -5612,9 +5612,7 @@ def calendar_events_api(request):
     from datetime import datetime
 
     # Get display timezone
-    tz_setting = GeneralSetting.objects.filter(key='timezone').first()
-    timezone_str = tz_setting.value if tz_setting else 'UTC'
-    display_tz = pytz.timezone(timezone_str)
+    display_tz = get_display_timezone()
 
     # Get all events
     events = Event.objects.select_related('event_type').all()
@@ -6194,11 +6192,7 @@ def move_event_date_view(request):
             }, status=404)
 
         # Get the timezone setting
-        try:
-            tz_setting = GeneralSetting.objects.get(key='timezone')
-            tz = pytz.timezone(tz_setting.value)
-        except (GeneralSetting.DoesNotExist, pytz.exceptions.UnknownTimeZoneError):
-            tz = pytz.UTC
+        tz = get_display_timezone()
 
         # Parse the existing timestamp to get the time in the display timezone
         existing_dt = event.timestamp.astimezone(tz)
