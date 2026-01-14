@@ -5641,10 +5641,11 @@ def calendar_events_api(request):
             event_dict['end'] = display_tz.localize(end_datetime).isoformat()
             event_dict['allDay'] = True
 
-        # Add color from event type
+        # Add color and icon from event type
         if event.event_type:
             event_dict['backgroundColor'] = event.event_type.color
             event_dict['borderColor'] = event.event_type.color
+            event_dict['icon'] = event.event_type.bootstrap_icon_id
 
         events_data.append(event_dict)
 

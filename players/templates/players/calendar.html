@@ -195,6 +195,25 @@ document.addEventListener('DOMContentLoaded', function() {
         dayMaxEvents: true,
         events: '{% url "players:calendar_events_api" %}',
 
+        // Custom event content to display icons
+        eventContent: function(arg) {
+            let arrayOfDomNodes = [];
+
+            // Create icon element if icon exists
+            if (arg.event.extendedProps.icon) {
+                let iconEl = document.createElement('i');
+                iconEl.className = 'bi bi-' + arg.event.extendedProps.icon + ' me-1';
+                arrayOfDomNodes.push(iconEl);
+            }
+
+            // Create title element
+            let titleEl = document.createElement('span');
+            titleEl.innerHTML = arg.event.title;
+            arrayOfDomNodes.push(titleEl);
+
+            return { domNodes: arrayOfDomNodes };
+        },
+
         // When user clicks on a date (creates new event)
         select: function(info) {
             console.log('Select event triggered:', info);
