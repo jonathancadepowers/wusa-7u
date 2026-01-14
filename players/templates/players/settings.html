@@ -201,6 +201,24 @@
 
                         <hr class="my-4">
 
+                        <h5 class="card-title">Show/Hide Website Components</h5>
+                        <p class="text-muted">Control the visibility of different categories of components across the website.</p>
+
+                        <div class="row g-2">
+                            <div class="col-auto">
+                                <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#componentVisibilityModal" data-category="preseason">
+                                    <i class="bi bi-eye me-2"></i>Pre-Season Items
+                                </button>
+                            </div>
+                            <div class="col-auto">
+                                <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#componentVisibilityModal" data-category="testing">
+                                    <i class="bi bi-eye-slash me-2"></i>Testing Items
+                                </button>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
                         <h5 class="card-title">Developer Settings</h5>
                         <p class="text-muted">Advanced settings for developers and administrators.</p>
 
@@ -631,6 +649,39 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-danger" id="confirmClearDraftStarsBtn">
                         <i class="bi bi-trash me-2"></i>Yes, Delete All Stars
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Component Visibility Modal -->
+    <div class="modal fade" id="componentVisibilityModal" tabindex="-1" aria-labelledby="componentVisibilityModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="componentVisibilityModalLabel">Component Visibility</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info" role="alert">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        Toggle the switch below to show or hide <span id="categoryName"></span> across the website.
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="visibilityToggle" role="switch">
+                        <label class="form-check-label" for="visibilityToggle">
+                            Show <span id="categoryNameLabel"></span>
+                        </label>
+                    </div>
+                    <div id="visibilityStatusSection" class="mt-3" style="display: none;">
+                        <!-- Status messages will be displayed here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveVisibilityBtn">
+                        <i class="bi bi-save me-2"></i>Save Changes
                     </button>
                 </div>
             </div>
@@ -1832,6 +1883,112 @@
             } catch (error) {
                 document.getElementById('quickLinkError').textContent = 'An error occurred. Please try again.';
                 document.getElementById('quickLinkError').classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+            }
+        });
+
+        // Component Visibility Modal Logic
+        const componentVisibilityModal = document.getElementById('componentVisibilityModal');
+        let currentCategory = null;
+
+        componentVisibilityModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            currentCategory = button.getAttribute('data-category');
+
+            const categoryNameMap = {
+                'preseason': 'Pre-Season Items',
+                'testing': 'Testing Items'
+            };
+
+            const categoryKeyMap = {
+                'preseason': 'show_preseason_items',
+                'testing': 'show_testing_items'
+            };
+
+            const categoryName = categoryNameMap[currentCategory];
+            document.getElementById('categoryName').textContent = categoryName;
+            document.getElementById('categoryNameLabel').textContent = categoryName;
+
+            // Reset status section
+            document.getElementById('visibilityStatusSection').style.display = 'none';
+
+            // Fetch current visibility status
+            fetch('/api/component-categories/')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const categoryKey = categoryKeyMap[currentCategory];
+                        const category = data.categories.find(c => c.key === categoryKey);
+                        if (category) {
+                            document.getElementById('visibilityToggle').checked = category.visible;
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading visibility status:', error);
+                });
+        });
+
+        // Save visibility button handler
+        document.getElementById('saveVisibilityBtn').addEventListener('click', async function() {
+            const btn = this;
+            const originalHTML = btn.innerHTML;
+            const statusSection = document.getElementById('visibilityStatusSection');
+            const isVisible = document.getElementById('visibilityToggle').checked;
+
+            const categoryKeyMap = {
+                'preseason': 'show_preseason_items',
+                'testing': 'show_testing_items'
+            };
+
+            const categoryKey = categoryKeyMap[currentCategory];
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+
+            try {
+                const response = await fetch('/api/toggle-component-visibility/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({
+                        category: categoryKey,
+                        visible: isVisible
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    statusSection.style.display = 'block';
+                    statusSection.innerHTML = `
+                        <div class="alert alert-success" role="alert">
+                            <i class="bi bi-check-circle-fill me-2"></i>
+                            Visibility settings updated successfully! Reload the page to see changes.
+                        </div>
+                    `;
+
+                    // Close modal after 2 seconds
+                    setTimeout(() => {
+                        bootstrap.Modal.getInstance(componentVisibilityModal).hide();
+                        statusSection.style.display = 'none';
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    throw new Error(result.error || 'Failed to update visibility settings');
+                }
+            } catch (error) {
+                statusSection.style.display = 'block';
+                statusSection.innerHTML = `
+                    <div class="alert alert-danger" role="alert">
+                        <i class="bi bi-x-circle-fill me-2"></i>
+                        <strong>Error:</strong> ${error.message}
+                    </div>
+                `;
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = originalHTML;

@@ -29,7 +29,7 @@ def get_display_timezone():
 
 def settings_view(request):
     """Main settings page"""
-    from .models import Draft, QuickLink
+    from .models import Draft, QuickLink, GeneralSetting
 
     # Check if there's an existing draft
     draft_exists = Draft.objects.exists()
@@ -37,9 +37,15 @@ def settings_view(request):
     # Get all quick links (fixed links are always shown first)
     quick_links = QuickLink.objects.all().order_by('display_order', 'name')
 
+    # Get visibility settings
+    show_preseason = GeneralSetting.objects.filter(key='show_preseason_items').first()
+    show_testing = GeneralSetting.objects.filter(key='show_testing_items').first()
+
     context = {
         'draft_exists': draft_exists,
-        'quick_links': quick_links
+        'quick_links': quick_links,
+        'show_preseason_items': show_preseason.value.lower() == 'true' if show_preseason else True,
+        'show_testing_items': show_testing.value.lower() == 'true' if show_testing else True,
     }
     return render(request, 'players/settings.html', context)
 
@@ -1731,6 +1737,79 @@ def update_manager_api_view(request):
         }, status=500)
 
 
+def get_component_categories_api_view(request):
+    """API endpoint to get all component categories and their visibility"""
+    from .models import GeneralSetting
+
+    categories = [
+        {
+            'key': 'show_preseason_items',
+            'label': 'Pre-Season Items',
+            'description': 'Pre-season checklists and setup components'
+        },
+        {
+            'key': 'show_testing_items',
+            'label': 'Testing Items',
+            'description': 'Testing and development tools'
+        }
+    ]
+
+    # Get current visibility for each category
+    for category in categories:
+        setting = GeneralSetting.objects.filter(key=category['key']).first()
+        category['visible'] = setting.value.lower() == 'true' if setting else True
+
+    return JsonResponse({
+        'success': True,
+        'categories': categories
+    })
+
+
+@csrf_exempt
+def toggle_component_visibility_api_view(request):
+    """API endpoint to toggle component category visibility"""
+    if request.method != 'POST':
+        return JsonResponse({
+            'success': False,
+            'error': 'Invalid request method'
+        }, status=400)
+
+    from .models import GeneralSetting
+    import json
+
+    try:
+        data = json.loads(request.body)
+        key = data.get('key')
+        visible = data.get('visible')
+
+        if not key:
+            return JsonResponse({
+                'success': False,
+                'error': 'Missing required field: key'
+            }, status=400)
+
+        # Update or create the setting
+        setting, created = GeneralSetting.objects.get_or_create(
+            key=key,
+            defaults={'value': 'true' if visible else 'false'}
+        )
+
+        if not created:
+            setting.value = 'true' if visible else 'false'
+            setting.save()
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Visibility updated successfully'
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
 def players_list_view(request):
     """List all players with search, sorting, and pagination"""
     search_query = request.GET.get('search', '')
@@ -1778,13 +1857,19 @@ def players_list_view(request):
     # Get all teams for the team assignment dropdown
     all_teams = Team.objects.all().order_by('name')
 
+    # Get visibility settings
+    show_preseason = GeneralSetting.objects.filter(key='show_preseason_items').first()
+    show_testing = GeneralSetting.objects.filter(key='show_testing_items').first()
+
     context = {
         'page_obj': page_obj,
         'search_query': search_query,
         'sort_by': sort_by,
         'order': order,
         'total_players': Player.objects.count(),
-        'all_teams': all_teams
+        'all_teams': all_teams,
+        'show_preseason_items': show_preseason.value.lower() == 'true' if show_preseason else True,
+        'show_testing_items': show_testing.value.lower() == 'true' if show_testing else True,
     }
     return render(request, 'players/players_list.html', context)
 
@@ -2362,6 +2447,10 @@ def team_detail_view(request, team_secret):
         logging.error(f"Error calculating checklist: {e}")
         checklist_items = []
 
+    # Get visibility settings
+    show_preseason = GeneralSetting.objects.filter(key='show_preseason_items').first()
+    show_testing = GeneralSetting.objects.filter(key='show_testing_items').first()
+
     context = {
         'team': team,
         'players': players,
@@ -2370,7 +2459,9 @@ def team_detail_view(request, team_secret):
         'available_players': available_players,
         'drafted_players': drafted_players,
         'starred_player_ids': starred_player_ids,
-        'starred_players': starred_players
+        'starred_players': starred_players,
+        'show_preseason_items': show_preseason.value.lower() == 'true' if show_preseason else True,
+        'show_testing_items': show_testing.value.lower() == 'true' if show_testing else True,
     }
     return render(request, 'players/team_detail.html', context)
 
@@ -2527,6 +2618,10 @@ def managers_list_view(request):
     total_teams = Team.objects.count()
     manager_team_mismatch = total_managers != total_teams
 
+    # Get visibility settings
+    show_preseason = GeneralSetting.objects.filter(key='show_preseason_items').first()
+    show_testing = GeneralSetting.objects.filter(key='show_testing_items').first()
+
     context = {
         'page_obj': page_obj,
         'search_query': search_query,
@@ -2535,7 +2630,9 @@ def managers_list_view(request):
         'total_managers': total_managers,
         'total_teams': total_teams,
         'manager_team_mismatch': manager_team_mismatch,
-        'unassigned_teams': unassigned_teams
+        'unassigned_teams': unassigned_teams,
+        'show_preseason_items': show_preseason.value.lower() == 'true' if show_preseason else True,
+        'show_testing_items': show_testing.value.lower() == 'true' if show_testing else True,
     }
     return render(request, 'players/managers_list.html', context)
 
@@ -2671,6 +2768,10 @@ def teams_list_view(request):
     # Get all teams with manager info for the secrets modal
     all_teams = Team.objects.select_related('manager').filter(manager__isnull=False).order_by('name')
 
+    # Get visibility settings
+    show_preseason = GeneralSetting.objects.filter(key='show_preseason_items').first()
+    show_testing = GeneralSetting.objects.filter(key='show_testing_items').first()
+
     context = {
         'page_obj': page_obj,
         'search_query': search_query,
@@ -2678,7 +2779,9 @@ def teams_list_view(request):
         'order': order,
         'total_teams': Team.objects.count(),
         'unassigned_managers': unassigned_managers,
-        'all_teams': all_teams
+        'all_teams': all_teams,
+        'show_preseason_items': show_preseason.value.lower() == 'true' if show_preseason else True,
+        'show_testing_items': show_testing.value.lower() == 'true' if show_testing else True,
     }
     return render(request, 'players/teams_list.html', context)
 
@@ -3590,6 +3693,14 @@ def run_draft_view(request):
         'drafted_players_count': drafted_players_count,
         'remaining_players_count': remaining_players_count,
     }
+
+    # Get visibility settings
+    show_preseason = GeneralSetting.objects.filter(key='show_preseason_items').first()
+    show_testing = GeneralSetting.objects.filter(key='show_testing_items').first()
+
+    context['show_preseason_items'] = show_preseason.value.lower() == 'true' if show_preseason else True
+    context['show_testing_items'] = show_testing.value.lower() == 'true' if show_testing else True
+
     return render(request, 'players/run_draft.html', context)
 
 
