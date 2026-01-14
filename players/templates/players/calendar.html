@@ -162,7 +162,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Check for master password and show admin buttons
-    const masterPasswordCookie = document.cookie.split('; ').find(row => row.startsWith('master_password_verified='));
+    const masterPasswordCookie = document.cookie.split('; ').find(row => row.startsWith('master_password='));
     console.log('Master password cookie:', masterPasswordCookie);
     if (masterPasswordCookie) {
         document.getElementById('adminButtons').style.display = 'flex';
