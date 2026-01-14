@@ -177,9 +177,12 @@
     border-color: #34495e !important;
 }
 
-.fc .fc-button-primary:not(:disabled).fc-button-active {
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active,
+.fc .fc-button-primary.fc-button-active {
     background-color: #1a252f !important;
     border-color: #1a252f !important;
+    box-shadow: none !important;
 }
 
 /* Add spacing between custom buttons */
