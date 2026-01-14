@@ -27,8 +27,8 @@ def main():
         cursor.execute("UPDATE quick_links SET display_order = 0 WHERE name = 'All Division Players'")
 
         # Update Manager Data OR Manager Contact Info (whichever exists)
-        cursor.execute("UPDATE quick_links SET display_order = 1, url = '#manager-contact-info' WHERE name = 'Manager Data'")
-        cursor.execute("UPDATE quick_links SET display_order = 1, url = '#manager-contact-info', is_fixed = TRUE WHERE name = 'Manager Contact Info'")
+        cursor.execute("UPDATE quick_links SET display_order = 1, url = '#manager-contact-info', is_active = TRUE WHERE name = 'Manager Data'")
+        cursor.execute("UPDATE quick_links SET display_order = 1, url = '#manager-contact-info', is_fixed = TRUE, is_active = TRUE WHERE name = 'Manager Contact Info'")
 
         # Check if All Division Players exists
         cursor.execute("SELECT COUNT(*) FROM quick_links WHERE name = 'All Division Players'")

@@ -539,6 +539,7 @@
                 const managers = data.managers || [];
 
                 managersData = managers.map(m => ({
+                    id: m.id,
                     team: m.team || 'Unassigned',
                     name: m.name || 'N/A',
                     email: m.email || 'N/A',
@@ -570,13 +571,34 @@
             );
 
             tbody.innerHTML = filtered.map(m => `
-                <tr>
+                <tr data-manager-id="${m.id}">
                     <td>${m.team}</td>
-                    <td>${m.name}</td>
-                    <td>${m.email}</td>
-                    <td>${m.phone}</td>
+                    <td contenteditable="true" data-field="name" class="editable-cell">${m.name}</td>
+                    <td contenteditable="true" data-field="email" class="editable-cell">${m.email}</td>
+                    <td contenteditable="true" data-field="phone" class="editable-cell">${m.phone}</td>
                 </tr>
             `).join('');
+
+            // Add event listeners for editable cells
+            tbody.querySelectorAll('.editable-cell').forEach(cell => {
+                cell.addEventListener('keydown', async (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const field = cell.dataset.field;
+                        const value = cell.textContent.trim();
+                        const managerId = cell.closest('tr').dataset.managerId;
+                        await saveManagerField(managerId, field, value, cell);
+                    }
+                });
+
+                // Also save on blur (when user clicks away)
+                cell.addEventListener('blur', async (e) => {
+                    const field = cell.dataset.field;
+                    const value = cell.textContent.trim();
+                    const managerId = cell.closest('tr').dataset.managerId;
+                    await saveManagerField(managerId, field, value, cell);
+                });
+            });
         }
 
         function sortManagersTable(column) {
@@ -597,6 +619,59 @@
             });
 
             renderManagersTable();
+        }
+
+        async function saveManagerField(managerId, field, value, cellElement) {
+            // Store original value for rollback on error
+            const originalValue = cellElement.textContent;
+
+            // Visual feedback - add saving state
+            cellElement.style.backgroundColor = '#fff3cd';
+
+            try {
+                const formData = new FormData();
+                formData.append('manager_id', managerId);
+                formData.append('field', field);
+                formData.append('value', value);
+                formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+                const response = await fetch('/api/update-manager/', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Success - flash green briefly
+                    cellElement.style.backgroundColor = '#d1e7dd';
+                    setTimeout(() => {
+                        cellElement.style.backgroundColor = '';
+                    }, 1000);
+
+                    // Update the managersData array
+                    const manager = managersData.find(m => m.id == managerId);
+                    if (manager) {
+                        manager[field] = value;
+                    }
+                } else {
+                    // Error - flash red and revert
+                    cellElement.style.backgroundColor = '#f8d7da';
+                    cellElement.textContent = originalValue;
+                    alert('Error saving: ' + (data.error || 'Unknown error'));
+                    setTimeout(() => {
+                        cellElement.style.backgroundColor = '';
+                    }, 2000);
+                }
+            } catch (error) {
+                // Network error - flash red and revert
+                cellElement.style.backgroundColor = '#f8d7da';
+                cellElement.textContent = originalValue;
+                alert('Error saving: ' + error.message);
+                setTimeout(() => {
+                    cellElement.style.backgroundColor = '';
+                }, 2000);
+            }
         }
 
         document.getElementById('managerSearchInput').addEventListener('input', renderManagersTable);
