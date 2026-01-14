@@ -15,6 +15,7 @@ urlpatterns = [
     path('quick-links/create/', views.create_quick_link, name='create_quick_link'),
     path('quick-links/<int:link_id>/update/', views.update_quick_link, name='update_quick_link'),
     path('quick-links/<int:link_id>/delete/', views.delete_quick_link, name='delete_quick_link'),
+    path('quick-links/set-order/', views.set_quick_link_order, name='set_quick_link_order'),
     path('export-division-configuration/', views.export_division_configuration, name='export_division_configuration'),
     path('import-division-configuration/', views.import_division_configuration, name='import_division_configuration'),
     path('get-master-password/', views.get_master_password, name='get_master_password'),

@@ -133,6 +133,36 @@ def delete_quick_link(request, link_id):
     return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
 
+@csrf_exempt
+def set_quick_link_order(request):
+    """Set the display order for quick links"""
+    if request.method == 'POST':
+        try:
+            import json
+            from .models import QuickLink
+
+            data = json.loads(request.body)
+            order_data = data.get('order', [])
+
+            # Update each quick link's display_order
+            for item in order_data:
+                link_id = item.get('id')
+                display_order = item.get('display_order')
+
+                quick_link = QuickLink.objects.get(id=link_id)
+                quick_link.display_order = display_order
+                quick_link.save()
+
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            })
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+
 def export_division_configuration(request):
     """
     Export complete data from validation_code, division_validation_registry,
