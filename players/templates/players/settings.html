@@ -162,8 +162,8 @@
                         <div id="quickLinksContainer" class="row g-2">
                             {% for link in quick_links %}
                             <div class="col-auto">
-                                <button type="button" class="btn btn-outline-primary" onclick="editQuickLink({{ link.id }}, '{{ link.name|escapejs }}', '{{ link.url|escapejs }}', '{{ link.icon|escapejs }}', {{ link.display_order }})">
-                                    <i class="bi {{ link.icon }} me-2"></i>{{ link.name }}
+                                <button type="button" class="btn btn-outline-primary{% if not link.is_active %} opacity-50{% endif %}" onclick="editQuickLink({{ link.id }}, '{{ link.name|escapejs }}', '{{ link.url|escapejs }}', '{{ link.icon|escapejs }}', {{ link.display_order }}, {{ link.is_active|lower }})">
+                                    <i class="bi {{ link.icon }} me-2"></i>{{ link.name }}{% if not link.is_active %} (Inactive){% endif %}
                                 </button>
                             </div>
                             {% empty %}
@@ -353,6 +353,16 @@
                             <label for="quickLinkOrder" class="form-label">Display Order</label>
                             <input type="number" class="form-control" id="quickLinkOrder" value="0">
                             <div class="form-text">Lower numbers appear first</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="quickLinkActive" checked>
+                                <label class="form-check-label" for="quickLinkActive">
+                                    Active
+                                </label>
+                                <div class="form-text">Only active links appear on the public portal</div>
+                            </div>
                         </div>
 
                         <div class="alert alert-success d-none" id="quickLinkSuccess"></div>
@@ -1572,7 +1582,7 @@
         // Quick Link Management
         let isEditingQuickLink = false;
 
-        function editQuickLink(id, name, url, icon, displayOrder) {
+        function editQuickLink(id, name, url, icon, displayOrder, isActive) {
             isEditingQuickLink = true;
 
             document.getElementById('quickLinkId').value = id;
@@ -1580,6 +1590,7 @@
             document.getElementById('quickLinkUrl').value = url;
             document.getElementById('quickLinkIcon').value = icon;
             document.getElementById('quickLinkOrder').value = displayOrder;
+            document.getElementById('quickLinkActive').checked = isActive;
 
             document.getElementById('addQuickLinkModalLabel').textContent = 'Edit Quick Link';
             document.getElementById('deleteQuickLinkBtn').classList.remove('d-none');
@@ -1617,7 +1628,8 @@
                 name: document.getElementById('quickLinkName').value,
                 url: document.getElementById('quickLinkUrl').value,
                 icon: document.getElementById('quickLinkIcon').value,
-                display_order: document.getElementById('quickLinkOrder').value
+                display_order: document.getElementById('quickLinkOrder').value,
+                is_active: document.getElementById('quickLinkActive').checked
             };
 
             if (!data.name || !data.url || !data.icon) {

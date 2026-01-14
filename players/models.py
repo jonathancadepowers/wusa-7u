@@ -317,6 +317,7 @@ class QuickLink(models.Model):
     url = models.CharField(max_length=500)
     icon = models.CharField(max_length=100)  # Bootstrap icon class (e.g., "bi-clipboard-check")
     display_order = models.IntegerField(default=0)
+    is_active = models.BooleanField(default=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

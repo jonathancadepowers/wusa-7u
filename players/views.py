@@ -58,7 +58,8 @@ def create_quick_link(request):
                 name=data.get('name'),
                 url=data.get('url'),
                 icon=data.get('icon'),
-                display_order=data.get('display_order', 0)
+                display_order=data.get('display_order', 0),
+                is_active=data.get('is_active', True)
             )
 
             return JsonResponse({
@@ -89,6 +90,7 @@ def update_quick_link(request, link_id):
             quick_link.url = data.get('url', quick_link.url)
             quick_link.icon = data.get('icon', quick_link.icon)
             quick_link.display_order = data.get('display_order', quick_link.display_order)
+            quick_link.is_active = data.get('is_active', quick_link.is_active)
             quick_link.save()
 
             return JsonResponse({'success': True})
@@ -1516,7 +1518,7 @@ def public_portal_view(request):
     from .models import QuickLink
 
     teams = Team.objects.all().order_by('name')
-    quick_links = QuickLink.objects.all().order_by('display_order', 'name')
+    quick_links = QuickLink.objects.filter(is_active=True).order_by('display_order', 'name')
 
     context = {
         'teams': teams,
