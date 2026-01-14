@@ -40,9 +40,6 @@
                         <label for="eventType" class="form-label">Event Type *</label>
                         <select class="form-control" id="eventType" required>
                             <option value="">Select event type...</option>
-                            {% for event_type in event_types %}
-                            <option value="{{ event_type.id }}">{{ event_type.name }}</option>
-                            {% endfor %}
                         </select>
                     </div>
                     <div class="mb-3">
@@ -95,9 +92,6 @@
                         <label for="editEventType" class="form-label">Event Type *</label>
                         <select class="form-control" id="editEventType" required>
                             <option value="">Select event type...</option>
-                            {% for event_type in event_types %}
-                            <option value="{{ event_type.id }}">{{ event_type.name }}</option>
-                            {% endfor %}
                         </select>
                     </div>
                     <div class="mb-3">
@@ -179,6 +173,59 @@ document.addEventListener('DOMContentLoaded', function() {
     if (masterPasswordCookie) {
         document.getElementById('adminButtons').style.display = 'flex';
     }
+
+    // Function to load event types into dropdowns
+    async function loadEventTypeOptions() {
+        try {
+            const response = await fetch('{% url "players:get_event_types" %}');
+            const result = await response.json();
+
+            if (result.success) {
+                const eventTypes = result.event_types;
+
+                // Update create event modal dropdown
+                const createSelect = document.getElementById('eventType');
+                const createCurrentValue = createSelect.value;
+                createSelect.innerHTML = '<option value="">Select event type...</option>';
+                eventTypes.forEach(et => {
+                    const option = document.createElement('option');
+                    option.value = et.id;
+                    option.textContent = et.name;
+                    createSelect.appendChild(option);
+                });
+                if (createCurrentValue) createSelect.value = createCurrentValue;
+
+                // Update edit event modal dropdown
+                const editSelect = document.getElementById('editEventType');
+                const editCurrentValue = editSelect.value;
+                editSelect.innerHTML = '<option value="">Select event type...</option>';
+                eventTypes.forEach(et => {
+                    const option = document.createElement('option');
+                    option.value = et.id;
+                    option.textContent = et.name;
+                    editSelect.appendChild(option);
+                });
+                if (editCurrentValue) editSelect.value = editCurrentValue;
+            }
+        } catch (error) {
+            console.error('Error loading event types:', error);
+        }
+    }
+
+    // Load event types on page load
+    loadEventTypeOptions();
+
+    // Reload event types when create modal opens
+    const createEventModal = document.getElementById('createEventModal');
+    createEventModal.addEventListener('show.bs.modal', function() {
+        loadEventTypeOptions();
+    });
+
+    // Reload event types when edit modal opens
+    const editEventModal = document.getElementById('editEventModal');
+    editEventModal.addEventListener('show.bs.modal', function() {
+        loadEventTypeOptions();
+    });
 
     // Initialize FullCalendar
     const calendarEl = document.getElementById('calendar');
