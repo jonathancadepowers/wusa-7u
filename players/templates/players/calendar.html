@@ -230,6 +230,12 @@ button.fc-today-button.fc-button.fc-button-primary.fc-button-active,
 .fc .fc-createEvent-button {
     margin-right: 10px !important;
 }
+
+/* Hide admin buttons when not authenticated */
+.hide-admin-buttons .fc-createEvent-button,
+.hide-admin-buttons .fc-manageEventTypes-button {
+    display: none !important;
+}
 </style>
 
 <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
@@ -299,7 +305,7 @@ document.addEventListener('DOMContentLoaded', function() {
         headerToolbar: {
             left: 'prev,next today',
             center: 'title',
-            right: masterPasswordCookie ? 'createEvent,manageEventTypes dayGridMonth,timeGridWeek,timeGridDay' : 'dayGridMonth,timeGridWeek,timeGridDay'
+            right: 'createEvent,manageEventTypes dayGridMonth,timeGridWeek,timeGridDay'
         },
         customButtons: {
             createEvent: {
@@ -492,6 +498,11 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     calendar.render();
+
+    // Hide admin buttons if no master password
+    if (!masterPasswordCookie) {
+        calendarEl.classList.add('hide-admin-buttons');
+    }
 
     // Force Today button to use the same active color as other buttons
     // This needs to happen after render and on any view change
