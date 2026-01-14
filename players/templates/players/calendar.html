@@ -153,17 +153,29 @@
     text-decoration: none !important;
 }
 
-/* Add left padding to event content */
+/* Add left padding to event content and truncate with ellipsis */
 .fc-event-main {
     padding-left: 4px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
 }
 
 .fc .fc-daygrid-event {
     padding-left: 4px !important;
+    overflow: hidden !important;
 }
 
 .fc .fc-daygrid-event-harness {
     padding-left: 4px !important;
+}
+
+/* Ensure event title content doesn't overflow */
+.fc .fc-event-title,
+.fc .fc-daygrid-event-dot {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
 }
 
 /* Make all calendar buttons the same color - override ALL FullCalendar defaults */
