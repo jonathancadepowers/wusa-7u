@@ -1472,7 +1472,6 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div id="addBackgroundCheckAlert" class="alert d-none mb-3" role="alert"></div>
                     <form id="addBackgroundCheckForm">
                         <div class="mb-3">
                             <label for="addFirstName" class="form-label">Guardian's First Name <span class="text-danger">*</span></label>
@@ -1510,6 +1509,7 @@
                             <textarea class="form-control" id="addComments" rows="3"></textarea>
                         </div>
                     </form>
+                    <div id="addBackgroundCheckAlert" class="alert d-none mt-3" role="alert"></div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -1533,7 +1533,6 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div id="editBackgroundCheckAlert{{ check.pk }}" class="alert d-none mb-3" role="alert"></div>
                     <form id="editBackgroundCheckForm{{ check.pk }}">
                         <div class="mb-3">
                             <label for="editFirstName{{ check.pk }}" class="form-label">Guardian's First Name <span class="text-danger">*</span></label>
@@ -1563,6 +1562,7 @@
                             <textarea class="form-control" id="editComments{{ check.pk }}" rows="3">{{ check.comments }}</textarea>
                         </div>
                     </form>
+                    <div id="editBackgroundCheckAlert{{ check.pk }}" class="alert d-none mt-3" role="alert"></div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-danger" onclick="deleteBackgroundCheck({{ check.pk }})">
@@ -1590,7 +1590,7 @@
             const alertDiv = document.getElementById('addBackgroundCheckAlert');
 
             if (!firstName || !lastName || !playerId || !clearanceDate) {
-                alertDiv.className = 'alert alert-danger mb-3';
+                alertDiv.className = 'alert alert-danger mt-3';
                 alertDiv.textContent = 'Please fill in all required fields';
                 alertDiv.classList.remove('d-none');
                 return;
@@ -1616,7 +1616,7 @@
             .then(data => {
                 if (data.success) {
                     // Show success message
-                    alertDiv.className = 'alert alert-success mb-3';
+                    alertDiv.className = 'alert alert-success mt-3';
                     alertDiv.textContent = 'Background check created successfully';
                     alertDiv.classList.remove('d-none');
 
@@ -1629,14 +1629,14 @@
                         window.location.reload();
                     }, 1500);
                 } else {
-                    alertDiv.className = 'alert alert-danger mb-3';
+                    alertDiv.className = 'alert alert-danger mt-3';
                     alertDiv.textContent = 'Error: ' + data.error;
                     alertDiv.classList.remove('d-none');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alertDiv.className = 'alert alert-danger mb-3';
+                alertDiv.className = 'alert alert-danger mt-3';
                 alertDiv.textContent = 'Failed to create background check';
                 alertDiv.classList.remove('d-none');
             });
@@ -1651,7 +1651,7 @@
             const alertDiv = document.getElementById('editBackgroundCheckAlert' + checkId);
 
             if (!firstName || !lastName || !playerId || !clearanceDate) {
-                alertDiv.className = 'alert alert-danger mb-3';
+                alertDiv.className = 'alert alert-danger mt-3';
                 alertDiv.textContent = 'Please fill in all required fields';
                 alertDiv.classList.remove('d-none');
                 return;
@@ -1676,7 +1676,7 @@
             .then(data => {
                 if (data.success) {
                     // Show success message
-                    alertDiv.className = 'alert alert-success mb-3';
+                    alertDiv.className = 'alert alert-success mt-3';
                     alertDiv.textContent = 'Background check updated successfully';
                     alertDiv.classList.remove('d-none');
 
@@ -1689,14 +1689,14 @@
                         window.location.reload();
                     }, 1500);
                 } else {
-                    alertDiv.className = 'alert alert-danger mb-3';
+                    alertDiv.className = 'alert alert-danger mt-3';
                     alertDiv.textContent = 'Error: ' + data.error;
                     alertDiv.classList.remove('d-none');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alertDiv.className = 'alert alert-danger mb-3';
+                alertDiv.className = 'alert alert-danger mt-3';
                 alertDiv.textContent = 'Failed to update background check';
                 alertDiv.classList.remove('d-none');
             });
@@ -1716,6 +1716,8 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
+                    // Store the state to expand the section after reload
+                    sessionStorage.setItem('expandBackgroundChecks', 'true');
                     alert('Background check deleted successfully');
                     window.location.reload();
                 } else {
