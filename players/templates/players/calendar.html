@@ -170,12 +170,9 @@
 <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Check for master password and show admin buttons
+    // Check for master password
     const masterPasswordCookie = document.cookie.split('; ').find(row => row.startsWith('master_password='));
     console.log('Master password cookie:', masterPasswordCookie);
-    if (masterPasswordCookie) {
-        document.getElementById('adminButtons').style.display = 'flex';
-    }
 
     // Function to load event types into dropdowns
     async function loadEventTypeOptions() {
