@@ -1642,7 +1642,7 @@
             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
 
             try {
-                const url = isEdit ? `/players/quick-links/${linkId}/update/` : '/players/quick-links/create/';
+                const url = isEdit ? `/quick-links/${linkId}/update/` : '/quick-links/create/';
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: {
@@ -1689,7 +1689,7 @@
             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Deleting...';
 
             try {
-                const response = await fetch(`/players/quick-links/${linkId}/delete/`, {
+                const response = await fetch(`/quick-links/${linkId}/delete/`, {
                     method: 'POST',
                     headers: {
                         'X-CSRFToken': '{{ csrf_token }}'
