@@ -239,7 +239,7 @@ document.addEventListener('DOMContentLoaded', function() {
         formData.append('description', description);
 
         try {
-            const response = await fetch('/players/calendar/create-event/', {
+            const response = await fetch('{% url "players:create_event" %}', {
                 method: 'POST',
                 headers: {'X-CSRFToken': getCookie('csrftoken')},
                 body: formData
@@ -312,7 +312,7 @@ document.addEventListener('DOMContentLoaded', function() {
         formData.append('description', description);
 
         try {
-            const response = await fetch('/players/calendar/update-event/', {
+            const response = await fetch('{% url "players:update_event" %}', {
                 method: 'POST',
                 headers: {'X-CSRFToken': getCookie('csrftoken')},
                 body: formData
@@ -341,7 +341,7 @@ document.addEventListener('DOMContentLoaded', function() {
         formData.append('event_id', eventId);
 
         try {
-            const response = await fetch('/players/calendar/delete-event/', {
+            const response = await fetch('{% url "players:delete_event" %}', {
                 method: 'POST',
                 headers: {'X-CSRFToken': getCookie('csrftoken')},
                 body: formData
@@ -372,7 +372,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         try {
-            const response = await fetch('/players/calendar/move-event-date/', {
+            const response = await fetch('{% url "players:move_event_date" %}', {
                 method: 'POST',
                 headers: {'X-CSRFToken': getCookie('csrftoken')},
                 body: formData
