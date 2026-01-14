@@ -330,30 +330,35 @@ document.addEventListener('DOMContentLoaded', function() {
         events: '{% url "players:calendar_events_api" %}',
 
         // Custom event content to display icons and times
+        // Pattern: <Icon> <Time> <Event Name>
         eventContent: function(arg) {
             let arrayOfDomNodes = [];
 
-            // Add time if event has specific start time (not all-day)
-            if (arg.event.start && !arg.event.allDay) {
-                let timeEl = document.createElement('span');
-                timeEl.className = 'me-1 fw-bold';
-                let time = arg.event.start.toLocaleTimeString('en-US', {
-                    hour: 'numeric',
-                    minute: '2-digit',
-                    hour12: true
-                });
-                timeEl.innerHTML = time;
-                arrayOfDomNodes.push(timeEl);
-            }
-
-            // Create icon element if icon exists
+            // 1. Create icon element if icon exists
             if (arg.event.extendedProps.icon) {
                 let iconEl = document.createElement('i');
                 iconEl.className = 'bi bi-' + arg.event.extendedProps.icon + ' me-1';
                 arrayOfDomNodes.push(iconEl);
             }
 
-            // Create title element
+            // 2. Add time if event has specific start time (not all-day)
+            // Format: 7pm (lowercase, no space, no minutes if :00)
+            if (arg.event.start && !arg.event.allDay) {
+                let timeEl = document.createElement('span');
+                timeEl.className = 'me-1';
+                let hours = arg.event.start.getHours();
+                let minutes = arg.event.start.getMinutes();
+                let ampm = hours >= 12 ? 'pm' : 'am';
+                hours = hours % 12;
+                hours = hours ? hours : 12; // 0 should be 12
+
+                // Only show minutes if not :00
+                let timeStr = minutes === 0 ? hours + ampm : hours + ':' + (minutes < 10 ? '0' + minutes : minutes) + ampm;
+                timeEl.innerHTML = timeStr;
+                arrayOfDomNodes.push(timeEl);
+            }
+
+            // 3. Create title element
             let titleEl = document.createElement('span');
             titleEl.innerHTML = arg.event.title;
             arrayOfDomNodes.push(titleEl);
