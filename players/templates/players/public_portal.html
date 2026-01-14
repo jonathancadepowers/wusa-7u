@@ -462,6 +462,13 @@
                     school: p.school || 'N/A'
                 }));
 
+                // Sort by team (column 0) in ascending order by default
+                allPlayersData.sort((a, b) => {
+                    const aVal = a.team.toLowerCase();
+                    const bVal = b.team.toLowerCase();
+                    return aVal.localeCompare(bVal);
+                });
+
                 renderAllPlayersTable();
             } catch (error) {
                 tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error loading players</td></tr>';
