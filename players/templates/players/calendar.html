@@ -166,22 +166,35 @@
     padding-left: 4px !important;
 }
 
-/* Make all calendar buttons the same color */
+/* Make all calendar buttons the same color - override ALL FullCalendar defaults */
+.fc-button-group > .fc-button,
+.fc-toolbar-chunk > .fc-button,
 .fc .fc-button-primary,
 .fc .fc-button,
-.fc .fc-today-button {
+.fc .fc-today-button,
+button.fc-today-button.fc-button.fc-button-primary {
     background-color: #2c3e50 !important;
     border-color: #2c3e50 !important;
     border-radius: 4px !important;
+    color: white !important;
 }
 
+.fc-button-group > .fc-button:hover,
+.fc-toolbar-chunk > .fc-button:hover,
 .fc .fc-button-primary:hover,
 .fc .fc-button:hover,
-.fc .fc-today-button:hover {
+.fc .fc-today-button:hover,
+button.fc-today-button.fc-button.fc-button-primary:hover {
     background-color: #34495e !important;
     border-color: #34495e !important;
 }
 
+.fc-button-group > .fc-button:not(:disabled).fc-button-active,
+.fc-button-group > .fc-button:not(:disabled):active,
+.fc-button-group > .fc-button.fc-button-active,
+.fc-toolbar-chunk > .fc-button:not(:disabled).fc-button-active,
+.fc-toolbar-chunk > .fc-button:not(:disabled):active,
+.fc-toolbar-chunk > .fc-button.fc-button-active,
 .fc .fc-button-primary:not(:disabled).fc-button-active,
 .fc .fc-button-primary:not(:disabled):active,
 .fc .fc-button-primary.fc-button-active,
@@ -191,10 +204,14 @@
 .fc .fc-today-button:not(:disabled).fc-button-active,
 .fc .fc-today-button:not(:disabled):active,
 .fc .fc-today-button.fc-button-active,
+button.fc-today-button.fc-button.fc-button-primary:not(:disabled).fc-button-active,
+button.fc-today-button.fc-button.fc-button-primary:not(:disabled):active,
+button.fc-today-button.fc-button.fc-button-primary.fc-button-active,
 .fc .fc-button-active {
     background-color: #1a252f !important;
     border-color: #1a252f !important;
     box-shadow: none !important;
+    color: white !important;
 }
 
 /* Add spacing between custom buttons */
