@@ -6552,6 +6552,129 @@ def set_draft_order_and_daughters_view(request):
 
 @require_http_methods(["GET"])
 @csrf_exempt
+def export_priority_scores_view(request):
+    """
+    Export priority scores for all teams as a CSV file
+    """
+    from .models import Team, Player, PlayerRanking, ManagerDaughterRanking
+    from collections import defaultdict
+    import csv
+    from django.http import HttpResponse
+
+    try:
+        # Step 1: Get all teams with managers who have daughters
+        teams_with_daughters = Team.objects.filter(
+            manager__isnull=False,
+            manager__daughter__isnull=False
+        ).select_related('manager', 'manager__daughter').distinct()
+
+        if not teams_with_daughters.exists():
+            return HttpResponse(
+                'No teams with manager\'s daughters found',
+                status=400
+            )
+
+        # Step 2: Calculate Borda counts for all players in player_rankings
+        all_player_rankings = PlayerRanking.objects.all()
+        player_borda_scores = defaultdict(int)
+
+        for ranking in all_player_rankings:
+            rankings_list = json.loads(ranking.ranking)
+            num_players = len(rankings_list)
+            for idx, item in enumerate(rankings_list):
+                player_id = item['player_id']
+                player_borda_scores[player_id] += (num_players - idx)
+
+        # Step 3: Calculate Borda counts for manager's daughters
+        all_daughter_rankings = ManagerDaughterRanking.objects.all()
+        daughter_borda_scores = defaultdict(int)
+
+        for ranking in all_daughter_rankings:
+            rankings_list = json.loads(ranking.ranking)
+            num_daughters = len(rankings_list)
+            for idx, item in enumerate(rankings_list):
+                player_id = item['player_id']
+                daughter_borda_scores[player_id] += (num_daughters - idx)
+
+        # Step 4: Calculate draft order priority for each team
+        team_priorities = []
+
+        for team in teams_with_daughters:
+            daughter = team.manager.daughter
+            daughter_id = daughter.id
+
+            # Check if daughter is in top players (player_rankings)
+            in_top_players = daughter_id in player_borda_scores
+
+            if in_top_players:
+                # Elite daughter - picks later
+                overall_borda = player_borda_scores[daughter_id]
+                daughter_borda = daughter_borda_scores.get(daughter_id, 0)
+                priority_score = overall_borda - (daughter_borda * 0.5)
+                classification = "Elite Daughter"
+            else:
+                # Non-elite daughter - picks earlier
+                daughter_borda = daughter_borda_scores.get(daughter_id, 0)
+                priority_score = -(daughter_borda)
+                classification = "Non-Elite Daughter"
+
+            team_priorities.append({
+                'team_name': team.name,
+                'manager_name': f"{team.manager.first_name} {team.manager.last_name}",
+                'daughter_name': f"{daughter.first_name} {daughter.last_name}",
+                'classification': classification,
+                'priority_score': priority_score,
+                'overall_borda': player_borda_scores.get(daughter_id, 0),
+                'daughter_borda': daughter_borda_scores.get(daughter_id, 0)
+            })
+
+        # Step 5: Sort teams by priority score (lowest = picks first)
+        team_priorities.sort(key=lambda x: x['priority_score'])
+
+        # Add draft position after sorting
+        for idx, item in enumerate(team_priorities, start=1):
+            item['draft_position'] = idx
+
+        # Step 6: Create CSV response
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="draft_priority_scores.csv"'
+
+        writer = csv.writer(response)
+        writer.writerow([
+            'Draft Position',
+            'Team Name',
+            'Manager Name',
+            'Daughter Name',
+            'Classification',
+            'Priority Score',
+            'Overall Borda Score',
+            'Daughter Borda Score'
+        ])
+
+        for item in team_priorities:
+            writer.writerow([
+                item['draft_position'],
+                item['team_name'],
+                item['manager_name'],
+                item['daughter_name'],
+                item['classification'],
+                f"{item['priority_score']:.2f}",
+                item['overall_borda'],
+                item['daughter_borda']
+            ])
+
+        return response
+
+    except Exception as e:
+        import traceback
+        return HttpResponse(
+            f'An error occurred: {str(e)}\n\n{traceback.format_exc()}',
+            status=500
+        )
+
+
+@require_http_methods(["GET"])
+@csrf_exempt
 def get_draft_order_view(request):
     """Get current draft order with team details"""
     from .models import Draft, Team

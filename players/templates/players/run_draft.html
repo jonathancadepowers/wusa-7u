@@ -1349,6 +1349,9 @@
                     </div>
                 </div>
                 <div class="modal-footer">
+                    <button type="button" class="btn btn-info" id="exportPriorityScoresBtn">
+                        <i class="bi bi-download me-2"></i>Export Priority Scores
+                    </button>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     <button type="button" class="btn btn-success" id="setDraftOrderBtn" style="display: none;">
                         <i class="bi bi-check-circle me-2"></i>Proceed
@@ -1429,20 +1432,20 @@
                 .then(data => {
                     document.getElementById('draftOrderLoading').style.display = 'none';
 
+                    // Always show the content with explanations
+                    document.getElementById('draftOrderContent').style.display = 'block';
+                    document.getElementById('topPlayerCount').textContent = data.top_player_count;
+
                     if (data.error) {
                         // Show error from server
                         document.getElementById('draftOrderError').innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>' + data.error;
                         document.getElementById('draftOrderError').style.display = 'block';
                     } else if (data.picks_exist) {
-                        // Show error message
+                        // Show error message but keep content visible
                         document.getElementById('draftOrderError').style.display = 'block';
                     } else {
-                        // Show content and button
-                        document.getElementById('draftOrderContent').style.display = 'block';
+                        // No picks exist - show the Proceed button
                         document.getElementById('setDraftOrderBtn').style.display = 'inline-block';
-
-                        // Update dynamic values
-                        document.getElementById('topPlayerCount').textContent = data.top_player_count;
                     }
                 })
                 .catch(error => {
@@ -1489,6 +1492,51 @@
                 btn.disabled = false;
                 btn.innerHTML = originalHtml;
             });
+        });
+
+        // Handle Export Priority Scores button click
+        document.getElementById('exportPriorityScoresBtn').addEventListener('click', function() {
+            const btn = this;
+            const originalHtml = btn.innerHTML;
+
+            // Disable button and show loading
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generating...';
+
+            fetch('/api/export-priority-scores/')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.blob();
+                })
+                .then(blob => {
+                    // Create download link
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+
+                    // Generate filename with current date/time
+                    const now = new Date();
+                    const timestamp = now.toISOString().slice(0, 19).replace(/:/g, '-');
+                    a.download = `draft_priority_scores_${timestamp}.csv`;
+
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+
+                    // Re-enable button
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                })
+                .catch(error => {
+                    console.error('Error exporting priority scores:', error);
+                    alert('An error occurred while exporting priority scores: ' + error.message);
+                    btn.disabled = false;
+                    btn.innerHTML = originalHtml;
+                });
         });
 
         // Reorder Teams Modal Logic

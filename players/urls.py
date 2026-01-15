@@ -83,6 +83,7 @@ urlpatterns = [
     path('api/toggle-try-out-attendance/', views.toggle_try_out_attendance_view, name='toggle_try_out_attendance'),
     path('api/check-draft-picks/', views.check_draft_picks_view, name='check_draft_picks'),
     path('api/set-draft-order-and-daughters/', views.set_draft_order_and_daughters_view, name='set_draft_order_and_daughters'),
+    path('api/export-priority-scores/', views.export_priority_scores_view, name='export_priority_scores'),
     path('team_preferences/', views.team_preferences_view, name='team_preferences'),
     path('team_preferences/save/', views.save_team_preferences_view, name='save_team_preferences'),
     path('team_preferences/analyze/', views.team_preferences_analyze_view, name='team_preferences_analyze'),
