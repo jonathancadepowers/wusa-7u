@@ -5959,7 +5959,9 @@ def parse_natural_language_event_view(request):
                 'TO_TIMEZONE': display_tz.zone,
                 'STRICT_PARSING': False,
                 'PREFER_DAY_OF_MONTH': 'first',
-                'PARSERS': ['absolute-time', 'relative-time', 'base-formats']
+                'RELATIVE_BASE': datetime.now(display_tz),
+                'REQUIRE_PARTS': ['day', 'month'],  # Only require day and month, not year or time
+                'PARSERS': ['absolute-time', 'relative-time', 'base-formats', 'no-spaces-time']
             }
         )
 
