@@ -5950,7 +5950,8 @@ def parse_natural_language_event_view(request):
 
         # Parse the datetime from the text
         # Use PREFER_DATES_FROM='future' to prefer future dates
-        # Try with very lenient settings first
+
+        # First, try to parse the full text as-is
         parsed_datetime = dateparser.parse(
             text,
             settings={
@@ -5962,6 +5963,37 @@ def parse_natural_language_event_view(request):
                 'RELATIVE_BASE': datetime.now(display_tz)
             }
         )
+
+        # If that failed, try to extract just the date/time portion using regex
+        if not parsed_datetime:
+            # Look for common date patterns
+            date_patterns = [
+                r'\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?(?:\s+(?:at\s+)?\d{1,2}(?::\d{2})?\s*(?:am|pm|AM|PM)?)?',  # 1/19/26 or 1/19/26 at 3pm
+                r'(?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2}(?:st|nd|rd|th)?(?:,?\s+\d{2,4})?(?:\s+(?:at\s+)?\d{1,2}(?::\d{2})?\s*(?:am|pm|AM|PM)?)?',  # January 19th, 2026 at 3pm
+                r'(?:tomorrow|today|tonight)(?:\s+(?:at\s+)?\d{1,2}(?::\d{2})?\s*(?:am|pm|AM|PM)?)?',  # tomorrow at 3pm
+                r'(?:next|this|last)\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)(?:\s+(?:at\s+)?\d{1,2}(?::\d{2})?\s*(?:am|pm|AM|PM)?)?',  # next Tuesday at 7pm
+            ]
+
+            extracted_date = None
+            for pattern in date_patterns:
+                match = re.search(pattern, text, re.IGNORECASE)
+                if match:
+                    extracted_date = match.group(0)
+                    break
+
+            # If we found a date pattern, try parsing just that part
+            if extracted_date:
+                parsed_datetime = dateparser.parse(
+                    extracted_date,
+                    settings={
+                        'PREFER_DATES_FROM': 'future',
+                        'TIMEZONE': display_tz.zone,
+                        'RETURN_AS_TIMEZONE_AWARE': True,
+                        'TO_TIMEZONE': display_tz.zone,
+                        'STRICT_PARSING': False,
+                        'RELATIVE_BASE': datetime.now(display_tz)
+                    }
+                )
 
         if not parsed_datetime:
             return JsonResponse({
