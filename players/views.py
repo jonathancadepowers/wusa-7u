@@ -5950,6 +5950,7 @@ def parse_natural_language_event_view(request):
 
         # Parse the datetime from the text
         # Use PREFER_DATES_FROM='future' to prefer future dates
+        # Try with very lenient settings first
         parsed_datetime = dateparser.parse(
             text,
             settings={
@@ -5958,17 +5959,14 @@ def parse_natural_language_event_view(request):
                 'RETURN_AS_TIMEZONE_AWARE': True,
                 'TO_TIMEZONE': display_tz.zone,
                 'STRICT_PARSING': False,
-                'PREFER_DAY_OF_MONTH': 'first',
-                'RELATIVE_BASE': datetime.now(display_tz),
-                'REQUIRE_PARTS': ['day', 'month'],  # Only require day and month, not year or time
-                'PARSERS': ['absolute-time', 'relative-time', 'base-formats', 'no-spaces-time']
+                'RELATIVE_BASE': datetime.now(display_tz)
             }
         )
 
         if not parsed_datetime:
             return JsonResponse({
                 'success': False,
-                'error': 'Could not understand the date/time in your text. Try formats like "tomorrow at 3pm", "1/19/2025 at 7pm", or "January 19th".'
+                'error': f'Could not parse a date from: "{text}". Try formats like "tomorrow at 3pm", "1/19/2025", "January 19th at 7pm", or "next Tuesday".'
             }, status=400)
 
         # Simple heuristic to extract event name
