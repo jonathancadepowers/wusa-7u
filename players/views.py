@@ -5873,17 +5873,26 @@ def create_event_view(request):
                 'error': 'Invalid event type selected.'
             }, status=400)
 
-        # Parse the timestamp (format: YYYY-MM-DDTHH:MM from datetime-local input)
+        # Parse the timestamp (format: YYYY-MM-DDTHH:MM from datetime-local input, or just YYYY-MM-DD for date-only)
         try:
-            # Parse as naive datetime first
-            naive_timestamp = datetime.fromisoformat(timestamp_str)
             # Get display timezone
             from .models import GeneralSetting
             import pytz
             display_tz_setting = GeneralSetting.objects.filter(key='display_timezone').first()
             display_tz = pytz.timezone(display_tz_setting.value) if display_tz_setting else pytz.UTC
-            # Localize to display timezone, then convert to UTC for storage
-            timestamp = display_tz.localize(naive_timestamp)
+
+            # Check if this is date-only (no 'T' separator) or date-time
+            if 'T' in timestamp_str:
+                # Has time component - parse and localize normally
+                naive_timestamp = datetime.fromisoformat(timestamp_str)
+                timestamp = display_tz.localize(naive_timestamp)
+            else:
+                # Date only - create a timezone-aware datetime at midnight in the display timezone
+                # This ensures all-day events display consistently
+                from datetime import date
+                date_only = date.fromisoformat(timestamp_str)
+                naive_midnight = datetime.combine(date_only, datetime.min.time())
+                timestamp = display_tz.localize(naive_midnight)
         except ValueError:
             return JsonResponse({
                 'success': False,
