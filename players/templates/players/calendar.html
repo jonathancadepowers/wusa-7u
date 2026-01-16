@@ -23,65 +23,73 @@
                 <div class="alert alert-danger d-none" id="createEventError"></div>
 
                 <!-- Natural Language Input Section -->
-                <div class="card bg-light mb-4">
-                    <div class="card-body">
-                        <h6 class="card-title mb-3">
-                            <i class="bi bi-magic me-2"></i>Quick Create with Natural Language
-                        </h6>
-                        <div class="mb-2">
-                            <input type="text" class="form-control" id="naturalLanguageInput"
-                                   placeholder='e.g., "Division Meeting next Tuesday at 7pm at WUES"'>
-                            <small class="form-text text-muted">
-                                Try: "tomorrow at 3pm", "next Friday at 6:30pm", "January 20th at 7pm"
-                            </small>
-                        </div>
-                        <div class="d-flex gap-2 align-items-center">
-                            <button type="button" class="btn btn-sm btn-info" id="parseNaturalLanguageBtn">
-                                <i class="bi bi-arrow-down-circle me-1"></i>Parse & Fill Form
-                            </button>
-                            <div id="nlParseResult" class="text-muted small"></div>
+                <div id="naturalLanguageSection">
+                    <div class="card bg-light mb-3">
+                        <div class="card-body">
+                            <h6 class="card-title mb-3">
+                                <i class="bi bi-magic me-2"></i>Quick Create with Natural Language
+                            </h6>
+                            <div class="mb-2">
+                                <input type="text" class="form-control" id="naturalLanguageInput"
+                                       placeholder='e.g., "Division Meeting next Tuesday at 7pm at WUES"'>
+                            </div>
+                            <div class="d-flex gap-2 align-items-center flex-wrap">
+                                <button type="button" class="btn btn-primary" id="createEventFromNLBtn">
+                                    <i class="bi bi-plus-circle me-1"></i>Create Event
+                                </button>
+                                <button type="button" class="btn btn-secondary btn-sm" id="showManualFormBtn">
+                                    Enter Details Manually
+                                </button>
+                                <div id="nlParseResult" class="text-muted small"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <hr class="my-3">
-
-                <form id="createEventForm">
+                <!-- Manual Form Section (hidden by default) -->
+                <div id="manualFormSection" style="display: none;">
                     <div class="mb-3">
-                        <label for="eventName" class="form-label">Event Name *</label>
-                        <input type="text" class="form-control" id="eventName" required>
+                        <button type="button" class="btn btn-sm btn-link p-0" id="backToNaturalLanguageBtn">
+                            <i class="bi bi-arrow-left me-1"></i>Back to Natural Language
+                        </button>
                     </div>
-                    <div class="mb-3">
-                        <label for="eventType" class="form-label">Event Type *</label>
-                        <select class="form-control" id="eventType" required>
-                            <option value="">Select event type...</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="eventLocation" class="form-label">Location</label>
-                        <input type="text" class="form-control" id="eventLocation">
-                    </div>
-                    <div class="mb-3">
-                        <label for="eventStartDate" class="form-label">Start Date *</label>
-                        <input type="date" class="form-control" id="eventStartDate" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="eventStartTime" class="form-label">Start Time</label>
-                        <input type="time" class="form-control" id="eventStartTime">
-                    </div>
-                    <div class="mb-3">
-                        <label for="eventEndDate" class="form-label">End Date (for multi-day events)</label>
-                        <input type="date" class="form-control" id="eventEndDate">
-                    </div>
-                    <div class="mb-3">
-                        <label for="eventDescription" class="form-label">Description</label>
-                        <textarea class="form-control" id="eventDescription" rows="3"></textarea>
-                    </div>
-                </form>
+                    <form id="createEventForm">
+                        <div class="mb-3">
+                            <label for="eventName" class="form-label">Event Name *</label>
+                            <input type="text" class="form-control" id="eventName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="eventType" class="form-label">Event Type *</label>
+                            <select class="form-control" id="eventType" required>
+                                <option value="">Select event type...</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="eventLocation" class="form-label">Location</label>
+                            <input type="text" class="form-control" id="eventLocation">
+                        </div>
+                        <div class="mb-3">
+                            <label for="eventStartDate" class="form-label">Start Date *</label>
+                            <input type="date" class="form-control" id="eventStartDate" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="eventStartTime" class="form-label">Start Time</label>
+                            <input type="time" class="form-control" id="eventStartTime">
+                        </div>
+                        <div class="mb-3">
+                            <label for="eventEndDate" class="form-label">End Date (for multi-day events)</label>
+                            <input type="date" class="form-control" id="eventEndDate">
+                        </div>
+                        <div class="mb-3">
+                            <label for="eventDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="eventDescription" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="createEventBtn">Create Event</button>
+                <button type="button" class="btn btn-primary" id="createEventBtn" style="display: none;">Create Event</button>
             </div>
         </div>
     </div>
@@ -546,68 +554,87 @@ document.addEventListener('DOMContentLoaded', function() {
     const observer = new MutationObserver(forceButtonColors);
     observer.observe(calendarEl, { childList: true, subtree: true, attributes: true });
 
-    // Natural Language Event Parser
-    document.getElementById('parseNaturalLanguageBtn').addEventListener('click', async function() {
+    // Toggle between natural language and manual form
+    document.getElementById('showManualFormBtn').addEventListener('click', function() {
+        document.getElementById('naturalLanguageSection').style.display = 'none';
+        document.getElementById('manualFormSection').style.display = 'block';
+        document.getElementById('createEventBtn').style.display = 'inline-block';
+    });
+
+    document.getElementById('backToNaturalLanguageBtn').addEventListener('click', function() {
+        document.getElementById('manualFormSection').style.display = 'none';
+        document.getElementById('naturalLanguageSection').style.display = 'block';
+        document.getElementById('createEventBtn').style.display = 'none';
+    });
+
+    // Create Event from Natural Language
+    document.getElementById('createEventFromNLBtn').addEventListener('click', async function() {
         const btn = this;
         const originalHtml = btn.innerHTML;
         const input = document.getElementById('naturalLanguageInput').value.trim();
         const resultDiv = document.getElementById('nlParseResult');
 
         if (!input) {
-            resultDiv.innerHTML = '<span class="text-danger">Please enter some text to parse</span>';
+            resultDiv.innerHTML = '<span class="text-danger">Please enter event details</span>';
             return;
         }
 
         // Disable button and show loading
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Parsing...';
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Creating...';
         resultDiv.innerHTML = '';
 
         try {
             const formData = new FormData();
             formData.append('text', input);
 
-            const response = await fetch('{% url "players:parse_natural_language_event" %}', {
+            // Parse the natural language
+            const parseResponse = await fetch('{% url "players:parse_natural_language_event" %}', {
                 method: 'POST',
                 headers: {'X-CSRFToken': getCookie('csrftoken')},
                 body: formData
             });
 
-            const result = await response.json();
+            const parseResult = await parseResponse.json();
 
-            if (result.success) {
-                // Fill in the form fields with parsed data
-                document.getElementById('eventName').value = result.name;
-                document.getElementById('eventLocation').value = result.location || '';
-
-                // Parse the timestamp (format: YYYY-MM-DDTHH:MM)
-                const [datePart, timePart] = result.timestamp.split('T');
-                document.getElementById('eventStartDate').value = datePart;
-                document.getElementById('eventStartTime').value = timePart;
-
-                // Show success message
-                resultDiv.innerHTML = `<span class="text-success"><i class="bi bi-check-circle me-1"></i>Parsed: ${result.parsed_datetime_display}</span>`;
-
-                // Clear the natural language input
-                document.getElementById('naturalLanguageInput').value = '';
-            } else {
-                resultDiv.innerHTML = `<span class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>${result.error}</span>`;
+            if (!parseResult.success) {
+                resultDiv.innerHTML = `<span class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>${parseResult.error}</span>`;
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+                return;
             }
+
+            // Need to get event type - show error if none selected yet
+            // For now, we'll require them to use manual form if event type is needed
+            // Or we could add event type selection to NL section
+            resultDiv.innerHTML = '<span class="text-warning"><i class="bi bi-info-circle me-1"></i>Please select an event type and complete creation manually</span>';
+
+            // Pre-fill the manual form
+            document.getElementById('eventName').value = parseResult.name;
+            document.getElementById('eventLocation').value = parseResult.location || '';
+            const [datePart, timePart] = parseResult.timestamp.split('T');
+            document.getElementById('eventStartDate').value = datePart;
+            document.getElementById('eventStartTime').value = timePart;
+
+            // Switch to manual form
+            document.getElementById('naturalLanguageSection').style.display = 'none';
+            document.getElementById('manualFormSection').style.display = 'block';
+            document.getElementById('createEventBtn').style.display = 'inline-block';
+
         } catch (error) {
-            console.error('Error parsing natural language:', error);
-            resultDiv.innerHTML = '<span class="text-danger">An error occurred while parsing</span>';
+            console.error('Error creating event:', error);
+            resultDiv.innerHTML = '<span class="text-danger">An error occurred</span>';
         } finally {
-            // Re-enable button
             btn.disabled = false;
             btn.innerHTML = originalHtml;
         }
     });
 
-    // Allow Enter key to trigger parsing
+    // Allow Enter key to trigger creation
     document.getElementById('naturalLanguageInput').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             e.preventDefault();
-            document.getElementById('parseNaturalLanguageBtn').click();
+            document.getElementById('createEventFromNLBtn').click();
         }
     });
 
