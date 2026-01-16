@@ -612,9 +612,17 @@ document.addEventListener('DOMContentLoaded', function() {
             // Pre-fill the manual form
             document.getElementById('eventName').value = parseResult.name;
             document.getElementById('eventLocation').value = parseResult.location || '';
-            const [datePart, timePart] = parseResult.timestamp.split('T');
-            document.getElementById('eventStartDate').value = datePart;
-            document.getElementById('eventStartTime').value = timePart;
+
+            // Handle both date-only and date-time formats
+            if (parseResult.timestamp.includes('T')) {
+                const [datePart, timePart] = parseResult.timestamp.split('T');
+                document.getElementById('eventStartDate').value = datePart;
+                document.getElementById('eventStartTime').value = timePart;
+            } else {
+                // Date only, no time
+                document.getElementById('eventStartDate').value = parseResult.timestamp;
+                document.getElementById('eventStartTime').value = '';
+            }
 
             // Switch to manual form
             document.getElementById('naturalLanguageSection').style.display = 'none';

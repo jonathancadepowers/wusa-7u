@@ -6044,15 +6044,25 @@ def parse_natural_language_event_view(request):
         if not name:
             name = 'New Event'
 
-        # Format the datetime for the form (YYYY-MM-DDTHH:MM)
-        formatted_datetime = parsed_datetime.strftime('%Y-%m-%dT%H:%M')
+        # Check if a time was explicitly mentioned in the text
+        has_time = bool(re.search(r'\d{1,2}(:\d{2})?\s*(am|pm|AM|PM)', text, re.IGNORECASE))
+
+        # Format the datetime for the form
+        # If no time was specified, only return the date (which will leave time blank in form)
+        if has_time:
+            formatted_datetime = parsed_datetime.strftime('%Y-%m-%dT%H:%M')
+            display_format = parsed_datetime.strftime('%A, %B %d, %Y at %I:%M %p')
+        else:
+            # Only date, no time
+            formatted_datetime = parsed_datetime.strftime('%Y-%m-%d')
+            display_format = parsed_datetime.strftime('%A, %B %d, %Y')
 
         return JsonResponse({
             'success': True,
             'name': name,
             'timestamp': formatted_datetime,
             'location': location,
-            'parsed_datetime_display': parsed_datetime.strftime('%A, %B %d, %Y at %I:%M %p')
+            'parsed_datetime_display': display_format
         })
 
     except Exception as e:
