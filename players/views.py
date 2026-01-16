@@ -6107,12 +6107,12 @@ def update_event_type_view(request):
     from .models import EventType
 
     try:
-        event_type_id = request.POST.get('id', '').strip()
+        event_type_id = request.POST.get('event_type_id', '').strip()
         name = request.POST.get('name', '').strip()
         bootstrap_icon_id = request.POST.get('bootstrap_icon_id', '').strip()
         color = request.POST.get('color', '#0d6efd').strip()
 
-        if not event_type_id or not name or not bootstrap_icon_id:
+        if not event_type_id or not name:
             return JsonResponse({
                 'success': False,
                 'error': 'Please provide all required fields.'
