@@ -5956,14 +5956,17 @@ def parse_natural_language_event_view(request):
                 'PREFER_DATES_FROM': 'future',
                 'TIMEZONE': display_tz.zone,
                 'RETURN_AS_TIMEZONE_AWARE': True,
-                'TO_TIMEZONE': display_tz.zone
+                'TO_TIMEZONE': display_tz.zone,
+                'STRICT_PARSING': False,
+                'PREFER_DAY_OF_MONTH': 'first',
+                'PARSERS': ['absolute-time', 'relative-time', 'base-formats']
             }
         )
 
         if not parsed_datetime:
             return JsonResponse({
                 'success': False,
-                'error': 'Could not understand the date/time in your text. Please try phrases like "tomorrow at 3pm" or "next Tuesday at 7pm".'
+                'error': 'Could not understand the date/time in your text. Try formats like "tomorrow at 3pm", "1/19/2025 at 7pm", or "January 19th".'
             }, status=400)
 
         # Simple heuristic to extract event name
@@ -5974,9 +5977,10 @@ def parse_natural_language_event_view(request):
         date_patterns = [
             r'\b(next|this|last)\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b',
             r'\b(today|tomorrow|tonight)\b',
-            r'\b(january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2}(st|nd|rd|th)?\b',
+            r'\b(january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2}(st|nd|rd|th)?(,?\s+\d{2,4})?\b',
             r'\b\d{1,2}[/-]\d{1,2}([/-]\d{2,4})?\b',
-            r'\bin\s+\d+\s+(day|days|week|weeks|month|months)\b'
+            r'\bin\s+\d+\s+(day|days|week|weeks|month|months)\b',
+            r'\bon\s+\d{1,2}[/-]\d{1,2}([/-]\d{2,4})?\b'
         ]
 
         # Remove time patterns like "at 3pm", "7:00 PM", etc.
