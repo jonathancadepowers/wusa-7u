@@ -5925,6 +5925,109 @@ def create_event_view(request):
         }, status=500)
 
 
+@require_http_methods(["POST"])
+@csrf_exempt
+def parse_natural_language_event_view(request):
+    """Parse natural language event input and return structured data"""
+    import dateparser
+    import re
+    from datetime import datetime
+    from .models import GeneralSetting
+    import pytz
+
+    try:
+        text = request.POST.get('text', '').strip()
+
+        if not text:
+            return JsonResponse({
+                'success': False,
+                'error': 'Please provide event text to parse.'
+            }, status=400)
+
+        # Get display timezone for parsing
+        display_tz_setting = GeneralSetting.objects.filter(key='display_timezone').first()
+        display_tz = pytz.timezone(display_tz_setting.value) if display_tz_setting else pytz.UTC
+
+        # Parse the datetime from the text
+        # Use PREFER_DATES_FROM='future' to prefer future dates
+        parsed_datetime = dateparser.parse(
+            text,
+            settings={
+                'PREFER_DATES_FROM': 'future',
+                'TIMEZONE': display_tz.zone,
+                'RETURN_AS_TIMEZONE_AWARE': True,
+                'TO_TIMEZONE': display_tz.zone
+            }
+        )
+
+        if not parsed_datetime:
+            return JsonResponse({
+                'success': False,
+                'error': 'Could not understand the date/time in your text. Please try phrases like "tomorrow at 3pm" or "next Tuesday at 7pm".'
+            }, status=400)
+
+        # Simple heuristic to extract event name
+        # Remove common date/time words and patterns
+        name = text
+
+        # Remove date patterns like "next Tuesday", "tomorrow", "1/15", etc.
+        date_patterns = [
+            r'\b(next|this|last)\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b',
+            r'\b(today|tomorrow|tonight)\b',
+            r'\b(january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2}(st|nd|rd|th)?\b',
+            r'\b\d{1,2}[/-]\d{1,2}([/-]\d{2,4})?\b',
+            r'\bin\s+\d+\s+(day|days|week|weeks|month|months)\b'
+        ]
+
+        # Remove time patterns like "at 3pm", "7:00 PM", etc.
+        time_patterns = [
+            r'\bat\s+\d{1,2}(:\d{2})?\s*(am|pm|AM|PM)?\b',
+            r'\b\d{1,2}(:\d{2})?\s*(am|pm|AM|PM)\b'
+        ]
+
+        # Remove location patterns like "at WUES", "at the gym"
+        location_patterns = [
+            r'\bat\s+[A-Z]{2,}\b',  # at WUES, at YMCA
+            r'\bat\s+the\s+\w+\b'    # at the gym, at the park
+        ]
+
+        # Try to extract location before removing it
+        location = ''
+        location_match = re.search(r'\bat\s+([A-Z]{2,}|the\s+\w+)\b', text, re.IGNORECASE)
+        if location_match:
+            location = location_match.group(1).strip()
+
+        # Remove all patterns to get event name
+        for pattern in date_patterns + time_patterns + location_patterns:
+            name = re.sub(pattern, '', name, flags=re.IGNORECASE)
+
+        # Clean up the name
+        name = re.sub(r'\s+', ' ', name).strip()  # Remove extra whitespace
+        name = re.sub(r'^(at|on|in)\s+', '', name, flags=re.IGNORECASE)  # Remove leading prepositions
+
+        if not name:
+            name = 'New Event'
+
+        # Format the datetime for the form (YYYY-MM-DDTHH:MM)
+        formatted_datetime = parsed_datetime.strftime('%Y-%m-%dT%H:%M')
+
+        return JsonResponse({
+            'success': True,
+            'name': name,
+            'timestamp': formatted_datetime,
+            'location': location,
+            'parsed_datetime_display': parsed_datetime.strftime('%A, %B %d, %Y at %I:%M %p')
+        })
+
+    except Exception as e:
+        import traceback
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred while parsing: {str(e)}',
+            'traceback': traceback.format_exc()
+        }, status=500)
+
+
 @require_http_methods(["GET"])
 def get_event_types_view(request):
     """Get all event types"""

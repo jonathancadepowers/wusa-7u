@@ -21,6 +21,31 @@
             </div>
             <div class="modal-body">
                 <div class="alert alert-danger d-none" id="createEventError"></div>
+
+                <!-- Natural Language Input Section -->
+                <div class="card bg-light mb-4">
+                    <div class="card-body">
+                        <h6 class="card-title mb-3">
+                            <i class="bi bi-magic me-2"></i>Quick Create with Natural Language
+                        </h6>
+                        <div class="mb-2">
+                            <input type="text" class="form-control" id="naturalLanguageInput"
+                                   placeholder='e.g., "Division Meeting next Tuesday at 7pm at WUES"'>
+                            <small class="form-text text-muted">
+                                Try: "tomorrow at 3pm", "next Friday at 6:30pm", "January 20th at 7pm"
+                            </small>
+                        </div>
+                        <div class="d-flex gap-2 align-items-center">
+                            <button type="button" class="btn btn-sm btn-info" id="parseNaturalLanguageBtn">
+                                <i class="bi bi-arrow-down-circle me-1"></i>Parse & Fill Form
+                            </button>
+                            <div id="nlParseResult" class="text-muted small"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="my-3">
+
                 <form id="createEventForm">
                     <div class="mb-3">
                         <label for="eventName" class="form-label">Event Name *</label>
@@ -520,6 +545,71 @@ document.addEventListener('DOMContentLoaded', function() {
     // Reapply when calendar changes views
     const observer = new MutationObserver(forceButtonColors);
     observer.observe(calendarEl, { childList: true, subtree: true, attributes: true });
+
+    // Natural Language Event Parser
+    document.getElementById('parseNaturalLanguageBtn').addEventListener('click', async function() {
+        const btn = this;
+        const originalHtml = btn.innerHTML;
+        const input = document.getElementById('naturalLanguageInput').value.trim();
+        const resultDiv = document.getElementById('nlParseResult');
+
+        if (!input) {
+            resultDiv.innerHTML = '<span class="text-danger">Please enter some text to parse</span>';
+            return;
+        }
+
+        // Disable button and show loading
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Parsing...';
+        resultDiv.innerHTML = '';
+
+        try {
+            const formData = new FormData();
+            formData.append('text', input);
+
+            const response = await fetch('{% url "players:parse_natural_language_event" %}', {
+                method: 'POST',
+                headers: {'X-CSRFToken': getCookie('csrftoken')},
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                // Fill in the form fields with parsed data
+                document.getElementById('eventName').value = result.name;
+                document.getElementById('eventLocation').value = result.location || '';
+
+                // Parse the timestamp (format: YYYY-MM-DDTHH:MM)
+                const [datePart, timePart] = result.timestamp.split('T');
+                document.getElementById('eventStartDate').value = datePart;
+                document.getElementById('eventStartTime').value = timePart;
+
+                // Show success message
+                resultDiv.innerHTML = `<span class="text-success"><i class="bi bi-check-circle me-1"></i>Parsed: ${result.parsed_datetime_display}</span>`;
+
+                // Clear the natural language input
+                document.getElementById('naturalLanguageInput').value = '';
+            } else {
+                resultDiv.innerHTML = `<span class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>${result.error}</span>`;
+            }
+        } catch (error) {
+            console.error('Error parsing natural language:', error);
+            resultDiv.innerHTML = '<span class="text-danger">An error occurred while parsing</span>';
+        } finally {
+            // Re-enable button
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+        }
+    });
+
+    // Allow Enter key to trigger parsing
+    document.getElementById('naturalLanguageInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('parseNaturalLanguageBtn').click();
+        }
+    });
 
     // Create Event
     document.getElementById('createEventBtn').addEventListener('click', async function() {
