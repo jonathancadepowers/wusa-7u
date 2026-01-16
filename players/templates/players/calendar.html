@@ -367,6 +367,9 @@ document.addEventListener('DOMContentLoaded', function() {
         selectMirror: true,
         dayMaxEvents: true,
         events: '{% url "players:calendar_events_api" %}',
+        displayEventTime: true,
+        displayEventEnd: false,
+        eventDisplay: 'block', // Force all events to display as blocks (not dots)
 
         // Custom event content to display icons and times
         // Pattern: <Icon> <Time> <Event Name>
