@@ -211,11 +211,6 @@
                                         </td>
                                         <td>
                                             {{ check.clearance_date }}
-                                            {% if check.is_valid %}
-                                                <i class="bi bi-check-circle-fill text-success ms-1" title="Valid"></i>
-                                            {% else %}
-                                                <i class="bi bi-x-circle-fill text-danger ms-1" title="Expired"></i>
-                                            {% endif %}
                                         </td>
                                         <td>
                                             <button type="button" class="btn btn-sm" style="background-color: #6f42c1; color: white;" data-bs-toggle="modal" data-bs-target="#editBackgroundCheckModal{{ check.pk }}" title="Edit Details">
