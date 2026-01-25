@@ -2,8 +2,64 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h1>Hello World</h1>
-    <p>Team: {{ team.name }}</p>
-    <p>Roster ID: {{ roster.id }}</p>
+    <h2>{{ team.name }} - Game Roster</h2>
+
+    <!-- Baseball Scoreboard Style Innings -->
+    <div class="innings-scoreboard mt-4 mb-4">
+        <div class="scoreboard-label">INNINGS</div>
+        <div class="innings-numbers">
+            <div class="inning-box">1</div>
+            <div class="inning-box">2</div>
+            <div class="inning-box">3</div>
+            <div class="inning-box">4</div>
+            <div class="inning-box">5</div>
+            <div class="inning-box">6</div>
+            <div class="inning-box">7</div>
+            <div class="inning-box">8</div>
+            <div class="inning-box">9</div>
+        </div>
+    </div>
 </div>
+
+<style>
+.innings-scoreboard {
+    display: flex;
+    align-items: center;
+    background-color: #2d5016;
+    border: 4px solid #8b7355;
+    padding: 10px 20px;
+    border-radius: 4px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+
+.scoreboard-label {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    font-size: 18px;
+    color: #f0e68c;
+    background-color: #1a3010;
+    padding: 8px 16px;
+    border: 2px solid #8b7355;
+    margin-right: 10px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+.innings-numbers {
+    display: flex;
+    gap: 2px;
+}
+
+.inning-box {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    font-size: 24px;
+    color: #f0e68c;
+    background-color: #1a3010;
+    border: 2px solid #8b7355;
+    padding: 8px 16px;
+    min-width: 45px;
+    text-align: center;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+</style>
 {% endblock %}
