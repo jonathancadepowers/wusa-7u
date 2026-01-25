@@ -2562,7 +2562,8 @@ def team_detail_view(request, team_secret):
 def roster_view(request, team_secret, roster_id):
     """View and edit a specific roster"""
     from django.shortcuts import render, get_object_or_404
-    from .models import Roster, Team
+    from .models import Roster, Team, GeneralSetting
+    import pytz
 
     # Get the team by manager_secret
     team = get_object_or_404(Team, manager_secret=team_secret)
@@ -2570,9 +2571,18 @@ def roster_view(request, team_secret, roster_id):
     # Get the roster
     roster = get_object_or_404(Roster, id=roster_id, team=team)
 
+    # Get display timezone
+    display_tz_setting = GeneralSetting.objects.filter(key='display_timezone').first()
+    display_tz = pytz.timezone(display_tz_setting.value) if display_tz_setting else pytz.UTC
+
+    # Convert event timestamp to display timezone
+    event_time_display = roster.event.timestamp.astimezone(display_tz) if roster.event else None
+
     return render(request, 'players/roster.html', {
         'team': team,
-        'roster': roster
+        'roster': roster,
+        'event_time_display': event_time_display,
+        'display_tz': display_tz
     })
 
 

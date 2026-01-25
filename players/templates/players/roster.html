@@ -2,7 +2,12 @@
 
 {% block content %}
 <div class="container mt-4 mb-5">
-    <h2>{{ team.name }} - Game Roster</h2>
+    <h2>
+        Home: {{ roster.event.home_team.name|default:"TBD" }} |
+        Away: {{ roster.event.away_team.name|default:"TBD" }} |
+        Time: {{ event_time_display|date:"m/d/y, g:i A" }} {{ display_tz }} |
+        Location: {{ roster.event.location|default:"TBD" }}
+    </h2>
 
     <!-- Innings Tabs -->
     <ul class="nav nav-tabs mt-4" id="inningTabs" role="tablist">
