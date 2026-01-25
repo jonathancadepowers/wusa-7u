@@ -5870,7 +5870,6 @@ def create_event_view(request):
     try:
         name = request.POST.get('name', '').strip()
         event_type_id = request.POST.get('event_type_id', '').strip()
-        team_id = request.POST.get('team_id', '').strip()
         home_team_id = request.POST.get('home_team_id', '').strip()
         away_team_id = request.POST.get('away_team_id', '').strip()
         location = request.POST.get('location', '').strip()
@@ -5892,17 +5891,6 @@ def create_event_view(request):
                 'success': False,
                 'error': 'Invalid event type selected.'
             }, status=400)
-
-        # Get the team if provided
-        team = None
-        if team_id:
-            try:
-                team = Team.objects.get(id=team_id)
-            except Team.DoesNotExist:
-                return JsonResponse({
-                    'success': False,
-                    'error': 'Invalid team selected.'
-                }, status=400)
 
         # Get home and away teams if provided
         home_team = None
@@ -5966,7 +5954,6 @@ def create_event_view(request):
         event = Event.objects.create(
             name=name,
             event_type=event_type,
-            team=team,
             home_team=home_team,
             away_team=away_team,
             location=location if location else None,
@@ -6286,7 +6273,6 @@ def update_event_view(request):
         event_id = request.POST.get('event_id', '').strip()
         name = request.POST.get('name', '').strip()
         event_type_id = request.POST.get('event_type_id', '').strip()
-        team_id = request.POST.get('team_id', '').strip()
         home_team_id = request.POST.get('home_team_id', '').strip()
         away_team_id = request.POST.get('away_team_id', '').strip()
         location = request.POST.get('location', '').strip()
@@ -6318,17 +6304,6 @@ def update_event_view(request):
                 return JsonResponse({
                     'success': False,
                     'error': 'Invalid event type selected.'
-                }, status=400)
-
-        # Validate team if provided
-        team = None
-        if team_id:
-            try:
-                team = Team.objects.get(id=team_id)
-            except Team.DoesNotExist:
-                return JsonResponse({
-                    'success': False,
-                    'error': 'Invalid team selected.'
                 }, status=400)
 
         # Validate home and away teams if provided
@@ -6392,7 +6367,6 @@ def update_event_view(request):
         # Update the event
         event.name = name
         event.event_type = event_type
-        event.team = team
         event.home_team = home_team
         event.away_team = away_team
         event.location = location if location else None
