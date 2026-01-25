@@ -1,24 +1,30 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mt-4">
+<div class="container-fluid mt-4">
     <h2>{{ team.name }} - Game Roster</h2>
 
-    <!-- Innings Section -->
-    <div class="innings-section mt-4 mb-4">
-        <div class="innings-header">
-            <div class="innings-label text-muted">Innings</div>
-            <div class="inning-box">1</div>
-            <div class="inning-box">2</div>
-            <div class="inning-box">3</div>
-            <div class="inning-box">4</div>
-            <div class="inning-box">5</div>
-            <div class="inning-box">6</div>
+    <!-- Main Content Layout -->
+    <div class="row mt-4">
+        <!-- Left Column: Innings and other controls -->
+        <div class="col-md-3">
+            <!-- Innings Section -->
+            <div class="innings-section mb-4">
+                <div class="innings-header">
+                    <div class="innings-label text-muted">Innings</div>
+                    <div class="inning-box">1</div>
+                    <div class="inning-box">2</div>
+                    <div class="inning-box">3</div>
+                    <div class="inning-box">4</div>
+                    <div class="inning-box">5</div>
+                    <div class="inning-box">6</div>
+                </div>
+            </div>
         </div>
-    </div>
 
-    <!-- Baseball Field -->
-    <div class="baseball-field mt-4">
+        <!-- Right Column: Baseball Field -->
+        <div class="col-md-8">
+            <div class="baseball-field">
         <svg viewBox="0 0 500 450" class="field-svg">
             <!-- Outfield grass (arc shape) -->
             <path d="M 50 400 Q 50 150 250 50 Q 450 150 450 400 Z"
@@ -95,6 +101,8 @@
                 <text x="250" y="381" text-anchor="middle" font-size="13" font-weight="bold" fill="#333">C</text>
             </g>
         </svg>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -105,28 +113,26 @@
 
 .innings-header {
     display: flex;
-    align-items: center;
-    gap: 15px;
+    flex-direction: column;
+    gap: 8px;
     padding: 15px 0;
     border-bottom: 2px solid #dee2e6;
 }
 
 .innings-label {
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    white-space: nowrap;
-    margin-right: 10px;
+    margin-bottom: 5px;
 }
 
 .inning-box {
-    flex: 1;
-    font-size: 20px;
+    font-size: 16px;
     font-weight: 500;
     color: #495057;
     text-align: center;
-    padding: 10px;
+    padding: 8px;
     background-color: #f8f9fa;
     border: 1px solid #dee2e6;
     border-radius: 4px;
@@ -134,14 +140,16 @@
 
 /* Baseball Field Styles */
 .baseball-field {
-    max-width: 500px;
-    margin: 0 auto;
-    padding: 20px;
+    width: 100%;
+    height: 700px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .field-svg {
     width: 100%;
-    height: auto;
+    height: 100%;
     filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
 }
 
