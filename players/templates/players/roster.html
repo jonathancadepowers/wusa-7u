@@ -6,8 +6,8 @@
 
     <!-- Innings Section -->
     <div class="innings-section mt-4 mb-4">
-        <h6 class="innings-label text-muted">Innings</h6>
         <div class="innings-header">
+            <div class="innings-label text-muted">Innings</div>
             <div class="inning-box">1</div>
             <div class="inning-box">2</div>
             <div class="inning-box">3</div>
@@ -23,20 +23,21 @@
     margin-bottom: 2rem;
 }
 
+.innings-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 0;
+    border-bottom: 2px solid #dee2e6;
+}
+
 .innings-label {
     font-size: 14px;
     font-weight: 500;
-    margin-bottom: 8px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-}
-
-.innings-header {
-    display: flex;
-    justify-content: space-evenly;
-    gap: 20px;
-    padding: 15px 0;
-    border-bottom: 2px solid #dee2e6;
+    white-space: nowrap;
+    margin-right: 10px;
 }
 
 .inning-box {
