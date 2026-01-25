@@ -5847,12 +5847,13 @@ def create_event_type_view(request):
 @csrf_exempt
 def create_event_view(request):
     """Create a new event"""
-    from .models import Event, EventType
+    from .models import Event, EventType, Team
     from datetime import datetime
 
     try:
         name = request.POST.get('name', '').strip()
         event_type_id = request.POST.get('event_type_id', '').strip()
+        team_id = request.POST.get('team_id', '').strip()
         location = request.POST.get('location', '').strip()
         timestamp_str = request.POST.get('timestamp', '').strip()
         end_date_str = request.POST.get('end_date', '').strip()
@@ -5872,6 +5873,17 @@ def create_event_view(request):
                 'success': False,
                 'error': 'Invalid event type selected.'
             }, status=400)
+
+        # Get the team if provided
+        team = None
+        if team_id:
+            try:
+                team = Team.objects.get(id=team_id)
+            except Team.DoesNotExist:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Invalid team selected.'
+                }, status=400)
 
         # Parse the timestamp (format: YYYY-MM-DDTHH:MM from datetime-local input, or just YYYY-MM-DD for date-only)
         try:
@@ -5915,6 +5927,7 @@ def create_event_view(request):
         event = Event.objects.create(
             name=name,
             event_type=event_type,
+            team=team,
             location=location if location else None,
             timestamp=timestamp,
             end_date=end_date,
@@ -6109,6 +6122,29 @@ def get_event_types_view(request):
         }, status=500)
 
 
+def get_teams_api_view(request):
+    """Get all teams for dropdown"""
+    from .models import Team
+
+    try:
+        teams = Team.objects.all().order_by('name')
+        teams_data = [{
+            'id': team.id,
+            'name': team.name
+        } for team in teams]
+
+        return JsonResponse({
+            'success': True,
+            'teams': teams_data
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
 @require_http_methods(["POST"])
 @csrf_exempt
 def update_event_type_view(request):
@@ -6202,13 +6238,14 @@ def delete_event_type_view(request):
 @csrf_exempt
 def update_event_view(request):
     """Update an existing event"""
-    from .models import Event, EventType
+    from .models import Event, EventType, Team
     from datetime import datetime
 
     try:
         event_id = request.POST.get('event_id', '').strip()
         name = request.POST.get('name', '').strip()
         event_type_id = request.POST.get('event_type_id', '').strip()
+        team_id = request.POST.get('team_id', '').strip()
         location = request.POST.get('location', '').strip()
         timestamp_str = request.POST.get('timestamp', '').strip()
         end_date_str = request.POST.get('end_date', '').strip()
@@ -6240,17 +6277,37 @@ def update_event_view(request):
                     'error': 'Invalid event type selected.'
                 }, status=400)
 
+        # Validate team if provided
+        team = None
+        if team_id:
+            try:
+                team = Team.objects.get(id=team_id)
+            except Team.DoesNotExist:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Invalid team selected.'
+                }, status=400)
+
         # Parse the timestamp
         try:
-            # Parse as naive datetime first
-            naive_timestamp = datetime.fromisoformat(timestamp_str)
             # Get display timezone
             from .models import GeneralSetting
             import pytz
             display_tz_setting = GeneralSetting.objects.filter(key='display_timezone').first()
             display_tz = pytz.timezone(display_tz_setting.value) if display_tz_setting else pytz.UTC
-            # Localize to display timezone, then convert to UTC for storage
-            timestamp = display_tz.localize(naive_timestamp)
+
+            # Check if this is date-only (no 'T' separator) or date-time
+            if 'T' in timestamp_str:
+                # Has time component - parse and localize normally
+                naive_timestamp = datetime.fromisoformat(timestamp_str)
+                timestamp = display_tz.localize(naive_timestamp)
+            else:
+                # Date only - create a timezone-aware datetime at midnight in the display timezone
+                # This ensures all-day events display consistently
+                from datetime import date
+                date_only = date.fromisoformat(timestamp_str)
+                naive_midnight = datetime.combine(date_only, datetime.min.time())
+                timestamp = display_tz.localize(naive_midnight)
         except ValueError:
             return JsonResponse({
                 'success': False,
@@ -6272,6 +6329,7 @@ def update_event_view(request):
         # Update the event
         event.name = name
         event.event_type = event_type
+        event.team = team
         event.location = location if location else None
         event.timestamp = timestamp
         event.end_date = end_date
@@ -6320,6 +6378,7 @@ def get_event_view(request):
                 'id': event.id,
                 'name': event.name,
                 'event_type_id': event.event_type.id if event.event_type else None,
+                'team_id': event.team.id if event.team else None,
                 'location': event.location or '',
                 'timestamp': event.timestamp.isoformat(),
                 'end_date': event.end_date.isoformat() if event.end_date else '',
