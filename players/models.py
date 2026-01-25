@@ -358,3 +358,29 @@ class BackgroundCheck(models.Model):
         """Check if background check clearance date is valid (not expired)"""
         from datetime import date
         return self.clearance_date > date.today()
+
+
+class Roster(models.Model):
+    event = models.ForeignKey('Event', on_delete=models.CASCADE, related_name='rosters')
+    team = models.ForeignKey('Team', on_delete=models.CASCADE, related_name='rosters')
+    inning_1 = models.JSONField(default=dict, help_text='Field positions for inning 1')
+    inning_2 = models.JSONField(default=dict, help_text='Field positions for inning 2')
+    inning_3 = models.JSONField(default=dict, help_text='Field positions for inning 3')
+    inning_4 = models.JSONField(default=dict, help_text='Field positions for inning 4')
+    inning_5 = models.JSONField(default=dict, help_text='Field positions for inning 5')
+    inning_6 = models.JSONField(default=dict, help_text='Field positions for inning 6')
+    lineup = models.JSONField(default=list, help_text='Batting lineup order')
+    validation_status = models.CharField(max_length=50, blank=True, null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'rosters'
+        unique_together = ('event', 'team')
+        ordering = ['-created_at']
+        verbose_name = 'Roster'
+        verbose_name_plural = 'Rosters'
+
+    def __str__(self):
+        return f"Roster for {self.team.name} - {self.event.name}"
