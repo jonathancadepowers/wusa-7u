@@ -2559,6 +2559,23 @@ def team_detail_view(request, team_secret):
     return render(request, 'players/team_detail.html', context)
 
 
+def roster_view(request, team_secret, roster_id):
+    """View and edit a specific roster"""
+    from django.shortcuts import render, get_object_or_404
+    from .models import Roster, Team
+
+    # Get the team by manager_secret
+    team = get_object_or_404(Team, manager_secret=team_secret)
+
+    # Get the roster
+    roster = get_object_or_404(Roster, id=roster_id, team=team)
+
+    return render(request, 'players/roster.html', {
+        'team': team,
+        'roster': roster
+    })
+
+
 def export_team_roster_csv(request, team_secret):
     """Export team roster to CSV with same structure as the Team Roster table"""
     import csv
