@@ -5871,6 +5871,8 @@ def create_event_view(request):
         name = request.POST.get('name', '').strip()
         event_type_id = request.POST.get('event_type_id', '').strip()
         team_id = request.POST.get('team_id', '').strip()
+        home_team_id = request.POST.get('home_team_id', '').strip()
+        away_team_id = request.POST.get('away_team_id', '').strip()
         location = request.POST.get('location', '').strip()
         timestamp_str = request.POST.get('timestamp', '').strip()
         end_date_str = request.POST.get('end_date', '').strip()
@@ -5900,6 +5902,26 @@ def create_event_view(request):
                 return JsonResponse({
                     'success': False,
                     'error': 'Invalid team selected.'
+                }, status=400)
+
+        # Get home and away teams if provided
+        home_team = None
+        away_team = None
+        if home_team_id:
+            try:
+                home_team = Team.objects.get(id=home_team_id)
+            except Team.DoesNotExist:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Invalid home team selected.'
+                }, status=400)
+        if away_team_id:
+            try:
+                away_team = Team.objects.get(id=away_team_id)
+            except Team.DoesNotExist:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Invalid away team selected.'
                 }, status=400)
 
         # Parse the timestamp (format: YYYY-MM-DDTHH:MM from datetime-local input, or just YYYY-MM-DD for date-only)
@@ -5945,6 +5967,8 @@ def create_event_view(request):
             name=name,
             event_type=event_type,
             team=team,
+            home_team=home_team,
+            away_team=away_team,
             location=location if location else None,
             timestamp=timestamp,
             end_date=end_date,
@@ -6263,6 +6287,8 @@ def update_event_view(request):
         name = request.POST.get('name', '').strip()
         event_type_id = request.POST.get('event_type_id', '').strip()
         team_id = request.POST.get('team_id', '').strip()
+        home_team_id = request.POST.get('home_team_id', '').strip()
+        away_team_id = request.POST.get('away_team_id', '').strip()
         location = request.POST.get('location', '').strip()
         timestamp_str = request.POST.get('timestamp', '').strip()
         end_date_str = request.POST.get('end_date', '').strip()
@@ -6303,6 +6329,26 @@ def update_event_view(request):
                 return JsonResponse({
                     'success': False,
                     'error': 'Invalid team selected.'
+                }, status=400)
+
+        # Validate home and away teams if provided
+        home_team = None
+        away_team = None
+        if home_team_id:
+            try:
+                home_team = Team.objects.get(id=home_team_id)
+            except Team.DoesNotExist:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Invalid home team selected.'
+                }, status=400)
+        if away_team_id:
+            try:
+                away_team = Team.objects.get(id=away_team_id)
+            except Team.DoesNotExist:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Invalid away team selected.'
                 }, status=400)
 
         # Parse the timestamp
@@ -6347,6 +6393,8 @@ def update_event_view(request):
         event.name = name
         event.event_type = event_type
         event.team = team
+        event.home_team = home_team
+        event.away_team = away_team
         event.location = location if location else None
         event.timestamp = timestamp
         event.end_date = end_date

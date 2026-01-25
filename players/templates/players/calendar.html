@@ -38,6 +38,20 @@
                                 <option value="">No team (general event)</option>
                             </select>
                         </div>
+                        <div id="gameTeamsContainer" style="display: none;">
+                            <div class="mb-3">
+                                <label for="homeTeam" class="form-label">Home Team *</label>
+                                <select class="form-control" id="homeTeam">
+                                    <option value="">Select home team...</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="awayTeam" class="form-label">Away Team *</label>
+                                <select class="form-control" id="awayTeam">
+                                    <option value="">Select away team...</option>
+                                </select>
+                            </div>
+                        </div>
                         <div class="mb-3">
                             <label for="eventLocation" class="form-label">Location</label>
                             <input type="text" class="form-control" id="eventLocation">
@@ -95,6 +109,20 @@
                         <select class="form-control" id="editEventTeam">
                             <option value="">No team (general event)</option>
                         </select>
+                    </div>
+                    <div id="editGameTeamsContainer" style="display: none;">
+                        <div class="mb-3">
+                            <label for="editHomeTeam" class="form-label">Home Team *</label>
+                            <select class="form-control" id="editHomeTeam">
+                                <option value="">Select home team...</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editAwayTeam" class="form-label">Away Team *</label>
+                            <select class="form-control" id="editAwayTeam">
+                                <option value="">Select away team...</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label for="editEventLocation" class="form-label">Location</label>
@@ -327,6 +355,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     editSelect.appendChild(option);
                 });
                 if (editCurrentValue) editSelect.value = editCurrentValue;
+
+                // Store teams globally for game team dropdowns
+                window.allTeams = teams;
             }
         } catch (error) {
             console.error('Error loading teams:', error);
@@ -349,6 +380,101 @@ document.addEventListener('DOMContentLoaded', function() {
     editEventModal.addEventListener('show.bs.modal', function() {
         loadEventTypeOptions();
         loadTeamOptions();
+    });
+
+    // Helper function to populate game team dropdowns
+    function populateGameTeamDropdowns(homeSelectId, awaySelectId, excludeHome, excludeAway) {
+        if (!window.allTeams) return;
+
+        const homeSelect = document.getElementById(homeSelectId);
+        const awaySelect = document.getElementById(awaySelectId);
+
+        const homeCurrentValue = homeSelect.value;
+        const awayCurrentValue = awaySelect.value;
+
+        // Populate home team dropdown
+        homeSelect.innerHTML = '<option value="">Select home team...</option>';
+        window.allTeams.forEach(team => {
+            if (excludeAway && team.id == excludeAway) return;
+            const option = document.createElement('option');
+            option.value = team.id;
+            option.textContent = team.name;
+            homeSelect.appendChild(option);
+        });
+        if (homeCurrentValue) homeSelect.value = homeCurrentValue;
+
+        // Populate away team dropdown
+        awaySelect.innerHTML = '<option value="">Select away team...</option>';
+        window.allTeams.forEach(team => {
+            if (excludeHome && team.id == excludeHome) return;
+            const option = document.createElement('option');
+            option.value = team.id;
+            option.textContent = team.name;
+            awaySelect.appendChild(option);
+        });
+        if (awayCurrentValue) awaySelect.value = awayCurrentValue;
+    }
+
+    // Handle event type change for create modal
+    document.getElementById('eventType').addEventListener('change', function() {
+        const selectedType = this.options[this.selectedIndex].text;
+        const gameContainer = document.getElementById('gameTeamsContainer');
+        const teamSelect = document.getElementById('eventTeam');
+
+        if (selectedType.toLowerCase() === 'game') {
+            gameContainer.style.display = 'block';
+            teamSelect.parentElement.style.display = 'none';
+            populateGameTeamDropdowns('homeTeam', 'awayTeam', null, null);
+        } else {
+            gameContainer.style.display = 'none';
+            teamSelect.parentElement.style.display = 'block';
+        }
+    });
+
+    // Handle event type change for edit modal
+    document.getElementById('editEventType').addEventListener('change', function() {
+        const selectedType = this.options[this.selectedIndex].text;
+        const gameContainer = document.getElementById('editGameTeamsContainer');
+        const teamSelect = document.getElementById('editEventTeam');
+
+        if (selectedType.toLowerCase() === 'game') {
+            gameContainer.style.display = 'block';
+            teamSelect.parentElement.style.display = 'none';
+            populateGameTeamDropdowns('editHomeTeam', 'editAwayTeam', null, null);
+        } else {
+            gameContainer.style.display = 'none';
+            teamSelect.parentElement.style.display = 'block';
+        }
+    });
+
+    // Handle home team selection to exclude from away team dropdown
+    document.getElementById('homeTeam').addEventListener('change', function() {
+        const awaySelect = document.getElementById('awayTeam');
+        const awayCurrentValue = awaySelect.value;
+        populateGameTeamDropdowns('homeTeam', 'awayTeam', this.value, null);
+        if (awayCurrentValue && awayCurrentValue != this.value) awaySelect.value = awayCurrentValue;
+    });
+
+    document.getElementById('editHomeTeam').addEventListener('change', function() {
+        const awaySelect = document.getElementById('editAwayTeam');
+        const awayCurrentValue = awaySelect.value;
+        populateGameTeamDropdowns('editHomeTeam', 'editAwayTeam', this.value, null);
+        if (awayCurrentValue && awayCurrentValue != this.value) awaySelect.value = awayCurrentValue;
+    });
+
+    // Handle away team selection to exclude from home team dropdown
+    document.getElementById('awayTeam').addEventListener('change', function() {
+        const homeSelect = document.getElementById('homeTeam');
+        const homeCurrentValue = homeSelect.value;
+        populateGameTeamDropdowns('homeTeam', 'awayTeam', null, this.value);
+        if (homeCurrentValue && homeCurrentValue != this.value) homeSelect.value = homeCurrentValue;
+    });
+
+    document.getElementById('editAwayTeam').addEventListener('change', function() {
+        const homeSelect = document.getElementById('editHomeTeam');
+        const homeCurrentValue = homeSelect.value;
+        populateGameTeamDropdowns('editHomeTeam', 'editAwayTeam', null, this.value);
+        if (homeCurrentValue && homeCurrentValue != this.value) homeSelect.value = homeCurrentValue;
     });
 
     // Initialize FullCalendar
@@ -582,21 +708,36 @@ document.addEventListener('DOMContentLoaded', function() {
         const name = document.getElementById('eventName').value;
         const eventType = document.getElementById('eventType').value;
         const team = document.getElementById('eventTeam').value;
+        const homeTeam = document.getElementById('homeTeam').value;
+        const awayTeam = document.getElementById('awayTeam').value;
         const location = document.getElementById('eventLocation').value;
         const startDate = document.getElementById('eventStartDate').value;
         const startTime = document.getElementById('eventStartTime').value;
         const endDate = document.getElementById('eventEndDate').value;
         const description = document.getElementById('eventDescription').value;
 
+        const gameContainer = document.getElementById('gameTeamsContainer');
+        const isGame = gameContainer.style.display !== 'none';
+
         if (!name || !eventType || !startDate) {
             alert('Please fill in all required fields');
+            return;
+        }
+
+        if (isGame && (!homeTeam || !awayTeam)) {
+            alert('Please select both home and away teams for a game');
             return;
         }
 
         const formData = new FormData();
         formData.append('name', name);
         formData.append('event_type_id', eventType);
-        if (team) formData.append('team_id', team);
+        if (isGame) {
+            formData.append('home_team_id', homeTeam);
+            formData.append('away_team_id', awayTeam);
+        } else if (team) {
+            formData.append('team_id', team);
+        }
         formData.append('location', location);
         formData.append('timestamp', startDate + (startTime ? 'T' + startTime : 'T00:00'));
         if (endDate) formData.append('end_date', endDate);
@@ -668,17 +809,32 @@ document.addEventListener('DOMContentLoaded', function() {
         const name = document.getElementById('editEventName').value;
         const eventType = document.getElementById('editEventType').value;
         const team = document.getElementById('editEventTeam').value;
+        const homeTeam = document.getElementById('editHomeTeam').value;
+        const awayTeam = document.getElementById('editAwayTeam').value;
         const location = document.getElementById('editEventLocation').value;
         const startDate = document.getElementById('editEventStartDate').value;
         const startTime = document.getElementById('editEventStartTime').value;
         const endDate = document.getElementById('editEventEndDate').value;
         const description = document.getElementById('editEventDescription').value;
 
+        const gameContainer = document.getElementById('editGameTeamsContainer');
+        const isGame = gameContainer.style.display !== 'none';
+
+        if (isGame && (!homeTeam || !awayTeam)) {
+            alert('Please select both home and away teams for a game');
+            return;
+        }
+
         const formData = new FormData();
         formData.append('event_id', eventId);
         formData.append('name', name);
         formData.append('event_type_id', eventType);
-        if (team) formData.append('team_id', team);
+        if (isGame) {
+            formData.append('home_team_id', homeTeam);
+            formData.append('away_team_id', awayTeam);
+        } else if (team) {
+            formData.append('team_id', team);
+        }
         formData.append('location', location);
         // Only append time if provided, otherwise send just the date
         formData.append('timestamp', startTime ? startDate + 'T' + startTime : startDate);
