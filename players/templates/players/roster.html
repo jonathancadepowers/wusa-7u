@@ -242,6 +242,19 @@
     stroke-width: 3;
 }
 
+.position-marker.drag-over .position-circle {
+    fill: #cfe2ff;
+    stroke: #0d6efd;
+    stroke-width: 4;
+    stroke-dasharray: 5, 5;
+    animation: pulse 0.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
 .player-name-display {
     font-weight: 600;
     fill: #333;
@@ -290,10 +303,17 @@ document.addEventListener('DOMContentLoaded', function() {
         positionMarkers.forEach(marker => {
             marker.addEventListener('dragover', function(e) {
                 e.preventDefault();
+                this.classList.add('drag-over');
+            });
+
+            marker.addEventListener('dragleave', function(e) {
+                this.classList.remove('drag-over');
             });
 
             marker.addEventListener('drop', function(e) {
                 e.preventDefault();
+                this.classList.remove('drag-over');
+
                 const playerId = e.dataTransfer.getData('playerId');
                 const playerName = e.dataTransfer.getData('playerName');
                 const position = this.dataset.position;
