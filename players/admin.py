@@ -298,11 +298,11 @@ class RosterAdmin(admin.ModelAdmin):
     list_display = ['id', 'team', 'event', 'validation_status', 'created_at', 'updated_at']
     list_filter = ['team', 'event', 'validation_status']
     search_fields = ['team__name', 'event__name']
-    readonly_fields = ['created_at', 'updated_at']
+    readonly_fields = ['id', 'created_at', 'updated_at']
 
     fieldsets = (
         ('Roster Assignment', {
-            'fields': ('event', 'team', 'validation_status')
+            'fields': ('id', 'event', 'team', 'validation_status')
         }),
         ('Batting Lineup', {
             'fields': ('lineup',)
