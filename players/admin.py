@@ -257,15 +257,18 @@ class EventTypeAdmin(admin.ModelAdmin):
 
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
-    list_display = ['id', 'name', 'event_type', 'location', 'timestamp', 'created_at', 'updated_at']
-    list_filter = ['event_type', 'timestamp']
+    list_display = ['id', 'name', 'event_type', 'team', 'home_team', 'away_team', 'location', 'timestamp', 'created_at', 'updated_at']
+    list_filter = ['event_type', 'team', 'home_team', 'away_team', 'timestamp']
     search_fields = ['name', 'description', 'location']
     readonly_fields = ['created_at', 'updated_at']
     date_hierarchy = 'timestamp'
 
     fieldsets = (
         ('Event Information', {
-            'fields': ('name', 'event_type', 'location', 'timestamp', 'description')
+            'fields': ('name', 'event_type', 'location', 'timestamp', 'end_date', 'description')
+        }),
+        ('Team Assignment', {
+            'fields': ('team', 'home_team', 'away_team')
         }),
         ('Metadata', {
             'fields': ('created_at', 'updated_at'),
