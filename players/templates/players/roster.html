@@ -16,6 +16,30 @@
             <div class="inning-box">6</div>
         </div>
     </div>
+
+    <!-- Baseball Field -->
+    <div class="baseball-field mt-4">
+        <div class="field-container">
+            <!-- Outfield (green grass) -->
+            <div class="outfield">
+                <!-- Outfield positions -->
+                <div class="position-marker outfield-left">LF</div>
+                <div class="position-marker outfield-center">CF</div>
+                <div class="position-marker outfield-right">RF</div>
+            </div>
+
+            <!-- Infield (brown dirt) -->
+            <div class="infield">
+                <!-- Infield positions -->
+                <div class="position-marker shortstop">SS</div>
+                <div class="position-marker second-base">2B</div>
+                <div class="position-marker third-base">3B</div>
+                <div class="position-marker first-base">1B</div>
+                <div class="position-marker pitcher">P</div>
+                <div class="position-marker catcher">C</div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <style>
@@ -50,6 +74,110 @@
     background-color: #f8f9fa;
     border: 1px solid #dee2e6;
     border-radius: 4px;
+}
+
+/* Baseball Field Styles */
+.baseball-field {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.field-container {
+    position: relative;
+    width: 100%;
+    padding-bottom: 100%; /* Square aspect ratio */
+}
+
+.outfield {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 40%;
+    background: linear-gradient(to bottom, #4a7c4e 0%, #5a9d5e 100%);
+    border-radius: 50% 50% 0 0;
+    border: 3px solid #2d5016;
+}
+
+.infield {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%) rotate(45deg);
+    width: 42%;
+    height: 42%;
+    background: linear-gradient(135deg, #c19a6b 0%, #a67c52 100%);
+    border: 3px solid #8b6f47;
+}
+
+.position-marker {
+    position: absolute;
+    background-color: white;
+    border: 2px solid #333;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 12px;
+    color: #333;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* Outfield positions */
+.outfield-left {
+    top: 25%;
+    left: 15%;
+}
+
+.outfield-center {
+    top: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.outfield-right {
+    top: 25%;
+    right: 15%;
+}
+
+/* Infield positions */
+.third-base {
+    bottom: 48%;
+    left: 22%;
+    transform: rotate(-45deg);
+}
+
+.shortstop {
+    bottom: 52%;
+    left: 42%;
+    transform: rotate(-45deg);
+}
+
+.second-base {
+    bottom: 48%;
+    right: 22%;
+    transform: rotate(-45deg);
+}
+
+.first-base {
+    bottom: 52%;
+    right: 42%;
+    transform: rotate(-45deg);
+}
+
+.pitcher {
+    bottom: 56%;
+    left: 50%;
+    transform: translateX(-50%) rotate(-45deg);
+}
+
+.catcher {
+    bottom: 5%;
+    left: 50%;
+    transform: translateX(-50%);
 }
 </style>
 {% endblock %}
