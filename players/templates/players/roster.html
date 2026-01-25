@@ -2,12 +2,33 @@
 
 {% block content %}
 <div class="container mt-4 mb-5">
-    <h2>
-        Home: {{ roster.event.home_team.name|default:"TBD" }} |
-        Away: {{ roster.event.away_team.name|default:"TBD" }} |
-        Time: {{ event_time_display|date:"m/d/y, g:i A" }} {{ display_tz }} |
-        Location: {{ roster.event.location|default:"TBD" }}
-    </h2>
+    <!-- Game Info Header -->
+    <div class="card mb-4">
+        <div class="card-body py-3">
+            <div class="row align-items-center text-center">
+                <div class="col-md-5">
+                    <h5 class="mb-0 text-primary fw-bold">{{ roster.event.home_team.name|default:"TBD" }}</h5>
+                    <small class="text-muted">Home</small>
+                </div>
+                <div class="col-md-2">
+                    <span class="badge bg-secondary fs-6">VS</span>
+                </div>
+                <div class="col-md-5">
+                    <h5 class="mb-0 text-danger fw-bold">{{ roster.event.away_team.name|default:"TBD" }}</h5>
+                    <small class="text-muted">Away</small>
+                </div>
+            </div>
+            <hr class="my-2">
+            <div class="row text-center">
+                <div class="col-md-6">
+                    <small class="text-muted"><i class="bi bi-clock"></i> {{ event_time_display|date:"m/d/y, g:i A" }} {{ display_tz }}</small>
+                </div>
+                <div class="col-md-6">
+                    <small class="text-muted"><i class="bi bi-geo-alt"></i> {{ roster.event.location|default:"TBD" }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Innings Tabs -->
     <ul class="nav nav-tabs mt-4" id="inningTabs" role="tablist">
