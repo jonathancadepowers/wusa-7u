@@ -1,43 +1,52 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container-fluid mt-4">
+<div class="container mt-4">
     <h2>{{ team.name }} - Game Roster</h2>
 
-    <!-- Innings Section -->
-    <div class="innings-section mb-4">
-        <div class="innings-header">
-            <div class="innings-label text-muted">Innings</div>
-            <div class="inning-box">1</div>
-            <div class="inning-box">2</div>
-            <div class="inning-box">3</div>
-            <div class="inning-box">4</div>
-            <div class="inning-box">5</div>
-            <div class="inning-box">6</div>
-        </div>
-    </div>
+    <!-- Innings Tabs -->
+    <ul class="nav nav-tabs mt-4" id="inningTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="inning1-tab" data-bs-toggle="tab" data-bs-target="#inning1" type="button" role="tab">Inning 1</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="inning2-tab" data-bs-toggle="tab" data-bs-target="#inning2" type="button" role="tab">Inning 2</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="inning3-tab" data-bs-toggle="tab" data-bs-target="#inning3" type="button" role="tab">Inning 3</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="inning4-tab" data-bs-toggle="tab" data-bs-target="#inning4" type="button" role="tab">Inning 4</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="inning5-tab" data-bs-toggle="tab" data-bs-target="#inning5" type="button" role="tab">Inning 5</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="inning6-tab" data-bs-toggle="tab" data-bs-target="#inning6" type="button" role="tab">Inning 6</button>
+        </li>
+    </ul>
 
-    <!-- Main Content: Player Names and Baseball Field -->
-    <div class="row">
-        <!-- Left Column: Player Names -->
-        <div class="col-md-3">
-            <div class="player-list">
-                <div class="player-card">Player Name</div>
-                <div class="player-card">Player Name</div>
-                <div class="player-card">Player Name</div>
-                <div class="player-card">Player Name</div>
-                <div class="player-card">Player Name</div>
-                <div class="player-card">Player Name</div>
-                <div class="player-card">Player Name</div>
-                <div class="player-card">Player Name</div>
-                <div class="player-card">Player Name</div>
-                <div class="player-card">Player Name</div>
-            </div>
-        </div>
+    <!-- Tab Content -->
+    <div class="tab-content mt-4" id="inningTabContent">
+        {% for inning in "123456" %}
+        <div class="tab-pane fade {% if inning == '1' %}show active{% endif %}" id="inning{{ inning }}" role="tabpanel">
+            <div class="row">
+                <!-- Left Column: Player List -->
+                <div class="col-md-4">
+                    <h5 class="mb-3">Available Players</h5>
+                    <div class="player-list" id="playerList{{ inning }}">
+                        {% for player in team.players.all %}
+                        <div class="player-card" draggable="true" data-player-id="{{ player.id }}" data-player-name="{{ player.first_name }} {{ player.last_name }}">
+                            {{ player.first_name }} {{ player.last_name }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
 
-        <!-- Right Column: Baseball Field -->
-        <div class="col-md-9">
-            <div class="baseball-field">
+                <!-- Right Column: Baseball Field -->
+                <div class="col-md-8">
+                    <h5 class="mb-3">Field Positions</h5>
+                    <div class="baseball-field" data-inning="{{ inning }}">
         <svg viewBox="0 0 500 450" class="field-svg">
             <!-- Outfield grass (arc shape) -->
             <path d="M 50 400 Q 50 150 250 50 Q 450 150 450 400 Z"
@@ -68,142 +77,217 @@
             <!-- Home plate -->
             <polygon points="250,360 245,355 245,350 255,350 255,355" fill="white" stroke="#999" stroke-width="1"/>
 
-            <!-- Position markers -->
+            <!-- Position markers (drop zones) -->
             <g class="position-marker" data-position="LF">
-                <circle cx="120" cy="180" r="22" fill="white" stroke="#333" stroke-width="2"/>
-                <text x="120" y="186" text-anchor="middle" font-size="13" font-weight="bold" fill="#333">LF</text>
+                <circle cx="120" cy="180" r="30" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
+                <text x="120" y="186" text-anchor="middle" font-size="12" font-weight="bold" fill="#666" class="position-label">LF</text>
+                <text x="120" y="200" text-anchor="middle" font-size="10" fill="#999" class="player-name-display"></text>
             </g>
 
             <g class="position-marker" data-position="CF">
-                <circle cx="250" cy="130" r="22" fill="white" stroke="#333" stroke-width="2"/>
-                <text x="250" y="136" text-anchor="middle" font-size="13" font-weight="bold" fill="#333">CF</text>
+                <circle cx="250" cy="130" r="30" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
+                <text x="250" y="136" text-anchor="middle" font-size="12" font-weight="bold" fill="#666" class="position-label">CF</text>
+                <text x="250" y="150" text-anchor="middle" font-size="10" fill="#999" class="player-name-display"></text>
             </g>
 
             <g class="position-marker" data-position="RF">
-                <circle cx="380" cy="180" r="22" fill="white" stroke="#333" stroke-width="2"/>
-                <text x="380" y="186" text-anchor="middle" font-size="13" font-weight="bold" fill="#333">RF</text>
+                <circle cx="380" cy="180" r="30" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
+                <text x="380" y="186" text-anchor="middle" font-size="12" font-weight="bold" fill="#666" class="position-label">RF</text>
+                <text x="380" y="200" text-anchor="middle" font-size="10" fill="#999" class="player-name-display"></text>
             </g>
 
             <g class="position-marker" data-position="3B">
-                <circle cx="130" cy="230" r="22" fill="white" stroke="#333" stroke-width="2"/>
-                <text x="130" y="236" text-anchor="middle" font-size="13" font-weight="bold" fill="#333">3B</text>
+                <circle cx="130" cy="230" r="30" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
+                <text x="130" y="236" text-anchor="middle" font-size="12" font-weight="bold" fill="#666" class="position-label">3B</text>
+                <text x="130" y="250" text-anchor="middle" font-size="10" fill="#999" class="player-name-display"></text>
             </g>
 
             <g class="position-marker" data-position="SS">
-                <circle cx="185" cy="190" r="22" fill="white" stroke="#333" stroke-width="2"/>
-                <text x="185" y="196" text-anchor="middle" font-size="13" font-weight="bold" fill="#333">SS</text>
+                <circle cx="185" cy="190" r="30" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
+                <text x="185" y="196" text-anchor="middle" font-size="12" font-weight="bold" fill="#666" class="position-label">SS</text>
+                <text x="185" y="210" text-anchor="middle" font-size="10" fill="#999" class="player-name-display"></text>
             </g>
 
             <g class="position-marker" data-position="2B">
-                <circle cx="315" cy="190" r="22" fill="white" stroke="#333" stroke-width="2"/>
-                <text x="315" y="196" text-anchor="middle" font-size="13" font-weight="bold" fill="#333">2B</text>
+                <circle cx="315" cy="190" r="30" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
+                <text x="315" y="196" text-anchor="middle" font-size="12" font-weight="bold" fill="#666" class="position-label">2B</text>
+                <text x="315" y="210" text-anchor="middle" font-size="10" fill="#999" class="player-name-display"></text>
             </g>
 
             <g class="position-marker" data-position="1B">
-                <circle cx="370" cy="230" r="22" fill="white" stroke="#333" stroke-width="2"/>
-                <text x="370" y="236" text-anchor="middle" font-size="13" font-weight="bold" fill="#333">1B</text>
+                <circle cx="370" cy="230" r="30" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
+                <text x="370" y="236" text-anchor="middle" font-size="12" font-weight="bold" fill="#666" class="position-label">1B</text>
+                <text x="370" y="250" text-anchor="middle" font-size="10" fill="#999" class="player-name-display"></text>
             </g>
 
             <g class="position-marker" data-position="P">
-                <circle cx="250" cy="230" r="22" fill="white" stroke="#333" stroke-width="2"/>
-                <text x="250" y="236" text-anchor="middle" font-size="13" font-weight="bold" fill="#333">P</text>
+                <circle cx="250" cy="230" r="30" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
+                <text x="250" y="236" text-anchor="middle" font-size="12" font-weight="bold" fill="#666" class="position-label">P</text>
+                <text x="250" y="250" text-anchor="middle" font-size="10" fill="#999" class="player-name-display"></text>
             </g>
 
             <g class="position-marker" data-position="C">
-                <circle cx="250" cy="375" r="22" fill="white" stroke="#333" stroke-width="2"/>
-                <text x="250" y="381" text-anchor="middle" font-size="13" font-weight="bold" fill="#333">C</text>
+                <circle cx="250" cy="375" r="30" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
+                <text x="250" y="381" text-anchor="middle" font-size="12" font-weight="bold" fill="#666" class="position-label">C</text>
+                <text x="250" y="395" text-anchor="middle" font-size="10" fill="#999" class="player-name-display"></text>
             </g>
         </svg>
+                    </div>
+                </div>
             </div>
         </div>
+        {% endfor %}
     </div>
 </div>
 
 <style>
-.innings-section {
-    margin-bottom: 2rem;
-}
-
-.innings-header {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    padding: 15px 0;
-    border-bottom: 2px solid #dee2e6;
-}
-
-.innings-label {
-    font-size: 14px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    white-space: nowrap;
-    margin-right: 10px;
-}
-
-.inning-box {
-    flex: 1;
-    font-size: 20px;
-    font-weight: 500;
-    color: #495057;
-    text-align: center;
-    padding: 10px;
-    background-color: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 4px;
-}
-
 /* Player List Styles */
 .player-list {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
+    max-height: 600px;
+    overflow-y: auto;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
 }
 
 .player-card {
-    padding: 15px 20px;
+    padding: 12px 16px;
     background-color: white;
-    border: 2px solid #4CAF50;
+    border: 1px solid #dee2e6;
     border-radius: 4px;
-    font-size: 18px;
-    font-weight: 500;
-    text-align: center;
+    font-size: 14px;
+    text-align: left;
     cursor: grab;
     transition: all 0.2s;
 }
 
 .player-card:hover {
-    background-color: #f0f0f0;
-    transform: translateX(5px);
+    background-color: #f8f9fa;
+    border-color: #0d6efd;
+    transform: translateX(3px);
 }
 
 .player-card:active {
     cursor: grabbing;
+    opacity: 0.6;
+}
+
+.player-card.dragging {
+    opacity: 0.4;
 }
 
 /* Baseball Field Styles */
 .baseball-field {
     width: 100%;
-    height: 700px;
+    height: 550px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transform: rotate(45deg);
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    padding: 20px;
 }
 
 .field-svg {
-    width: 80%;
-    height: 80%;
-    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+    width: 100%;
+    height: 100%;
+    max-width: 600px;
 }
 
 .position-marker {
     cursor: pointer;
-    transition: transform 0.2s;
+    transition: all 0.2s;
 }
 
-.position-marker:hover circle {
-    fill: #f0f0f0;
+.position-marker:hover .position-circle {
+    fill: rgba(13, 110, 253, 0.1);
+    stroke: #0d6efd;
+}
+
+.position-marker.has-player .position-circle {
+    fill: rgba(25, 135, 84, 0.2);
+    stroke: #198754;
+}
+
+.player-name-display {
+    font-weight: 600;
+    fill: #333;
+}
+
+/* Tab Styles */
+.nav-tabs .nav-link {
+    color: #6c757d;
+}
+
+.nav-tabs .nav-link.active {
+    color: #0d6efd;
+    font-weight: 500;
 }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const rosterId = {{ roster.id }};
+    const teamSecret = '{{ team.manager_secret }}';
+
+    // Initialize drag and drop for each inning
+    for (let inning = 1; inning <= 6; inning++) {
+        initializeDragAndDrop(inning);
+        loadPositions(inning);
+    }
+
+    function initializeDragAndDrop(inning) {
+        const playerCards = document.querySelectorAll(`#playerList${inning} .player-card`);
+        const positionMarkers = document.querySelectorAll(`[data-inning="${inning}"] .position-marker`);
+
+        // Make player cards draggable
+        playerCards.forEach(card => {
+            card.addEventListener('dragstart', function(e) {
+                e.dataTransfer.setData('playerId', this.dataset.playerId);
+                e.dataTransfer.setData('playerName', this.dataset.playerName);
+                this.classList.add('dragging');
+            });
+
+            card.addEventListener('dragend', function() {
+                this.classList.remove('dragging');
+            });
+        });
+
+        // Make position markers droppable
+        positionMarkers.forEach(marker => {
+            marker.addEventListener('dragover', function(e) {
+                e.preventDefault();
+            });
+
+            marker.addEventListener('drop', function(e) {
+                e.preventDefault();
+                const playerId = e.dataTransfer.getData('playerId');
+                const playerName = e.dataTransfer.getData('playerName');
+                const position = this.dataset.position;
+
+                // Update display
+                const nameDisplay = this.querySelector('.player-name-display');
+                nameDisplay.textContent = playerName;
+                this.classList.add('has-player');
+
+                // Save to database
+                savePosition(inning, position, playerId, playerName);
+            });
+        });
+    }
+
+    function savePosition(inning, position, playerId, playerName) {
+        // TODO: Implement AJAX call to save position to database
+        console.log(`Saving: Inning ${inning}, Position ${position}, Player ${playerId} (${playerName})`);
+    }
+
+    function loadPositions(inning) {
+        // TODO: Implement AJAX call to load positions from database
+        console.log(`Loading positions for inning ${inning}`);
+    }
+});
+</script>
 {% endblock %}
