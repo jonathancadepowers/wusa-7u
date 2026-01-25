@@ -208,6 +208,10 @@
     opacity: 0.4;
 }
 
+.player-card.assigned {
+    display: none;
+}
+
 /* Baseball Field Styles */
 .baseball-field {
     width: 100%;
@@ -322,6 +326,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 const nameDisplay = this.querySelector('.player-name-display');
                 nameDisplay.textContent = playerName;
                 this.classList.add('has-player');
+
+                // Hide player card from Available Players list
+                const playerCard = document.querySelector(`#playerList${inning} .player-card[data-player-id="${playerId}"]`);
+                if (playerCard) {
+                    playerCard.classList.add('assigned');
+                }
 
                 // Save to database
                 savePosition(inning, position, playerId, playerName);
