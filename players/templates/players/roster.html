@@ -30,23 +30,26 @@
     <div class="tab-content mt-4" id="inningTabContent">
         {% for inning in "123456" %}
         <div class="tab-pane fade {% if inning == '1' %}show active{% endif %}" id="inning{{ inning }}" role="tabpanel">
-            <div class="row">
+            <div class="row g-3">
                 <!-- Left Column: Player List -->
-                <div class="col-md-4">
-                    <h5 class="mb-3">Available Players</h5>
-                    <div class="player-list" id="playerList{{ inning }}">
-                        {% for player in team.players.all %}
-                        <div class="player-card" draggable="true" data-player-id="{{ player.id }}" data-player-name="{{ player.first_name }} {{ player.last_name }}">
-                            {{ player.first_name }} {{ player.last_name }}
+                <div class="col-md-6">
+                    <div class="roster-section">
+                        <h5 class="section-header">Available Players</h5>
+                        <div class="player-list" id="playerList{{ inning }}">
+                            {% for player in team.players.all %}
+                            <div class="player-card" draggable="true" data-player-id="{{ player.id }}" data-player-name="{{ player.first_name }} {{ player.last_name }}">
+                                {{ player.first_name }} {{ player.last_name }}
+                            </div>
+                            {% endfor %}
                         </div>
-                        {% endfor %}
                     </div>
                 </div>
 
                 <!-- Right Column: Baseball Field -->
-                <div class="col-md-8">
-                    <h5 class="mb-3">Field Positions</h5>
-                    <div class="baseball-field" data-inning="{{ inning }}">
+                <div class="col-md-6">
+                    <div class="roster-section">
+                        <h5 class="section-header">Field Positions</h5>
+                        <div class="baseball-field" data-inning="{{ inning }}">
         <svg viewBox="0 0 600 550" class="field-svg">
             <!-- Outfield grass (rectangular box) -->
             <rect x="30" y="20" width="540" height="500" fill="#6ba368" stroke="none"/>
@@ -133,6 +136,7 @@
                 <text x="300" y="502" text-anchor="middle" font-size="11" fill="#333" class="player-name-display"></text>
             </g>
         </svg>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -142,12 +146,33 @@
 </div>
 
 <style>
+/* Section Container Styles */
+.roster-section {
+    background-color: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    height: 750px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.section-header {
+    font-size: 16px;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e9ecef;
+}
+
 /* Player List Styles */
 .player-list {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    max-height: 600px;
+    flex: 1;
     overflow-y: auto;
     padding: 10px;
     background-color: #f8f9fa;
@@ -183,7 +208,7 @@
 /* Baseball Field Styles */
 .baseball-field {
     width: 100%;
-    height: 750px;
+    flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
