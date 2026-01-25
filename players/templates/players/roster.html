@@ -404,14 +404,76 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function savePosition(inning, position, playerId, playerName) {
-        // TODO: Implement AJAX call to save position to database
-        console.log(`Saving: Inning ${inning}, Position ${position}, Player ${playerId} (${playerName})`);
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    async function savePosition(inning, position, playerId, playerName) {
+        try {
+            const formData = new FormData();
+            formData.append('inning', inning);
+            formData.append('position', position);
+            formData.append('player_id', playerId);
+
+            const response = await fetch(`/teams/${teamSecret}/roster/${rosterId}/save-position/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: formData
+            });
+
+            const result = await response.json();
+            if (!result.success) {
+                console.error('Error saving position:', result.error);
+                alert('Failed to save position. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error saving position:', error);
+            alert('Failed to save position. Please try again.');
+        }
     }
 
     function loadPositions(inning) {
-        // TODO: Implement AJAX call to load positions from database
-        console.log(`Loading positions for inning ${inning}`);
+        // Get roster data from the page
+        const rosterData = {{ roster_data_json|safe }};
+        const inningData = rosterData[`inning_${inning}`];
+
+        if (!inningData || Object.keys(inningData).length === 0) return;
+
+        // Load each position
+        Object.keys(inningData).forEach(position => {
+            const playerId = inningData[position];
+
+            // Find the player card to get the player name
+            const playerCard = document.querySelector(`#playerList${inning} .player-card[data-player-id="${playerId}"]`);
+            if (!playerCard) return;
+
+            const playerName = playerCard.dataset.playerName;
+
+            // Find the position marker
+            const marker = document.querySelector(`[data-inning="${inning}"] .position-marker[data-position="${position}"]`);
+            if (!marker) return;
+
+            // Update display
+            const nameDisplay = marker.querySelector('.player-name-display');
+            nameDisplay.textContent = playerName;
+            marker.classList.add('has-player');
+
+            // Hide player card from Available Players list
+            playerCard.classList.add('assigned');
+        });
     }
 });
 </script>

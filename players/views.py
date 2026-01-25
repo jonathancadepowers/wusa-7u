@@ -2578,12 +2578,68 @@ def roster_view(request, team_secret, roster_id):
     # Convert event timestamp to display timezone
     event_time_display = roster.event.timestamp.astimezone(display_tz) if roster.event else None
 
+    # Prepare roster data for JavaScript
+    import json
+    roster_data = {
+        'inning_1': roster.inning_1 or {},
+        'inning_2': roster.inning_2 or {},
+        'inning_3': roster.inning_3 or {},
+        'inning_4': roster.inning_4 or {},
+        'inning_5': roster.inning_5 or {},
+        'inning_6': roster.inning_6 or {},
+    }
+
     return render(request, 'players/roster.html', {
         'team': team,
         'roster': roster,
+        'roster_data_json': json.dumps(roster_data),
         'event_time_display': event_time_display,
         'display_tz': display_tz
     })
+
+
+def save_roster_position(request, team_secret, roster_id):
+    """Save a player position assignment to a roster"""
+    from django.shortcuts import get_object_or_404
+    from django.http import JsonResponse
+    from .models import Roster, Team
+    import json
+
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=405)
+
+    # Get the team by manager_secret
+    team = get_object_or_404(Team, manager_secret=team_secret)
+
+    # Get the roster
+    roster = get_object_or_404(Roster, id=roster_id, team=team)
+
+    try:
+        # Get the data from the request
+        inning = request.POST.get('inning')
+        position = request.POST.get('position')
+        player_id = request.POST.get('player_id')
+
+        if not inning or not position or not player_id:
+            return JsonResponse({'success': False, 'error': 'Missing required fields'}, status=400)
+
+        # Get the inning field name
+        inning_field = f'inning_{inning}'
+
+        # Get current inning data
+        current_data = getattr(roster, inning_field) or {}
+
+        # Update the position
+        current_data[position] = player_id
+
+        # Save back to roster
+        setattr(roster, inning_field, current_data)
+        roster.save()
+
+        return JsonResponse({'success': True})
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
 def export_team_roster_csv(request, team_secret):
