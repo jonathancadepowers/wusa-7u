@@ -4,18 +4,33 @@
 <div class="container mt-4">
     <h2>{{ team.name }} - Game Roster</h2>
 
-    <!-- Innings Header -->
-    <div class="innings-header mt-4 mb-4">
-        <div class="inning-box">1</div>
-        <div class="inning-box">2</div>
-        <div class="inning-box">3</div>
-        <div class="inning-box">4</div>
-        <div class="inning-box">5</div>
-        <div class="inning-box">6</div>
+    <!-- Innings Section -->
+    <div class="innings-section mt-4 mb-4">
+        <h6 class="innings-label text-muted">Innings</h6>
+        <div class="innings-header">
+            <div class="inning-box">1</div>
+            <div class="inning-box">2</div>
+            <div class="inning-box">3</div>
+            <div class="inning-box">4</div>
+            <div class="inning-box">5</div>
+            <div class="inning-box">6</div>
+        </div>
     </div>
 </div>
 
 <style>
+.innings-section {
+    margin-bottom: 2rem;
+}
+
+.innings-label {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
 .innings-header {
     display: flex;
     justify-content: space-evenly;
