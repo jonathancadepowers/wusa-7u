@@ -205,7 +205,8 @@
 }
 
 .player-card.dragging {
-    opacity: 0.4;
+    opacity: 0.3;
+    transform: scale(0.95);
 }
 
 .player-card.assigned {
@@ -295,6 +296,21 @@ document.addEventListener('DOMContentLoaded', function() {
             card.addEventListener('dragstart', function(e) {
                 e.dataTransfer.setData('playerId', this.dataset.playerId);
                 e.dataTransfer.setData('playerName', this.dataset.playerName);
+
+                // Create a custom drag image
+                const dragImage = this.cloneNode(true);
+                dragImage.style.position = 'absolute';
+                dragImage.style.top = '-1000px';
+                dragImage.style.opacity = '0.8';
+                dragImage.style.pointerEvents = 'none';
+                document.body.appendChild(dragImage);
+                e.dataTransfer.setDragImage(dragImage, 0, 0);
+
+                // Clean up drag image after drag starts
+                setTimeout(() => {
+                    document.body.removeChild(dragImage);
+                }, 0);
+
                 this.classList.add('dragging');
             });
 
