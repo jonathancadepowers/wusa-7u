@@ -52,91 +52,91 @@
                         <div class="baseball-field" data-inning="{{ inning }}">
         <svg viewBox="0 0 600 625" class="field-svg">
             <!-- Infield dirt (90 foot diamond + extended areas) -->
-            <path d="M 300 580.625 L 70 422.5 L 300 264.375 L 530 422.5 Z"
+            <path d="M 300 560.625 L 70 402.5 L 300 244.375 L 530 402.5 Z"
                   fill="#d4a574" stroke="none"/>
 
             <!-- Dirt cutout around pitcher/home plate -->
-            <ellipse cx="300" cy="580.625" rx="86.25" ry="57.5" fill="#d4a574" stroke="none"/>
-            <circle cx="300" cy="422.5" r="43.125" fill="#d4a574" stroke="none"/>
+            <ellipse cx="300" cy="560.625" rx="86.25" ry="57.5" fill="#d4a574" stroke="none"/>
+            <circle cx="300" cy="402.5" r="43.125" fill="#d4a574" stroke="none"/>
 
             <!-- Basepaths (dirt lines) -->
-            <line x1="300" y1="580.625" x2="70" y2="422.5" stroke="#c19a6b" stroke-width="5"/>
-            <line x1="300" y1="580.625" x2="530" y2="422.5" stroke="#c19a6b" stroke-width="5"/>
-            <line x1="70" y1="422.5" x2="300" y2="264.375" stroke="#c19a6b" stroke-width="5"/>
-            <line x1="530" y1="422.5" x2="300" y2="264.375" stroke="#c19a6b" stroke-width="5"/>
+            <line x1="300" y1="560.625" x2="70" y2="402.5" stroke="#c19a6b" stroke-width="5"/>
+            <line x1="300" y1="560.625" x2="530" y2="402.5" stroke="#c19a6b" stroke-width="5"/>
+            <line x1="70" y1="402.5" x2="300" y2="244.375" stroke="#c19a6b" stroke-width="5"/>
+            <line x1="530" y1="402.5" x2="300" y2="244.375" stroke="#c19a6b" stroke-width="5"/>
 
             <!-- Pitcher's mound -->
-            <circle cx="300" cy="422.5" r="31.625" fill="#b8885c" stroke="#a67c52" stroke-width="2"/>
+            <circle cx="300" cy="402.5" r="31.625" fill="#b8885c" stroke="#a67c52" stroke-width="2"/>
 
             <!-- Bases -->
-            <rect x="295" y="259.375" width="10" height="10" fill="white" stroke="#999" stroke-width="1" transform="rotate(45 300 264.375)"/>
-            <rect x="525" y="417.5" width="10" height="10" fill="white" stroke="#999" stroke-width="1" transform="rotate(45 530 422.5)"/>
-            <rect x="65" y="417.5" width="10" height="10" fill="white" stroke="#999" stroke-width="1" transform="rotate(45 70 422.5)"/>
+            <rect x="295" y="239.375" width="10" height="10" fill="white" stroke="#999" stroke-width="1" transform="rotate(45 300 244.375)"/>
+            <rect x="525" y="397.5" width="10" height="10" fill="white" stroke="#999" stroke-width="1" transform="rotate(45 530 402.5)"/>
+            <rect x="65" y="397.5" width="10" height="10" fill="white" stroke="#999" stroke-width="1" transform="rotate(45 70 402.5)"/>
 
             <!-- Home plate -->
-            <polygon points="300,591.875 294.25,585 294.25,580.625 305.75,580.625 305.75,585" fill="white" stroke="#999" stroke-width="1"/>
+            <polygon points="300,571.875 294.25,565 294.25,560.625 305.75,560.625 305.75,565" fill="white" stroke="#999" stroke-width="1"/>
 
             <!-- Position markers (drop zones) -->
             <!-- Outfielders - spread far out and deeper -->
             <g class="position-marker" data-position="LF">
-                <circle cx="70" cy="143.125" r="40" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
-                <text x="70" y="149.125" text-anchor="middle" font-size="14" font-weight="bold" fill="#666" class="position-label">LF</text>
-                <text x="70" y="165.125" text-anchor="middle" font-size="11" fill="#333" class="player-name-display"></text>
+                <circle cx="70" cy="123.125" r="40" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
+                <text x="70" y="129.125" text-anchor="middle" font-size="14" font-weight="bold" fill="#666" class="position-label">LF</text>
+                <text x="70" y="145.125" text-anchor="middle" font-size="11" fill="#333" class="player-name-display"></text>
             </g>
 
             <g class="position-marker" data-position="CF">
-                <circle cx="300" cy="109.375" r="40" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
-                <text x="300" y="115.375" text-anchor="middle" font-size="14" font-weight="bold" fill="#666" class="position-label">CF</text>
-                <text x="300" y="131.375" text-anchor="middle" font-size="11" fill="#333" class="player-name-display"></text>
+                <circle cx="300" cy="89.375" r="40" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
+                <text x="300" y="95.375" text-anchor="middle" font-size="14" font-weight="bold" fill="#666" class="position-label">CF</text>
+                <text x="300" y="111.375" text-anchor="middle" font-size="11" fill="#333" class="player-name-display"></text>
             </g>
 
             <g class="position-marker" data-position="RF">
-                <circle cx="530" cy="143.125" r="40" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
-                <text x="530" y="149.125" text-anchor="middle" font-size="14" font-weight="bold" fill="#666" class="position-label">RF</text>
-                <text x="530" y="165.125" text-anchor="middle" font-size="11" fill="#333" class="player-name-display"></text>
+                <circle cx="530" cy="123.125" r="40" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
+                <text x="530" y="129.125" text-anchor="middle" font-size="14" font-weight="bold" fill="#666" class="position-label">RF</text>
+                <text x="530" y="145.125" text-anchor="middle" font-size="11" fill="#333" class="player-name-display"></text>
             </g>
 
             <!-- Infielders - spread around diamond -->
             <g class="position-marker" data-position="3B">
-                <circle cx="70" cy="422.5" r="40" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
-                <text x="70" y="428.5" text-anchor="middle" font-size="14" font-weight="bold" fill="#666" class="position-label">3B</text>
-                <text x="70" y="444.5" text-anchor="middle" font-size="11" fill="#333" class="player-name-display"></text>
+                <circle cx="70" cy="402.5" r="40" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
+                <text x="70" y="408.5" text-anchor="middle" font-size="14" font-weight="bold" fill="#666" class="position-label">3B</text>
+                <text x="70" y="424.5" text-anchor="middle" font-size="11" fill="#333" class="player-name-display"></text>
             </g>
 
             <g class="position-marker" data-position="SS">
-                <circle cx="231" cy="314.6875" r="40" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
-                <text x="231" y="320.6875" text-anchor="middle" font-size="14" font-weight="bold" fill="#666" class="position-label">SS</text>
-                <text x="231" y="336.6875" text-anchor="middle" font-size="11" fill="#333" class="player-name-display"></text>
+                <circle cx="231" cy="294.6875" r="40" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
+                <text x="231" y="300.6875" text-anchor="middle" font-size="14" font-weight="bold" fill="#666" class="position-label">SS</text>
+                <text x="231" y="316.6875" text-anchor="middle" font-size="11" fill="#333" class="player-name-display"></text>
             </g>
 
             <g class="position-marker" data-position="2B">
-                <circle cx="443.75" cy="314.6875" r="40" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
-                <text x="443.75" y="320.6875" text-anchor="middle" font-size="14" font-weight="bold" fill="#666" class="position-label">2B</text>
-                <text x="443.75" y="336.6875" text-anchor="middle" font-size="11" fill="#333" class="player-name-display"></text>
+                <circle cx="443.75" cy="294.6875" r="40" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
+                <text x="443.75" y="300.6875" text-anchor="middle" font-size="14" font-weight="bold" fill="#666" class="position-label">2B</text>
+                <text x="443.75" y="316.6875" text-anchor="middle" font-size="11" fill="#333" class="player-name-display"></text>
             </g>
 
             <g class="position-marker" data-position="1B">
-                <circle cx="530" cy="422.5" r="40" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
-                <text x="530" y="428.5" text-anchor="middle" font-size="14" font-weight="bold" fill="#666" class="position-label">1B</text>
-                <text x="530" y="444.5" text-anchor="middle" font-size="11" fill="#333" class="player-name-display"></text>
+                <circle cx="530" cy="402.5" r="40" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
+                <text x="530" y="408.5" text-anchor="middle" font-size="14" font-weight="bold" fill="#666" class="position-label">1B</text>
+                <text x="530" y="424.5" text-anchor="middle" font-size="11" fill="#333" class="player-name-display"></text>
             </g>
 
             <g class="position-marker" data-position="P">
-                <circle cx="300" cy="422.5" r="40" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
-                <text x="300" y="428.5" text-anchor="middle" font-size="14" font-weight="bold" fill="#666" class="position-label">P</text>
-                <text x="300" y="444.5" text-anchor="middle" font-size="11" fill="#333" class="player-name-display"></text>
+                <circle cx="300" cy="402.5" r="40" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
+                <text x="300" y="408.5" text-anchor="middle" font-size="14" font-weight="bold" fill="#666" class="position-label">P</text>
+                <text x="300" y="424.5" text-anchor="middle" font-size="11" fill="#333" class="player-name-display"></text>
             </g>
 
             <g class="position-marker" data-position="R">
-                <circle cx="300" cy="264.375" r="40" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
-                <text x="300" y="270.375" text-anchor="middle" font-size="14" font-weight="bold" fill="#666" class="position-label">R</text>
-                <text x="300" y="286.375" text-anchor="middle" font-size="11" fill="#333" class="player-name-display"></text>
+                <circle cx="300" cy="244.375" r="40" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
+                <text x="300" y="250.375" text-anchor="middle" font-size="14" font-weight="bold" fill="#666" class="position-label">R</text>
+                <text x="300" y="266.375" text-anchor="middle" font-size="11" fill="#333" class="player-name-display"></text>
             </g>
 
             <g class="position-marker" data-position="C">
-                <circle cx="300" cy="627.125" r="40" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
-                <text x="300" y="633.125" text-anchor="middle" font-size="14" font-weight="bold" fill="#666" class="position-label">C</text>
-                <text x="300" y="649.125" text-anchor="middle" font-size="11" fill="#333" class="player-name-display"></text>
+                <circle cx="300" cy="607.125" r="40" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
+                <text x="300" y="613.125" text-anchor="middle" font-size="14" font-weight="bold" fill="#666" class="position-label">C</text>
+                <text x="300" y="629.125" text-anchor="middle" font-size="11" fill="#333" class="player-name-display"></text>
             </g>
         </svg>
                         </div>
