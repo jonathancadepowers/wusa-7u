@@ -33,22 +33,40 @@
     <!-- Innings Tabs -->
     <ul class="nav nav-tabs mt-4" id="inningTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="inning1-tab" data-bs-toggle="tab" data-bs-target="#inning1" type="button" role="tab">Inning 1</button>
+            <button class="nav-link active inning-tab" id="inning1-tab" data-bs-toggle="tab" data-bs-target="#inning1" type="button" role="tab" data-inning="1">
+                <span class="inning-label">Inning 1</span>
+                <i class="bi bi-check-circle-fill validation-icon"></i>
+            </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="inning2-tab" data-bs-toggle="tab" data-bs-target="#inning2" type="button" role="tab">Inning 2</button>
+            <button class="nav-link inning-tab" id="inning2-tab" data-bs-toggle="tab" data-bs-target="#inning2" type="button" role="tab" data-inning="2">
+                <span class="inning-label">Inning 2</span>
+                <i class="bi bi-check-circle-fill validation-icon"></i>
+            </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="inning3-tab" data-bs-toggle="tab" data-bs-target="#inning3" type="button" role="tab">Inning 3</button>
+            <button class="nav-link inning-tab" id="inning3-tab" data-bs-toggle="tab" data-bs-target="#inning3" type="button" role="tab" data-inning="3">
+                <span class="inning-label">Inning 3</span>
+                <i class="bi bi-check-circle-fill validation-icon"></i>
+            </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="inning4-tab" data-bs-toggle="tab" data-bs-target="#inning4" type="button" role="tab">Inning 4</button>
+            <button class="nav-link inning-tab" id="inning4-tab" data-bs-toggle="tab" data-bs-target="#inning4" type="button" role="tab" data-inning="4">
+                <span class="inning-label">Inning 4</span>
+                <i class="bi bi-check-circle-fill validation-icon"></i>
+            </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="inning5-tab" data-bs-toggle="tab" data-bs-target="#inning5" type="button" role="tab">Inning 5</button>
+            <button class="nav-link inning-tab" id="inning5-tab" data-bs-toggle="tab" data-bs-target="#inning5" type="button" role="tab" data-inning="5">
+                <span class="inning-label">Inning 5</span>
+                <i class="bi bi-check-circle-fill validation-icon"></i>
+            </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="inning6-tab" data-bs-toggle="tab" data-bs-target="#inning6" type="button" role="tab">Inning 6</button>
+            <button class="nav-link inning-tab" id="inning6-tab" data-bs-toggle="tab" data-bs-target="#inning6" type="button" role="tab" data-inning="6">
+                <span class="inning-label">Inning 6</span>
+                <i class="bi bi-check-circle-fill validation-icon"></i>
+            </button>
         </li>
     </ul>
 
@@ -323,6 +341,45 @@
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(13,110,253,0.3);
 }
+
+/* Inning Tab Validation Styles */
+.inning-tab {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.inning-tab .validation-icon {
+    font-size: 16px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.inning-tab.valid .validation-icon {
+    color: #198754;
+    opacity: 1;
+}
+
+.inning-tab.valid {
+    border-color: #198754;
+    background: linear-gradient(135deg, #d1e7dd 0%, #ffffff 100%);
+}
+
+.inning-tab.valid:hover {
+    border-color: #198754;
+    background: linear-gradient(135deg, #c3e6cb 0%, #f8f9fa 100%);
+}
+
+.inning-tab.valid.active {
+    background: linear-gradient(135deg, #198754 0%, #157347 100%);
+    border-color: #198754;
+    color: white;
+}
+
+.inning-tab.valid.active .validation-icon {
+    color: white;
+}
 </style>
 
 <script>
@@ -400,8 +457,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // Save to database
                 savePosition(inning, position, playerId, playerName);
+
+                // Update inning validation
+                updateInningValidation(inning);
             });
         });
+    }
+
+    function updateInningValidation(inning) {
+        // Check if all players are assigned
+        const playerList = document.querySelector(`#playerList${inning}`);
+        const unassignedPlayers = playerList.querySelectorAll('.player-card:not(.assigned)');
+        const inningTab = document.querySelector(`#inning${inning}-tab`);
+
+        if (unassignedPlayers.length === 0) {
+            inningTab.classList.add('valid');
+        } else {
+            inningTab.classList.remove('valid');
+        }
     }
 
     function getCookie(name) {
@@ -474,6 +547,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // Hide player card from Available Players list
             playerCard.classList.add('assigned');
         });
+
+        // Update inning validation after loading positions
+        updateInningValidation(inning);
     }
 });
 </script>
