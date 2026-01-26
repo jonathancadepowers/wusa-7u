@@ -2602,13 +2602,31 @@ def roster_view(request, team_secret, roster_id):
     allow_benched_players_setting = GeneralSetting.objects.filter(key='allow_benched_players').first()
     allow_benched_players = allow_benched_players_setting.value.lower() == 'true' if allow_benched_players_setting else False
 
+    # Calculate if team has enough players to show 4 outfielders
+    # Base positions: 6 infield (C, 1B, 2B, 3B, SS, P) + 3 outfield (LF, CF, RF) = 9
+    base_positions = 9
+
+    # Add rover if allowed
+    if allow_rover_position:
+        base_positions += 1
+
+    # Determine if we should show 4 outfielders based on team size
+    show_four_outfielders = False
+    if allow_four_outfielders:
+        # Check if team has enough players for 4 outfielders
+        positions_with_four_outfielders = base_positions + 1  # Add 1 for the 4th outfielder
+        player_count = team.players.count()
+
+        if player_count >= positions_with_four_outfielders:
+            show_four_outfielders = True
+
     return render(request, 'players/roster.html', {
         'team': team,
         'roster': roster,
         'roster_data_json': json.dumps(roster_data),
         'event_time_display': event_time_display,
         'display_tz': display_tz,
-        'allow_four_outfielders': allow_four_outfielders,
+        'allow_four_outfielders': show_four_outfielders,
         'allow_rover_position': allow_rover_position,
         'allow_benched_players': allow_benched_players,
         'innings_per_game': innings_per_game,
