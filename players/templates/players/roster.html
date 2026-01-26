@@ -413,13 +413,17 @@
     fill: #333;
 }
 
-.remove-player-btn:hover circle {
-    fill: #c82333;
-    transform: scale(1.1);
+.remove-player-btn {
+    pointer-events: all;
+    cursor: pointer !important;
 }
 
-.remove-player-btn {
-    transition: all 0.2s ease;
+.remove-player-btn:hover circle {
+    fill: #c82333;
+}
+
+.position-marker.has-player:has(.remove-player-btn:hover) {
+    cursor: pointer !important;
 }
 
 /* Tab Styles - Card Style */
