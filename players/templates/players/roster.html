@@ -35,37 +35,43 @@
         <li class="nav-item" role="presentation">
             <button class="nav-link active inning-tab" id="inning1-tab" data-bs-toggle="tab" data-bs-target="#inning1" type="button" role="tab" data-inning="1">
                 <span class="inning-label">Inning 1</span>
-                <i class="bi bi-check-circle-fill validation-icon"></i>
+                <i class="bi bi-check-circle-fill validation-icon valid-icon"></i>
+                <i class="bi bi-x-circle-fill validation-icon invalid-icon"></i>
             </button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link inning-tab" id="inning2-tab" data-bs-toggle="tab" data-bs-target="#inning2" type="button" role="tab" data-inning="2">
                 <span class="inning-label">Inning 2</span>
-                <i class="bi bi-check-circle-fill validation-icon"></i>
+                <i class="bi bi-check-circle-fill validation-icon valid-icon"></i>
+                <i class="bi bi-x-circle-fill validation-icon invalid-icon"></i>
             </button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link inning-tab" id="inning3-tab" data-bs-toggle="tab" data-bs-target="#inning3" type="button" role="tab" data-inning="3">
                 <span class="inning-label">Inning 3</span>
-                <i class="bi bi-check-circle-fill validation-icon"></i>
+                <i class="bi bi-check-circle-fill validation-icon valid-icon"></i>
+                <i class="bi bi-x-circle-fill validation-icon invalid-icon"></i>
             </button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link inning-tab" id="inning4-tab" data-bs-toggle="tab" data-bs-target="#inning4" type="button" role="tab" data-inning="4">
                 <span class="inning-label">Inning 4</span>
-                <i class="bi bi-check-circle-fill validation-icon"></i>
+                <i class="bi bi-check-circle-fill validation-icon valid-icon"></i>
+                <i class="bi bi-x-circle-fill validation-icon invalid-icon"></i>
             </button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link inning-tab" id="inning5-tab" data-bs-toggle="tab" data-bs-target="#inning5" type="button" role="tab" data-inning="5">
                 <span class="inning-label">Inning 5</span>
-                <i class="bi bi-check-circle-fill validation-icon"></i>
+                <i class="bi bi-check-circle-fill validation-icon valid-icon"></i>
+                <i class="bi bi-x-circle-fill validation-icon invalid-icon"></i>
             </button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link inning-tab" id="inning6-tab" data-bs-toggle="tab" data-bs-target="#inning6" type="button" role="tab" data-inning="6">
                 <span class="inning-label">Inning 6</span>
-                <i class="bi bi-check-circle-fill validation-icon"></i>
+                <i class="bi bi-check-circle-fill validation-icon valid-icon"></i>
+                <i class="bi bi-x-circle-fill validation-icon invalid-icon"></i>
             </button>
         </li>
     </ul>
@@ -352,13 +358,28 @@
 
 .inning-tab .validation-icon {
     font-size: 16px;
-    opacity: 0;
     transition: opacity 0.3s ease;
 }
 
-.inning-tab.valid .validation-icon {
+/* By default, show invalid icon (red X) */
+.inning-tab .valid-icon {
+    display: none;
+}
+
+.inning-tab .invalid-icon {
+    color: #dc3545;
+    opacity: 1;
+}
+
+/* When valid, show green checkmark and hide red X */
+.inning-tab.valid .valid-icon {
+    display: inline;
     color: #198754;
     opacity: 1;
+}
+
+.inning-tab.valid .invalid-icon {
+    display: none;
 }
 
 .inning-tab.valid {
@@ -377,7 +398,12 @@
     color: white;
 }
 
-.inning-tab.valid.active .validation-icon {
+.inning-tab.valid.active .valid-icon {
+    color: white;
+}
+
+/* Invalid state styling (when active) */
+.inning-tab.active .invalid-icon {
     color: white;
 }
 </style>
