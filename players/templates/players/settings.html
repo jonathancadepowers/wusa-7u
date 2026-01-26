@@ -62,6 +62,9 @@
                         <p class="text-muted">Configure division-specific settings like field positions.</p>
 
                         <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#generalDivisionSettingsModal">
+                                <i class="bi bi-gear me-2"></i>General Division Settings
+                            </button>
                             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#infieldPositionsModal">
                                 <i class="bi bi-diagram-3 me-2"></i>Infield Positions
                             </button>
@@ -704,6 +707,37 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary" id="saveVisibilityBtn">
                         <i class="bi bi-save me-2"></i>Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- General Division Settings Modal -->
+    <div class="modal fade" id="generalDivisionSettingsModal" tabindex="-1" aria-labelledby="generalDivisionSettingsModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="generalDivisionSettingsModalLabel">General Division Settings</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="generalDivisionSettingsError" class="alert alert-danger d-none"></div>
+                    <div id="generalDivisionSettingsSuccess" class="alert alert-success d-none"></div>
+
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" id="allowBenchedPlayersToggle">
+                            <label class="form-check-label" for="allowBenchedPlayersToggle">
+                                Allow Players To Sit on Bench
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveGeneralDivisionSettingsBtn">
+                        <i class="bi bi-save me-2"></i>Save Settings
                     </button>
                 </div>
             </div>
@@ -2324,6 +2358,74 @@
             }
             return cookieValue;
         }
+
+        // General Division Settings Modal
+        const generalDivisionSettingsModal = document.getElementById('generalDivisionSettingsModal');
+        generalDivisionSettingsModal.addEventListener('show.bs.modal', async function () {
+            // Load current setting
+            try {
+                const response = await fetch('{% url "players:get_general_setting" %}?key=allow_benched_players');
+                const result = await response.json();
+
+                if (result.success && result.value) {
+                    const isAllowed = result.value === 'true';
+                    document.getElementById('allowBenchedPlayersToggle').checked = isAllowed;
+                } else {
+                    // Default to false if not set
+                    document.getElementById('allowBenchedPlayersToggle').checked = false;
+                }
+            } catch (error) {
+                console.error('Error loading general division settings:', error);
+                document.getElementById('allowBenchedPlayersToggle').checked = false;
+            }
+        });
+
+        document.getElementById('saveGeneralDivisionSettingsBtn').addEventListener('click', async function() {
+            const btn = this;
+            const originalHTML = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+
+            // Clear previous messages
+            document.getElementById('generalDivisionSettingsError').classList.add('d-none');
+            document.getElementById('generalDivisionSettingsSuccess').classList.add('d-none');
+
+            try {
+                const isAllowed = document.getElementById('allowBenchedPlayersToggle').checked;
+
+                const formData = new FormData();
+                formData.append('key', 'allow_benched_players');
+                formData.append('value', isAllowed.toString());
+
+                const response = await fetch('{% url "players:save_general_setting" %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    document.getElementById('generalDivisionSettingsSuccess').textContent = 'Settings saved successfully!';
+                    document.getElementById('generalDivisionSettingsSuccess').classList.remove('d-none');
+
+                    setTimeout(() => {
+                        bootstrap.Modal.getInstance(generalDivisionSettingsModal).hide();
+                    }, 1500);
+                } else {
+                    document.getElementById('generalDivisionSettingsError').textContent = result.error || 'Failed to save settings.';
+                    document.getElementById('generalDivisionSettingsError').classList.remove('d-none');
+                }
+            } catch (error) {
+                document.getElementById('generalDivisionSettingsError').textContent = 'An error occurred. Please try again.';
+                document.getElementById('generalDivisionSettingsError').classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+            }
+        });
 
         // Infield Positions Modal
         const infieldModal = document.getElementById('infieldPositionsModal');
