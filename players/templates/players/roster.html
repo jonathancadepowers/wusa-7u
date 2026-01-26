@@ -260,6 +260,7 @@
     padding: 10px;
     background-color: #f8f9fa;
     border-radius: 4px;
+    transition: background-color 0.2s ease;
 }
 
 .player-card {
@@ -320,6 +321,14 @@
 .position-marker:hover .position-circle {
     fill: rgba(13, 110, 253, 0.1);
     stroke: #0d6efd;
+}
+
+.position-marker.has-player {
+    cursor: grab;
+}
+
+.position-marker.has-player:active {
+    cursor: grabbing;
 }
 
 .position-marker.has-player .position-circle {
@@ -453,12 +462,14 @@ document.addEventListener('DOMContentLoaded', function() {
     function initializeDragAndDrop(inning) {
         const playerCards = document.querySelectorAll(`#playerList${inning} .player-card`);
         const positionMarkers = document.querySelectorAll(`[data-inning="${inning}"] .position-marker`);
+        const playerList = document.querySelector(`#playerList${inning}`);
 
         // Make player cards draggable
         playerCards.forEach(card => {
             card.addEventListener('dragstart', function(e) {
                 e.dataTransfer.setData('playerId', this.dataset.playerId);
                 e.dataTransfer.setData('playerName', this.dataset.playerName);
+                e.dataTransfer.setData('source', 'playerList');
 
                 // Create a custom drag image
                 const dragImage = this.cloneNode(true);
@@ -482,8 +493,41 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
 
-        // Make position markers droppable
+        // Make position markers droppable and draggable
         positionMarkers.forEach(marker => {
+            // Set initial draggable state
+            marker.setAttribute('draggable', 'false');
+
+            // Make position marker draggable when it has a player
+            marker.addEventListener('dragstart', function(e) {
+                if (!this.classList.contains('has-player')) {
+                    e.preventDefault();
+                    return;
+                }
+
+                const nameDisplay = this.querySelector('.player-name-display');
+                const playerName = nameDisplay.textContent;
+                const position = this.dataset.position;
+
+                // Find the player ID by matching the player name
+                const playerCard = Array.from(document.querySelectorAll(`#playerList${inning} .player-card`))
+                    .find(card => card.dataset.playerName === playerName);
+
+                if (playerCard) {
+                    e.dataTransfer.setData('playerId', playerCard.dataset.playerId);
+                    e.dataTransfer.setData('playerName', playerName);
+                    e.dataTransfer.setData('position', position);
+                    e.dataTransfer.setData('source', 'position');
+
+                    this.style.opacity = '0.5';
+                }
+            });
+
+            marker.addEventListener('dragend', function() {
+                this.style.opacity = '1';
+            });
+
+            // Position marker as drop zone
             marker.addEventListener('dragover', function(e) {
                 e.preventDefault();
                 this.classList.add('drag-over');
@@ -500,11 +544,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 const playerId = e.dataTransfer.getData('playerId');
                 const playerName = e.dataTransfer.getData('playerName');
                 const position = this.dataset.position;
+                const source = e.dataTransfer.getData('source');
+
+                // If dragging from another position, clear that position first
+                if (source === 'position') {
+                    const oldPosition = e.dataTransfer.getData('position');
+                    const oldMarker = document.querySelector(`[data-inning="${inning}"] .position-marker[data-position="${oldPosition}"]`);
+                    if (oldMarker && oldMarker !== this) {
+                        const oldNameDisplay = oldMarker.querySelector('.player-name-display');
+                        oldNameDisplay.textContent = '';
+                        oldMarker.classList.remove('has-player');
+                        oldMarker.setAttribute('draggable', 'false');
+                        savePosition(inning, oldPosition, '', '');
+                    }
+                }
 
                 // Update display
                 const nameDisplay = this.querySelector('.player-name-display');
                 nameDisplay.textContent = playerName;
                 this.classList.add('has-player');
+                this.setAttribute('draggable', 'true');
 
                 // Hide player card from Available Players list
                 const playerCard = document.querySelector(`#playerList${inning} .player-card[data-player-id="${playerId}"]`);
@@ -518,6 +577,56 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Update inning validation
                 updateInningValidation(inning);
             });
+        });
+
+        // Make player list a drop zone for unassigning players
+        playerList.addEventListener('dragover', function(e) {
+            const source = e.dataTransfer.types.includes('text/plain') ? 'unknown' : 'position';
+            // Only allow drops from positions, not from the player list itself
+            if (source !== 'playerList') {
+                e.preventDefault();
+                this.style.backgroundColor = '#e7f1ff';
+            }
+        });
+
+        playerList.addEventListener('dragleave', function(e) {
+            this.style.backgroundColor = '#f8f9fa';
+        });
+
+        playerList.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.style.backgroundColor = '#f8f9fa';
+
+            const source = e.dataTransfer.getData('source');
+
+            // Only allow unassigning from positions, not moving within player list
+            if (source !== 'position') {
+                return;
+            }
+
+            const playerId = e.dataTransfer.getData('playerId');
+            const position = e.dataTransfer.getData('position');
+
+            // Clear the position marker
+            const marker = document.querySelector(`[data-inning="${inning}"] .position-marker[data-position="${position}"]`);
+            if (marker) {
+                const nameDisplay = marker.querySelector('.player-name-display');
+                nameDisplay.textContent = '';
+                marker.classList.remove('has-player');
+                marker.setAttribute('draggable', 'false');
+            }
+
+            // Show the player card in the Available Players list again
+            const playerCard = document.querySelector(`#playerList${inning} .player-card[data-player-id="${playerId}"]`);
+            if (playerCard) {
+                playerCard.classList.remove('assigned');
+            }
+
+            // Save the unassignment to database
+            savePosition(inning, position, '', '');
+
+            // Update inning validation
+            updateInningValidation(inning);
         });
     }
 
@@ -600,6 +709,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const nameDisplay = marker.querySelector('.player-name-display');
             nameDisplay.textContent = playerName;
             marker.classList.add('has-player');
+            marker.setAttribute('draggable', 'true');
 
             // Hide player card from Available Players list
             playerCard.classList.add('assigned');

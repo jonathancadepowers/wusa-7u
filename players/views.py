@@ -2627,9 +2627,9 @@ def save_roster_position(request, team_secret, roster_id):
         # Get the data from the request
         inning = request.POST.get('inning')
         position = request.POST.get('position')
-        player_id = request.POST.get('player_id')
+        player_id = request.POST.get('player_id', '')
 
-        if not inning or not position or not player_id:
+        if not inning or not position:
             return JsonResponse({'success': False, 'error': 'Missing required fields'}, status=400)
 
         # Get the inning field name
@@ -2638,8 +2638,12 @@ def save_roster_position(request, team_secret, roster_id):
         # Get current inning data
         current_data = getattr(roster, inning_field) or {}
 
-        # Update the position
-        current_data[position] = player_id
+        # Update or remove the position
+        if player_id:
+            current_data[position] = player_id
+        else:
+            # Remove the position if player_id is empty (unassigning)
+            current_data.pop(position, None)
 
         # Save back to roster
         setattr(roster, inning_field, current_data)
