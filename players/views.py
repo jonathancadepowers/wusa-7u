@@ -2589,12 +2589,17 @@ def roster_view(request, team_secret, roster_id):
         'inning_6': roster.inning_6 or {},
     }
 
+    # Get division settings
+    allow_four_outfielders_setting = GeneralSetting.objects.filter(key='allow_four_outfielders').first()
+    allow_four_outfielders = allow_four_outfielders_setting.value.lower() == 'true' if allow_four_outfielders_setting else False
+
     return render(request, 'players/roster.html', {
         'team': team,
         'roster': roster,
         'roster_data_json': json.dumps(roster_data),
         'event_time_display': event_time_display,
-        'display_tz': display_tz
+        'display_tz': display_tz,
+        'allow_four_outfielders': allow_four_outfielders
     })
 
 

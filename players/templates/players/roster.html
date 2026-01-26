@@ -128,6 +128,33 @@
 
             <!-- Position markers (drop zones) -->
             <!-- Outfielders - spread far out and deeper -->
+            {% if allow_four_outfielders %}
+            <!-- Four Outfielders Layout -->
+            <g class="position-marker" data-position="LF">
+                <circle cx="70" cy="113.125" r="40" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
+                <text x="70" y="119.125" text-anchor="middle" font-size="14" font-weight="bold" fill="#666" class="position-label">LF</text>
+                <text x="70" y="168.125" text-anchor="middle" font-size="11" fill="#333" class="player-name-display"></text>
+            </g>
+
+            <g class="position-marker" data-position="CF-L">
+                <circle cx="220" cy="79.375" r="40" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
+                <text x="220" y="85.375" text-anchor="middle" font-size="14" font-weight="bold" fill="#666" class="position-label">CF-L</text>
+                <text x="220" y="134.375" text-anchor="middle" font-size="11" fill="#333" class="player-name-display"></text>
+            </g>
+
+            <g class="position-marker" data-position="CF-R">
+                <circle cx="380" cy="79.375" r="40" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
+                <text x="380" y="85.375" text-anchor="middle" font-size="14" font-weight="bold" fill="#666" class="position-label">CF-R</text>
+                <text x="380" y="134.375" text-anchor="middle" font-size="11" fill="#333" class="player-name-display"></text>
+            </g>
+
+            <g class="position-marker" data-position="RF">
+                <circle cx="530" cy="113.125" r="40" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
+                <text x="530" y="119.125" text-anchor="middle" font-size="14" font-weight="bold" fill="#666" class="position-label">RF</text>
+                <text x="530" y="168.125" text-anchor="middle" font-size="11" fill="#333" class="player-name-display"></text>
+            </g>
+            {% else %}
+            <!-- Three Outfielders Layout -->
             <g class="position-marker" data-position="LF">
                 <circle cx="70" cy="113.125" r="40" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
                 <text x="70" y="119.125" text-anchor="middle" font-size="14" font-weight="bold" fill="#666" class="position-label">LF</text>
@@ -145,6 +172,7 @@
                 <text x="530" y="119.125" text-anchor="middle" font-size="14" font-weight="bold" fill="#666" class="position-label">RF</text>
                 <text x="530" y="168.125" text-anchor="middle" font-size="11" fill="#333" class="player-name-display"></text>
             </g>
+            {% endif %}
 
             <!-- Infielders - spread around diamond -->
             <g class="position-marker" data-position="3B">
