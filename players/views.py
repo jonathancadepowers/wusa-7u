@@ -7311,3 +7311,77 @@ def delete_background_check_view(request, background_check_id):
 
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+def get_general_setting(request):
+    """Get a general setting value by key"""
+    from django.http import JsonResponse
+    from .models import GeneralSetting
+
+    try:
+        key = request.GET.get('key', '').strip()
+
+        if not key:
+            return JsonResponse({
+                'success': False,
+                'error': 'Please provide a setting key.'
+            }, status=400)
+
+        setting = GeneralSetting.objects.filter(key=key).first()
+
+        if setting:
+            return JsonResponse({
+                'success': True,
+                'key': setting.key,
+                'value': setting.value
+            })
+        else:
+            return JsonResponse({
+                'success': True,
+                'key': key,
+                'value': None
+            })
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
+@require_http_methods(["POST"])
+def save_general_setting(request):
+    """Save a general setting"""
+    from django.http import JsonResponse
+    from .models import GeneralSetting
+
+    try:
+        key = request.POST.get('key', '').strip()
+        value = request.POST.get('value', '').strip()
+
+        if not key:
+            return JsonResponse({
+                'success': False,
+                'error': 'Please provide a setting key.'
+            }, status=400)
+
+        # Update or create the setting
+        setting, created = GeneralSetting.objects.update_or_create(
+            key=key,
+            defaults={'value': value}
+        )
+
+        action = "created" if created else "updated"
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Setting {action} successfully!',
+            'key': key,
+            'value': value
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)

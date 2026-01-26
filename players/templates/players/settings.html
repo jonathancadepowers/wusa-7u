@@ -58,6 +58,17 @@
 
                         <hr class="my-4">
 
+                        <h5 class="card-title">Division Settings</h5>
+                        <p class="text-muted">Configure division-specific settings like field positions.</p>
+
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#infieldPositionsModal">
+                                <i class="bi bi-diagram-3 me-2"></i>Infield Positions
+                            </button>
+                        </div>
+
+                        <hr class="my-4">
+
                         <h5 class="card-title" id="player-data-import">Player Data Import</h5>
                         <p class="text-muted">Upload the player registration Excel file exported out of TeamSideline to import player data.</p>
 
@@ -693,6 +704,74 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary" id="saveVisibilityBtn">
                         <i class="bi bi-save me-2"></i>Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Infield Positions Modal -->
+    <div class="modal fade" id="infieldPositionsModal" tabindex="-1" aria-labelledby="infieldPositionsModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="infieldPositionsModalLabel">Configure Infield Positions</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted">Select which positions are considered infield positions for this division.</p>
+                    <div id="infieldPositionsError" class="alert alert-danger d-none"></div>
+                    <div id="infieldPositionsSuccess" class="alert alert-success d-none"></div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input infield-position" type="checkbox" value="C" id="posC">
+                            <label class="form-check-label" for="posC">
+                                C (Catcher)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input infield-position" type="checkbox" value="1B" id="pos1B">
+                            <label class="form-check-label" for="pos1B">
+                                1B (First Base)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input infield-position" type="checkbox" value="2B" id="pos2B">
+                            <label class="form-check-label" for="pos2B">
+                                2B (Second Base)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input infield-position" type="checkbox" value="3B" id="pos3B">
+                            <label class="form-check-label" for="pos3B">
+                                3B (Third Base)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input infield-position" type="checkbox" value="SS" id="posSS">
+                            <label class="form-check-label" for="posSS">
+                                SS (Shortstop)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input infield-position" type="checkbox" value="R" id="posR">
+                            <label class="form-check-label" for="posR">
+                                R (Rover)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input infield-position" type="checkbox" value="P" id="posP">
+                            <label class="form-check-label" for="posP">
+                                P (Pitcher)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveInfieldPositionsBtn">
+                        <i class="bi bi-save me-2"></i>Save Infield Positions
                     </button>
                 </div>
             </div>
@@ -2224,6 +2303,77 @@
             } catch (error) {
                 document.getElementById('quickLinkOrderError').textContent = 'An error occurred. Please try again.';
                 document.getElementById('quickLinkOrderError').classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+            }
+        });
+
+        // Infield Positions Modal
+        const infieldModal = document.getElementById('infieldPositionsModal');
+        infieldModal.addEventListener('show.bs.modal', async function () {
+            // Load current infield positions
+            try {
+                const response = await fetch('{% url "players:get_general_setting" %}?key=infield_positions');
+                const result = await response.json();
+
+                if (result.success && result.value) {
+                    const positions = JSON.parse(result.value);
+                    // Uncheck all first
+                    document.querySelectorAll('.infield-position').forEach(cb => cb.checked = false);
+                    // Check the saved positions
+                    positions.forEach(pos => {
+                        const checkbox = document.querySelector(`.infield-position[value="${pos}"]`);
+                        if (checkbox) checkbox.checked = true;
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading infield positions:', error);
+            }
+        });
+
+        document.getElementById('saveInfieldPositionsBtn').addEventListener('click', async function() {
+            const btn = this;
+            const originalHTML = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+
+            document.getElementById('infieldPositionsError').classList.add('d-none');
+            document.getElementById('infieldPositionsSuccess').classList.add('d-none');
+
+            try {
+                // Get selected positions
+                const selectedPositions = Array.from(document.querySelectorAll('.infield-position:checked'))
+                    .map(cb => cb.value);
+
+                const formData = new FormData();
+                formData.append('key', 'infield_positions');
+                formData.append('value', JSON.stringify(selectedPositions));
+
+                const response = await fetch('{% url "players:save_general_setting" %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    document.getElementById('infieldPositionsSuccess').textContent = 'Infield positions saved successfully!';
+                    document.getElementById('infieldPositionsSuccess').classList.remove('d-none');
+
+                    setTimeout(() => {
+                        bootstrap.Modal.getInstance(infieldModal).hide();
+                    }, 1500);
+                } else {
+                    document.getElementById('infieldPositionsError').textContent = result.error || 'Failed to save infield positions.';
+                    document.getElementById('infieldPositionsError').classList.remove('d-none');
+                }
+            } catch (error) {
+                document.getElementById('infieldPositionsError').textContent = 'An error occurred. Please try again.';
+                document.getElementById('infieldPositionsError').classList.remove('d-none');
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = originalHTML;
