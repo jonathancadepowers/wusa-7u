@@ -376,14 +376,9 @@
     -webkit-user-select: none;
 }
 
-.position-marker:hover .position-circle {
+.position-marker:not(.has-player):hover .position-circle {
     fill: rgba(13, 110, 253, 0.1);
     stroke: #0d6efd;
-}
-
-.position-marker:has(.remove-player-btn:hover) .position-circle {
-    fill: rgba(255,255,255,0.9);
-    stroke: #333;
 }
 
 .position-marker.has-player {
@@ -398,16 +393,6 @@
     fill: #d1e7dd;
     stroke: #198754;
     stroke-width: 3;
-}
-
-.position-marker.has-player:hover .position-circle {
-    fill: #d1e7dd;
-    stroke: #198754;
-}
-
-.position-marker.has-player:has(.remove-player-btn:hover) .position-circle {
-    fill: #d1e7dd;
-    stroke: #198754;
 }
 
 .position-marker.drag-over .position-circle {
