@@ -721,11 +721,29 @@
                     <div id="generalDivisionSettingsError" class="alert alert-danger d-none"></div>
                     <div id="generalDivisionSettingsSuccess" class="alert alert-success d-none"></div>
 
-                    <div class="mb-4">
+                    <div class="mb-3">
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" role="switch" id="allowBenchedPlayersToggle">
                             <label class="form-check-label" for="allowBenchedPlayersToggle">
                                 Allow Players To Sit on Bench
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" id="allowRoverPositionToggle">
+                            <label class="form-check-label" for="allowRoverPositionToggle">
+                                Allow Rover Position
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" id="allowFourOutfieldersToggle">
+                            <label class="form-check-label" for="allowFourOutfieldersToggle">
+                                Allow Four Outfielders (If Team Has Enough Players)
                             </label>
                         </div>
                     </div>
@@ -2356,6 +2374,40 @@
                 document.getElementById('allowBenchedPlayersToggle').checked = false;
             }
 
+            // Load allow rover position setting
+            try {
+                const response = await fetch('{% url "players:get_general_setting" %}?key=allow_rover_position');
+                const result = await response.json();
+
+                if (result.success && result.value) {
+                    const isAllowed = result.value === 'true';
+                    document.getElementById('allowRoverPositionToggle').checked = isAllowed;
+                } else {
+                    // Default to false if not set
+                    document.getElementById('allowRoverPositionToggle').checked = false;
+                }
+            } catch (error) {
+                console.error('Error loading allow rover position setting:', error);
+                document.getElementById('allowRoverPositionToggle').checked = false;
+            }
+
+            // Load allow four outfielders setting
+            try {
+                const response = await fetch('{% url "players:get_general_setting" %}?key=allow_four_outfielders');
+                const result = await response.json();
+
+                if (result.success && result.value) {
+                    const isAllowed = result.value === 'true';
+                    document.getElementById('allowFourOutfieldersToggle').checked = isAllowed;
+                } else {
+                    // Default to false if not set
+                    document.getElementById('allowFourOutfieldersToggle').checked = false;
+                }
+            } catch (error) {
+                console.error('Error loading allow four outfielders setting:', error);
+                document.getElementById('allowFourOutfieldersToggle').checked = false;
+            }
+
             // Load infield positions
             try {
                 const response = await fetch('{% url "players:get_general_setting" %}?key=infield_positions');
@@ -2406,13 +2458,11 @@
                     throw new Error(result1.error || 'Failed to save bench setting');
                 }
 
-                // Save infield positions
-                const selectedPositions = Array.from(document.querySelectorAll('.infield-position:checked'))
-                    .map(cb => cb.value);
-
+                // Save allow rover position setting
+                const allowRover = document.getElementById('allowRoverPositionToggle').checked;
                 const formData2 = new FormData();
-                formData2.append('key', 'infield_positions');
-                formData2.append('value', JSON.stringify(selectedPositions));
+                formData2.append('key', 'allow_rover_position');
+                formData2.append('value', allowRover.toString());
 
                 const response2 = await fetch('{% url "players:save_general_setting" %}', {
                     method: 'POST',
@@ -2424,10 +2474,50 @@
 
                 const result2 = await response2.json();
                 if (!result2.success) {
-                    throw new Error(result2.error || 'Failed to save infield positions');
+                    throw new Error(result2.error || 'Failed to save rover position setting');
                 }
 
-                // Both saves successful
+                // Save allow four outfielders setting
+                const allowFourOutfielders = document.getElementById('allowFourOutfieldersToggle').checked;
+                const formData3 = new FormData();
+                formData3.append('key', 'allow_four_outfielders');
+                formData3.append('value', allowFourOutfielders.toString());
+
+                const response3 = await fetch('{% url "players:save_general_setting" %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: formData3
+                });
+
+                const result3 = await response3.json();
+                if (!result3.success) {
+                    throw new Error(result3.error || 'Failed to save four outfielders setting');
+                }
+
+                // Save infield positions
+                const selectedPositions = Array.from(document.querySelectorAll('.infield-position:checked'))
+                    .map(cb => cb.value);
+
+                const formData4 = new FormData();
+                formData4.append('key', 'infield_positions');
+                formData4.append('value', JSON.stringify(selectedPositions));
+
+                const response4 = await fetch('{% url "players:save_general_setting" %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: formData4
+                });
+
+                const result4 = await response4.json();
+                if (!result4.success) {
+                    throw new Error(result4.error || 'Failed to save infield positions');
+                }
+
+                // All saves successful
                 document.getElementById('generalDivisionSettingsSuccess').textContent = 'Settings saved successfully!';
                 document.getElementById('generalDivisionSettingsSuccess').classList.remove('d-none');
 
