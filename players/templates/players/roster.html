@@ -710,12 +710,29 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateInningValidation(inning) {
-        // Check if all players are assigned
         const playerList = document.querySelector(`#playerList${inning}`);
-        const unassignedPlayers = playerList.querySelectorAll('.player-card:not(.assigned)');
         const inningTab = document.querySelector(`#inning${inning}-tab`);
+        const allowBenchedPlayers = {{ allow_benched_players|lower }};
 
-        if (unassignedPlayers.length === 0) {
+        let isValid = false;
+
+        if (allowBenchedPlayers) {
+            // Mode 1: Allow benched players - just check if all positions are filled
+            const fieldContainer = document.querySelector(`[data-inning="${inning}"]`);
+            const allPositions = fieldContainer.querySelectorAll('.position-marker');
+            const filledPositions = fieldContainer.querySelectorAll('.position-marker.has-player');
+
+            // Inning is valid if all positions on the field have been filled
+            isValid = (allPositions.length === filledPositions.length);
+        } else {
+            // Mode 2: Don't allow benched players - check if all players are assigned
+            const unassignedPlayers = playerList.querySelectorAll('.player-card:not(.assigned)');
+
+            // Inning is valid if all players have been assigned to positions
+            isValid = (unassignedPlayers.length === 0);
+        }
+
+        if (isValid) {
             inningTab.classList.add('valid');
         } else {
             inningTab.classList.remove('valid');

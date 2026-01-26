@@ -2599,6 +2599,9 @@ def roster_view(request, team_secret, roster_id):
     innings_per_game_setting = GeneralSetting.objects.filter(key='innings_per_game').first()
     innings_per_game = int(innings_per_game_setting.value) if innings_per_game_setting else 6
 
+    allow_benched_players_setting = GeneralSetting.objects.filter(key='allow_benched_players').first()
+    allow_benched_players = allow_benched_players_setting.value.lower() == 'true' if allow_benched_players_setting else False
+
     return render(request, 'players/roster.html', {
         'team': team,
         'roster': roster,
@@ -2607,6 +2610,7 @@ def roster_view(request, team_secret, roster_id):
         'display_tz': display_tz,
         'allow_four_outfielders': allow_four_outfielders,
         'allow_rover_position': allow_rover_position,
+        'allow_benched_players': allow_benched_players,
         'innings_per_game': innings_per_game,
         'innings_range': range(1, innings_per_game + 1)
     })
