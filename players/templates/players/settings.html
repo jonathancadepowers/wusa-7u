@@ -739,13 +739,19 @@
                         </div>
                     </div>
 
-                    <div class="mb-4">
+                    <div class="mb-3">
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" role="switch" id="allowFourOutfieldersToggle">
                             <label class="form-check-label" for="allowFourOutfieldersToggle">
                                 Allow Four Outfielders (If Team Has Enough Players)
                             </label>
                         </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="inningsPerGameInput" class="form-label">Number of Innings Per Game</label>
+                        <input type="number" class="form-control" id="inningsPerGameInput" min="5" max="9" value="6" style="max-width: 150px;">
+                        <div class="form-text">Valid range: 5-9 innings</div>
                     </div>
 
                     <hr class="my-4">
@@ -2408,6 +2414,23 @@
                 document.getElementById('allowFourOutfieldersToggle').checked = false;
             }
 
+            // Load innings per game setting
+            try {
+                const response = await fetch('{% url "players:get_general_setting" %}?key=innings_per_game');
+                const result = await response.json();
+
+                if (result.success && result.value) {
+                    const innings = parseInt(result.value);
+                    document.getElementById('inningsPerGameInput').value = innings;
+                } else {
+                    // Default to 6 if not set
+                    document.getElementById('inningsPerGameInput').value = 6;
+                }
+            } catch (error) {
+                console.error('Error loading innings per game setting:', error);
+                document.getElementById('inningsPerGameInput').value = 6;
+            }
+
             // Load infield positions
             try {
                 const response = await fetch('{% url "players:get_general_setting" %}?key=infield_positions');
@@ -2496,13 +2519,11 @@
                     throw new Error(result3.error || 'Failed to save four outfielders setting');
                 }
 
-                // Save infield positions
-                const selectedPositions = Array.from(document.querySelectorAll('.infield-position:checked'))
-                    .map(cb => cb.value);
-
+                // Save innings per game setting
+                const inningsPerGame = document.getElementById('inningsPerGameInput').value;
                 const formData4 = new FormData();
-                formData4.append('key', 'infield_positions');
-                formData4.append('value', JSON.stringify(selectedPositions));
+                formData4.append('key', 'innings_per_game');
+                formData4.append('value', inningsPerGame);
 
                 const response4 = await fetch('{% url "players:save_general_setting" %}', {
                     method: 'POST',
@@ -2514,7 +2535,28 @@
 
                 const result4 = await response4.json();
                 if (!result4.success) {
-                    throw new Error(result4.error || 'Failed to save infield positions');
+                    throw new Error(result4.error || 'Failed to save innings per game setting');
+                }
+
+                // Save infield positions
+                const selectedPositions = Array.from(document.querySelectorAll('.infield-position:checked'))
+                    .map(cb => cb.value);
+
+                const formData5 = new FormData();
+                formData5.append('key', 'infield_positions');
+                formData5.append('value', JSON.stringify(selectedPositions));
+
+                const response5 = await fetch('{% url "players:save_general_setting" %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: formData5
+                });
+
+                const result5 = await response5.json();
+                if (!result5.success) {
+                    throw new Error(result5.error || 'Failed to save infield positions');
                 }
 
                 // All saves successful

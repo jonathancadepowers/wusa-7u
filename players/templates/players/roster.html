@@ -32,54 +32,21 @@
 
     <!-- Innings Tabs -->
     <ul class="nav nav-tabs mt-4" id="inningTabs" role="tablist">
+        {% for inning in innings_range %}
         <li class="nav-item" role="presentation">
-            <button class="nav-link active inning-tab" id="inning1-tab" data-bs-toggle="tab" data-bs-target="#inning1" type="button" role="tab" data-inning="1">
-                <span class="inning-label">Inning 1</span>
+            <button class="nav-link {% if inning == 1 %}active{% endif %} inning-tab" id="inning{{ inning }}-tab" data-bs-toggle="tab" data-bs-target="#inning{{ inning }}" type="button" role="tab" data-inning="{{ inning }}">
+                <span class="inning-label">Inning {{ inning }}</span>
                 <i class="bi bi-check-circle-fill validation-icon valid-icon"></i>
                 <i class="bi bi-x-circle-fill validation-icon invalid-icon"></i>
             </button>
         </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link inning-tab" id="inning2-tab" data-bs-toggle="tab" data-bs-target="#inning2" type="button" role="tab" data-inning="2">
-                <span class="inning-label">Inning 2</span>
-                <i class="bi bi-check-circle-fill validation-icon valid-icon"></i>
-                <i class="bi bi-x-circle-fill validation-icon invalid-icon"></i>
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link inning-tab" id="inning3-tab" data-bs-toggle="tab" data-bs-target="#inning3" type="button" role="tab" data-inning="3">
-                <span class="inning-label">Inning 3</span>
-                <i class="bi bi-check-circle-fill validation-icon valid-icon"></i>
-                <i class="bi bi-x-circle-fill validation-icon invalid-icon"></i>
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link inning-tab" id="inning4-tab" data-bs-toggle="tab" data-bs-target="#inning4" type="button" role="tab" data-inning="4">
-                <span class="inning-label">Inning 4</span>
-                <i class="bi bi-check-circle-fill validation-icon valid-icon"></i>
-                <i class="bi bi-x-circle-fill validation-icon invalid-icon"></i>
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link inning-tab" id="inning5-tab" data-bs-toggle="tab" data-bs-target="#inning5" type="button" role="tab" data-inning="5">
-                <span class="inning-label">Inning 5</span>
-                <i class="bi bi-check-circle-fill validation-icon valid-icon"></i>
-                <i class="bi bi-x-circle-fill validation-icon invalid-icon"></i>
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link inning-tab" id="inning6-tab" data-bs-toggle="tab" data-bs-target="#inning6" type="button" role="tab" data-inning="6">
-                <span class="inning-label">Inning 6</span>
-                <i class="bi bi-check-circle-fill validation-icon valid-icon"></i>
-                <i class="bi bi-x-circle-fill validation-icon invalid-icon"></i>
-            </button>
-        </li>
+        {% endfor %}
     </ul>
 
     <!-- Tab Content -->
     <div class="tab-content mt-4" id="inningTabContent">
-        {% for inning in "123456" %}
-        <div class="tab-pane fade {% if inning == '1' %}show active{% endif %}" id="inning{{ inning }}" role="tabpanel">
+        {% for inning in innings_range %}
+        <div class="tab-pane fade {% if inning == 1 %}show active{% endif %}" id="inning{{ inning }}" role="tabpanel">
             <div class="row g-3">
                 <!-- Left Column: Player List -->
                 <div class="col-md-6">

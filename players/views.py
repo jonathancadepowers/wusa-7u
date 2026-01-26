@@ -2596,6 +2596,9 @@ def roster_view(request, team_secret, roster_id):
     allow_rover_position_setting = GeneralSetting.objects.filter(key='allow_rover_position').first()
     allow_rover_position = allow_rover_position_setting.value.lower() == 'true' if allow_rover_position_setting else False
 
+    innings_per_game_setting = GeneralSetting.objects.filter(key='innings_per_game').first()
+    innings_per_game = int(innings_per_game_setting.value) if innings_per_game_setting else 6
+
     return render(request, 'players/roster.html', {
         'team': team,
         'roster': roster,
@@ -2603,7 +2606,9 @@ def roster_view(request, team_secret, roster_id):
         'event_time_display': event_time_display,
         'display_tz': display_tz,
         'allow_four_outfielders': allow_four_outfielders,
-        'allow_rover_position': allow_rover_position
+        'allow_rover_position': allow_rover_position,
+        'innings_per_game': innings_per_game,
+        'innings_range': range(1, innings_per_game + 1)
     })
 
 
