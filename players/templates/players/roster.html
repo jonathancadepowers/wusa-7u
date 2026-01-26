@@ -497,6 +497,36 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Make position markers droppable and draggable
         positionMarkers.forEach(marker => {
+            // Double-click to unassign player from position
+            marker.addEventListener('dblclick', function(e) {
+                if (!this.classList.contains('has-player')) {
+                    return;
+                }
+
+                const nameDisplay = this.querySelector('.player-name-display');
+                const playerName = nameDisplay.textContent;
+                const position = this.dataset.position;
+
+                // Find the player card by name
+                const playerCard = Array.from(document.querySelectorAll(`#playerList${inning} .player-card`))
+                    .find(card => card.dataset.playerName === playerName);
+
+                if (!playerCard) return;
+
+                // Clear the position
+                nameDisplay.textContent = '';
+                this.classList.remove('has-player');
+
+                // Show the player card in Available Players list
+                playerCard.classList.remove('assigned');
+
+                // Save the unassignment
+                savePosition(inning, position, '', '');
+
+                // Update inning validation
+                updateInningValidation(inning);
+            });
+
             // Make position marker draggable when it has a player
             marker.addEventListener('dragstart', function(e) {
                 if (!this.classList.contains('has-player')) {
