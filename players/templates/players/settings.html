@@ -2397,6 +2397,9 @@
                 document.getElementById('allowRoverPositionToggle').checked = false;
             }
 
+            // Update Rover checkbox state based on toggle
+            updateRoverCheckboxState();
+
             // Load allow four outfielders setting
             try {
                 const response = await fetch('{% url "players:get_general_setting" %}?key=allow_four_outfielders');
@@ -2449,6 +2452,30 @@
             } catch (error) {
                 console.error('Error loading infield positions:', error);
             }
+
+            // Update Rover checkbox state again after loading positions
+            updateRoverCheckboxState();
+        });
+
+        // Helper function to update Rover checkbox state based on Allow Rover Position toggle
+        function updateRoverCheckboxState() {
+            const allowRoverToggle = document.getElementById('allowRoverPositionToggle');
+            const roverCheckbox = document.getElementById('posR');
+
+            if (allowRoverToggle && roverCheckbox) {
+                const isAllowed = allowRoverToggle.checked;
+                roverCheckbox.disabled = !isAllowed;
+
+                // If disabling and checkbox is checked, uncheck it
+                if (!isAllowed && roverCheckbox.checked) {
+                    roverCheckbox.checked = false;
+                }
+            }
+        }
+
+        // Add event listener for Allow Rover Position toggle changes
+        document.getElementById('allowRoverPositionToggle').addEventListener('change', function() {
+            updateRoverCheckboxState();
         });
 
         document.getElementById('saveGeneralDivisionSettingsBtn').addEventListener('click', async function() {
