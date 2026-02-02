@@ -65,7 +65,24 @@
                 <!-- Right Column: Baseball Field -->
                 <div class="col-md-6">
                     <div class="roster-section">
-                        <h5 class="section-header">Field Positions</h5>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="section-header mb-0" style="border-bottom: none; padding-bottom: 0;">Field Positions</h5>
+                            {% if inning > 1 %}
+                            <div class="dropdown">
+                                <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-copy me-1"></i>Clone from...
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    {% for prev_inning in innings_range %}
+                                    {% if prev_inning < inning %}
+                                    <li><a class="dropdown-item clone-inning-btn" href="#" data-source-inning="{{ prev_inning }}" data-target-inning="{{ inning }}">Inning {{ prev_inning }}</a></li>
+                                    {% endif %}
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="section-header-border mb-3"></div>
                         <div class="baseball-field" data-inning="{{ inning }}">
         <svg viewBox="0 0 600 625" class="field-svg">
             <!-- Infield dirt (90 foot diamond + extended areas) -->
@@ -270,6 +287,10 @@
     color: #495057;
     margin-bottom: 16px;
     padding-bottom: 12px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.section-header-border {
     border-bottom: 2px solid #e9ecef;
 }
 
@@ -487,11 +508,94 @@
 document.addEventListener('DOMContentLoaded', function() {
     const rosterId = {{ roster.id }};
     const teamSecret = '{{ team.manager_secret }}';
+    const inningsPerGame = {{ innings_per_game }};
 
     // Initialize drag and drop for each inning
-    for (let inning = 1; inning <= 6; inning++) {
+    for (let inning = 1; inning <= inningsPerGame; inning++) {
         initializeDragAndDrop(inning);
         loadPositions(inning);
+    }
+
+    // Initialize clone buttons
+    document.querySelectorAll('.clone-inning-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const sourceInning = parseInt(this.dataset.sourceInning);
+            const targetInning = parseInt(this.dataset.targetInning);
+            cloneInning(sourceInning, targetInning);
+        });
+    });
+
+    async function cloneInning(sourceInning, targetInning) {
+        // Get all position assignments from source inning
+        const sourceField = document.querySelector(`[data-inning="${sourceInning}"]`);
+        const targetField = document.querySelector(`[data-inning="${targetInning}"]`);
+        const targetPlayerList = document.querySelector(`#playerList${targetInning}`);
+
+        // First, clear all positions in target inning (UI and database)
+        const targetMarkers = targetField.querySelectorAll('.position-marker');
+        for (const marker of targetMarkers) {
+            const position = marker.dataset.position;
+            const nameDisplay = marker.querySelector('.player-name-display');
+            const removeBtn = marker.querySelector('.remove-player-btn');
+
+            // Clear UI
+            nameDisplay.textContent = '';
+            marker.classList.remove('has-player');
+            if (removeBtn) removeBtn.style.display = 'none';
+
+            // Clear from database
+            await savePosition(targetInning, position, '', '');
+        }
+
+        // Reset all player cards in target inning to unassigned
+        targetPlayerList.querySelectorAll('.player-card').forEach(card => {
+            card.classList.remove('assigned');
+        });
+
+        // Get assignments from source inning and apply to target
+        const sourceMarkers = sourceField.querySelectorAll('.position-marker.has-player');
+
+        for (const sourceMarker of sourceMarkers) {
+            const position = sourceMarker.dataset.position;
+            const playerName = sourceMarker.querySelector('.player-name-display').textContent;
+
+            // Find the corresponding target marker
+            const targetMarker = targetField.querySelector(`.position-marker[data-position="${position}"]`);
+            if (!targetMarker) continue;
+
+            // Find the player card in target inning by name
+            const playerCard = Array.from(targetPlayerList.querySelectorAll('.player-card'))
+                .find(card => card.dataset.playerName === playerName);
+            if (!playerCard) continue;
+
+            const playerId = playerCard.dataset.playerId;
+
+            // Update target marker display
+            const nameDisplay = targetMarker.querySelector('.player-name-display');
+            nameDisplay.textContent = playerName;
+            targetMarker.classList.add('has-player');
+
+            const removeBtn = targetMarker.querySelector('.remove-player-btn');
+            if (removeBtn) removeBtn.style.display = 'block';
+
+            // Hide player card
+            playerCard.classList.add('assigned');
+
+            // Save to database
+            await savePosition(targetInning, position, playerId, playerName);
+        }
+
+        // Update validation for target inning
+        updateInningValidation(targetInning);
+
+        // Show success feedback
+        const targetTab = document.querySelector(`#inning${targetInning}-tab`);
+        targetTab.style.transition = 'background-color 0.3s';
+        targetTab.style.backgroundColor = '#d1e7dd';
+        setTimeout(() => {
+            targetTab.style.backgroundColor = '';
+        }, 1000);
     }
 
     function initializeDragAndDrop(inning) {
@@ -713,23 +817,28 @@ document.addEventListener('DOMContentLoaded', function() {
         const playerList = document.querySelector(`#playerList${inning}`);
         const inningTab = document.querySelector(`#inning${inning}-tab`);
         const allowBenchedPlayers = {{ allow_benched_players|lower }};
+        const fieldContainer = document.querySelector(`[data-inning="${inning}"]`);
+
+        const totalPositions = fieldContainer.querySelectorAll('.position-marker').length;
+        const filledPositions = fieldContainer.querySelectorAll('.position-marker.has-player').length;
+        const totalPlayers = playerList.querySelectorAll('.player-card').length;
+        const unassignedPlayers = playerList.querySelectorAll('.player-card:not(.assigned)').length;
 
         let isValid = false;
 
         if (allowBenchedPlayers) {
-            // Mode 1: Allow benched players - just check if all positions are filled
-            const fieldContainer = document.querySelector(`[data-inning="${inning}"]`);
-            const allPositions = fieldContainer.querySelectorAll('.position-marker');
-            const filledPositions = fieldContainer.querySelectorAll('.position-marker.has-player');
-
-            // Inning is valid if all positions on the field have been filled
-            isValid = (allPositions.length === filledPositions.length);
+            // Mode 1: Allow benched players
+            if (totalPlayers >= totalPositions) {
+                // Enough or more players than positions - all positions must be filled
+                isValid = (totalPositions === filledPositions);
+            } else {
+                // Fewer players than positions (e.g., some didn't show up) - all players must be assigned
+                isValid = (unassignedPlayers === 0);
+            }
         } else {
-            // Mode 2: Don't allow benched players - check if all players are assigned
-            const unassignedPlayers = playerList.querySelectorAll('.player-card:not(.assigned)');
-
-            // Inning is valid if all players have been assigned to positions
-            isValid = (unassignedPlayers.length === 0);
+            // Mode 2: Don't allow benched players - all players must be assigned
+            // (If more players than positions, this will be impossible - intentional)
+            isValid = (unassignedPlayers === 0);
         }
 
         if (isValid) {
