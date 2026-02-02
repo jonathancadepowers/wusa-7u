@@ -528,9 +528,9 @@ document.addEventListener('DOMContentLoaded', function() {
     async function cloneInning(sourceInning, targetInning) {
         console.log('cloneInning called:', sourceInning, '->', targetInning);
 
-        // Get all position assignments from source inning
-        const sourceField = document.querySelector(`[data-inning="${sourceInning}"]`);
-        const targetField = document.querySelector(`[data-inning="${targetInning}"]`);
+        // Get all position assignments from source inning - use .baseball-field to be specific
+        const sourceField = document.querySelector(`.baseball-field[data-inning="${sourceInning}"]`);
+        const targetField = document.querySelector(`.baseball-field[data-inning="${targetInning}"]`);
         const targetPlayerList = document.querySelector(`#playerList${targetInning}`);
 
         console.log('sourceField:', sourceField);
