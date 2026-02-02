@@ -2621,10 +2621,14 @@ def roster_view(request, team_secret, roster_id):
         if player_count >= positions_with_four_outfielders:
             show_four_outfielders = True
 
+    # Prepare lineup data for JavaScript
+    lineup_data = roster.lineup or []
+
     return render(request, 'players/roster.html', {
         'team': team,
         'roster': roster,
         'roster_data_json': json.dumps(roster_data),
+        'lineup_data_json': json.dumps(lineup_data),
         'event_time_display': event_time_display,
         'display_tz': display_tz,
         'allow_four_outfielders': show_four_outfielders,
@@ -2679,6 +2683,43 @@ def save_roster_position(request, team_secret, roster_id):
 
         return JsonResponse({'success': True})
 
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+def save_roster_lineup(request, team_secret, roster_id):
+    """Save the batting lineup order for a roster"""
+    from django.shortcuts import get_object_or_404
+    from django.http import JsonResponse
+    from .models import Roster, Team
+    import json
+
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=405)
+
+    # Get the team by manager_secret
+    team = get_object_or_404(Team, manager_secret=team_secret)
+
+    # Get the roster
+    roster = get_object_or_404(Roster, id=roster_id, team=team)
+
+    try:
+        # Get the lineup data from the request
+        lineup_json = request.POST.get('lineup', '[]')
+        lineup = json.loads(lineup_json)
+
+        # Validate lineup is a list of player IDs
+        if not isinstance(lineup, list):
+            return JsonResponse({'success': False, 'error': 'Invalid lineup format'}, status=400)
+
+        # Save the lineup to roster
+        roster.lineup = lineup
+        roster.save()
+
+        return JsonResponse({'success': True})
+
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON format'}, status=400)
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 

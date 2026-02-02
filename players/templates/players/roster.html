@@ -41,6 +41,11 @@
             </button>
         </li>
         {% endfor %}
+        <li class="nav-item" role="presentation">
+            <button class="nav-link lineup-tab" id="lineup-tab" data-bs-toggle="tab" data-bs-target="#lineup" type="button" role="tab">
+                <span class="lineup-label">Lineup</span>
+            </button>
+        </li>
     </ul>
 
     <!-- Tab Content -->
@@ -274,6 +279,46 @@
             </div>
         </div>
         {% endfor %}
+
+        <!-- Lineup Tab Pane -->
+        <div class="tab-pane fade" id="lineup" role="tabpanel">
+            <div class="row g-3">
+                <div class="col-12">
+                    <div class="roster-section lineup-section">
+                        <div class="d-flex justify-content-between align-items-center section-header">
+                            <span>Batting Lineup</span>
+                            <button class="btn btn-outline-secondary btn-sm" id="resetLineupBtn">
+                                Reset to Alphabetical
+                            </button>
+                        </div>
+                        <div class="lineup-table-container">
+                            <table class="table lineup-table" id="lineupTable">
+                                <thead>
+                                    <tr>
+                                        <th class="order-col">#</th>
+                                        <th class="name-col">Player Name</th>
+                                        {% for inning in innings_range %}
+                                        <th class="position-col">Inn {{ inning }}</th>
+                                        {% endfor %}
+                                    </tr>
+                                </thead>
+                                <tbody id="lineupBody">
+                                    {% for player in team.players.all %}
+                                    <tr class="lineup-row" draggable="true" data-player-id="{{ player.id }}" data-player-name="{{ player.first_name }} {{ player.last_name }}">
+                                        <td class="order-col"><span class="batting-order"></span></td>
+                                        <td class="name-col">{{ player.first_name }} {{ player.last_name }}</td>
+                                        {% for inning in innings_range %}
+                                        <td class="position-col position-display" data-inning="{{ inning }}">-</td>
+                                        {% endfor %}
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -530,6 +575,109 @@
 /* Invalid state styling (when active) - keep red */
 .inning-tab.active .invalid-icon {
     color: #dc3545;
+}
+
+/* Lineup Tab Styles */
+.lineup-tab {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.lineup-section {
+    height: auto !important;
+    min-height: 400px;
+    max-height: calc(100vh - 300px);
+}
+
+.lineup-table-container {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: auto;
+}
+
+.lineup-table {
+    margin-bottom: 0;
+    width: 100%;
+}
+
+.lineup-table thead th {
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 10;
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+    color: #495057;
+    white-space: nowrap;
+    padding: 12px 8px;
+}
+
+.lineup-table .order-col {
+    width: 60px;
+    text-align: center;
+    font-weight: 700;
+}
+
+.lineup-table .name-col {
+    min-width: 150px;
+}
+
+.lineup-table .position-col {
+    width: 70px;
+    text-align: center;
+    font-size: 13px;
+}
+
+.lineup-row {
+    cursor: grab;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.lineup-row:hover {
+    background-color: #f8f9fa;
+}
+
+.lineup-row:active {
+    cursor: grabbing;
+}
+
+.lineup-row.dragging {
+    opacity: 0.5;
+    background-color: #e7f1ff;
+}
+
+.lineup-row.drag-over {
+    border-top: 3px solid #0d6efd;
+}
+
+.lineup-row td {
+    padding: 12px 8px;
+    vertical-align: middle;
+}
+
+.batting-order {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background-color: #0d6efd;
+    color: white;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.position-display {
+    color: #6c757d;
+}
+
+.position-display:not(:empty) {
+    color: #198754;
+    font-weight: 500;
 }
 </style>
 
@@ -1058,6 +1206,230 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update inning validation and message after loading positions
         updateInningValidation(inning);
         updateAllAssignedMessage(inning);
+    }
+
+    // ========== LINEUP TAB FUNCTIONALITY ==========
+
+    // Initialize lineup functionality
+    initializeLineup();
+
+    function initializeLineup() {
+        const lineupBody = document.getElementById('lineupBody');
+        const resetBtn = document.getElementById('resetLineupBtn');
+        const savedLineup = {{ lineup_data_json|safe }};
+        const rosterData = {{ roster_data_json|safe }};
+
+        // Get all rows and sort them
+        const rows = Array.from(lineupBody.querySelectorAll('.lineup-row'));
+
+        if (savedLineup && savedLineup.length > 0) {
+            // Sort by saved lineup order
+            sortRowsByLineup(rows, savedLineup);
+        } else {
+            // Sort alphabetically by default
+            sortRowsAlphabetically(rows);
+        }
+
+        // Re-append rows in sorted order
+        rows.forEach(row => lineupBody.appendChild(row));
+
+        // Update batting order numbers
+        updateBattingOrderNumbers();
+
+        // Update position displays from roster data
+        updateLineupPositions(rosterData);
+
+        // Initialize drag-and-drop for lineup rows
+        initializeLineupDragDrop();
+
+        // Reset button handler
+        resetBtn.addEventListener('click', function() {
+            sortRowsAlphabetically(rows);
+            rows.forEach(row => lineupBody.appendChild(row));
+            updateBattingOrderNumbers();
+            saveLineup();
+        });
+
+        // Listen for tab switches to update positions
+        document.getElementById('lineup-tab').addEventListener('shown.bs.tab', function() {
+            updateLineupPositionsFromField();
+        });
+    }
+
+    function sortRowsByLineup(rows, lineup) {
+        rows.sort((a, b) => {
+            const aId = a.dataset.playerId;
+            const bId = b.dataset.playerId;
+            const aIndex = lineup.indexOf(aId);
+            const bIndex = lineup.indexOf(bId);
+
+            // If not in lineup, put at end alphabetically
+            if (aIndex === -1 && bIndex === -1) {
+                return a.dataset.playerName.localeCompare(b.dataset.playerName);
+            }
+            if (aIndex === -1) return 1;
+            if (bIndex === -1) return -1;
+
+            return aIndex - bIndex;
+        });
+    }
+
+    function sortRowsAlphabetically(rows) {
+        rows.sort((a, b) => {
+            return a.dataset.playerName.localeCompare(b.dataset.playerName);
+        });
+    }
+
+    function updateBattingOrderNumbers() {
+        const rows = document.querySelectorAll('#lineupBody .lineup-row');
+        rows.forEach((row, index) => {
+            const orderSpan = row.querySelector('.batting-order');
+            orderSpan.textContent = index + 1;
+        });
+    }
+
+    function updateLineupPositions(rosterData) {
+        const rows = document.querySelectorAll('#lineupBody .lineup-row');
+
+        rows.forEach(row => {
+            const playerId = row.dataset.playerId;
+
+            // Check each inning for this player's position
+            for (let inning = 1; inning <= inningsPerGame; inning++) {
+                const inningData = rosterData[`inning_${inning}`] || {};
+                const positionCell = row.querySelector(`.position-display[data-inning="${inning}"]`);
+
+                if (!positionCell) continue;
+
+                // Find if this player is assigned to any position in this inning
+                let playerPosition = '-';
+                for (const [position, assignedPlayerId] of Object.entries(inningData)) {
+                    if (assignedPlayerId === playerId) {
+                        playerPosition = position;
+                        break;
+                    }
+                }
+
+                positionCell.textContent = playerPosition;
+                if (playerPosition !== '-') {
+                    positionCell.style.color = '#198754';
+                    positionCell.style.fontWeight = '500';
+                } else {
+                    positionCell.style.color = '#6c757d';
+                    positionCell.style.fontWeight = 'normal';
+                }
+            }
+        });
+    }
+
+    function updateLineupPositionsFromField() {
+        // Build roster data from current field state
+        const rosterData = {};
+
+        for (let inning = 1; inning <= inningsPerGame; inning++) {
+            const field = document.querySelector(`.baseball-field[data-inning="${inning}"]`);
+            if (!field) continue;
+
+            const inningData = {};
+            const markers = field.querySelectorAll('.position-marker.has-player');
+
+            markers.forEach(marker => {
+                const position = marker.dataset.position;
+                const playerName = marker.querySelector('.player-name-display').textContent;
+
+                // Find player ID by name
+                const playerCard = document.querySelector(`#playerList${inning} .player-card[data-player-name="${playerName}"]`);
+                if (playerCard) {
+                    inningData[position] = playerCard.dataset.playerId;
+                }
+            });
+
+            rosterData[`inning_${inning}`] = inningData;
+        }
+
+        updateLineupPositions(rosterData);
+    }
+
+    function initializeLineupDragDrop() {
+        const lineupBody = document.getElementById('lineupBody');
+        let draggedRow = null;
+
+        lineupBody.querySelectorAll('.lineup-row').forEach(row => {
+            row.addEventListener('dragstart', function(e) {
+                draggedRow = this;
+                this.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+            });
+
+            row.addEventListener('dragend', function() {
+                this.classList.remove('dragging');
+                document.querySelectorAll('.lineup-row.drag-over').forEach(r => {
+                    r.classList.remove('drag-over');
+                });
+                draggedRow = null;
+            });
+
+            row.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                if (this !== draggedRow) {
+                    this.classList.add('drag-over');
+                }
+            });
+
+            row.addEventListener('dragleave', function() {
+                this.classList.remove('drag-over');
+            });
+
+            row.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('drag-over');
+
+                if (draggedRow && this !== draggedRow) {
+                    // Get all rows
+                    const rows = Array.from(lineupBody.querySelectorAll('.lineup-row'));
+                    const draggedIndex = rows.indexOf(draggedRow);
+                    const dropIndex = rows.indexOf(this);
+
+                    // Insert dragged row at new position
+                    if (draggedIndex < dropIndex) {
+                        this.parentNode.insertBefore(draggedRow, this.nextSibling);
+                    } else {
+                        this.parentNode.insertBefore(draggedRow, this);
+                    }
+
+                    // Update batting order numbers
+                    updateBattingOrderNumbers();
+
+                    // Save the new lineup order
+                    saveLineup();
+                }
+            });
+        });
+    }
+
+    async function saveLineup() {
+        try {
+            const rows = document.querySelectorAll('#lineupBody .lineup-row');
+            const lineup = Array.from(rows).map(row => row.dataset.playerId);
+
+            const formData = new FormData();
+            formData.append('lineup', JSON.stringify(lineup));
+
+            const response = await fetch(`/teams/${teamSecret}/roster/${rosterId}/save-lineup/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: formData
+            });
+
+            const result = await response.json();
+            if (!result.success) {
+                console.error('Error saving lineup:', result.error);
+            }
+        } catch (error) {
+            console.error('Error saving lineup:', error);
+        }
     }
 });
 </script>

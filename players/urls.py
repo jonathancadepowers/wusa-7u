@@ -62,6 +62,7 @@ urlpatterns = [
     path('teams/<str:team_secret>/', views.team_detail_view, name='team_detail'),
     path('teams/<str:team_secret>/roster/<int:roster_id>/', views.roster_view, name='roster_view'),
     path('teams/<str:team_secret>/roster/<int:roster_id>/save-position/', views.save_roster_position, name='save_roster_position'),
+    path('teams/<str:team_secret>/roster/<int:roster_id>/save-lineup/', views.save_roster_lineup, name='save_roster_lineup'),
     path('teams/<str:team_secret>/export-roster/', views.export_team_roster_csv, name='export_team_roster_csv'),
     path('teams/<str:team_secret>/toggle-star/', views.toggle_star_player_view, name='toggle_star_player'),
     path('teams/<str:team_secret>/save-starred-order/', views.save_starred_order_view, name='save_starred_order'),
