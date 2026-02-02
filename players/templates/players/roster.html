@@ -343,6 +343,7 @@
                                         {% for inning in innings_range %}
                                         <th class="position-col">{{ inning }}</th>
                                         {% endfor %}
+                                        <th class="validation-col">Validation</th>
                                     </tr>
                                 </thead>
                                 <tbody id="lineupBody">
@@ -353,6 +354,10 @@
                                         {% for inning in innings_range %}
                                         <td class="position-col position-display" data-inning="{{ inning }}">-</td>
                                         {% endfor %}
+                                        <td class="validation-col validation-status" data-bs-toggle="tooltip" data-bs-placement="left" title="">
+                                            <i class="bi bi-check-circle-fill text-success validation-icon-valid" style="display: none;"></i>
+                                            <i class="bi bi-x-circle-fill text-danger validation-icon-invalid" style="display: none;"></i>
+                                        </td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
@@ -736,6 +741,19 @@
     font-weight: 500;
 }
 
+.lineup-table .validation-col {
+    width: 90px;
+    text-align: center;
+}
+
+.validation-status {
+    cursor: help;
+}
+
+.validation-status i {
+    font-size: 18px;
+}
+
 /* Save Toast Styles */
 .save-toast {
     position: fixed;
@@ -811,6 +829,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const rosterId = {{ roster.id }};
     const teamSecret = '{{ team.manager_secret }}';
     const inningsPerGame = {{ innings_per_game }};
+    const allowBenchedPlayers = {{ allow_benched_players|lower }};
+    const infieldPositions = {{ infield_positions_json|safe }};
+
+    // Initialize Bootstrap tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl, { html: true });
+    });
 
     // Initialize manual save button
     const saveBtn = document.getElementById('manualSaveBtn');
@@ -1529,6 +1555,88 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
+
+        // Validate players after updating positions
+        validateLineupPlayers(rosterData);
+    }
+
+    function validateLineupPlayers(rosterData) {
+        const rows = document.querySelectorAll('#lineupBody .lineup-row');
+
+        rows.forEach(row => {
+            const playerId = row.dataset.playerId;
+            const playerName = row.dataset.playerName;
+            const validationCell = row.querySelector('.validation-status');
+            const validIcon = validationCell.querySelector('.validation-icon-valid');
+            const invalidIcon = validationCell.querySelector('.validation-icon-invalid');
+
+            const errors = [];
+
+            // Collect player positions for each inning
+            const playerPositions = {};
+            for (let inning = 1; inning <= inningsPerGame; inning++) {
+                const inningData = rosterData[`inning_${inning}`] || {};
+                playerPositions[inning] = null;
+
+                for (const [position, assignedPlayerId] of Object.entries(inningData)) {
+                    if (assignedPlayerId === playerId) {
+                        playerPositions[inning] = position;
+                        break;
+                    }
+                }
+            }
+
+            // Validation 1: Must play infield at least once in first 3 innings
+            let playedInfieldFirst3 = false;
+            for (let inning = 1; inning <= Math.min(3, inningsPerGame); inning++) {
+                const position = playerPositions[inning];
+                if (position && infieldPositions.includes(position)) {
+                    playedInfieldFirst3 = true;
+                    break;
+                }
+            }
+
+            if (!playedInfieldFirst3) {
+                errors.push('Must play an infield position at least once in the first 3 innings.');
+            }
+
+            // Validation 2: If benched players not allowed, must have position every inning
+            if (!allowBenchedPlayers) {
+                const benchedInnings = [];
+                for (let inning = 1; inning <= inningsPerGame; inning++) {
+                    if (!playerPositions[inning]) {
+                        benchedInnings.push(inning);
+                    }
+                }
+
+                if (benchedInnings.length > 0) {
+                    errors.push(`Not assigned a position in inning${benchedInnings.length > 1 ? 's' : ''} ${benchedInnings.join(', ')}.`);
+                }
+            }
+
+            // Update validation display
+            const tooltipInstance = bootstrap.Tooltip.getInstance(validationCell);
+
+            if (errors.length === 0) {
+                validIcon.style.display = 'inline';
+                invalidIcon.style.display = 'none';
+                if (tooltipInstance) {
+                    tooltipInstance.setContent({ '.tooltip-inner': "Player's roster and positions are valid for this game." });
+                }
+            } else {
+                validIcon.style.display = 'none';
+                invalidIcon.style.display = 'inline';
+                let errorHtml = '';
+                if (errors.length === 1) {
+                    errorHtml = errors[0];
+                } else {
+                    errorHtml = errors.map((e, i) => `${i + 1}. ${e}`).join('<br>');
+                }
+                if (tooltipInstance) {
+                    tooltipInstance.setContent({ '.tooltip-inner': errorHtml });
+                }
+            }
+        });
     }
 
     function updateLineupPositionsFromField() {
@@ -1557,6 +1665,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         updateLineupPositions(rosterData);
+        // Validation is now called inside updateLineupPositions
     }
 
     function initializeLineupDragDrop() {

@@ -2603,6 +2603,10 @@ def roster_view(request, team_secret, roster_id):
     allow_benched_players_setting = GeneralSetting.objects.filter(key='allow_benched_players').first()
     allow_benched_players = allow_benched_players_setting.value.lower() == 'true' if allow_benched_players_setting else False
 
+    # Get infield positions setting
+    infield_positions_setting = GeneralSetting.objects.filter(key='infield_positions').first()
+    infield_positions = json.loads(infield_positions_setting.value) if infield_positions_setting and infield_positions_setting.value else ['C', '1B', '2B', '3B', 'SS', 'P']
+
     # Calculate if team has enough players to show 4 outfielders
     # Base positions: 6 infield (C, 1B, 2B, 3B, SS, P) + 3 outfield (LF, CF, RF) = 9
     base_positions = 9
@@ -2635,7 +2639,8 @@ def roster_view(request, team_secret, roster_id):
         'allow_rover_position': allow_rover_position,
         'allow_benched_players': allow_benched_players,
         'innings_per_game': innings_per_game,
-        'innings_range': range(1, innings_per_game + 1)
+        'innings_range': range(1, innings_per_game + 1),
+        'infield_positions_json': json.dumps(infield_positions)
     })
 
 
