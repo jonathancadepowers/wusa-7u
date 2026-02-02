@@ -29,17 +29,23 @@ def get_display_timezone():
 
 def settings_view(request):
     """Main settings page"""
-    from .models import Draft, QuickLink
+    from .models import Draft, QuickLink, GeneralSetting
 
     # Check if there's an existing draft
     draft_exists = Draft.objects.exists()
 
-    # Get all quick links
+    # Get all quick links (fixed links are always shown first)
     quick_links = QuickLink.objects.all().order_by('display_order', 'name')
+
+    # Get visibility settings
+    show_preseason = GeneralSetting.objects.filter(key='show_preseason_items').first()
+    show_testing = GeneralSetting.objects.filter(key='show_testing_items').first()
 
     context = {
         'draft_exists': draft_exists,
-        'quick_links': quick_links
+        'quick_links': quick_links,
+        'show_preseason_items': show_preseason.value.lower() == 'true' if show_preseason else True,
+        'show_testing_items': show_testing.value.lower() == 'true' if show_testing else True,
     }
     return render(request, 'players/settings.html', context)
 
@@ -86,6 +92,13 @@ def update_quick_link(request, link_id):
             data = json.loads(request.body)
             quick_link = QuickLink.objects.get(id=link_id)
 
+            # Prevent modification of fixed links
+            if quick_link.is_fixed:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Cannot modify fixed quick links'
+                })
+
             quick_link.name = data.get('name', quick_link.name)
             quick_link.url = data.get('url', quick_link.url)
             quick_link.icon = data.get('icon', quick_link.icon)
@@ -116,6 +129,14 @@ def delete_quick_link(request, link_id):
             from .models import QuickLink
 
             quick_link = QuickLink.objects.get(id=link_id)
+
+            # Prevent deletion of fixed links
+            if quick_link.is_fixed:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Cannot delete fixed quick links'
+                })
+
             quick_link.delete()
 
             return JsonResponse({'success': True})
@@ -124,6 +145,42 @@ def delete_quick_link(request, link_id):
                 'success': False,
                 'error': 'Quick link not found'
             })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            })
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+
+@csrf_exempt
+def set_quick_link_order(request):
+    """Set the display order for quick links (only non-fixed links)"""
+    if request.method == 'POST':
+        try:
+            import json
+            from .models import QuickLink
+
+            data = json.loads(request.body)
+            order_data = data.get('order', [])
+
+            # Fixed links always start at position 0, 1, etc.
+            # Count fixed links to know where to start ordering non-fixed links
+            fixed_count = QuickLink.objects.filter(is_fixed=True).count()
+
+            # Update each non-fixed quick link's display_order
+            for index, item in enumerate(order_data):
+                link_id = item.get('id')
+
+                quick_link = QuickLink.objects.get(id=link_id)
+
+                # Skip fixed links (they shouldn't be in the list, but just in case)
+                if not quick_link.is_fixed:
+                    quick_link.display_order = fixed_count + index
+                    quick_link.save()
+
+            return JsonResponse({'success': True})
         except Exception as e:
             return JsonResponse({
                 'success': False,
@@ -1582,7 +1639,7 @@ def validate_team_secret_view(request):
 
 def players_api_view(request):
     """API endpoint to get list of all players"""
-    players = Player.objects.all().order_by('last_name', 'first_name')
+    players = Player.objects.select_related('team').all().order_by('last_name', 'first_name')
 
     players_data = []
     for player in players:
@@ -1591,6 +1648,9 @@ def players_api_view(request):
             'first_name': player.first_name,
             'last_name': player.last_name,
             'draftable': player.draftable,
+            'team': player.team.name if player.team else None,
+            'birthday': player.birthday.strftime('%Y-%m-%d') if player.birthday else None,
+            'school': player.school,
         })
 
     return JsonResponse(players_data, safe=False)
@@ -1678,6 +1738,167 @@ def update_manager_api_view(request):
         }, status=500)
 
 
+def get_component_categories_api_view(request):
+    """API endpoint to get all component categories and their visibility"""
+    from .models import GeneralSetting
+
+    categories = [
+        {
+            'key': 'show_preseason_items',
+            'label': 'Pre-Season Items',
+            'description': 'Pre-season checklists and setup components'
+        },
+        {
+            'key': 'show_testing_items',
+            'label': 'Testing Items',
+            'description': 'Testing and development tools'
+        }
+    ]
+
+    # Get current visibility for each category
+    for category in categories:
+        setting = GeneralSetting.objects.filter(key=category['key']).first()
+        category['visible'] = setting.value.lower() == 'true' if setting else True
+
+    return JsonResponse({
+        'success': True,
+        'categories': categories
+    })
+
+
+@csrf_exempt
+def toggle_component_visibility_api_view(request):
+    """API endpoint to toggle component category visibility"""
+    if request.method != 'POST':
+        return JsonResponse({
+            'success': False,
+            'error': 'Invalid request method'
+        }, status=400)
+
+    from .models import GeneralSetting
+    import json
+
+    try:
+        data = json.loads(request.body)
+        key = data.get('key')
+        visible = data.get('visible')
+
+        if not key:
+            return JsonResponse({
+                'success': False,
+                'error': 'Missing required field: key'
+            }, status=400)
+
+        # Update or create the setting
+        setting, created = GeneralSetting.objects.get_or_create(
+            key=key,
+            defaults={'value': 'true' if visible else 'false'}
+        )
+
+        if not created:
+            setting.value = 'true' if visible else 'false'
+            setting.save()
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Visibility updated successfully'
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+def get_component_items_api_view(request):
+    """API endpoint to get all UI items affected by a component category"""
+    import os
+    import re
+    from django.conf import settings
+
+    category = request.GET.get('category', '')
+
+    # Map category to CSS class
+    class_map = {
+        'preseason': 'preseason-component',
+        'testing': 'testing-component'
+    }
+
+    css_class = class_map.get(category)
+    if not css_class:
+        return JsonResponse({
+            'success': False,
+            'error': 'Invalid category'
+        }, status=400)
+
+    # Define component items manually - more reliable than parsing HTML
+    component_items = {
+        'preseason': [
+            {
+                'page': 'Team Detail',
+                'description': 'Practice Slot Selector section',
+                'type': 'Section'
+            }
+        ],
+        'testing': [
+            {
+                'page': 'Players List',
+                'description': 'Reset Teams button',
+                'type': 'Button'
+            },
+            {
+                'page': 'Players List',
+                'description': 'Delete All Players button',
+                'type': 'Button'
+            },
+            {
+                'page': 'Players List',
+                'description': 'Add Player button',
+                'type': 'Button'
+            },
+            {
+                'page': 'Teams List',
+                'description': 'Unassign Practice Slots button',
+                'type': 'Button'
+            },
+            {
+                'page': 'Run Draft',
+                'description': 'Simulate Draft button',
+                'type': 'Button'
+            },
+            {
+                'page': 'Run Draft',
+                'description': 'Reset Draft button',
+                'type': 'Button'
+            },
+            {
+                'page': 'Managers List',
+                'description': 'Randomly Assign Managers button',
+                'type': 'Button'
+            },
+            {
+                'page': 'Managers List',
+                'description': 'Randomly Assign Daughters button',
+                'type': 'Button'
+            },
+            {
+                'page': 'Managers List',
+                'description': 'Unassign All Managers button',
+                'type': 'Button'
+            }
+        ]
+    }
+
+    items = component_items.get(category, [])
+
+    return JsonResponse({
+        'success': True,
+        'items': items,
+        'count': len(items)
+    })
+
+
 def players_list_view(request):
     """List all players with search, sorting, and pagination"""
     search_query = request.GET.get('search', '')
@@ -1725,13 +1946,19 @@ def players_list_view(request):
     # Get all teams for the team assignment dropdown
     all_teams = Team.objects.all().order_by('name')
 
+    # Get visibility settings
+    show_preseason = GeneralSetting.objects.filter(key='show_preseason_items').first()
+    show_testing = GeneralSetting.objects.filter(key='show_testing_items').first()
+
     context = {
         'page_obj': page_obj,
         'search_query': search_query,
         'sort_by': sort_by,
         'order': order,
         'total_players': Player.objects.count(),
-        'all_teams': all_teams
+        'all_teams': all_teams,
+        'show_preseason_items': show_preseason.value.lower() == 'true' if show_preseason else True,
+        'show_testing_items': show_testing.value.lower() == 'true' if show_testing else True,
     }
     return render(request, 'players/players_list.html', context)
 
@@ -2309,6 +2536,14 @@ def team_detail_view(request, team_secret):
         logging.error(f"Error calculating checklist: {e}")
         checklist_items = []
 
+    # Get background checks for this team
+    from .models import BackgroundCheck
+    background_checks = BackgroundCheck.objects.filter(team=team).select_related('player').order_by('last_name', 'first_name')
+
+    # Get visibility settings
+    show_preseason = GeneralSetting.objects.filter(key='show_preseason_items').first()
+    show_testing = GeneralSetting.objects.filter(key='show_testing_items').first()
+
     context = {
         'team': team,
         'players': players,
@@ -2317,9 +2552,135 @@ def team_detail_view(request, team_secret):
         'available_players': available_players,
         'drafted_players': drafted_players,
         'starred_player_ids': starred_player_ids,
-        'starred_players': starred_players
+        'starred_players': starred_players,
+        'background_checks': background_checks,
+        'show_preseason_items': show_preseason.value.lower() == 'true' if show_preseason else True,
+        'show_testing_items': show_testing.value.lower() == 'true' if show_testing else True,
     }
     return render(request, 'players/team_detail.html', context)
+
+
+def roster_view(request, team_secret, roster_id):
+    """View and edit a specific roster"""
+    from django.shortcuts import render, get_object_or_404
+    from .models import Roster, Team, GeneralSetting
+    import pytz
+
+    # Get the team by manager_secret
+    team = get_object_or_404(Team, manager_secret=team_secret)
+
+    # Get the roster
+    roster = get_object_or_404(Roster, id=roster_id, team=team)
+
+    # Get display timezone
+    display_tz_setting = GeneralSetting.objects.filter(key='display_timezone').first()
+    display_tz = pytz.timezone(display_tz_setting.value) if display_tz_setting else pytz.UTC
+
+    # Convert event timestamp to display timezone
+    event_time_display = roster.event.timestamp.astimezone(display_tz) if roster.event else None
+
+    # Prepare roster data for JavaScript
+    import json
+    roster_data = {
+        'inning_1': roster.inning_1 or {},
+        'inning_2': roster.inning_2 or {},
+        'inning_3': roster.inning_3 or {},
+        'inning_4': roster.inning_4 or {},
+        'inning_5': roster.inning_5 or {},
+        'inning_6': roster.inning_6 or {},
+    }
+
+    # Get division settings
+    allow_four_outfielders_setting = GeneralSetting.objects.filter(key='allow_four_outfielders').first()
+    allow_four_outfielders = allow_four_outfielders_setting.value.lower() == 'true' if allow_four_outfielders_setting else False
+
+    allow_rover_position_setting = GeneralSetting.objects.filter(key='allow_rover_position').first()
+    allow_rover_position = allow_rover_position_setting.value.lower() == 'true' if allow_rover_position_setting else False
+
+    innings_per_game_setting = GeneralSetting.objects.filter(key='innings_per_game').first()
+    innings_per_game = int(innings_per_game_setting.value) if innings_per_game_setting else 6
+
+    allow_benched_players_setting = GeneralSetting.objects.filter(key='allow_benched_players').first()
+    allow_benched_players = allow_benched_players_setting.value.lower() == 'true' if allow_benched_players_setting else False
+
+    # Calculate if team has enough players to show 4 outfielders
+    # Base positions: 6 infield (C, 1B, 2B, 3B, SS, P) + 3 outfield (LF, CF, RF) = 9
+    base_positions = 9
+
+    # Add rover if allowed
+    if allow_rover_position:
+        base_positions += 1
+
+    # Determine if we should show 4 outfielders based on team size
+    show_four_outfielders = False
+    if allow_four_outfielders:
+        # Check if team has enough players for 4 outfielders
+        positions_with_four_outfielders = base_positions + 1  # Add 1 for the 4th outfielder
+        player_count = team.players.count()
+
+        if player_count >= positions_with_four_outfielders:
+            show_four_outfielders = True
+
+    return render(request, 'players/roster.html', {
+        'team': team,
+        'roster': roster,
+        'roster_data_json': json.dumps(roster_data),
+        'event_time_display': event_time_display,
+        'display_tz': display_tz,
+        'allow_four_outfielders': show_four_outfielders,
+        'allow_rover_position': allow_rover_position,
+        'allow_benched_players': allow_benched_players,
+        'innings_per_game': innings_per_game,
+        'innings_range': range(1, innings_per_game + 1)
+    })
+
+
+def save_roster_position(request, team_secret, roster_id):
+    """Save a player position assignment to a roster"""
+    from django.shortcuts import get_object_or_404
+    from django.http import JsonResponse
+    from .models import Roster, Team
+    import json
+
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=405)
+
+    # Get the team by manager_secret
+    team = get_object_or_404(Team, manager_secret=team_secret)
+
+    # Get the roster
+    roster = get_object_or_404(Roster, id=roster_id, team=team)
+
+    try:
+        # Get the data from the request
+        inning = request.POST.get('inning')
+        position = request.POST.get('position')
+        player_id = request.POST.get('player_id', '')
+
+        if not inning or not position:
+            return JsonResponse({'success': False, 'error': 'Missing required fields'}, status=400)
+
+        # Get the inning field name
+        inning_field = f'inning_{inning}'
+
+        # Get current inning data
+        current_data = getattr(roster, inning_field) or {}
+
+        # Update or remove the position
+        if player_id:
+            current_data[position] = player_id
+        else:
+            # Remove the position if player_id is empty (unassigning)
+            current_data.pop(position, None)
+
+        # Save back to roster
+        setattr(roster, inning_field, current_data)
+        roster.save()
+
+        return JsonResponse({'success': True})
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
 def export_team_roster_csv(request, team_secret):
@@ -2474,6 +2835,10 @@ def managers_list_view(request):
     total_teams = Team.objects.count()
     manager_team_mismatch = total_managers != total_teams
 
+    # Get visibility settings
+    show_preseason = GeneralSetting.objects.filter(key='show_preseason_items').first()
+    show_testing = GeneralSetting.objects.filter(key='show_testing_items').first()
+
     context = {
         'page_obj': page_obj,
         'search_query': search_query,
@@ -2482,7 +2847,9 @@ def managers_list_view(request):
         'total_managers': total_managers,
         'total_teams': total_teams,
         'manager_team_mismatch': manager_team_mismatch,
-        'unassigned_teams': unassigned_teams
+        'unassigned_teams': unassigned_teams,
+        'show_preseason_items': show_preseason.value.lower() == 'true' if show_preseason else True,
+        'show_testing_items': show_testing.value.lower() == 'true' if show_testing else True,
     }
     return render(request, 'players/managers_list.html', context)
 
@@ -2618,6 +2985,10 @@ def teams_list_view(request):
     # Get all teams with manager info for the secrets modal
     all_teams = Team.objects.select_related('manager').filter(manager__isnull=False).order_by('name')
 
+    # Get visibility settings
+    show_preseason = GeneralSetting.objects.filter(key='show_preseason_items').first()
+    show_testing = GeneralSetting.objects.filter(key='show_testing_items').first()
+
     context = {
         'page_obj': page_obj,
         'search_query': search_query,
@@ -2625,7 +2996,9 @@ def teams_list_view(request):
         'order': order,
         'total_teams': Team.objects.count(),
         'unassigned_managers': unassigned_managers,
-        'all_teams': all_teams
+        'all_teams': all_teams,
+        'show_preseason_items': show_preseason.value.lower() == 'true' if show_preseason else True,
+        'show_testing_items': show_testing.value.lower() == 'true' if show_testing else True,
     }
     return render(request, 'players/teams_list.html', context)
 
@@ -3537,6 +3910,14 @@ def run_draft_view(request):
         'drafted_players_count': drafted_players_count,
         'remaining_players_count': remaining_players_count,
     }
+
+    # Get visibility settings
+    show_preseason = GeneralSetting.objects.filter(key='show_preseason_items').first()
+    show_testing = GeneralSetting.objects.filter(key='show_testing_items').first()
+
+    context['show_preseason_items'] = show_preseason.value.lower() == 'true' if show_preseason else True
+    context['show_testing_items'] = show_testing.value.lower() == 'true' if show_testing else True
+
     return render(request, 'players/run_draft.html', context)
 
 
@@ -5355,9 +5736,7 @@ def calendar_events_api(request):
     from datetime import datetime
 
     # Get display timezone
-    tz_setting = GeneralSetting.objects.filter(key='timezone').first()
-    timezone_str = tz_setting.value if tz_setting else 'UTC'
-    display_tz = pytz.timezone(timezone_str)
+    display_tz = get_display_timezone()
 
     # Get all events
     events = Event.objects.select_related('event_type').all()
@@ -5386,10 +5765,17 @@ def calendar_events_api(request):
             event_dict['end'] = display_tz.localize(end_datetime).isoformat()
             event_dict['allDay'] = True
 
-        # Add color from event type
+        # Add color and icon from event type
         if event.event_type:
             event_dict['backgroundColor'] = event.event_type.color
             event_dict['borderColor'] = event.event_type.color
+            event_dict['icon'] = event.event_type.bootstrap_icon_id
+
+        # Add location and description for tooltips
+        if event.location:
+            event_dict['location'] = event.location
+        if event.description:
+            event_dict['description'] = event.description
 
         events_data.append(event_dict)
 
@@ -5585,12 +5971,14 @@ def create_event_type_view(request):
 @csrf_exempt
 def create_event_view(request):
     """Create a new event"""
-    from .models import Event, EventType
+    from .models import Event, EventType, Team
     from datetime import datetime
 
     try:
         name = request.POST.get('name', '').strip()
         event_type_id = request.POST.get('event_type_id', '').strip()
+        home_team_id = request.POST.get('home_team_id', '').strip()
+        away_team_id = request.POST.get('away_team_id', '').strip()
         location = request.POST.get('location', '').strip()
         timestamp_str = request.POST.get('timestamp', '').strip()
         end_date_str = request.POST.get('end_date', '').strip()
@@ -5611,17 +5999,46 @@ def create_event_view(request):
                 'error': 'Invalid event type selected.'
             }, status=400)
 
-        # Parse the timestamp (format: YYYY-MM-DDTHH:MM from datetime-local input)
+        # Get home and away teams if provided
+        home_team = None
+        away_team = None
+        if home_team_id:
+            try:
+                home_team = Team.objects.get(id=home_team_id)
+            except Team.DoesNotExist:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Invalid home team selected.'
+                }, status=400)
+        if away_team_id:
+            try:
+                away_team = Team.objects.get(id=away_team_id)
+            except Team.DoesNotExist:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Invalid away team selected.'
+                }, status=400)
+
+        # Parse the timestamp (format: YYYY-MM-DDTHH:MM from datetime-local input, or just YYYY-MM-DD for date-only)
         try:
-            # Parse as naive datetime first
-            naive_timestamp = datetime.fromisoformat(timestamp_str)
             # Get display timezone
             from .models import GeneralSetting
             import pytz
             display_tz_setting = GeneralSetting.objects.filter(key='display_timezone').first()
             display_tz = pytz.timezone(display_tz_setting.value) if display_tz_setting else pytz.UTC
-            # Localize to display timezone, then convert to UTC for storage
-            timestamp = display_tz.localize(naive_timestamp)
+
+            # Check if this is date-only (no 'T' separator) or date-time
+            if 'T' in timestamp_str:
+                # Has time component - parse and localize normally
+                naive_timestamp = datetime.fromisoformat(timestamp_str)
+                timestamp = display_tz.localize(naive_timestamp)
+            else:
+                # Date only - create a timezone-aware datetime at midnight in the display timezone
+                # This ensures all-day events display consistently
+                from datetime import date
+                date_only = date.fromisoformat(timestamp_str)
+                naive_midnight = datetime.combine(date_only, datetime.min.time())
+                timestamp = display_tz.localize(naive_midnight)
         except ValueError:
             return JsonResponse({
                 'success': False,
@@ -5644,6 +6061,8 @@ def create_event_view(request):
         event = Event.objects.create(
             name=name,
             event_type=event_type,
+            home_team=home_team,
+            away_team=away_team,
             location=location if location else None,
             timestamp=timestamp,
             end_date=end_date,
@@ -5660,6 +6079,155 @@ def create_event_view(request):
         return JsonResponse({
             'success': False,
             'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
+@require_http_methods(["POST"])
+@csrf_exempt
+def parse_natural_language_event_view(request):
+    """Parse natural language event input and return structured data"""
+    import dateparser
+    import re
+    from datetime import datetime
+    from .models import GeneralSetting
+    import pytz
+
+    try:
+        text = request.POST.get('text', '').strip()
+
+        if not text:
+            return JsonResponse({
+                'success': False,
+                'error': 'Please provide event text to parse.'
+            }, status=400)
+
+        # Get display timezone for parsing
+        display_tz_setting = GeneralSetting.objects.filter(key='display_timezone').first()
+        display_tz = pytz.timezone(display_tz_setting.value) if display_tz_setting else pytz.UTC
+
+        # Parse the datetime from the text
+        # Use PREFER_DATES_FROM='future' to prefer future dates
+
+        # First, try to parse the full text as-is
+        parsed_datetime = dateparser.parse(
+            text,
+            settings={
+                'PREFER_DATES_FROM': 'future',
+                'TIMEZONE': display_tz.zone,
+                'RETURN_AS_TIMEZONE_AWARE': True,
+                'TO_TIMEZONE': display_tz.zone,
+                'STRICT_PARSING': False,
+                'RELATIVE_BASE': datetime.now(display_tz)
+            }
+        )
+
+        # If that failed, try to extract just the date/time portion using regex
+        if not parsed_datetime:
+            # Look for common date patterns
+            date_patterns = [
+                r'\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?(?:\s+(?:at\s+)?\d{1,2}(?::\d{2})?\s*(?:am|pm|AM|PM)?)?',  # 1/19/26 or 1/19/26 at 3pm
+                r'(?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2}(?:st|nd|rd|th)?(?:,?\s+\d{2,4})?(?:\s+(?:at\s+)?\d{1,2}(?::\d{2})?\s*(?:am|pm|AM|PM)?)?',  # January 19th, 2026 at 3pm
+                r'(?:tomorrow|today|tonight)(?:\s+(?:at\s+)?\d{1,2}(?::\d{2})?\s*(?:am|pm|AM|PM)?)?',  # tomorrow at 3pm
+                r'(?:next|this|last)\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)(?:\s+(?:at\s+)?\d{1,2}(?::\d{2})?\s*(?:am|pm|AM|PM)?)?',  # next Tuesday at 7pm
+            ]
+
+            extracted_date = None
+            for pattern in date_patterns:
+                match = re.search(pattern, text, re.IGNORECASE)
+                if match:
+                    extracted_date = match.group(0)
+                    break
+
+            # If we found a date pattern, try parsing just that part
+            if extracted_date:
+                parsed_datetime = dateparser.parse(
+                    extracted_date,
+                    settings={
+                        'PREFER_DATES_FROM': 'future',
+                        'TIMEZONE': display_tz.zone,
+                        'RETURN_AS_TIMEZONE_AWARE': True,
+                        'TO_TIMEZONE': display_tz.zone,
+                        'STRICT_PARSING': False,
+                        'RELATIVE_BASE': datetime.now(display_tz)
+                    }
+                )
+
+        if not parsed_datetime:
+            return JsonResponse({
+                'success': False,
+                'error': f'Could not parse a date from: "{text}". Try formats like "tomorrow at 3pm", "1/19/2025", "January 19th at 7pm", or "next Tuesday".'
+            }, status=400)
+
+        # Simple heuristic to extract event name
+        # Remove common date/time words and patterns
+        name = text
+
+        # Remove date patterns like "next Tuesday", "tomorrow", "1/15", etc.
+        date_patterns = [
+            r'\b(next|this|last)\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b',
+            r'\b(today|tomorrow|tonight)\b',
+            r'\b(january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2}(st|nd|rd|th)?(,?\s+\d{2,4})?\b',
+            r'\b\d{1,2}[/-]\d{1,2}([/-]\d{2,4})?\b',
+            r'\bin\s+\d+\s+(day|days|week|weeks|month|months)\b',
+            r'\bon\s+\d{1,2}[/-]\d{1,2}([/-]\d{2,4})?\b'
+        ]
+
+        # Remove time patterns like "at 3pm", "7:00 PM", etc.
+        time_patterns = [
+            r'\bat\s+\d{1,2}(:\d{2})?\s*(am|pm|AM|PM)?\b',
+            r'\b\d{1,2}(:\d{2})?\s*(am|pm|AM|PM)\b'
+        ]
+
+        # Remove location patterns like "at WUES", "at the gym"
+        location_patterns = [
+            r'\bat\s+[A-Z]{2,}\b',  # at WUES, at YMCA
+            r'\bat\s+the\s+\w+\b'    # at the gym, at the park
+        ]
+
+        # Try to extract location before removing it
+        location = ''
+        location_match = re.search(r'\bat\s+([A-Z]{2,}|the\s+\w+)\b', text, re.IGNORECASE)
+        if location_match:
+            location = location_match.group(1).strip()
+
+        # Remove all patterns to get event name
+        for pattern in date_patterns + time_patterns + location_patterns:
+            name = re.sub(pattern, '', name, flags=re.IGNORECASE)
+
+        # Clean up the name
+        name = re.sub(r'\s+', ' ', name).strip()  # Remove extra whitespace
+        name = re.sub(r'^(at|on|in)\s+', '', name, flags=re.IGNORECASE)  # Remove leading prepositions
+
+        if not name:
+            name = 'New Event'
+
+        # Check if a time was explicitly mentioned in the text
+        has_time = bool(re.search(r'\d{1,2}(:\d{2})?\s*(am|pm|AM|PM)', text, re.IGNORECASE))
+
+        # Format the datetime for the form
+        # If no time was specified, only return the date (which will leave time blank in form)
+        if has_time:
+            formatted_datetime = parsed_datetime.strftime('%Y-%m-%dT%H:%M')
+            display_format = parsed_datetime.strftime('%A, %B %d, %Y at %I:%M %p')
+        else:
+            # Only date, no time
+            formatted_datetime = parsed_datetime.strftime('%Y-%m-%d')
+            display_format = parsed_datetime.strftime('%A, %B %d, %Y')
+
+        return JsonResponse({
+            'success': True,
+            'name': name,
+            'timestamp': formatted_datetime,
+            'location': location,
+            'parsed_datetime_display': display_format
+        })
+
+    except Exception as e:
+        import traceback
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred while parsing: {str(e)}',
+            'traceback': traceback.format_exc()
         }, status=500)
 
 
@@ -5689,6 +6257,29 @@ def get_event_types_view(request):
         }, status=500)
 
 
+def get_teams_api_view(request):
+    """Get all teams for dropdown"""
+    from .models import Team
+
+    try:
+        teams = Team.objects.all().order_by('name')
+        teams_data = [{
+            'id': team.id,
+            'name': team.name
+        } for team in teams]
+
+        return JsonResponse({
+            'success': True,
+            'teams': teams_data
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
 @require_http_methods(["POST"])
 @csrf_exempt
 def update_event_type_view(request):
@@ -5696,12 +6287,12 @@ def update_event_type_view(request):
     from .models import EventType
 
     try:
-        event_type_id = request.POST.get('id', '').strip()
+        event_type_id = request.POST.get('event_type_id', '').strip()
         name = request.POST.get('name', '').strip()
         bootstrap_icon_id = request.POST.get('bootstrap_icon_id', '').strip()
         color = request.POST.get('color', '#0d6efd').strip()
 
-        if not event_type_id or not name or not bootstrap_icon_id:
+        if not event_type_id or not name:
             return JsonResponse({
                 'success': False,
                 'error': 'Please provide all required fields.'
@@ -5736,15 +6327,61 @@ def update_event_type_view(request):
 
 @require_http_methods(["POST"])
 @csrf_exempt
+def delete_event_type_view(request):
+    """Delete an event type and remove it from all events"""
+    from .models import EventType, Event
+
+    try:
+        event_type_id = request.POST.get('event_type_id', '').strip()
+
+        if not event_type_id:
+            return JsonResponse({
+                'success': False,
+                'error': 'Event type ID is required.'
+            }, status=400)
+
+        # Get the event type
+        try:
+            event_type = EventType.objects.get(id=event_type_id)
+        except EventType.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': 'Event type not found.'
+            }, status=404)
+
+        event_type_name = event_type.name
+
+        # Remove this event type from all events
+        Event.objects.filter(event_type=event_type).update(event_type=None)
+
+        # Delete the event type
+        event_type.delete()
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Event type "{event_type_name}" deleted successfully!'
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
+@require_http_methods(["POST"])
+@csrf_exempt
 def update_event_view(request):
     """Update an existing event"""
-    from .models import Event, EventType
+    from .models import Event, EventType, Team
     from datetime import datetime
 
     try:
-        event_id = request.POST.get('id', '').strip()
+        event_id = request.POST.get('event_id', '').strip()
         name = request.POST.get('name', '').strip()
-        event_type_id = request.POST.get('event_type', '').strip()
+        event_type_id = request.POST.get('event_type_id', '').strip()
+        home_team_id = request.POST.get('home_team_id', '').strip()
+        away_team_id = request.POST.get('away_team_id', '').strip()
         location = request.POST.get('location', '').strip()
         timestamp_str = request.POST.get('timestamp', '').strip()
         end_date_str = request.POST.get('end_date', '').strip()
@@ -5776,17 +6413,46 @@ def update_event_view(request):
                     'error': 'Invalid event type selected.'
                 }, status=400)
 
+        # Validate home and away teams if provided
+        home_team = None
+        away_team = None
+        if home_team_id:
+            try:
+                home_team = Team.objects.get(id=home_team_id)
+            except Team.DoesNotExist:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Invalid home team selected.'
+                }, status=400)
+        if away_team_id:
+            try:
+                away_team = Team.objects.get(id=away_team_id)
+            except Team.DoesNotExist:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Invalid away team selected.'
+                }, status=400)
+
         # Parse the timestamp
         try:
-            # Parse as naive datetime first
-            naive_timestamp = datetime.fromisoformat(timestamp_str)
             # Get display timezone
             from .models import GeneralSetting
             import pytz
             display_tz_setting = GeneralSetting.objects.filter(key='display_timezone').first()
             display_tz = pytz.timezone(display_tz_setting.value) if display_tz_setting else pytz.UTC
-            # Localize to display timezone, then convert to UTC for storage
-            timestamp = display_tz.localize(naive_timestamp)
+
+            # Check if this is date-only (no 'T' separator) or date-time
+            if 'T' in timestamp_str:
+                # Has time component - parse and localize normally
+                naive_timestamp = datetime.fromisoformat(timestamp_str)
+                timestamp = display_tz.localize(naive_timestamp)
+            else:
+                # Date only - create a timezone-aware datetime at midnight in the display timezone
+                # This ensures all-day events display consistently
+                from datetime import date
+                date_only = date.fromisoformat(timestamp_str)
+                naive_midnight = datetime.combine(date_only, datetime.min.time())
+                timestamp = display_tz.localize(naive_midnight)
         except ValueError:
             return JsonResponse({
                 'success': False,
@@ -5808,6 +6474,8 @@ def update_event_view(request):
         # Update the event
         event.name = name
         event.event_type = event_type
+        event.home_team = home_team
+        event.away_team = away_team
         event.location = location if location else None
         event.timestamp = timestamp
         event.end_date = end_date
@@ -5856,6 +6524,7 @@ def get_event_view(request):
                 'id': event.id,
                 'name': event.name,
                 'event_type_id': event.event_type.id if event.event_type else None,
+                'team_id': event.team.id if event.team else None,
                 'location': event.location or '',
                 'timestamp': event.timestamp.isoformat(),
                 'end_date': event.end_date.isoformat() if event.end_date else '',
@@ -5877,7 +6546,7 @@ def delete_event_view(request):
     from .models import Event
 
     try:
-        event_id = request.POST.get('id', '').strip()
+        event_id = request.POST.get('event_id', '').strip()
 
         if not event_id:
             return JsonResponse({
@@ -5919,12 +6588,13 @@ def move_event_date_view(request):
 
     try:
         event_id = request.POST.get('event_id', '').strip()
-        new_date = request.POST.get('new_date', '').strip()
+        timestamp_str = request.POST.get('timestamp', '').strip()
+        end_date_str = request.POST.get('end_date', '').strip()
 
-        if not event_id or not new_date:
+        if not event_id or not timestamp_str:
             return JsonResponse({
                 'success': False,
-                'error': 'Event ID and new date are required.'
+                'error': 'Event ID and timestamp are required.'
             }, status=400)
 
         # Get the event
@@ -5937,42 +6607,27 @@ def move_event_date_view(request):
             }, status=404)
 
         # Get the timezone setting
-        try:
-            tz_setting = GeneralSetting.objects.get(key='timezone')
-            tz = pytz.timezone(tz_setting.value)
-        except (GeneralSetting.DoesNotExist, pytz.exceptions.UnknownTimeZoneError):
-            tz = pytz.UTC
+        tz = get_display_timezone()
 
-        # Parse the existing timestamp to get the time in the display timezone
-        existing_dt = event.timestamp.astimezone(tz)
-        existing_time = existing_dt.time()
-
-        # Log original timestamp
+        # Parse the ISO timestamp from FullCalendar
+        # It comes as ISO string like "2025-01-15T10:00:00-06:00"
         import logging
         logger = logging.getLogger(__name__)
-        logger.info(f"Moving event {event.id}: Original timestamp UTC: {event.timestamp}, Display TZ: {tz}, Local time: {existing_dt}")
+        logger.info(f"Moving event {event.id}: New timestamp: {timestamp_str}")
 
-        # Parse the new date (YYYY-MM-DD format)
-        new_date_obj = datetime.strptime(new_date, '%Y-%m-%d').date()
-        logger.info(f"New date parsed: {new_date_obj}, Existing time in display TZ: {existing_time}")
-
-        # Combine new date with existing time in the display timezone
-        # This creates a naive datetime representing the local time
-        naive_dt = datetime.combine(new_date_obj, existing_time)
-        logger.info(f"Combined naive datetime (to be interpreted as {tz}): {naive_dt}")
-
-        # Try to localize, handling DST ambiguity
-        try:
-            new_dt = tz.localize(naive_dt, is_dst=None)
-        except:
-            # If ambiguous, use is_dst=False (standard time)
-            new_dt = tz.localize(naive_dt, is_dst=False)
-
-        logger.info(f"Localized datetime in {tz}: {new_dt}")
-        logger.info(f"Converting to UTC: {new_dt.astimezone(pytz.UTC)}")
+        # Parse the timestamp (it's in ISO format with timezone)
+        new_dt = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
 
         # Update the event timestamp
         event.timestamp = new_dt
+
+        # Update end_date if provided
+        if end_date_str:
+            from datetime import date
+            event.end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+        else:
+            event.end_date = None
+
         event.save()
 
         # Verify what was saved
@@ -5981,9 +6636,12 @@ def move_event_date_view(request):
         logger.info(f"Saved timestamp in display TZ ({tz}): {event.timestamp.astimezone(tz)}")
         logger.info(f"Day extracted from display TZ: {event.timestamp.astimezone(tz).day}")
 
+        # Format date for success message
+        display_date = event.timestamp.astimezone(tz).strftime('%Y-%m-%d')
+
         return JsonResponse({
             'success': True,
-            'message': f'Event "{event.name}" moved to {new_date} successfully!'
+            'message': f'Event "{event.name}" moved to {display_date} successfully!'
         })
 
     except Exception as e:
@@ -6257,6 +6915,129 @@ def set_draft_order_and_daughters_view(request):
 
 @require_http_methods(["GET"])
 @csrf_exempt
+def export_priority_scores_view(request):
+    """
+    Export priority scores for all teams as a CSV file
+    """
+    from .models import Team, Player, PlayerRanking, ManagerDaughterRanking
+    from collections import defaultdict
+    import csv
+    from django.http import HttpResponse
+
+    try:
+        # Step 1: Get all teams with managers who have daughters
+        teams_with_daughters = Team.objects.filter(
+            manager__isnull=False,
+            manager__daughter__isnull=False
+        ).select_related('manager', 'manager__daughter').distinct()
+
+        if not teams_with_daughters.exists():
+            return HttpResponse(
+                'No teams with manager\'s daughters found',
+                status=400
+            )
+
+        # Step 2: Calculate Borda counts for all players in player_rankings
+        all_player_rankings = PlayerRanking.objects.all()
+        player_borda_scores = defaultdict(int)
+
+        for ranking in all_player_rankings:
+            rankings_list = json.loads(ranking.ranking)
+            num_players = len(rankings_list)
+            for idx, item in enumerate(rankings_list):
+                player_id = item['player_id']
+                player_borda_scores[player_id] += (num_players - idx)
+
+        # Step 3: Calculate Borda counts for manager's daughters
+        all_daughter_rankings = ManagerDaughterRanking.objects.all()
+        daughter_borda_scores = defaultdict(int)
+
+        for ranking in all_daughter_rankings:
+            rankings_list = json.loads(ranking.ranking)
+            num_daughters = len(rankings_list)
+            for idx, item in enumerate(rankings_list):
+                player_id = item['player_id']
+                daughter_borda_scores[player_id] += (num_daughters - idx)
+
+        # Step 4: Calculate draft order priority for each team
+        team_priorities = []
+
+        for team in teams_with_daughters:
+            daughter = team.manager.daughter
+            daughter_id = daughter.id
+
+            # Check if daughter is in top players (player_rankings)
+            in_top_players = daughter_id in player_borda_scores
+
+            if in_top_players:
+                # Elite daughter - picks later
+                overall_borda = player_borda_scores[daughter_id]
+                daughter_borda = daughter_borda_scores.get(daughter_id, 0)
+                priority_score = overall_borda - (daughter_borda * 0.5)
+                classification = "Elite Daughter"
+            else:
+                # Non-elite daughter - picks earlier
+                daughter_borda = daughter_borda_scores.get(daughter_id, 0)
+                priority_score = -(daughter_borda)
+                classification = "Non-Elite Daughter"
+
+            team_priorities.append({
+                'team_name': team.name,
+                'manager_name': f"{team.manager.first_name} {team.manager.last_name}",
+                'daughter_name': f"{daughter.first_name} {daughter.last_name}",
+                'classification': classification,
+                'priority_score': priority_score,
+                'overall_borda': player_borda_scores.get(daughter_id, 0),
+                'daughter_borda': daughter_borda_scores.get(daughter_id, 0)
+            })
+
+        # Step 5: Sort teams by priority score (lowest = picks first)
+        team_priorities.sort(key=lambda x: x['priority_score'])
+
+        # Add draft position after sorting
+        for idx, item in enumerate(team_priorities, start=1):
+            item['draft_position'] = idx
+
+        # Step 6: Create CSV response
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="draft_priority_scores.csv"'
+
+        writer = csv.writer(response)
+        writer.writerow([
+            'Draft Position',
+            'Team Name',
+            'Manager Name',
+            'Daughter Name',
+            'Classification',
+            'Priority Score',
+            'Overall Borda Score',
+            'Daughter Borda Score'
+        ])
+
+        for item in team_priorities:
+            writer.writerow([
+                item['draft_position'],
+                item['team_name'],
+                item['manager_name'],
+                item['daughter_name'],
+                item['classification'],
+                f"{item['priority_score']:.2f}",
+                item['overall_borda'],
+                item['daughter_borda']
+            ])
+
+        return response
+
+    except Exception as e:
+        import traceback
+        return HttpResponse(
+            f'An error occurred: {str(e)}\n\n{traceback.format_exc()}',
+            status=500
+        )
+
+
+@require_http_methods(["GET"])
+@csrf_exempt
 def get_draft_order_view(request):
     """Get current draft order with team details"""
     from .models import Draft, Team
@@ -6440,3 +7221,208 @@ def execute_trade_view(request):
         return JsonResponse({'success': False, 'error': 'Player not found'}, status=404)
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@csrf_exempt
+def create_background_check_view(request):
+    """Create a new background check record"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=400)
+
+    try:
+        import json
+        from .models import BackgroundCheck
+
+        data = json.loads(request.body)
+        team_secret = data.get('team_secret')
+        first_name = data.get('first_name')
+        last_name = data.get('last_name')
+        player_id = data.get('player_id')
+        clearance_date = data.get('clearance_date')
+        comments = data.get('comments', '')
+
+        # Validate required fields
+        if not all([team_secret, first_name, last_name, player_id, clearance_date]):
+            return JsonResponse({'success': False, 'error': 'Missing required fields'}, status=400)
+
+        # Get the team
+        try:
+            team = Team.objects.get(manager_secret=team_secret)
+        except Team.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Team not found'}, status=404)
+
+        # Get the player
+        try:
+            player = Player.objects.get(id=player_id, team=team)
+        except Player.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Player not found or does not belong to this team'}, status=404)
+
+        # Create the background check
+        background_check = BackgroundCheck.objects.create(
+            first_name=first_name,
+            last_name=last_name,
+            player=player,
+            clearance_date=clearance_date,
+            comments=comments,
+            team=team
+        )
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Background check created successfully',
+            'background_check_id': background_check.id
+        })
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@csrf_exempt
+def update_background_check_view(request, background_check_id):
+    """Update an existing background check record"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=400)
+
+    try:
+        import json
+        from .models import BackgroundCheck
+
+        data = json.loads(request.body)
+        first_name = data.get('first_name')
+        last_name = data.get('last_name')
+        player_id = data.get('player_id')
+        clearance_date = data.get('clearance_date')
+        comments = data.get('comments', '')
+
+        # Validate required fields
+        if not all([first_name, last_name, player_id, clearance_date]):
+            return JsonResponse({'success': False, 'error': 'Missing required fields'}, status=400)
+
+        # Get the background check
+        try:
+            background_check = BackgroundCheck.objects.get(id=background_check_id)
+        except BackgroundCheck.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Background check not found'}, status=404)
+
+        # Get the player
+        try:
+            player = Player.objects.get(id=player_id, team=background_check.team)
+        except Player.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Player not found or does not belong to this team'}, status=404)
+
+        # Update the background check
+        background_check.first_name = first_name
+        background_check.last_name = last_name
+        background_check.player = player
+        background_check.clearance_date = clearance_date
+        background_check.comments = comments
+        background_check.save()
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Background check updated successfully'
+        })
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@csrf_exempt
+def delete_background_check_view(request, background_check_id):
+    """Delete a background check record"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=400)
+
+    try:
+        from .models import BackgroundCheck
+
+        # Get the background check
+        try:
+            background_check = BackgroundCheck.objects.get(id=background_check_id)
+        except BackgroundCheck.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Background check not found'}, status=404)
+
+        # Delete the background check
+        background_check.delete()
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Background check deleted successfully'
+        })
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+def get_general_setting(request):
+    """Get a general setting value by key"""
+    from django.http import JsonResponse
+    from .models import GeneralSetting
+
+    try:
+        key = request.GET.get('key', '').strip()
+
+        if not key:
+            return JsonResponse({
+                'success': False,
+                'error': 'Please provide a setting key.'
+            }, status=400)
+
+        setting = GeneralSetting.objects.filter(key=key).first()
+
+        if setting:
+            return JsonResponse({
+                'success': True,
+                'key': setting.key,
+                'value': setting.value
+            })
+        else:
+            return JsonResponse({
+                'success': True,
+                'key': key,
+                'value': None
+            })
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
+@require_http_methods(["POST"])
+def save_general_setting(request):
+    """Save a general setting"""
+    from django.http import JsonResponse
+    from .models import GeneralSetting
+
+    try:
+        key = request.POST.get('key', '').strip()
+        value = request.POST.get('value', '').strip()
+
+        if not key:
+            return JsonResponse({
+                'success': False,
+                'error': 'Please provide a setting key.'
+            }, status=400)
+
+        # Update or create the setting
+        setting, created = GeneralSetting.objects.update_or_create(
+            key=key,
+            defaults={'value': value}
+        )
+
+        action = "created" if created else "updated"
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Setting {action} successfully!',
+            'key': key,
+            'value': value
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'An error occurred: {str(e)}'
+        }, status=500)

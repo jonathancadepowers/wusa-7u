@@ -1,0 +1,824 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4 mb-5">
+    <!-- Game Info Header -->
+    <div class="card mb-4">
+        <div class="card-body py-3">
+            <div class="row align-items-center text-center">
+                <div class="col-md-5">
+                    <h5 class="mb-0 text-primary fw-bold">{{ roster.event.home_team.name }}</h5>
+                    <small class="text-muted">Home</small>
+                </div>
+                <div class="col-md-2">
+                    <span class="badge bg-secondary fs-6">VS</span>
+                </div>
+                <div class="col-md-5">
+                    <h5 class="mb-0 text-danger fw-bold">{{ roster.event.away_team.name }}</h5>
+                    <small class="text-muted">Away</small>
+                </div>
+            </div>
+            <hr class="my-2">
+            <div class="row text-center">
+                <div class="col-md-6">
+                    <small class="text-muted"><i class="bi bi-clock"></i> {{ event_time_display|date:"m/d/y, g:i A" }}</small>
+                </div>
+                <div class="col-md-6">
+                    <small class="text-muted"><i class="bi bi-geo-alt"></i> {{ roster.event.location|default:"TBD" }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Innings Tabs -->
+    <ul class="nav nav-tabs mt-4" id="inningTabs" role="tablist">
+        {% for inning in innings_range %}
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if inning == 1 %}active{% endif %} inning-tab" id="inning{{ inning }}-tab" data-bs-toggle="tab" data-bs-target="#inning{{ inning }}" type="button" role="tab" data-inning="{{ inning }}">
+                <span class="inning-label">Inning {{ inning }}</span>
+                <i class="bi bi-check-circle-fill validation-icon valid-icon"></i>
+                <i class="bi bi-x-circle-fill validation-icon invalid-icon"></i>
+            </button>
+        </li>
+        {% endfor %}
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content mt-4" id="inningTabContent">
+        {% for inning in innings_range %}
+        <div class="tab-pane fade {% if inning == 1 %}show active{% endif %}" id="inning{{ inning }}" role="tabpanel">
+            <div class="row g-3">
+                <!-- Left Column: Player List -->
+                <div class="col-md-6">
+                    <div class="roster-section">
+                        <h5 class="section-header">Available Players</h5>
+                        <div class="player-list" id="playerList{{ inning }}">
+                            {% for player in team.players.all %}
+                            <div class="player-card" draggable="true" data-player-id="{{ player.id }}" data-player-name="{{ player.first_name }} {{ player.last_name }}">
+                                {{ player.first_name }} {{ player.last_name }}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Baseball Field -->
+                <div class="col-md-6">
+                    <div class="roster-section">
+                        <h5 class="section-header">Field Positions</h5>
+                        <div class="baseball-field" data-inning="{{ inning }}">
+        <svg viewBox="0 0 600 625" class="field-svg">
+            <!-- Infield dirt (90 foot diamond + extended areas) -->
+            <path d="M 300 550.625 L 70 392.5 L 300 234.375 L 530 392.5 Z"
+                  fill="#d4a574" stroke="none"/>
+
+            <!-- Dirt cutout around pitcher/home plate -->
+            <ellipse cx="300" cy="550.625" rx="86.25" ry="57.5" fill="#d4a574" stroke="none"/>
+            <circle cx="300" cy="392.5" r="43.125" fill="#d4a574" stroke="none"/>
+
+            <!-- Basepaths (dirt lines) -->
+            <line x1="300" y1="550.625" x2="70" y2="392.5" stroke="#c19a6b" stroke-width="5"/>
+            <line x1="300" y1="550.625" x2="530" y2="392.5" stroke="#c19a6b" stroke-width="5"/>
+            <line x1="70" y1="392.5" x2="300" y2="234.375" stroke="#c19a6b" stroke-width="5"/>
+            <line x1="530" y1="392.5" x2="300" y2="234.375" stroke="#c19a6b" stroke-width="5"/>
+
+            <!-- Pitcher's mound -->
+            <circle cx="300" cy="392.5" r="31.625" fill="#b8885c" stroke="#a67c52" stroke-width="2"/>
+
+            <!-- Bases -->
+            <rect x="295" y="229.375" width="10" height="10" fill="white" stroke="#999" stroke-width="1" transform="rotate(45 300 234.375)"/>
+            <rect x="525" y="387.5" width="10" height="10" fill="white" stroke="#999" stroke-width="1" transform="rotate(45 530 392.5)"/>
+            <rect x="65" y="387.5" width="10" height="10" fill="white" stroke="#999" stroke-width="1" transform="rotate(45 70 392.5)"/>
+
+            <!-- Home plate -->
+            <polygon points="300,561.875 294.25,555 294.25,550.625 305.75,550.625 305.75,555" fill="white" stroke="#999" stroke-width="1"/>
+
+            <!-- Position markers (drop zones) -->
+            <!-- Outfielders - spread far out and deeper -->
+            {% if allow_four_outfielders %}
+            <!-- Four Outfielders Layout -->
+            <g class="position-marker" data-position="LF" draggable="true">
+                <circle cx="70" cy="113.125" r="40" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
+                <text x="70" y="119.125" text-anchor="middle" font-size="14" font-weight="bold" fill="#666" class="position-label">LF</text>
+                <text x="70" y="168.125" text-anchor="middle" font-size="11" fill="#333" class="player-name-display"></text>
+                <g class="remove-player-btn" style="display: none; cursor: pointer;">
+                    <circle cx="98" cy="85.125" r="12" fill="#dc3545" stroke="white" stroke-width="2"/>
+                    <text x="98" y="91.125" text-anchor="middle" font-size="16" font-weight="bold" fill="white">×</text>
+                </g>
+            </g>
+
+            <g class="position-marker" data-position="CF-L" draggable="true">
+                <circle cx="220" cy="79.375" r="40" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
+                <text x="220" y="85.375" text-anchor="middle" font-size="14" font-weight="bold" fill="#666" class="position-label">CF-L</text>
+                <text x="220" y="134.375" text-anchor="middle" font-size="11" fill="#333" class="player-name-display"></text>
+                <g class="remove-player-btn" style="display: none; cursor: pointer;">
+                    <circle cx="248" cy="51.375" r="12" fill="#dc3545" stroke="white" stroke-width="2"/>
+                    <text x="248" y="57.375" text-anchor="middle" font-size="16" font-weight="bold" fill="white">×</text>
+                </g>
+            </g>
+
+            <g class="position-marker" data-position="CF-R" draggable="true">
+                <circle cx="380" cy="79.375" r="40" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
+                <text x="380" y="85.375" text-anchor="middle" font-size="14" font-weight="bold" fill="#666" class="position-label">CF-R</text>
+                <text x="380" y="134.375" text-anchor="middle" font-size="11" fill="#333" class="player-name-display"></text>
+                <g class="remove-player-btn" style="display: none; cursor: pointer;">
+                    <circle cx="408" cy="51.375" r="12" fill="#dc3545" stroke="white" stroke-width="2"/>
+                    <text x="408" y="57.375" text-anchor="middle" font-size="16" font-weight="bold" fill="white">×</text>
+                </g>
+            </g>
+
+            <g class="position-marker" data-position="RF" draggable="true">
+                <circle cx="530" cy="113.125" r="40" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
+                <text x="530" y="119.125" text-anchor="middle" font-size="14" font-weight="bold" fill="#666" class="position-label">RF</text>
+                <text x="530" y="168.125" text-anchor="middle" font-size="11" fill="#333" class="player-name-display"></text>
+                <g class="remove-player-btn" style="display: none; cursor: pointer;">
+                    <circle cx="558" cy="85.125" r="12" fill="#dc3545" stroke="white" stroke-width="2"/>
+                    <text x="558" y="91.125" text-anchor="middle" font-size="16" font-weight="bold" fill="white">×</text>
+                </g>
+            </g>
+            {% else %}
+            <!-- Three Outfielders Layout -->
+            <g class="position-marker" data-position="LF" draggable="true">
+                <circle cx="70" cy="113.125" r="40" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
+                <text x="70" y="119.125" text-anchor="middle" font-size="14" font-weight="bold" fill="#666" class="position-label">LF</text>
+                <text x="70" y="168.125" text-anchor="middle" font-size="11" fill="#333" class="player-name-display"></text>
+                <g class="remove-player-btn" style="display: none; cursor: pointer;">
+                    <circle cx="98" cy="85.125" r="12" fill="#dc3545" stroke="white" stroke-width="2"/>
+                    <text x="98" y="91.125" text-anchor="middle" font-size="16" font-weight="bold" fill="white">×</text>
+                </g>
+            </g>
+
+            <g class="position-marker" data-position="CF" draggable="true">
+                <circle cx="300" cy="79.375" r="40" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
+                <text x="300" y="85.375" text-anchor="middle" font-size="14" font-weight="bold" fill="#666" class="position-label">CF</text>
+                <text x="300" y="134.375" text-anchor="middle" font-size="11" fill="#333" class="player-name-display"></text>
+                <g class="remove-player-btn" style="display: none; cursor: pointer;">
+                    <circle cx="328" cy="51.375" r="12" fill="#dc3545" stroke="white" stroke-width="2"/>
+                    <text x="328" y="57.375" text-anchor="middle" font-size="16" font-weight="bold" fill="white">×</text>
+                </g>
+            </g>
+
+            <g class="position-marker" data-position="RF" draggable="true">
+                <circle cx="530" cy="113.125" r="40" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
+                <text x="530" y="119.125" text-anchor="middle" font-size="14" font-weight="bold" fill="#666" class="position-label">RF</text>
+                <text x="530" y="168.125" text-anchor="middle" font-size="11" fill="#333" class="player-name-display"></text>
+                <g class="remove-player-btn" style="display: none; cursor: pointer;">
+                    <circle cx="558" cy="85.125" r="12" fill="#dc3545" stroke="white" stroke-width="2"/>
+                    <text x="558" y="91.125" text-anchor="middle" font-size="16" font-weight="bold" fill="white">×</text>
+                </g>
+            </g>
+            {% endif %}
+
+            <!-- Infielders - spread around diamond -->
+            <g class="position-marker" data-position="3B" draggable="true">
+                <circle cx="70" cy="392.5" r="40" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
+                <text x="70" y="398.5" text-anchor="middle" font-size="14" font-weight="bold" fill="#666" class="position-label">3B</text>
+                <text x="70" y="447.5" text-anchor="middle" font-size="11" fill="#333" class="player-name-display"></text>
+                <g class="remove-player-btn" style="display: none; cursor: pointer;">
+                    <circle cx="98" cy="364.5" r="12" fill="#dc3545" stroke="white" stroke-width="2"/>
+                    <text x="98" y="370.5" text-anchor="middle" font-size="16" font-weight="bold" fill="white">×</text>
+                </g>
+            </g>
+
+            <g class="position-marker" data-position="SS" draggable="true">
+                <circle cx="156.25" cy="284.6875" r="40" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
+                <text x="156.25" y="290.6875" text-anchor="middle" font-size="14" font-weight="bold" fill="#666" class="position-label">SS</text>
+                <text x="156.25" y="339.6875" text-anchor="middle" font-size="11" fill="#333" class="player-name-display"></text>
+                <g class="remove-player-btn" style="display: none; cursor: pointer;">
+                    <circle cx="184.25" cy="256.6875" r="12" fill="#dc3545" stroke="white" stroke-width="2"/>
+                    <text x="184.25" y="262.6875" text-anchor="middle" font-size="16" font-weight="bold" fill="white">×</text>
+                </g>
+            </g>
+
+            <g class="position-marker" data-position="2B" draggable="true">
+                <circle cx="443.75" cy="284.6875" r="40" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
+                <text x="443.75" y="290.6875" text-anchor="middle" font-size="14" font-weight="bold" fill="#666" class="position-label">2B</text>
+                <text x="443.75" y="339.6875" text-anchor="middle" font-size="11" fill="#333" class="player-name-display"></text>
+                <g class="remove-player-btn" style="display: none; cursor: pointer;">
+                    <circle cx="471.75" cy="256.6875" r="12" fill="#dc3545" stroke="white" stroke-width="2"/>
+                    <text x="471.75" y="262.6875" text-anchor="middle" font-size="16" font-weight="bold" fill="white">×</text>
+                </g>
+            </g>
+
+            <g class="position-marker" data-position="1B" draggable="true">
+                <circle cx="530" cy="392.5" r="40" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
+                <text x="530" y="398.5" text-anchor="middle" font-size="14" font-weight="bold" fill="#666" class="position-label">1B</text>
+                <text x="530" y="447.5" text-anchor="middle" font-size="11" fill="#333" class="player-name-display"></text>
+                <g class="remove-player-btn" style="display: none; cursor: pointer;">
+                    <circle cx="558" cy="364.5" r="12" fill="#dc3545" stroke="white" stroke-width="2"/>
+                    <text x="558" y="370.5" text-anchor="middle" font-size="16" font-weight="bold" fill="white">×</text>
+                </g>
+            </g>
+
+            <g class="position-marker" data-position="P" draggable="true">
+                <circle cx="300" cy="392.5" r="40" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
+                <text x="300" y="398.5" text-anchor="middle" font-size="14" font-weight="bold" fill="#666" class="position-label">P</text>
+                <text x="300" y="447.5" text-anchor="middle" font-size="11" fill="#333" class="player-name-display"></text>
+                <g class="remove-player-btn" style="display: none; cursor: pointer;">
+                    <circle cx="328" cy="364.5" r="12" fill="#dc3545" stroke="white" stroke-width="2"/>
+                    <text x="328" y="370.5" text-anchor="middle" font-size="16" font-weight="bold" fill="white">×</text>
+                </g>
+            </g>
+
+            {% if allow_rover_position %}
+            <g class="position-marker" data-position="R" draggable="true">
+                <circle cx="300" cy="234.375" r="40" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
+                <text x="300" y="240.375" text-anchor="middle" font-size="14" font-weight="bold" fill="#666" class="position-label">R</text>
+                <text x="300" y="289.375" text-anchor="middle" font-size="11" fill="#333" class="player-name-display"></text>
+                <g class="remove-player-btn" style="display: none; cursor: pointer;">
+                    <circle cx="328" cy="206.375" r="12" fill="#dc3545" stroke="white" stroke-width="2"/>
+                    <text x="328" y="212.375" text-anchor="middle" font-size="16" font-weight="bold" fill="white">×</text>
+                </g>
+            </g>
+            {% endif %}
+
+            <g class="position-marker" data-position="C" draggable="true">
+                <circle cx="300" cy="597.125" r="40" fill="rgba(255,255,255,0.9)" stroke="#333" stroke-width="2" class="position-circle"/>
+                <text x="300" y="603.125" text-anchor="middle" font-size="14" font-weight="bold" fill="#666" class="position-label">C</text>
+                <text x="300" y="652.125" text-anchor="middle" font-size="11" fill="#333" class="player-name-display"></text>
+                <g class="remove-player-btn" style="display: none; cursor: pointer;">
+                    <circle cx="328" cy="569.125" r="12" fill="#dc3545" stroke="white" stroke-width="2"/>
+                    <text x="328" y="575.125" text-anchor="middle" font-size="16" font-weight="bold" fill="white">×</text>
+                </g>
+            </g>
+        </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+/* Section Container Styles */
+.roster-section {
+    background-color: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    height: 750px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.section-header {
+    font-size: 16px;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+/* Player List Styles */
+.player-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+
+.player-card {
+    padding: 12px 16px;
+    background-color: white;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    font-size: 14px;
+    text-align: left;
+    cursor: grab;
+    transition: all 0.2s;
+}
+
+.player-card:hover {
+    background-color: #f8f9fa;
+    border-color: #0d6efd;
+    transform: translateX(3px);
+}
+
+.player-card:active {
+    cursor: grabbing;
+    opacity: 0.6;
+}
+
+.player-card.dragging {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.player-card.assigned {
+    display: none;
+}
+
+/* Baseball Field Styles */
+.baseball-field {
+    width: 100%;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #6ba368;
+    border-radius: 4px;
+    padding: 20px;
+    margin-top: -20px;
+}
+
+.field-svg {
+    width: 90%;
+    height: 90%;
+    max-width: none;
+}
+
+.position-marker {
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* Removed hover effect - only show drop zone during drag */
+
+.position-marker.has-player {
+    cursor: grab;
+}
+
+.position-marker.has-player:active {
+    cursor: grabbing;
+}
+
+.position-marker.has-player .position-circle {
+    fill: #d1e7dd;
+    stroke: #198754;
+    stroke-width: 3;
+}
+
+.position-marker.drag-over .position-circle {
+    fill: #cfe2ff;
+    stroke: #0d6efd;
+    stroke-width: 4;
+    stroke-dasharray: 5, 5;
+    animation: pulse 0.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.player-name-display {
+    font-weight: 600;
+    fill: #333;
+}
+
+.remove-player-btn {
+    pointer-events: all;
+    cursor: pointer !important;
+}
+
+.remove-player-btn:hover circle {
+    fill: #c82333;
+}
+
+.position-marker.has-player:has(.remove-player-btn:hover) {
+    cursor: pointer !important;
+}
+
+/* Tab Styles - Card Style */
+.nav-tabs {
+    border-bottom: none;
+    gap: 8px;
+}
+
+.nav-tabs .nav-link {
+    color: #495057;
+    background-color: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.nav-tabs .nav-link:hover {
+    background-color: #f8f9fa;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    border-color: #0d6efd;
+}
+
+.nav-tabs .nav-link.active {
+    color: white;
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    font-weight: 600;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(13,110,253,0.3);
+}
+
+/* Inning Tab Validation Styles */
+.inning-tab {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.inning-tab .validation-icon {
+    font-size: 16px;
+    transition: opacity 0.3s ease;
+}
+
+/* By default, show invalid icon (red X) */
+.inning-tab .valid-icon {
+    display: none;
+}
+
+.inning-tab .invalid-icon {
+    color: #dc3545;
+    opacity: 1;
+}
+
+/* When valid, show green checkmark and hide red X */
+.inning-tab.valid .valid-icon {
+    display: inline;
+    color: #198754;
+    opacity: 1;
+}
+
+.inning-tab.valid .invalid-icon {
+    display: none;
+}
+
+.inning-tab.valid {
+    border-color: #198754;
+    background: linear-gradient(135deg, #d1e7dd 0%, #ffffff 100%);
+}
+
+.inning-tab.valid:hover {
+    border-color: #198754;
+    background: linear-gradient(135deg, #c3e6cb 0%, #f8f9fa 100%);
+}
+
+.inning-tab.valid.active {
+    background: linear-gradient(135deg, #198754 0%, #157347 100%);
+    border-color: #198754;
+    color: white;
+}
+
+.inning-tab.valid.active .valid-icon {
+    color: white;
+}
+
+/* Invalid state styling (when active) - keep red */
+.inning-tab.active .invalid-icon {
+    color: #dc3545;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const rosterId = {{ roster.id }};
+    const teamSecret = '{{ team.manager_secret }}';
+
+    // Initialize drag and drop for each inning
+    for (let inning = 1; inning <= 6; inning++) {
+        initializeDragAndDrop(inning);
+        loadPositions(inning);
+    }
+
+    function initializeDragAndDrop(inning) {
+        const playerCards = document.querySelectorAll(`#playerList${inning} .player-card`);
+        const positionMarkers = document.querySelectorAll(`[data-inning="${inning}"] .position-marker`);
+        const playerList = document.querySelector(`#playerList${inning}`);
+
+        // Make player cards draggable
+        playerCards.forEach(card => {
+            card.addEventListener('dragstart', function(e) {
+                e.dataTransfer.setData('playerId', this.dataset.playerId);
+                e.dataTransfer.setData('playerName', this.dataset.playerName);
+                e.dataTransfer.setData('source', 'playerList');
+
+                // Create a custom drag image
+                const dragImage = this.cloneNode(true);
+                dragImage.style.position = 'absolute';
+                dragImage.style.top = '-1000px';
+                dragImage.style.opacity = '0.8';
+                dragImage.style.pointerEvents = 'none';
+                document.body.appendChild(dragImage);
+                e.dataTransfer.setDragImage(dragImage, 0, 0);
+
+                // Clean up drag image after drag starts
+                setTimeout(() => {
+                    document.body.removeChild(dragImage);
+                }, 0);
+
+                this.classList.add('dragging');
+            });
+
+            card.addEventListener('dragend', function() {
+                this.classList.remove('dragging');
+            });
+        });
+
+        // Make position markers droppable and draggable
+        positionMarkers.forEach(marker => {
+            // Click handler for remove button
+            const removeBtn = marker.querySelector('.remove-player-btn');
+            if (removeBtn) {
+                removeBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+
+                    const nameDisplay = marker.querySelector('.player-name-display');
+                    const playerName = nameDisplay.textContent;
+                    const position = marker.dataset.position;
+
+                    // Find the player card by name
+                    const playerCard = Array.from(document.querySelectorAll(`#playerList${inning} .player-card`))
+                        .find(card => card.dataset.playerName === playerName);
+
+                    if (!playerCard) return;
+
+                    // Clear the position
+                    nameDisplay.textContent = '';
+                    marker.classList.remove('has-player');
+                    removeBtn.style.display = 'none';
+
+                    // Show the player card in Available Players list
+                    playerCard.classList.remove('assigned');
+
+                    // Save the unassignment
+                    savePosition(inning, position, '', '');
+
+                    // Update inning validation
+                    updateInningValidation(inning);
+                });
+            }
+
+            // Make position marker draggable when it has a player
+            marker.addEventListener('dragstart', function(e) {
+                if (!this.classList.contains('has-player')) {
+                    e.preventDefault();
+                    return false;
+                }
+
+                const nameDisplay = this.querySelector('.player-name-display');
+                const playerName = nameDisplay.textContent;
+                const position = this.dataset.position;
+
+                // Find the player ID by matching the player name
+                const playerCard = Array.from(document.querySelectorAll(`#playerList${inning} .player-card`))
+                    .find(card => card.dataset.playerName === playerName);
+
+                if (playerCard) {
+                    e.dataTransfer.setData('playerId', playerCard.dataset.playerId);
+                    e.dataTransfer.setData('playerName', playerName);
+                    e.dataTransfer.setData('position', position);
+                    e.dataTransfer.setData('source', 'position');
+                    e.dataTransfer.effectAllowed = 'move';
+
+                    this.style.opacity = '0.5';
+                } else {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+
+            marker.addEventListener('dragend', function() {
+                this.style.opacity = '1';
+            });
+
+            // Position marker as drop zone
+            marker.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.classList.add('drag-over');
+            });
+
+            marker.addEventListener('dragleave', function(e) {
+                this.classList.remove('drag-over');
+            });
+
+            marker.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('drag-over');
+
+                const playerId = e.dataTransfer.getData('playerId');
+                const playerName = e.dataTransfer.getData('playerName');
+                const position = this.dataset.position;
+                const source = e.dataTransfer.getData('source');
+
+                // If dragging from another position, clear that position first
+                if (source === 'position') {
+                    const oldPosition = e.dataTransfer.getData('position');
+                    const oldMarker = document.querySelector(`[data-inning="${inning}"] .position-marker[data-position="${oldPosition}"]`);
+                    if (oldMarker && oldMarker !== this) {
+                        const oldNameDisplay = oldMarker.querySelector('.player-name-display');
+                        oldNameDisplay.textContent = '';
+                        oldMarker.classList.remove('has-player');
+                        const oldRemoveBtn = oldMarker.querySelector('.remove-player-btn');
+                        if (oldRemoveBtn) {
+                            oldRemoveBtn.style.display = 'none';
+                        }
+                        savePosition(inning, oldPosition, '', '');
+                    }
+                }
+
+                // Update display
+                const nameDisplay = this.querySelector('.player-name-display');
+                nameDisplay.textContent = playerName;
+                this.classList.add('has-player');
+
+                // Show remove button
+                const removeBtn = this.querySelector('.remove-player-btn');
+                if (removeBtn) {
+                    removeBtn.style.display = 'block';
+                }
+
+                // Hide player card from Available Players list
+                const playerCard = document.querySelector(`#playerList${inning} .player-card[data-player-id="${playerId}"]`);
+                if (playerCard) {
+                    playerCard.classList.add('assigned');
+                }
+
+                // Save to database
+                savePosition(inning, position, playerId, playerName);
+
+                // Update inning validation
+                updateInningValidation(inning);
+            });
+        });
+
+        // Make player list a drop zone for unassigning players
+        playerList.addEventListener('dragover', function(e) {
+            const source = e.dataTransfer.types.includes('text/plain') ? 'unknown' : 'position';
+            // Only allow drops from positions, not from the player list itself
+            if (source !== 'playerList') {
+                e.preventDefault();
+                this.style.backgroundColor = '#e7f1ff';
+            }
+        });
+
+        playerList.addEventListener('dragleave', function(e) {
+            this.style.backgroundColor = '#f8f9fa';
+        });
+
+        playerList.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.style.backgroundColor = '#f8f9fa';
+
+            const source = e.dataTransfer.getData('source');
+
+            // Only allow unassigning from positions, not moving within player list
+            if (source !== 'position') {
+                return;
+            }
+
+            const playerId = e.dataTransfer.getData('playerId');
+            const position = e.dataTransfer.getData('position');
+
+            // Clear the position marker
+            const marker = document.querySelector(`[data-inning="${inning}"] .position-marker[data-position="${position}"]`);
+            if (marker) {
+                const nameDisplay = marker.querySelector('.player-name-display');
+                nameDisplay.textContent = '';
+                marker.classList.remove('has-player');
+                const removeBtn = marker.querySelector('.remove-player-btn');
+                if (removeBtn) {
+                    removeBtn.style.display = 'none';
+                }
+            }
+
+            // Show the player card in the Available Players list again
+            const playerCard = document.querySelector(`#playerList${inning} .player-card[data-player-id="${playerId}"]`);
+            if (playerCard) {
+                playerCard.classList.remove('assigned');
+            }
+
+            // Save the unassignment to database
+            savePosition(inning, position, '', '');
+
+            // Update inning validation
+            updateInningValidation(inning);
+        });
+    }
+
+    function updateInningValidation(inning) {
+        const playerList = document.querySelector(`#playerList${inning}`);
+        const inningTab = document.querySelector(`#inning${inning}-tab`);
+        const allowBenchedPlayers = {{ allow_benched_players|lower }};
+
+        let isValid = false;
+
+        if (allowBenchedPlayers) {
+            // Mode 1: Allow benched players - just check if all positions are filled
+            const fieldContainer = document.querySelector(`[data-inning="${inning}"]`);
+            const allPositions = fieldContainer.querySelectorAll('.position-marker');
+            const filledPositions = fieldContainer.querySelectorAll('.position-marker.has-player');
+
+            // Inning is valid if all positions on the field have been filled
+            isValid = (allPositions.length === filledPositions.length);
+        } else {
+            // Mode 2: Don't allow benched players - check if all players are assigned
+            const unassignedPlayers = playerList.querySelectorAll('.player-card:not(.assigned)');
+
+            // Inning is valid if all players have been assigned to positions
+            isValid = (unassignedPlayers.length === 0);
+        }
+
+        if (isValid) {
+            inningTab.classList.add('valid');
+        } else {
+            inningTab.classList.remove('valid');
+        }
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    async function savePosition(inning, position, playerId, playerName) {
+        try {
+            const formData = new FormData();
+            formData.append('inning', inning);
+            formData.append('position', position);
+            formData.append('player_id', playerId);
+
+            const response = await fetch(`/teams/${teamSecret}/roster/${rosterId}/save-position/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: formData
+            });
+
+            const result = await response.json();
+            if (!result.success) {
+                console.error('Error saving position:', result.error);
+                alert('Failed to save position. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error saving position:', error);
+            alert('Failed to save position. Please try again.');
+        }
+    }
+
+    function loadPositions(inning) {
+        // Get roster data from the page
+        const rosterData = {{ roster_data_json|safe }};
+        const inningData = rosterData[`inning_${inning}`];
+
+        if (!inningData || Object.keys(inningData).length === 0) return;
+
+        // Load each position
+        Object.keys(inningData).forEach(position => {
+            const playerId = inningData[position];
+
+            // Find the player card to get the player name
+            const playerCard = document.querySelector(`#playerList${inning} .player-card[data-player-id="${playerId}"]`);
+            if (!playerCard) return;
+
+            const playerName = playerCard.dataset.playerName;
+
+            // Find the position marker
+            const marker = document.querySelector(`[data-inning="${inning}"] .position-marker[data-position="${position}"]`);
+            if (!marker) return;
+
+            // Update display
+            const nameDisplay = marker.querySelector('.player-name-display');
+            nameDisplay.textContent = playerName;
+            marker.classList.add('has-player');
+
+            // Show remove button
+            const removeBtn = marker.querySelector('.remove-player-btn');
+            if (removeBtn) {
+                removeBtn.style.display = 'block';
+            }
+
+            // Hide player card from Available Players list
+            playerCard.classList.add('assigned');
+        });
+
+        // Update inning validation after loading positions
+        updateInningValidation(inning);
+    }
+});
+</script>
+{% endblock %}

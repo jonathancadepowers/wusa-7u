@@ -4,6 +4,12 @@
 
 {% block page_title %}WUSA 7U - Players{% endblock %}
 
+{% block extra_css %}
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+{% endblock %}
+
 {% block content %}
     <div class="container mt-4">
         {% if messages %}
@@ -47,13 +53,13 @@
                             <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#executeTradeModal">
                                 <i class="bi bi-arrow-left-right me-1"></i>Execute Trade
                             </button>
-                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#resetTeamsModal">
+                            <button type="button" class="btn btn-danger testing-component" data-bs-toggle="modal" data-bs-target="#resetTeamsModal">
                                 Reset Teams
                             </button>
-                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteAllPlayersModal">
+                            <button type="button" class="btn btn-danger testing-component" data-bs-toggle="modal" data-bs-target="#deleteAllPlayersModal">
                                 Delete All Players
                             </button>
-                            <a href="{% url 'players:create' %}" class="btn btn-success">
+                            <a href="{% url 'players:create' %}" class="btn btn-success testing-component">
                                 <i class="bi bi-plus-circle me-1"></i>Add New Player
                             </a>
                         </div>
@@ -340,7 +346,7 @@
                                         <div class="mb-2"><strong>Player:</strong> <span id="preview1Player"></span></div>
                                         <div class="mb-2"><strong>Current Team:</strong> <span id="preview1CurrentTeam"></span></div>
                                         <div class="mb-2"><strong>New Team:</strong> <span id="preview1NewTeam" class="text-success fw-bold"></span></div>
-                                        <div class="mb-2"><strong>Conflicts:</strong> <span id="preview1Conflicts"></span></div>
+                                        <div class="mb-2"><strong>Player Conflicts:</strong> <span id="preview1Conflicts"></span></div>
                                         <div class="mb-0"><strong>New Team's Practice Slot:</strong> <span id="preview1PracticeSlot"></span></div>
                                     </div>
                                 </div>
@@ -352,7 +358,7 @@
                                         <div class="mb-2"><strong>Player:</strong> <span id="preview2Player"></span></div>
                                         <div class="mb-2"><strong>Current Team:</strong> <span id="preview2CurrentTeam"></span></div>
                                         <div class="mb-2"><strong>New Team:</strong> <span id="preview2NewTeam" class="text-success fw-bold"></span></div>
-                                        <div class="mb-2"><strong>Conflicts:</strong> <span id="preview2Conflicts"></span></div>
+                                        <div class="mb-2"><strong>Player Conflicts:</strong> <span id="preview2Conflicts"></span></div>
                                         <div class="mb-0"><strong>New Team's Practice Slot:</strong> <span id="preview2PracticeSlot"></span></div>
                                     </div>
                                 </div>
@@ -372,6 +378,11 @@
 {% endblock %}
 
 {% block extra_js %}
+    <!-- jQuery (required for Select2) -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
     <script>
         let currentPlayerId = null;
         let teamModalInstance = null;
@@ -596,6 +607,10 @@
 
         // Reset modal when closed
         executeTradeModal.addEventListener('hidden.bs.modal', function() {
+            // Destroy Select2 instances
+            $(tradePlayer1Select).select2('destroy');
+            $(tradePlayer2Select).select2('destroy');
+
             tradePlayer1Select.value = '';
             tradePlayer2Select.value = '';
             tradePreview.style.display = 'none';
@@ -627,6 +642,23 @@
                             option2.textContent = `${player.name} (${player.team_name})`;
                             tradePlayer2Select.appendChild(option2);
                         });
+
+                        // Initialize Select2 on both dropdowns
+                        $(tradePlayer1Select).select2({
+                            theme: 'bootstrap-5',
+                            placeholder: 'Select Player 1...',
+                            allowClear: true,
+                            width: '100%',
+                            dropdownParent: $('#executeTradeModal')
+                        });
+
+                        $(tradePlayer2Select).select2({
+                            theme: 'bootstrap-5',
+                            placeholder: 'Select Player 2...',
+                            allowClear: true,
+                            width: '100%',
+                            dropdownParent: $('#executeTradeModal')
+                        });
                     } else {
                         alert('Error loading players: ' + (data.error || 'Unknown error'));
                     }
@@ -637,9 +669,9 @@
                 });
         }
 
-        // Handle player selection changes
-        tradePlayer1Select.addEventListener('change', updateTradePreview);
-        tradePlayer2Select.addEventListener('change', updateTradePreview);
+        // Handle player selection changes (using jQuery for Select2 compatibility)
+        $(tradePlayer1Select).on('change', updateTradePreview);
+        $(tradePlayer2Select).on('change', updateTradePreview);
 
         function updateTradePreview() {
             const player1Id = tradePlayer1Select.value;

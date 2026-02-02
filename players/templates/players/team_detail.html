@@ -60,7 +60,7 @@
 
                 <!-- Pre-Season Checklist -->
                 {% if checklist_items %}
-                <div class="card bg-light border-success mb-4">
+                <div class="card bg-light border-success mb-4 preseason-component">
                     <div class="card-header bg-success text-white" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#checklistCollapse">
                         <h5 class="mb-0">
                             <i class="bi bi-list-check me-2"></i>Pre-Season Checklist
@@ -169,6 +169,68 @@
                         </div>
                     {% endif %}
                 {% endif %}
+
+                <!-- Background Checks Section -->
+                <div class="card bg-light border-purple mb-4" style="border-color: #6f42c1 !important;">
+                    <div class="card-header text-white" style="background-color: #6f42c1;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0" style="cursor: pointer; flex-grow: 1;" data-bs-toggle="collapse" data-bs-target="#backgroundChecksCollapse">
+                                <i class="bi bi-shield-check me-2"></i>Background Checks
+                                <i class="bi bi-chevron-down"></i>
+                            </h5>
+                            <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#addBackgroundCheckModal" onclick="event.stopPropagation();">
+                                <i class="bi bi-plus-circle me-1"></i>Add Background Check
+                            </button>
+                        </div>
+                    </div>
+                    <div class="collapse" id="backgroundChecksCollapse">
+                        <div class="card-body">
+                        {% if background_checks %}
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="backgroundChecksTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>First Name</th>
+                                        <th>Last Name</th>
+                                        <th>Player</th>
+                                        <th>Clearance Date</th>
+                                        <th>Details</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for check in background_checks %}
+                                    <tr>
+                                        <td>{{ check.first_name }}</td>
+                                        <td>{{ check.last_name }}</td>
+                                        <td>
+                                            {% if check.player %}
+                                                {{ check.player.first_name }} {{ check.player.last_name }}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {{ check.clearance_date }}
+                                        </td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm" style="background-color: #6f42c1; color: white;" data-bs-toggle="modal" data-bs-target="#editBackgroundCheckModal{{ check.pk }}" title="Edit Details">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                            <div class="alert alert-info mb-0">
+                                <i class="bi bi-info-circle me-2"></i>
+                                No background checks on file yet.
+                            </div>
+                        {% endif %}
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Drafted Players Section -->
                 {% if portal_open %}
@@ -1393,6 +1455,293 @@
             }
         });
     </script>
+
+    <!-- Add Background Check Modal -->
+    <div class="modal fade" id="addBackgroundCheckModal" tabindex="-1" aria-labelledby="addBackgroundCheckModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header text-white" style="background-color: #6f42c1;">
+                    <h5 class="modal-title" id="addBackgroundCheckModalLabel">
+                        <i class="bi bi-plus-circle me-2"></i>Add Background Check
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addBackgroundCheckForm">
+                        <div class="mb-3">
+                            <label for="addFirstName" class="form-label">Guardian's First Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="addFirstName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="addLastName" class="form-label">Guardian's Last Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="addLastName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="addPlayer" class="form-label">Player <span class="text-danger">*</span></label>
+                            <select class="form-select" id="addPlayer" required>
+                                <option value="">-- Select Player --</option>
+                                {% for player in players %}
+                                    <option value="{{ player.id }}">{{ player.first_name }} {{ player.last_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="addClearanceDate" class="form-label">Clearance Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="addClearanceDate" required>
+                        </div>
+                        <script>
+                            // Set today's date as default when modal opens
+                            document.addEventListener('DOMContentLoaded', function() {
+                                const dateInput = document.getElementById('addClearanceDate');
+                                if (dateInput) {
+                                    const today = new Date().toISOString().split('T')[0];
+                                    dateInput.value = today;
+                                }
+                            });
+                        </script>
+                        <div class="mb-3">
+                            <label for="addComments" class="form-label">Comments</label>
+                            <textarea class="form-control" id="addComments" rows="3"></textarea>
+                        </div>
+                    </form>
+                    <div id="addBackgroundCheckAlert" class="alert d-none mt-3" role="alert"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn" style="background-color: #6f42c1; color: white;" onclick="submitAddBackgroundCheck()">
+                        <i class="bi bi-save me-1"></i>Save
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Background Check Modals -->
+    {% for check in background_checks %}
+    <div class="modal fade" id="editBackgroundCheckModal{{ check.pk }}" tabindex="-1" aria-labelledby="editBackgroundCheckModalLabel{{ check.pk }}" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header text-white" style="background-color: #6f42c1;">
+                    <h5 class="modal-title" id="editBackgroundCheckModalLabel{{ check.pk }}">
+                        <i class="bi bi-pencil me-2"></i>Edit Background Check
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editBackgroundCheckForm{{ check.pk }}">
+                        <div class="mb-3">
+                            <label for="editFirstName{{ check.pk }}" class="form-label">Guardian's First Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="editFirstName{{ check.pk }}" value="{{ check.first_name }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editLastName{{ check.pk }}" class="form-label">Guardian's Last Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="editLastName{{ check.pk }}" value="{{ check.last_name }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editPlayer{{ check.pk }}" class="form-label">Player <span class="text-danger">*</span></label>
+                            <select class="form-select" id="editPlayer{{ check.pk }}" required>
+                                <option value="">-- Select Player --</option>
+                                {% for player in players %}
+                                    <option value="{{ player.id }}" {% if check.player and check.player.id == player.id %}selected{% endif %}>
+                                        {{ player.first_name }} {{ player.last_name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editClearanceDate{{ check.pk }}" class="form-label">Clearance Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="editClearanceDate{{ check.pk }}" value="{{ check.clearance_date|date:'Y-m-d' }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editComments{{ check.pk }}" class="form-label">Comments</label>
+                            <textarea class="form-control" id="editComments{{ check.pk }}" rows="3">{{ check.comments }}</textarea>
+                        </div>
+                    </form>
+                    <div id="editBackgroundCheckAlert{{ check.pk }}" class="alert d-none mt-3" role="alert"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" onclick="deleteBackgroundCheck({{ check.pk }})">
+                        <i class="bi bi-trash me-1"></i>Delete
+                    </button>
+                    <div class="ms-auto">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn" style="background-color: #6f42c1; color: white;" onclick="submitEditBackgroundCheck({{ check.pk }})">
+                            <i class="bi bi-save me-1"></i>Update
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <script>
+        function submitAddBackgroundCheck() {
+            const firstName = document.getElementById('addFirstName').value;
+            const lastName = document.getElementById('addLastName').value;
+            const playerId = document.getElementById('addPlayer').value;
+            const clearanceDate = document.getElementById('addClearanceDate').value;
+            const comments = document.getElementById('addComments').value;
+            const alertDiv = document.getElementById('addBackgroundCheckAlert');
+
+            if (!firstName || !lastName || !playerId || !clearanceDate) {
+                alertDiv.className = 'alert alert-danger mt-3';
+                alertDiv.textContent = 'Please fill in all required fields';
+                alertDiv.classList.remove('d-none');
+                return;
+            }
+
+            const data = {
+                team_secret: '{{ team.manager_secret }}',
+                first_name: firstName,
+                last_name: lastName,
+                player_id: playerId,
+                clearance_date: clearanceDate,
+                comments: comments
+            };
+
+            fetch('/background-checks/create/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success message
+                    alertDiv.className = 'alert alert-success mt-3';
+                    alertDiv.textContent = 'Background check created successfully';
+                    alertDiv.classList.remove('d-none');
+
+                    // Store the state to expand the section after reload
+                    sessionStorage.setItem('expandBackgroundChecks', 'true');
+
+                    // Close modal and reload after 1.5 seconds
+                    setTimeout(() => {
+                        bootstrap.Modal.getInstance(document.getElementById('addBackgroundCheckModal')).hide();
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    alertDiv.className = 'alert alert-danger mt-3';
+                    alertDiv.textContent = 'Error: ' + data.error;
+                    alertDiv.classList.remove('d-none');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alertDiv.className = 'alert alert-danger mt-3';
+                alertDiv.textContent = 'Failed to create background check';
+                alertDiv.classList.remove('d-none');
+            });
+        }
+
+        function submitEditBackgroundCheck(checkId) {
+            const firstName = document.getElementById('editFirstName' + checkId).value;
+            const lastName = document.getElementById('editLastName' + checkId).value;
+            const playerId = document.getElementById('editPlayer' + checkId).value;
+            const clearanceDate = document.getElementById('editClearanceDate' + checkId).value;
+            const comments = document.getElementById('editComments' + checkId).value;
+            const alertDiv = document.getElementById('editBackgroundCheckAlert' + checkId);
+
+            if (!firstName || !lastName || !playerId || !clearanceDate) {
+                alertDiv.className = 'alert alert-danger mt-3';
+                alertDiv.textContent = 'Please fill in all required fields';
+                alertDiv.classList.remove('d-none');
+                return;
+            }
+
+            const data = {
+                first_name: firstName,
+                last_name: lastName,
+                player_id: playerId,
+                clearance_date: clearanceDate,
+                comments: comments
+            };
+
+            fetch('/background-checks/' + checkId + '/update/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success message
+                    alertDiv.className = 'alert alert-success mt-3';
+                    alertDiv.textContent = 'Background check updated successfully';
+                    alertDiv.classList.remove('d-none');
+
+                    // Store the state to expand the section after reload
+                    sessionStorage.setItem('expandBackgroundChecks', 'true');
+
+                    // Close modal and reload after 1.5 seconds
+                    setTimeout(() => {
+                        bootstrap.Modal.getInstance(document.getElementById('editBackgroundCheckModal' + checkId)).hide();
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    alertDiv.className = 'alert alert-danger mt-3';
+                    alertDiv.textContent = 'Error: ' + data.error;
+                    alertDiv.classList.remove('d-none');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alertDiv.className = 'alert alert-danger mt-3';
+                alertDiv.textContent = 'Failed to update background check';
+                alertDiv.classList.remove('d-none');
+            });
+        }
+
+        function deleteBackgroundCheck(checkId) {
+            if (!confirm('Are you sure you want to delete this background check? This action cannot be undone.')) {
+                return;
+            }
+
+            fetch('/background-checks/' + checkId + '/delete/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Store the state to expand the section after reload
+                    sessionStorage.setItem('expandBackgroundChecks', 'true');
+                    alert('Background check deleted successfully');
+                    window.location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to delete background check');
+            });
+        }
+
+        // Check if we should expand the Background Checks section after page load
+        document.addEventListener('DOMContentLoaded', function() {
+            if (sessionStorage.getItem('expandBackgroundChecks') === 'true') {
+                // Clear the flag
+                sessionStorage.removeItem('expandBackgroundChecks');
+
+                // Expand the Background Checks section
+                const backgroundChecksCollapse = document.getElementById('backgroundChecksCollapse');
+                if (backgroundChecksCollapse) {
+                    const bsCollapse = new bootstrap.Collapse(backgroundChecksCollapse, {
+                        toggle: true
+                    });
+                }
+            }
+        });
+    </script>
+
     <!-- SortableJS Library -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 {% endblock %}

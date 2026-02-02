@@ -292,6 +292,8 @@ class EventType(models.Model):
 
 class Event(models.Model):
     event_type = models.ForeignKey(EventType, on_delete=models.SET_NULL, null=True, blank=True, related_name='events')
+    home_team = models.ForeignKey(Team, on_delete=models.SET_NULL, null=True, blank=True, related_name='home_events')
+    away_team = models.ForeignKey(Team, on_delete=models.SET_NULL, null=True, blank=True, related_name='away_events')
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True, null=True)
     location = models.CharField(max_length=200, blank=True, null=True)
@@ -318,6 +320,7 @@ class QuickLink(models.Model):
     icon = models.CharField(max_length=100)  # Bootstrap icon class (e.g., "bi-clipboard-check")
     display_order = models.IntegerField(default=0)
     is_active = models.BooleanField(default=True)
+    is_fixed = models.BooleanField(default=False)  # Fixed links can't be deleted/edited and have fixed positions
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -330,3 +333,55 @@ class QuickLink(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class BackgroundCheck(models.Model):
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
+    player = models.ForeignKey('Player', on_delete=models.CASCADE, related_name='background_checks')
+    clearance_date = models.DateField()
+    comments = models.TextField(blank=True, null=True)
+    team = models.ForeignKey('Team', on_delete=models.CASCADE, related_name='background_checks')
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'background_checks'
+        ordering = ['last_name', 'first_name']
+        verbose_name = 'Background Check'
+        verbose_name_plural = 'Background Checks'
+
+    def __str__(self):
+        return f"{self.first_name} {self.last_name} - {self.team.name if self.team else 'No Team'}"
+
+    def is_valid(self):
+        """Check if background check clearance date is valid (not expired)"""
+        from datetime import date
+        return self.clearance_date > date.today()
+
+
+class Roster(models.Model):
+    event = models.ForeignKey('Event', on_delete=models.CASCADE, related_name='rosters')
+    team = models.ForeignKey('Team', on_delete=models.CASCADE, related_name='rosters')
+    inning_1 = models.JSONField(default=dict, blank=True, null=True, help_text='Field positions for inning 1')
+    inning_2 = models.JSONField(default=dict, blank=True, null=True, help_text='Field positions for inning 2')
+    inning_3 = models.JSONField(default=dict, blank=True, null=True, help_text='Field positions for inning 3')
+    inning_4 = models.JSONField(default=dict, blank=True, null=True, help_text='Field positions for inning 4')
+    inning_5 = models.JSONField(default=dict, blank=True, null=True, help_text='Field positions for inning 5')
+    inning_6 = models.JSONField(default=dict, blank=True, null=True, help_text='Field positions for inning 6')
+    lineup = models.JSONField(default=list, blank=True, null=True, help_text='Batting lineup order')
+    validation_status = models.CharField(max_length=50, blank=True, null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'rosters'
+        unique_together = ('event', 'team')
+        ordering = ['-created_at']
+        verbose_name = 'Roster'
+        verbose_name_plural = 'Rosters'
+
+    def __str__(self):
+        return f"Roster for {self.team.name} - {self.event.name}"

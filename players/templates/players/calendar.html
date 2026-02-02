@@ -7,16 +7,6 @@
 
 {% block content %}
 <div class="container-fluid mt-4">
-    <!-- Admin Action Buttons (only shown if master password cookie exists) -->
-    <div id="adminButtons" class="mb-3 d-flex justify-content-end" style="display: none;">
-        <button type="button" class="btn btn-primary me-2" onclick="$('#createEventModal').modal('show')">
-            <i class="bi bi-plus-circle"></i> Create Event
-        </button>
-        <button type="button" class="btn btn-secondary" onclick="$('#modifyEventTypesModal').modal('show')">
-            <i class="bi bi-tags"></i> Manage Event Types
-        </button>
-    </div>
-
     <!-- FullCalendar Container -->
     <div id="calendar"></div>
 </div>
@@ -32,40 +22,51 @@
             <div class="modal-body">
                 <div class="alert alert-danger d-none" id="createEventError"></div>
                 <form id="createEventForm">
-                    <div class="mb-3">
-                        <label for="eventName" class="form-label">Event Name *</label>
-                        <input type="text" class="form-control" id="eventName" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="eventType" class="form-label">Event Type *</label>
-                        <select class="form-control" id="eventType" required>
-                            <option value="">Select event type...</option>
-                            {% for event_type in event_types %}
-                            <option value="{{ event_type.id }}">{{ event_type.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="eventLocation" class="form-label">Location</label>
-                        <input type="text" class="form-control" id="eventLocation">
-                    </div>
-                    <div class="mb-3">
-                        <label for="eventStartDate" class="form-label">Start Date *</label>
-                        <input type="date" class="form-control" id="eventStartDate" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="eventStartTime" class="form-label">Start Time</label>
-                        <input type="time" class="form-control" id="eventStartTime">
-                    </div>
-                    <div class="mb-3">
-                        <label for="eventEndDate" class="form-label">End Date (for multi-day events)</label>
-                        <input type="date" class="form-control" id="eventEndDate">
-                    </div>
-                    <div class="mb-3">
-                        <label for="eventDescription" class="form-label">Description</label>
-                        <textarea class="form-control" id="eventDescription" rows="3"></textarea>
-                    </div>
-                </form>
+                        <div class="mb-3">
+                            <label for="eventName" class="form-label">Event Name *</label>
+                            <input type="text" class="form-control" id="eventName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="eventType" class="form-label">Event Type *</label>
+                            <select class="form-control" id="eventType" required>
+                                <option value="">Select event type...</option>
+                            </select>
+                        </div>
+                        <div id="gameTeamsContainer" style="display: none;">
+                            <div class="mb-3">
+                                <label for="homeTeam" class="form-label">Home Team *</label>
+                                <select class="form-control" id="homeTeam">
+                                    <option value="">Select home team...</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="awayTeam" class="form-label">Away Team *</label>
+                                <select class="form-control" id="awayTeam">
+                                    <option value="">Select away team...</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="eventLocation" class="form-label">Location</label>
+                            <input type="text" class="form-control" id="eventLocation">
+                        </div>
+                        <div class="mb-3">
+                            <label for="eventStartDate" class="form-label">Start Date *</label>
+                            <input type="date" class="form-control" id="eventStartDate" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="eventStartTime" class="form-label">Start Time</label>
+                            <input type="time" class="form-control" id="eventStartTime">
+                        </div>
+                        <div class="mb-3">
+                            <label for="eventEndDate" class="form-label">End Date (for multi-day events)</label>
+                            <input type="date" class="form-control" id="eventEndDate">
+                        </div>
+                        <div class="mb-3">
+                            <label for="eventDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="eventDescription" rows="3"></textarea>
+                        </div>
+                    </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -95,10 +96,21 @@
                         <label for="editEventType" class="form-label">Event Type *</label>
                         <select class="form-control" id="editEventType" required>
                             <option value="">Select event type...</option>
-                            {% for event_type in event_types %}
-                            <option value="{{ event_type.id }}">{{ event_type.name }}</option>
-                            {% endfor %}
                         </select>
+                    </div>
+                    <div id="editGameTeamsContainer" style="display: none;">
+                        <div class="mb-3">
+                            <label for="editHomeTeam" class="form-label">Home Team *</label>
+                            <select class="form-control" id="editHomeTeam">
+                                <option value="">Select home team...</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editAwayTeam" class="form-label">Away Team *</label>
+                            <select class="form-control" id="editAwayTeam">
+                                <option value="">Select away team...</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label for="editEventLocation" class="form-label">Location</label>
@@ -156,16 +168,272 @@
     max-width: 1200px;
     margin: 0 auto;
 }
+
+/* Remove underlines from day headers and day numbers */
+.fc .fc-col-header-cell-cushion,
+.fc .fc-daygrid-day-number {
+    text-decoration: none !important;
+}
+
+/* Remove underline on hover too */
+.fc .fc-col-header-cell-cushion:hover,
+.fc .fc-daygrid-day-number:hover {
+    text-decoration: none !important;
+}
+
+/* Add left padding to event content and truncate with ellipsis */
+.fc-event-main {
+    padding-left: 4px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+
+.fc .fc-daygrid-event {
+    padding-left: 4px !important;
+    overflow: hidden !important;
+}
+
+.fc .fc-daygrid-event-harness {
+    padding-left: 4px !important;
+}
+
+/* Ensure event title content doesn't overflow */
+.fc .fc-event-title,
+.fc .fc-daygrid-event-dot {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+
+/* Make all calendar buttons the same color - override ALL FullCalendar defaults */
+.fc-button-group > .fc-button,
+.fc-toolbar-chunk > .fc-button,
+.fc .fc-button-primary,
+.fc .fc-button,
+.fc .fc-today-button,
+button.fc-today-button.fc-button.fc-button-primary {
+    background-color: #2c3e50 !important;
+    border-color: #2c3e50 !important;
+    border-radius: 4px !important;
+    color: white !important;
+}
+
+.fc-button-group > .fc-button:hover,
+.fc-toolbar-chunk > .fc-button:hover,
+.fc .fc-button-primary:hover,
+.fc .fc-button:hover,
+.fc .fc-today-button:hover,
+button.fc-today-button.fc-button.fc-button-primary:hover {
+    background-color: #34495e !important;
+    border-color: #34495e !important;
+}
+
+.fc-button-group > .fc-button:not(:disabled).fc-button-active,
+.fc-button-group > .fc-button:not(:disabled):active,
+.fc-button-group > .fc-button.fc-button-active,
+.fc-toolbar-chunk > .fc-button:not(:disabled).fc-button-active,
+.fc-toolbar-chunk > .fc-button:not(:disabled):active,
+.fc-toolbar-chunk > .fc-button.fc-button-active,
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active,
+.fc .fc-button-primary.fc-button-active,
+.fc .fc-button:not(:disabled).fc-button-active,
+.fc .fc-button:not(:disabled):active,
+.fc .fc-button.fc-button-active,
+.fc .fc-today-button:not(:disabled).fc-button-active,
+.fc .fc-today-button:not(:disabled):active,
+.fc .fc-today-button.fc-button-active,
+button.fc-today-button.fc-button.fc-button-primary:not(:disabled).fc-button-active,
+button.fc-today-button.fc-button.fc-button-primary:not(:disabled):active,
+button.fc-today-button.fc-button.fc-button-primary.fc-button-active,
+.fc .fc-button-active {
+    background-color: #1a252f !important;
+    border-color: #1a252f !important;
+    box-shadow: none !important;
+    color: white !important;
+}
+
+/* Add spacing between custom buttons */
+.fc .fc-createEvent-button {
+    margin-right: 10px !important;
+}
+
+/* Hide admin buttons when not authenticated */
+.hide-admin-buttons .fc-createEvent-button,
+.hide-admin-buttons .fc-manageEventTypes-button {
+    display: none !important;
+}
 </style>
 
 <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Check for master password and show admin buttons
-    const masterPasswordCookie = document.cookie.split('; ').find(row => row.startsWith('master_password_verified='));
-    if (masterPasswordCookie) {
-        document.getElementById('adminButtons').style.display = 'flex';
+    // Check for master password
+    const masterPasswordCookie = document.cookie.split('; ').find(row => row.startsWith('master_password='));
+    console.log('Master password cookie:', masterPasswordCookie);
+
+    // Function to load event types into dropdowns
+    async function loadEventTypeOptions() {
+        try {
+            const response = await fetch('{% url "players:get_event_types" %}');
+            const result = await response.json();
+
+            if (result.success) {
+                const eventTypes = result.event_types;
+
+                // Update create event modal dropdown
+                const createSelect = document.getElementById('eventType');
+                const createCurrentValue = createSelect.value;
+                createSelect.innerHTML = '<option value="">Select event type...</option>';
+                eventTypes.forEach(et => {
+                    const option = document.createElement('option');
+                    option.value = et.id;
+                    option.textContent = et.name;
+                    createSelect.appendChild(option);
+                });
+                if (createCurrentValue) createSelect.value = createCurrentValue;
+
+                // Update edit event modal dropdown
+                const editSelect = document.getElementById('editEventType');
+                const editCurrentValue = editSelect.value;
+                editSelect.innerHTML = '<option value="">Select event type...</option>';
+                eventTypes.forEach(et => {
+                    const option = document.createElement('option');
+                    option.value = et.id;
+                    option.textContent = et.name;
+                    editSelect.appendChild(option);
+                });
+                if (editCurrentValue) editSelect.value = editCurrentValue;
+            }
+        } catch (error) {
+            console.error('Error loading event types:', error);
+        }
     }
+
+    // Function to load teams into dropdowns
+    async function loadTeamOptions() {
+        try {
+            const response = await fetch('{% url "players:get_teams_api" %}');
+            const result = await response.json();
+
+            if (result.success) {
+                const teams = result.teams;
+
+                // Store teams globally for game team dropdowns
+                window.allTeams = teams;
+            }
+        } catch (error) {
+            console.error('Error loading teams:', error);
+        }
+    }
+
+    // Load event types and teams on page load
+    loadEventTypeOptions();
+    loadTeamOptions();
+
+    // Reload event types and teams when create modal opens
+    const createEventModal = document.getElementById('createEventModal');
+    createEventModal.addEventListener('show.bs.modal', function() {
+        loadEventTypeOptions();
+        loadTeamOptions();
+    });
+
+    // Reload event types and teams when edit modal opens
+    const editEventModal = document.getElementById('editEventModal');
+    editEventModal.addEventListener('show.bs.modal', function() {
+        loadEventTypeOptions();
+        loadTeamOptions();
+    });
+
+    // Helper function to populate game team dropdowns
+    function populateGameTeamDropdowns(homeSelectId, awaySelectId, excludeHome, excludeAway) {
+        if (!window.allTeams) return;
+
+        const homeSelect = document.getElementById(homeSelectId);
+        const awaySelect = document.getElementById(awaySelectId);
+
+        const homeCurrentValue = homeSelect.value;
+        const awayCurrentValue = awaySelect.value;
+
+        // Populate home team dropdown
+        homeSelect.innerHTML = '<option value="">Select home team...</option>';
+        window.allTeams.forEach(team => {
+            if (excludeAway && team.id == excludeAway) return;
+            const option = document.createElement('option');
+            option.value = team.id;
+            option.textContent = team.name;
+            homeSelect.appendChild(option);
+        });
+        if (homeCurrentValue) homeSelect.value = homeCurrentValue;
+
+        // Populate away team dropdown
+        awaySelect.innerHTML = '<option value="">Select away team...</option>';
+        window.allTeams.forEach(team => {
+            if (excludeHome && team.id == excludeHome) return;
+            const option = document.createElement('option');
+            option.value = team.id;
+            option.textContent = team.name;
+            awaySelect.appendChild(option);
+        });
+        if (awayCurrentValue) awaySelect.value = awayCurrentValue;
+    }
+
+    // Handle event type change for create modal
+    document.getElementById('eventType').addEventListener('change', function() {
+        const selectedType = this.options[this.selectedIndex].text;
+        const gameContainer = document.getElementById('gameTeamsContainer');
+
+        if (selectedType.toLowerCase() === 'game') {
+            gameContainer.style.display = 'block';
+            populateGameTeamDropdowns('homeTeam', 'awayTeam', null, null);
+        } else {
+            gameContainer.style.display = 'none';
+        }
+    });
+
+    // Handle event type change for edit modal
+    document.getElementById('editEventType').addEventListener('change', function() {
+        const selectedType = this.options[this.selectedIndex].text;
+        const gameContainer = document.getElementById('editGameTeamsContainer');
+
+        if (selectedType.toLowerCase() === 'game') {
+            gameContainer.style.display = 'block';
+            populateGameTeamDropdowns('editHomeTeam', 'editAwayTeam', null, null);
+        } else {
+            gameContainer.style.display = 'none';
+        }
+    });
+
+    // Handle home team selection to exclude from away team dropdown
+    document.getElementById('homeTeam').addEventListener('change', function() {
+        const awaySelect = document.getElementById('awayTeam');
+        const awayCurrentValue = awaySelect.value;
+        populateGameTeamDropdowns('homeTeam', 'awayTeam', this.value, null);
+        if (awayCurrentValue && awayCurrentValue != this.value) awaySelect.value = awayCurrentValue;
+    });
+
+    document.getElementById('editHomeTeam').addEventListener('change', function() {
+        const awaySelect = document.getElementById('editAwayTeam');
+        const awayCurrentValue = awaySelect.value;
+        populateGameTeamDropdowns('editHomeTeam', 'editAwayTeam', this.value, null);
+        if (awayCurrentValue && awayCurrentValue != this.value) awaySelect.value = awayCurrentValue;
+    });
+
+    // Handle away team selection to exclude from home team dropdown
+    document.getElementById('awayTeam').addEventListener('change', function() {
+        const homeSelect = document.getElementById('homeTeam');
+        const homeCurrentValue = homeSelect.value;
+        populateGameTeamDropdowns('homeTeam', 'awayTeam', null, this.value);
+        if (homeCurrentValue && homeCurrentValue != this.value) homeSelect.value = homeCurrentValue;
+    });
+
+    document.getElementById('editAwayTeam').addEventListener('change', function() {
+        const homeSelect = document.getElementById('editHomeTeam');
+        const homeCurrentValue = homeSelect.value;
+        populateGameTeamDropdowns('editHomeTeam', 'editAwayTeam', null, this.value);
+        if (homeCurrentValue && homeCurrentValue != this.value) homeSelect.value = homeCurrentValue;
+    });
 
     // Initialize FullCalendar
     const calendarEl = document.getElementById('calendar');
@@ -174,17 +442,153 @@ document.addEventListener('DOMContentLoaded', function() {
         headerToolbar: {
             left: 'prev,next today',
             center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+            right: 'createEvent,manageEventTypes dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        customButtons: {
+            createEvent: {
+                text: 'Create Event',
+                click: function() {
+                    const modal = new bootstrap.Modal(document.getElementById('createEventModal'));
+                    modal.show();
+                }
+            },
+            manageEventTypes: {
+                text: 'Manage Event Types',
+                click: function() {
+                    const modal = new bootstrap.Modal(document.getElementById('modifyEventTypesModal'));
+                    modal.show();
+                }
+            }
+        },
+        buttonText: {
+            today: 'Today',
+            month: 'Month',
+            week: 'Week',
+            day: 'Day'
         },
         editable: masterPasswordCookie ? true : false,
         selectable: masterPasswordCookie ? true : false,
         selectMirror: true,
         dayMaxEvents: true,
-        events: '/players/calendar/api/events/',
+        events: '{% url "players:calendar_events_api" %}',
+        displayEventTime: true,
+        displayEventEnd: false,
+        eventDisplay: 'block', // Force all events to display as blocks (not dots)
+
+        // Custom event content to display icons and times
+        // Pattern: <Icon> <Time> <Event Name>
+        eventContent: function(arg) {
+            let arrayOfDomNodes = [];
+
+            // 1. Create icon element if icon exists
+            if (arg.event.extendedProps.icon) {
+                let iconEl = document.createElement('i');
+                iconEl.className = 'bi bi-' + arg.event.extendedProps.icon + ' me-1';
+                arrayOfDomNodes.push(iconEl);
+            }
+
+            // 2. Add time if event has specific start time (not all-day)
+            // Format: 7pm (lowercase, no space, no minutes if :00)
+            if (arg.event.start && !arg.event.allDay) {
+                let timeEl = document.createElement('span');
+                timeEl.className = 'me-1';
+                let hours = arg.event.start.getHours();
+                let minutes = arg.event.start.getMinutes();
+                let ampm = hours >= 12 ? 'pm' : 'am';
+                hours = hours % 12;
+                hours = hours ? hours : 12; // 0 should be 12
+
+                // Only show minutes if not :00
+                let timeStr = minutes === 0 ? hours + ampm : hours + ':' + (minutes < 10 ? '0' + minutes : minutes) + ampm;
+                timeEl.innerHTML = timeStr;
+                arrayOfDomNodes.push(timeEl);
+            }
+
+            // 3. Create title element
+            let titleEl = document.createElement('span');
+            titleEl.innerHTML = arg.event.title;
+            arrayOfDomNodes.push(titleEl);
+
+            return { domNodes: arrayOfDomNodes };
+        },
+
+        // Show tooltip on mouse enter
+        eventMouseEnter: function(info) {
+            const event = info.event;
+            let tooltipContent = `<strong>${event.title}</strong>`;
+
+            // Add start time
+            if (event.start) {
+                const startTime = event.start.toLocaleString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                });
+                tooltipContent += `<br><i class="bi bi-clock me-1"></i>${startTime}`;
+            }
+
+            // Add end date if different from start
+            if (event.end && event.end.toDateString() !== event.start.toDateString()) {
+                const endTime = event.end.toLocaleString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric'
+                });
+                tooltipContent += `<br><i class="bi bi-calendar-check me-1"></i>Ends: ${endTime}`;
+            }
+
+            // Add location if exists
+            if (event.extendedProps.location) {
+                tooltipContent += `<br><i class="bi bi-geo-alt me-1"></i>${event.extendedProps.location}`;
+            }
+
+            // Add description if exists
+            if (event.extendedProps.description) {
+                tooltipContent += `<br><i class="bi bi-info-circle me-1"></i>${event.extendedProps.description}`;
+            }
+
+            // Create tooltip element
+            const tooltip = document.createElement('div');
+            tooltip.className = 'event-tooltip';
+            tooltip.innerHTML = tooltipContent;
+            tooltip.style.position = 'absolute';
+            tooltip.style.zIndex = '10000';
+            tooltip.style.backgroundColor = 'rgba(0, 0, 0, 0.9)';
+            tooltip.style.color = 'white';
+            tooltip.style.padding = '10px';
+            tooltip.style.borderRadius = '6px';
+            tooltip.style.fontSize = '13px';
+            tooltip.style.lineHeight = '1.6';
+            tooltip.style.maxWidth = '300px';
+            tooltip.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+            tooltip.style.pointerEvents = 'none';
+
+            // Position tooltip near the event
+            const rect = info.el.getBoundingClientRect();
+            tooltip.style.left = (rect.left + window.scrollX) + 'px';
+            tooltip.style.top = (rect.bottom + window.scrollY + 5) + 'px';
+
+            // Store tooltip on element for removal
+            info.el.tooltip = tooltip;
+            document.body.appendChild(tooltip);
+        },
+
+        // Remove tooltip on mouse leave
+        eventMouseLeave: function(info) {
+            if (info.el.tooltip) {
+                info.el.tooltip.remove();
+                info.el.tooltip = null;
+            }
+        },
 
         // When user clicks on a date (creates new event)
         select: function(info) {
-            $('#createEventModal').modal('show');
+            console.log('Select event triggered:', info);
+            const modal = new bootstrap.Modal(document.getElementById('createEventModal'));
+            modal.show();
             document.getElementById('eventStartDate').value = info.startStr;
             if (info.endStr && info.endStr !== info.startStr) {
                 // Multi-day selection
@@ -196,49 +600,106 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // When user clicks on an existing event
         eventClick: function(info) {
+            console.log('Event clicked:', info.event.id, 'Has master password:', !!masterPasswordCookie);
             if (masterPasswordCookie) {
                 loadEventForEdit(info.event.id);
             }
         },
 
+        // When user starts dragging an event
+        eventDragStart: function(info) {
+            // Remove any existing tooltips
+            if (info.el.tooltip) {
+                info.el.tooltip.remove();
+                info.el.tooltip = null;
+            }
+        },
+
         // When user drags an event to a new date/time
         eventDrop: function(info) {
+            console.log('Event dropped:', info.event.id);
             updateEventDateTime(info.event);
+        },
+
+        // When user starts resizing an event
+        eventResizeStart: function(info) {
+            // Remove any existing tooltips
+            if (info.el.tooltip) {
+                info.el.tooltip.remove();
+                info.el.tooltip = null;
+            }
         },
 
         // When user resizes an event
         eventResize: function(info) {
+            console.log('Event resized:', info.event.id);
             updateEventDateTime(info.event);
         }
     });
 
     calendar.render();
 
+    // Hide admin buttons if no master password
+    if (!masterPasswordCookie) {
+        calendarEl.classList.add('hide-admin-buttons');
+    }
+
+    // Force Today button to use the same active color as other buttons
+    // This needs to happen after render and on any view change
+    function forceButtonColors() {
+        const todayButton = document.querySelector('.fc-today-button');
+        if (todayButton && todayButton.classList.contains('fc-button-active')) {
+            todayButton.style.backgroundColor = '#1a252f';
+            todayButton.style.borderColor = '#1a252f';
+        }
+    }
+
+    // Apply immediately after render
+    setTimeout(forceButtonColors, 100);
+
+    // Reapply when calendar changes views
+    const observer = new MutationObserver(forceButtonColors);
+    observer.observe(calendarEl, { childList: true, subtree: true, attributes: true });
+
     // Create Event
     document.getElementById('createEventBtn').addEventListener('click', async function() {
         const name = document.getElementById('eventName').value;
         const eventType = document.getElementById('eventType').value;
+        const homeTeam = document.getElementById('homeTeam').value;
+        const awayTeam = document.getElementById('awayTeam').value;
         const location = document.getElementById('eventLocation').value;
         const startDate = document.getElementById('eventStartDate').value;
         const startTime = document.getElementById('eventStartTime').value;
         const endDate = document.getElementById('eventEndDate').value;
         const description = document.getElementById('eventDescription').value;
 
+        const gameContainer = document.getElementById('gameTeamsContainer');
+        const isGame = gameContainer.style.display !== 'none';
+
         if (!name || !eventType || !startDate) {
             alert('Please fill in all required fields');
+            return;
+        }
+
+        if (isGame && (!homeTeam || !awayTeam)) {
+            alert('Please select both home and away teams for a game');
             return;
         }
 
         const formData = new FormData();
         formData.append('name', name);
         formData.append('event_type_id', eventType);
+        if (isGame) {
+            formData.append('home_team_id', homeTeam);
+            formData.append('away_team_id', awayTeam);
+        }
         formData.append('location', location);
         formData.append('timestamp', startDate + (startTime ? 'T' + startTime : 'T00:00'));
         if (endDate) formData.append('end_date', endDate);
         formData.append('description', description);
 
         try {
-            const response = await fetch('/players/calendar/create-event/', {
+            const response = await fetch('{% url "players:create_event" %}', {
                 method: 'POST',
                 headers: {'X-CSRFToken': getCookie('csrftoken')},
                 body: formData
@@ -246,7 +707,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const result = await response.json();
             if (result.success) {
-                $('#createEventModal').modal('hide');
+                const modal = bootstrap.Modal.getInstance(document.getElementById('createEventModal'));
+                modal.hide();
                 calendar.refetchEvents();
                 document.getElementById('createEventForm').reset();
             } else {
@@ -261,8 +723,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load event for editing
     async function loadEventForEdit(eventId) {
         try {
-            const response = await fetch(`/players/calendar/get-event/?event_id=${eventId}`);
+            console.log('Loading event for edit:', eventId);
+            const response = await fetch(`{% url "players:get_event" %}?id=${eventId}`);
             const result = await response.json();
+            console.log('Get event result:', result);
 
             if (result.success) {
                 const event = result.event;
@@ -274,14 +738,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 const timestamp = new Date(event.timestamp);
                 document.getElementById('editEventStartDate').value = timestamp.toISOString().split('T')[0];
                 const timeStr = timestamp.toISOString().split('T')[1].substring(0, 5);
+                // Only populate time field if it's not midnight (all-day event)
                 if (timeStr !== '00:00') {
                     document.getElementById('editEventStartTime').value = timeStr;
+                } else {
+                    // Clear the time field for all-day events
+                    document.getElementById('editEventStartTime').value = '';
                 }
 
                 document.getElementById('editEventEndDate').value = event.end_date || '';
                 document.getElementById('editEventDescription').value = event.description || '';
 
-                $('#editEventModal').modal('show');
+                const modal = new bootstrap.Modal(document.getElementById('editEventModal'));
+                modal.show();
             }
         } catch (error) {
             alert('Error loading event: ' + error.message);
@@ -293,23 +762,38 @@ document.addEventListener('DOMContentLoaded', function() {
         const eventId = document.getElementById('editEventId').value;
         const name = document.getElementById('editEventName').value;
         const eventType = document.getElementById('editEventType').value;
+        const homeTeam = document.getElementById('editHomeTeam').value;
+        const awayTeam = document.getElementById('editAwayTeam').value;
         const location = document.getElementById('editEventLocation').value;
         const startDate = document.getElementById('editEventStartDate').value;
         const startTime = document.getElementById('editEventStartTime').value;
         const endDate = document.getElementById('editEventEndDate').value;
         const description = document.getElementById('editEventDescription').value;
 
+        const gameContainer = document.getElementById('editGameTeamsContainer');
+        const isGame = gameContainer.style.display !== 'none';
+
+        if (isGame && (!homeTeam || !awayTeam)) {
+            alert('Please select both home and away teams for a game');
+            return;
+        }
+
         const formData = new FormData();
         formData.append('event_id', eventId);
         formData.append('name', name);
         formData.append('event_type_id', eventType);
+        if (isGame) {
+            formData.append('home_team_id', homeTeam);
+            formData.append('away_team_id', awayTeam);
+        }
         formData.append('location', location);
-        formData.append('timestamp', startDate + (startTime ? 'T' + startTime : 'T00:00'));
+        // Only append time if provided, otherwise send just the date
+        formData.append('timestamp', startTime ? startDate + 'T' + startTime : startDate);
         if (endDate) formData.append('end_date', endDate);
         formData.append('description', description);
 
         try {
-            const response = await fetch('/players/calendar/update-event/', {
+            const response = await fetch('{% url "players:update_event" %}', {
                 method: 'POST',
                 headers: {'X-CSRFToken': getCookie('csrftoken')},
                 body: formData
@@ -317,7 +801,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const result = await response.json();
             if (result.success) {
-                $('#editEventModal').modal('hide');
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editEventModal'));
+                modal.hide();
                 calendar.refetchEvents();
             } else {
                 document.getElementById('editEventError').textContent = result.error;
@@ -337,7 +822,7 @@ document.addEventListener('DOMContentLoaded', function() {
         formData.append('event_id', eventId);
 
         try {
-            const response = await fetch('/players/calendar/delete-event/', {
+            const response = await fetch('{% url "players:delete_event" %}', {
                 method: 'POST',
                 headers: {'X-CSRFToken': getCookie('csrftoken')},
                 body: formData
@@ -345,7 +830,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const result = await response.json();
             if (result.success) {
-                $('#editEventModal').modal('hide');
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editEventModal'));
+                modal.hide();
                 calendar.refetchEvents();
             } else {
                 alert('Error deleting event: ' + result.error);
@@ -367,7 +853,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         try {
-            const response = await fetch('/players/calendar/move-event-date/', {
+            const response = await fetch('{% url "players:move_event_date" %}', {
                 method: 'POST',
                 headers: {'X-CSRFToken': getCookie('csrftoken')},
                 body: formData
@@ -398,6 +884,270 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         return cookieValue;
+    }
+
+    // Event Types Management
+    const modifyEventTypesModal = document.getElementById('modifyEventTypesModal');
+
+    // Load event types when modal is opened
+    modifyEventTypesModal.addEventListener('show.bs.modal', function() {
+        loadEventTypes();
+    });
+
+    // Load and display event types
+    async function loadEventTypes() {
+        try {
+            const response = await fetch('{% url "players:get_event_types" %}');
+            const result = await response.json();
+
+            if (result.success) {
+                displayEventTypes(result.event_types);
+            }
+        } catch (error) {
+            console.error('Error loading event types:', error);
+        }
+    }
+
+    // Display event types in the list
+    function displayEventTypes(eventTypes) {
+        const listContainer = document.getElementById('eventTypesList');
+        listContainer.innerHTML = '';
+
+        if (eventTypes.length === 0) {
+            return;
+        }
+
+        eventTypes.forEach(eventType => {
+            const card = document.createElement('div');
+            card.className = 'card mb-2';
+            card.innerHTML = `
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <div class="d-flex align-items-center">
+                                ${eventType.bootstrap_icon_id ? `<i class="bi bi-${eventType.bootstrap_icon_id} me-2" style="font-size: 1.5rem; color: ${eventType.color}"></i>` : ''}
+                                <div>
+                                    <h6 class="mb-0">${eventType.name}</h6>
+                                    <small class="text-muted">
+                                        Color: <span class="badge" style="background-color: ${eventType.color}">&nbsp;&nbsp;&nbsp;</span> ${eventType.color}
+                                        ${eventType.bootstrap_icon_id ? `| Icon: ${eventType.bootstrap_icon_id}` : ''}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <button class="btn btn-sm btn-primary me-2" onclick="editEventType(${eventType.id})">
+                                <i class="bi bi-pencil"></i> Edit
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteEventType(${eventType.id}, '${eventType.name}')">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            listContainer.appendChild(card);
+        });
+    }
+
+    // Predefined color palette
+    const predefinedColors = [
+        { hex: '#dc3545', name: 'Red' },
+        { hex: '#fd7e14', name: 'Orange' },
+        { hex: '#ffc107', name: 'Yellow' },
+        { hex: '#198754', name: 'Green' },
+        { hex: '#20c997', name: 'Teal' },
+        { hex: '#0dcaf0', name: 'Cyan' },
+        { hex: '#0d6efd', name: 'Blue' },
+        { hex: '#6610f2', name: 'Purple' },
+        { hex: '#d63384', name: 'Pink' },
+        { hex: '#6c757d', name: 'Gray' },
+        { hex: '#212529', name: 'Dark' },
+        { hex: '#adb5bd', name: 'Light Gray' }
+    ];
+
+    // Generate color option buttons
+    function generateColorOptions(selectedColor) {
+        return predefinedColors.map(color => {
+            const isSelected = color.hex.toLowerCase() === selectedColor.toLowerCase();
+            return `
+                <div class="color-option ${isSelected ? 'selected' : ''}"
+                     data-color="${color.hex}"
+                     style="background-color: ${color.hex}; width: 50px; height: 50px; border-radius: 8px; cursor: pointer; border: 3px solid ${isSelected ? '#000' : 'transparent'}; position: relative;"
+                     title="${color.name}">
+                    ${isSelected ? '<i class="bi bi-check-lg" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 24px; text-shadow: 0 0 3px rgba(0,0,0,0.5);"></i>' : ''}
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Create New Event Type button
+    document.getElementById('createNewEventTypeBtn').addEventListener('click', function() {
+        showEventTypeForm();
+    });
+
+    // Show event type form for creating/editing
+    function showEventTypeForm(eventType = null) {
+        const listContainer = document.getElementById('eventTypesList');
+
+        const formHtml = `
+            <div class="card border-primary" id="eventTypeFormCard">
+                <div class="card-header bg-primary text-white">
+                    ${eventType ? 'Edit Event Type' : 'Create New Event Type'}
+                </div>
+                <div class="card-body">
+                    <form id="eventTypeForm">
+                        <input type="hidden" id="eventTypeId" value="${eventType ? eventType.id : ''}">
+                        <div class="mb-3">
+                            <label for="eventTypeName" class="form-label">Name *</label>
+                            <input type="text" class="form-control" id="eventTypeName" required value="${eventType ? eventType.name : ''}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="eventTypeColor" class="form-label">Color *</label>
+                            <div class="d-flex flex-wrap gap-2" id="colorPicker">
+                                ${generateColorOptions(eventType ? eventType.color : '#0d6efd')}
+                            </div>
+                            <input type="hidden" id="eventTypeColor" value="${eventType ? eventType.color : '#0d6efd'}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="eventTypeIcon" class="form-label">Bootstrap Icon ID</label>
+                            <input type="text" class="form-control" id="eventTypeIcon" value="${eventType ? eventType.bootstrap_icon_id : ''}" placeholder="e.g., calendar-event, trophy, flag">
+                            <div class="form-text">Bootstrap icon class (e.g., bi-clipboard-check). See <a href="https://icons.getbootstrap.com/" target="_blank">Bootstrap Icons</a></div>
+                        </div>
+                        <div class="d-flex gap-2 justify-content-end">
+                            <button type="button" class="btn btn-secondary" id="cancelEventTypeBtn">
+                                <i class="bi bi-x-lg"></i> Cancel
+                            </button>
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-check-lg"></i> ${eventType ? 'Update' : 'Create'}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        `;
+
+        listContainer.innerHTML = formHtml;
+
+        // Add color selection click handlers
+        document.querySelectorAll('.color-option').forEach(option => {
+            option.addEventListener('click', function() {
+                // Remove selection from all options
+                document.querySelectorAll('.color-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                    opt.style.border = '3px solid transparent';
+                    opt.innerHTML = '';
+                });
+
+                // Mark this option as selected
+                this.classList.add('selected');
+                this.style.border = '3px solid #000';
+                this.innerHTML = '<i class="bi bi-check-lg" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 24px; text-shadow: 0 0 3px rgba(0,0,0,0.5);"></i>';
+
+                // Update hidden input
+                document.getElementById('eventTypeColor').value = this.getAttribute('data-color');
+            });
+        });
+
+        document.getElementById('eventTypeForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            await saveEventType(eventType ? eventType.id : null);
+        });
+
+        document.getElementById('cancelEventTypeBtn').addEventListener('click', function() {
+            loadEventTypes();
+        });
+    }
+
+    // Edit event type
+    window.editEventType = async function(eventTypeId) {
+        try {
+            const response = await fetch('{% url "players:get_event_types" %}');
+            const result = await response.json();
+
+            if (result.success) {
+                const eventType = result.event_types.find(et => et.id === eventTypeId);
+                if (eventType) {
+                    showEventTypeForm(eventType);
+                }
+            }
+        } catch (error) {
+            alert('Error loading event type: ' + error.message);
+        }
+    };
+
+    // Delete event type
+    window.deleteEventType = async function(eventTypeId, eventTypeName) {
+        if (!confirm(`Are you sure you want to delete the event type "${eventTypeName}"?\n\nThis will remove this type from all events that use it.`)) {
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('event_type_id', eventTypeId);
+
+        try {
+            const response = await fetch('{% url "players:delete_event_type" %}', {
+                method: 'POST',
+                headers: {'X-CSRFToken': getCookie('csrftoken')},
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert(`Event type "${eventTypeName}" has been deleted.`);
+                loadEventTypes();
+                calendar.refetchEvents(); // Refresh calendar to show updated events
+            } else {
+                alert('Error: ' + result.error);
+            }
+        } catch (error) {
+            alert('Error deleting event type: ' + error.message);
+        }
+    };
+
+    // Save event type (create or update)
+    async function saveEventType(eventTypeId) {
+        const name = document.getElementById('eventTypeName').value.trim();
+        const color = document.getElementById('eventTypeColor').value;
+        const icon = document.getElementById('eventTypeIcon').value.trim();
+
+        if (!name) {
+            alert('Please enter a name');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('name', name);
+        formData.append('color', color);
+        formData.append('bootstrap_icon_id', icon);
+
+        const url = eventTypeId
+            ? '{% url "players:update_event_type" %}'
+            : '{% url "players:create_event_type" %}';
+
+        if (eventTypeId) {
+            formData.append('event_type_id', eventTypeId);
+        }
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {'X-CSRFToken': getCookie('csrftoken')},
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                loadEventTypes();
+                calendar.refetchEvents(); // Refresh calendar to show updated colors/icons
+            } else {
+                alert('Error: ' + result.error);
+            }
+        } catch (error) {
+            alert('Error saving event type: ' + error.message);
+        }
     }
 });
 </script>

@@ -36,14 +36,14 @@
 
                 <!-- Action Buttons -->
                 <div class="mb-4">
-                    <div class="d-flex gap-2 flex-wrap">
-                        <button type="button" class="btn btn-info text-nowrap" data-bs-toggle="modal" data-bs-target="#randomAssignModal">
+                    <div class="d-flex gap-2 flex-wrap justify-content-end">
+                        <button type="button" class="btn btn-info text-nowrap testing-component" data-bs-toggle="modal" data-bs-target="#randomAssignModal">
                             <i class="bi bi-shuffle me-1"></i>Randomly Assign Managers
                         </button>
-                        <button type="button" class="btn btn-info text-nowrap" data-bs-toggle="modal" data-bs-target="#randomAssignDaughtersModal">
+                        <button type="button" class="btn btn-info text-nowrap testing-component" data-bs-toggle="modal" data-bs-target="#randomAssignDaughtersModal">
                             <i class="bi bi-shuffle me-1"></i>Randomly Assign Daughters
                         </button>
-                        <button type="button" class="btn btn-warning text-nowrap" data-bs-toggle="modal" data-bs-target="#unassignAllModal">
+                        <button type="button" class="btn btn-warning text-nowrap testing-component" data-bs-toggle="modal" data-bs-target="#unassignAllModal">
                             <i class="bi bi-exclamation-triangle me-1"></i>Unassign All Managers
                         </button>
                         <a href="{% url 'players:manager_create' %}" class="btn btn-success text-nowrap">

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Player, Team, Manager, Draft, PlayerRanking, ManagerDaughterRanking, SiblingRanking, DraftPick, TeamPreference, PracticeSlot, PracticeSlotRanking, GeneralSetting, ValidationCode, StarredDraftPick, DivisionValidationRegistry, Event, EventType
+from .models import Player, Team, Manager, Draft, PlayerRanking, ManagerDaughterRanking, SiblingRanking, DraftPick, TeamPreference, PracticeSlot, PracticeSlotRanking, GeneralSetting, ValidationCode, StarredDraftPick, DivisionValidationRegistry, Event, EventType, BackgroundCheck, Roster
 
 
 @admin.register(Draft)
@@ -257,15 +257,61 @@ class EventTypeAdmin(admin.ModelAdmin):
 
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
-    list_display = ['id', 'name', 'event_type', 'location', 'timestamp', 'created_at', 'updated_at']
-    list_filter = ['event_type', 'timestamp']
+    list_display = ['id', 'name', 'event_type', 'home_team', 'away_team', 'location', 'timestamp', 'created_at', 'updated_at']
+    list_filter = ['event_type', 'home_team', 'away_team', 'timestamp']
     search_fields = ['name', 'description', 'location']
     readonly_fields = ['created_at', 'updated_at']
     date_hierarchy = 'timestamp'
 
     fieldsets = (
         ('Event Information', {
-            'fields': ('name', 'event_type', 'location', 'timestamp', 'description')
+            'fields': ('name', 'event_type', 'location', 'timestamp', 'end_date', 'description')
+        }),
+        ('Team Assignment', {
+            'fields': ('home_team', 'away_team')
+        }),
+        ('Metadata', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(BackgroundCheck)
+class BackgroundCheckAdmin(admin.ModelAdmin):
+    list_display = ['first_name', 'last_name', 'team', 'player', 'clearance_date', 'is_valid', 'created_at', 'updated_at']
+    list_filter = ['team', 'clearance_date']
+    search_fields = ['first_name', 'last_name', 'team__name', 'player__first_name', 'player__last_name']
+    readonly_fields = ['created_at', 'updated_at']
+    date_hierarchy = 'clearance_date'
+
+    fieldsets = (
+        ('Background Check Information', {
+            'fields': ('first_name', 'last_name', 'player', 'team', 'clearance_date', 'comments')
+        }),
+        ('Metadata', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(Roster)
+class RosterAdmin(admin.ModelAdmin):
+    list_display = ['id', 'team', 'event', 'validation_status', 'created_at', 'updated_at']
+    list_filter = ['team', 'event', 'validation_status']
+    search_fields = ['team__name', 'event__name']
+    readonly_fields = ['id', 'created_at', 'updated_at']
+
+    fieldsets = (
+        ('Roster Assignment', {
+            'fields': ('id', 'event', 'team', 'validation_status')
+        }),
+        ('Batting Lineup', {
+            'fields': ('lineup',)
+        }),
+        ('Field Positions by Inning', {
+            'fields': ('inning_1', 'inning_2', 'inning_3', 'inning_4', 'inning_5', 'inning_6')
         }),
         ('Metadata', {
             'fields': ('created_at', 'updated_at'),

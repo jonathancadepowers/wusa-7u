@@ -18,6 +18,23 @@
         .ql-editor p {
             margin-bottom: 0.5em;
         }
+        /* Quick Link Order Drag/Drop Styles */
+        .sortable-item {
+            cursor: move;
+            user-select: none;
+        }
+        .sortable-item.dragging {
+            opacity: 0.5;
+        }
+        .sortable-item:hover {
+            background-color: #f8f9fa;
+        }
+        .drag-handle {
+            cursor: grab;
+        }
+        .drag-handle:active {
+            cursor: grabbing;
+        }
     </style>
 {% endblock %}
 
@@ -37,6 +54,16 @@
                             <a href="{% url 'players:division_setup_checklist' %}" class="btn btn-primary">
                                 <i class="bi bi-list-check me-2"></i>Checklist
                             </a>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <h5 class="card-title">Division Settings</h5>
+
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#generalDivisionSettingsModal">
+                                <i class="bi bi-gear me-2"></i>General Division Settings
+                            </button>
                         </div>
 
                         <hr class="my-4">
@@ -157,20 +184,47 @@
                             <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addQuickLinkModal">
                                 <i class="bi bi-plus-circle me-2"></i>Add Quick Link
                             </button>
+                            <button type="button" class="btn btn-primary ms-2" data-bs-toggle="modal" data-bs-target="#setQuickLinkOrderModal">
+                                <i class="bi bi-arrow-down-up me-2"></i>Set Order
+                            </button>
                         </div>
 
                         <div id="quickLinksContainer" class="row g-2">
                             {% for link in quick_links %}
                             <div class="col-auto">
-                                <button type="button" class="btn btn-outline-primary{% if not link.is_active %} opacity-50{% endif %}" onclick="editQuickLink({{ link.id }}, '{{ link.name|escapejs }}', '{{ link.url|escapejs }}', '{{ link.icon|escapejs }}', {{ link.display_order }}, {{ link.is_active|lower }})">
+                                {% if link.is_fixed %}
+                                <button type="button" class="btn btn-outline-secondary" disabled>
+                                    <i class="bi {{ link.icon }} me-2"></i>{{ link.name }} <span class="badge bg-info ms-1">Fixed</span>
+                                </button>
+                                {% else %}
+                                <button type="button" class="btn btn-outline-primary{% if not link.is_active %} opacity-50{% endif %}" onclick="editQuickLink({{ link.id }}, '{{ link.name|escapejs }}', '{{ link.url|escapejs }}', '{{ link.icon|escapejs }}', {{ link.display_order }}, {{ link.is_active|lower }}, {{ link.is_fixed|lower }})">
                                     <i class="bi {{ link.icon }} me-2"></i>{{ link.name }}{% if not link.is_active %} (Inactive){% endif %}
                                 </button>
+                                {% endif %}
                             </div>
                             {% empty %}
                             <div class="col-12">
                                 <p class="text-muted">No quick links configured yet.</p>
                             </div>
                             {% endfor %}
+                        </div>
+
+                        <hr class="my-4">
+
+                        <h5 class="card-title">Show/Hide Website Components</h5>
+                        <p class="text-muted">Control the visibility of different categories of components across the website.</p>
+
+                        <div class="row g-2">
+                            <div class="col-auto">
+                                <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#componentVisibilityModal" data-category="preseason">
+                                    <i class="bi bi-eye me-2"></i>Pre-Season Items
+                                </button>
+                            </div>
+                            <div class="col-auto">
+                                <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#componentVisibilityModal" data-category="testing">
+                                    <i class="bi bi-eye-slash me-2"></i>Testing Items
+                                </button>
+                            </div>
                         </div>
 
                         <hr class="my-4">
@@ -350,12 +404,6 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="quickLinkOrder" class="form-label">Display Order</label>
-                            <input type="number" class="form-control" id="quickLinkOrder" value="0">
-                            <div class="form-text">Lower numbers appear first</div>
-                        </div>
-
-                        <div class="mb-3">
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" id="quickLinkActive" checked>
                                 <label class="form-check-label" for="quickLinkActive">
@@ -377,6 +425,102 @@
                     <button type="button" class="btn btn-primary" id="saveQuickLinkBtn">
                         <i class="bi bi-save me-2"></i>Save Link
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Set Quick Link Order Modal -->
+    <div class="modal fade" id="setQuickLinkOrderModal" tabindex="-1" aria-labelledby="setQuickLinkOrderModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="setQuickLinkOrderModalLabel">Set Quick Link Order</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted">Drag and drop to reorder quick links. Changes will be saved when you click "Save Order".</p>
+                    <div id="sortableQuickLinks" class="list-group">
+                        <!-- Quick links will be loaded here dynamically -->
+                    </div>
+                    <div class="alert alert-success d-none mt-3" id="quickLinkOrderSuccess"></div>
+                    <div class="alert alert-danger d-none mt-3" id="quickLinkOrderError"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveQuickLinkOrderBtn">
+                        <i class="bi bi-save me-2"></i>Save Order
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- All Division Players Modal -->
+    <div class="modal fade" id="allDivisionPlayersModal" tabindex="-1" aria-labelledby="allDivisionPlayersModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="allDivisionPlayersModalLabel">All Division Players</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <input type="text" class="form-control" id="playerSearchInput" placeholder="Search players...">
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover" id="allPlayersTable">
+                            <thead>
+                                <tr>
+                                    <th style="cursor: pointer;" onclick="sortPlayersTable(0)">Team <i class="bi bi-arrow-down-up"></i></th>
+                                    <th style="cursor: pointer;" onclick="sortPlayersTable(1)">Player Name <i class="bi bi-arrow-down-up"></i></th>
+                                    <th style="cursor: pointer;" onclick="sortPlayersTable(2)">Birthday <i class="bi bi-arrow-down-up"></i></th>
+                                    <th style="cursor: pointer;" onclick="sortPlayersTable(3)">School <i class="bi bi-arrow-down-up"></i></th>
+                                </tr>
+                            </thead>
+                            <tbody id="allPlayersTableBody">
+                                <!-- Players will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manager Contact Info Modal -->
+    <div class="modal fade" id="managerContactInfoModal" tabindex="-1" aria-labelledby="managerContactInfoModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="managerContactInfoModalLabel">Manager Contact Information</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <input type="text" class="form-control" id="managerSearchInput" placeholder="Search managers...">
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover" id="managersTable">
+                            <thead>
+                                <tr>
+                                    <th style="cursor: pointer;" onclick="sortManagersTable(0)">Team <i class="bi bi-arrow-down-up"></i></th>
+                                    <th style="cursor: pointer;" onclick="sortManagersTable(1)">Manager Name <i class="bi bi-arrow-down-up"></i></th>
+                                    <th style="cursor: pointer;" onclick="sortManagersTable(2)">Email <i class="bi bi-arrow-down-up"></i></th>
+                                    <th style="cursor: pointer;" onclick="sortManagersTable(3)">Phone <i class="bi bi-arrow-down-up"></i></th>
+                                </tr>
+                            </thead>
+                            <tbody id="managersTableBody">
+                                <!-- Managers will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
@@ -515,6 +659,154 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-danger" id="confirmClearDraftStarsBtn">
                         <i class="bi bi-trash me-2"></i>Yes, Delete All Stars
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Component Visibility Modal -->
+    <div class="modal fade" id="componentVisibilityModal" tabindex="-1" aria-labelledby="componentVisibilityModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="componentVisibilityModalLabel">Component Visibility</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info" role="alert">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        Toggle the switch below to show or hide <span id="categoryName"></span> across the website.
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="visibilityToggle" role="switch">
+                        <label class="form-check-label" for="visibilityToggle">
+                            Show <span id="categoryNameLabel"></span>
+                        </label>
+                    </div>
+
+                    <!-- Affected Items List -->
+                    <div id="affectedItemsSection" class="mt-4" style="display: none;">
+                        <h6 class="text-muted mb-3">
+                            <i class="bi bi-list-ul me-2"></i>Affected UI Elements (<span id="itemCount">0</span>)
+                        </h6>
+                        <div id="affectedItemsList" class="list-group">
+                            <!-- Items will be loaded here -->
+                        </div>
+                    </div>
+
+                    <div id="visibilityStatusSection" class="mt-3" style="display: none;">
+                        <!-- Status messages will be displayed here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveVisibilityBtn">
+                        <i class="bi bi-save me-2"></i>Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- General Division Settings Modal -->
+    <div class="modal fade" id="generalDivisionSettingsModal" tabindex="-1" aria-labelledby="generalDivisionSettingsModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="generalDivisionSettingsModalLabel">General Division Settings</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="generalDivisionSettingsError" class="alert alert-danger d-none"></div>
+                    <div id="generalDivisionSettingsSuccess" class="alert alert-success d-none"></div>
+
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" id="allowBenchedPlayersToggle">
+                            <label class="form-check-label" for="allowBenchedPlayersToggle">
+                                Allow Players To Sit on Bench
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" id="allowRoverPositionToggle">
+                            <label class="form-check-label" for="allowRoverPositionToggle">
+                                Allow Rover Position
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" id="allowFourOutfieldersToggle">
+                            <label class="form-check-label" for="allowFourOutfieldersToggle">
+                                Allow Four Outfielders (If Team Has Enough Players)
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="inningsPerGameInput" class="form-label">Number of Innings Per Game</label>
+                        <input type="number" class="form-control" id="inningsPerGameInput" min="5" max="9" value="6" style="max-width: 150px;">
+                        <div class="form-text">Valid range: 5-9 innings</div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="mb-3">
+                        <h6 class="mb-3">Infield Positions</h6>
+                        <p class="text-muted small">Select which positions are considered infield positions for this division.</p>
+                        <div class="form-check">
+                            <input class="form-check-input infield-position" type="checkbox" value="C" id="posC">
+                            <label class="form-check-label" for="posC">
+                                C (Catcher)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input infield-position" type="checkbox" value="1B" id="pos1B">
+                            <label class="form-check-label" for="pos1B">
+                                1B (First Base)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input infield-position" type="checkbox" value="2B" id="pos2B">
+                            <label class="form-check-label" for="pos2B">
+                                2B (Second Base)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input infield-position" type="checkbox" value="3B" id="pos3B">
+                            <label class="form-check-label" for="pos3B">
+                                3B (Third Base)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input infield-position" type="checkbox" value="SS" id="posSS">
+                            <label class="form-check-label" for="posSS">
+                                SS (Shortstop)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input infield-position" type="checkbox" value="R" id="posR">
+                            <label class="form-check-label" for="posR">
+                                R (Rover)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input infield-position" type="checkbox" value="P" id="posP">
+                            <label class="form-check-label" for="posP">
+                                P (Pitcher)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveGeneralDivisionSettingsBtn">
+                        <i class="bi bi-save me-2"></i>Save Settings
                     </button>
                 </div>
             </div>
@@ -1582,14 +1874,18 @@
         // Quick Link Management
         let isEditingQuickLink = false;
 
-        function editQuickLink(id, name, url, icon, displayOrder, isActive) {
+        function editQuickLink(id, name, url, icon, displayOrder, isActive, isFixed) {
+            // Don't allow editing fixed links
+            if (isFixed) {
+                return;
+            }
+
             isEditingQuickLink = true;
 
             document.getElementById('quickLinkId').value = id;
             document.getElementById('quickLinkName').value = name;
             document.getElementById('quickLinkUrl').value = url;
             document.getElementById('quickLinkIcon').value = icon;
-            document.getElementById('quickLinkOrder').value = displayOrder;
             document.getElementById('quickLinkActive').checked = isActive;
 
             document.getElementById('addQuickLinkModalLabel').textContent = 'Edit Quick Link';
@@ -1628,7 +1924,6 @@
                 name: document.getElementById('quickLinkName').value,
                 url: document.getElementById('quickLinkUrl').value,
                 icon: document.getElementById('quickLinkIcon').value,
-                display_order: document.getElementById('quickLinkOrder').value,
                 is_active: document.getElementById('quickLinkActive').checked
             };
 
@@ -1642,7 +1937,7 @@
             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
 
             try {
-                const url = isEdit ? `/players/quick-links/${linkId}/update/` : '/players/quick-links/create/';
+                const url = isEdit ? `/quick-links/${linkId}/update/` : '/quick-links/create/';
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: {
@@ -1689,7 +1984,7 @@
             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Deleting...';
 
             try {
-                const response = await fetch(`/players/quick-links/${linkId}/delete/`, {
+                const response = await fetch(`/quick-links/${linkId}/delete/`, {
                     method: 'POST',
                     headers: {
                         'X-CSRFToken': '{{ csrf_token }}'
@@ -1713,6 +2008,594 @@
             } catch (error) {
                 document.getElementById('quickLinkError').textContent = 'An error occurred. Please try again.';
                 document.getElementById('quickLinkError').classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+            }
+        });
+
+        // Component Visibility Modal Logic
+        const componentVisibilityModal = document.getElementById('componentVisibilityModal');
+        let currentCategory = null;
+
+        componentVisibilityModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            currentCategory = button.getAttribute('data-category');
+
+            const categoryNameMap = {
+                'preseason': 'Pre-Season Items',
+                'testing': 'Testing Items'
+            };
+
+            const categoryKeyMap = {
+                'preseason': 'show_preseason_items',
+                'testing': 'show_testing_items'
+            };
+
+            const categoryName = categoryNameMap[currentCategory];
+            document.getElementById('categoryName').textContent = categoryName;
+            document.getElementById('categoryNameLabel').textContent = categoryName;
+
+            // Reset status section
+            document.getElementById('visibilityStatusSection').style.display = 'none';
+
+            // Fetch current visibility status
+            fetch('/api/component-categories/')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const categoryKey = categoryKeyMap[currentCategory];
+                        const category = data.categories.find(c => c.key === categoryKey);
+                        if (category) {
+                            document.getElementById('visibilityToggle').checked = category.visible;
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading visibility status:', error);
+                });
+
+            // Fetch and display affected items
+            fetch(`/api/component-items/?category=${currentCategory}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.items.length > 0) {
+                        const itemsList = document.getElementById('affectedItemsList');
+                        const itemCount = document.getElementById('itemCount');
+                        const affectedSection = document.getElementById('affectedItemsSection');
+
+                        // Clear existing items
+                        itemsList.innerHTML = '';
+
+                        // Update count
+                        itemCount.textContent = data.count;
+
+                        // Add items to list
+                        data.items.forEach(item => {
+                            const itemDiv = document.createElement('div');
+                            itemDiv.className = 'list-group-item';
+                            itemDiv.innerHTML = `
+                                <div class="d-flex w-100 justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">${item.description}</h6>
+                                        <small class="text-muted">
+                                            <i class="bi bi-file-earmark-text me-1"></i>${item.page}
+                                            <span class="ms-2">•</span>
+                                            <span class="ms-2">${item.type}</span>
+                                        </small>
+                                    </div>
+                                </div>
+                            `;
+                            itemsList.appendChild(itemDiv);
+                        });
+
+                        // Show the section
+                        affectedSection.style.display = 'block';
+                    } else {
+                        // Hide section if no items
+                        document.getElementById('affectedItemsSection').style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading affected items:', error);
+                    document.getElementById('affectedItemsSection').style.display = 'none';
+                });
+        });
+
+        // Save visibility button handler
+        document.getElementById('saveVisibilityBtn').addEventListener('click', async function() {
+            const btn = this;
+            const originalHTML = btn.innerHTML;
+            const statusSection = document.getElementById('visibilityStatusSection');
+            const isVisible = document.getElementById('visibilityToggle').checked;
+
+            const categoryKeyMap = {
+                'preseason': 'show_preseason_items',
+                'testing': 'show_testing_items'
+            };
+
+            const categoryKey = categoryKeyMap[currentCategory];
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+
+            try {
+                const response = await fetch('/api/toggle-component-visibility/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({
+                        key: categoryKey,
+                        visible: isVisible
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    statusSection.style.display = 'block';
+                    statusSection.innerHTML = `
+                        <div class="alert alert-success" role="alert">
+                            <i class="bi bi-check-circle-fill me-2"></i>
+                            Visibility settings updated successfully! Reload the page to see changes.
+                        </div>
+                    `;
+
+                    // Close modal after 2 seconds
+                    setTimeout(() => {
+                        bootstrap.Modal.getInstance(componentVisibilityModal).hide();
+                        statusSection.style.display = 'none';
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    throw new Error(result.error || 'Failed to update visibility settings');
+                }
+            } catch (error) {
+                statusSection.style.display = 'block';
+                statusSection.innerHTML = `
+                    <div class="alert alert-danger" role="alert">
+                        <i class="bi bi-x-circle-fill me-2"></i>
+                        <strong>Error:</strong> ${error.message}
+                    </div>
+                `;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+            }
+        });
+
+        // Quick Link Order Management
+        let quickLinksData = [];
+
+        // Load quick links when modal opens
+        document.getElementById('setQuickLinkOrderModal').addEventListener('show.bs.modal', function () {
+            loadQuickLinksForOrdering();
+        });
+
+        async function loadQuickLinksForOrdering() {
+            const container = document.getElementById('sortableQuickLinks');
+            container.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+
+            try {
+                // Get quick links from the page context (only active and non-fixed links)
+                quickLinksData = [
+                    {% for link in quick_links %}
+                    {
+                        id: {{ link.id }},
+                        name: '{{ link.name|escapejs }}',
+                        icon: '{{ link.icon|escapejs }}',
+                        display_order: {{ link.display_order }},
+                        is_active: {{ link.is_active|lower }},
+                        is_fixed: {{ link.is_fixed|lower }}
+                    }{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                ].filter(link => link.is_active && !link.is_fixed);
+
+                renderSortableQuickLinks();
+            } catch (error) {
+                container.innerHTML = '<div class="alert alert-danger">Failed to load quick links.</div>';
+            }
+        }
+
+        function renderSortableQuickLinks() {
+            const container = document.getElementById('sortableQuickLinks');
+
+            if (quickLinksData.length === 0) {
+                container.innerHTML = '<div class="text-muted text-center py-3">No quick links to order.</div>';
+                return;
+            }
+
+            container.innerHTML = quickLinksData.map((link, index) => `
+                <div class="list-group-item sortable-item d-flex align-items-center" data-id="${link.id}" draggable="true">
+                    <i class="bi bi-grip-vertical me-3 drag-handle text-muted"></i>
+                    <i class="bi ${link.icon} me-3"></i>
+                    <span class="flex-grow-1">${link.name}</span>
+                </div>
+            `).join('');
+
+            // Initialize drag and drop
+            initializeDragAndDrop();
+        }
+
+        function initializeDragAndDrop() {
+            const sortableItems = document.querySelectorAll('#sortableQuickLinks .sortable-item');
+
+            sortableItems.forEach(item => {
+                item.addEventListener('dragstart', handleDragStart);
+                item.addEventListener('dragover', handleDragOver);
+                item.addEventListener('drop', handleDrop);
+                item.addEventListener('dragend', handleDragEnd);
+            });
+        }
+
+        let draggedElement = null;
+
+        function handleDragStart(e) {
+            draggedElement = this;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', this.innerHTML);
+        }
+
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+
+            const afterElement = getDragAfterElement(document.getElementById('sortableQuickLinks'), e.clientY);
+
+            if (afterElement == null) {
+                document.getElementById('sortableQuickLinks').appendChild(draggedElement);
+            } else {
+                document.getElementById('sortableQuickLinks').insertBefore(draggedElement, afterElement);
+            }
+
+            return false;
+        }
+
+        function handleDrop(e) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+            return false;
+        }
+
+        function handleDragEnd(e) {
+            this.classList.remove('dragging');
+
+            // Update quickLinksData array to match new order
+            const container = document.getElementById('sortableQuickLinks');
+            const items = container.querySelectorAll('.sortable-item');
+            const newOrder = [];
+
+            items.forEach((item, index) => {
+                const linkId = parseInt(item.getAttribute('data-id'));
+                const link = quickLinksData.find(l => l.id === linkId);
+                if (link) {
+                    link.display_order = index;
+                    newOrder.push(link);
+                }
+            });
+
+            quickLinksData = newOrder;
+        }
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.sortable-item:not(.dragging)')];
+
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        // Save Quick Link Order
+        document.getElementById('saveQuickLinkOrderBtn').addEventListener('click', async function() {
+            const btn = this;
+            const originalHTML = btn.innerHTML;
+
+            const orderData = quickLinksData.map((link, index) => ({
+                id: link.id,
+                display_order: index
+            }));
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+
+            try {
+                const response = await fetch('/quick-links/set-order/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ order: orderData })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    document.getElementById('quickLinkOrderSuccess').textContent = 'Order saved successfully!';
+                    document.getElementById('quickLinkOrderSuccess').classList.remove('d-none');
+                    document.getElementById('quickLinkOrderError').classList.add('d-none');
+
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    document.getElementById('quickLinkOrderError').textContent = result.error || 'Failed to save order.';
+                    document.getElementById('quickLinkOrderError').classList.remove('d-none');
+                }
+            } catch (error) {
+                document.getElementById('quickLinkOrderError').textContent = 'An error occurred. Please try again.';
+                document.getElementById('quickLinkOrderError').classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+            }
+        });
+
+        // Helper function to get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // General Division Settings Modal
+        const generalDivisionSettingsModal = document.getElementById('generalDivisionSettingsModal');
+        generalDivisionSettingsModal.addEventListener('show.bs.modal', async function () {
+            // Load allow benched players setting
+            try {
+                const response = await fetch('{% url "players:get_general_setting" %}?key=allow_benched_players');
+                const result = await response.json();
+
+                if (result.success && result.value) {
+                    const isAllowed = result.value === 'true';
+                    document.getElementById('allowBenchedPlayersToggle').checked = isAllowed;
+                } else {
+                    // Default to false if not set
+                    document.getElementById('allowBenchedPlayersToggle').checked = false;
+                }
+            } catch (error) {
+                console.error('Error loading allow benched players setting:', error);
+                document.getElementById('allowBenchedPlayersToggle').checked = false;
+            }
+
+            // Load allow rover position setting
+            try {
+                const response = await fetch('{% url "players:get_general_setting" %}?key=allow_rover_position');
+                const result = await response.json();
+
+                if (result.success && result.value) {
+                    const isAllowed = result.value === 'true';
+                    document.getElementById('allowRoverPositionToggle').checked = isAllowed;
+                } else {
+                    // Default to false if not set
+                    document.getElementById('allowRoverPositionToggle').checked = false;
+                }
+            } catch (error) {
+                console.error('Error loading allow rover position setting:', error);
+                document.getElementById('allowRoverPositionToggle').checked = false;
+            }
+
+            // Update Rover checkbox state based on toggle
+            updateRoverCheckboxState();
+
+            // Load allow four outfielders setting
+            try {
+                const response = await fetch('{% url "players:get_general_setting" %}?key=allow_four_outfielders');
+                const result = await response.json();
+
+                if (result.success && result.value) {
+                    const isAllowed = result.value === 'true';
+                    document.getElementById('allowFourOutfieldersToggle').checked = isAllowed;
+                } else {
+                    // Default to false if not set
+                    document.getElementById('allowFourOutfieldersToggle').checked = false;
+                }
+            } catch (error) {
+                console.error('Error loading allow four outfielders setting:', error);
+                document.getElementById('allowFourOutfieldersToggle').checked = false;
+            }
+
+            // Load innings per game setting
+            try {
+                const response = await fetch('{% url "players:get_general_setting" %}?key=innings_per_game');
+                const result = await response.json();
+
+                if (result.success && result.value) {
+                    const innings = parseInt(result.value);
+                    document.getElementById('inningsPerGameInput').value = innings;
+                } else {
+                    // Default to 6 if not set
+                    document.getElementById('inningsPerGameInput').value = 6;
+                }
+            } catch (error) {
+                console.error('Error loading innings per game setting:', error);
+                document.getElementById('inningsPerGameInput').value = 6;
+            }
+
+            // Load infield positions
+            try {
+                const response = await fetch('{% url "players:get_general_setting" %}?key=infield_positions');
+                const result = await response.json();
+
+                if (result.success && result.value) {
+                    const positions = JSON.parse(result.value);
+                    // Uncheck all first
+                    document.querySelectorAll('.infield-position').forEach(cb => cb.checked = false);
+                    // Check the saved positions
+                    positions.forEach(pos => {
+                        const checkbox = document.querySelector(`.infield-position[value="${pos}"]`);
+                        if (checkbox) checkbox.checked = true;
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading infield positions:', error);
+            }
+
+            // Update Rover checkbox state again after loading positions
+            updateRoverCheckboxState();
+        });
+
+        // Helper function to update Rover checkbox state based on Allow Rover Position toggle
+        function updateRoverCheckboxState() {
+            const allowRoverToggle = document.getElementById('allowRoverPositionToggle');
+            const roverCheckbox = document.getElementById('posR');
+
+            if (allowRoverToggle && roverCheckbox) {
+                const isAllowed = allowRoverToggle.checked;
+                roverCheckbox.disabled = !isAllowed;
+
+                // If disabling and checkbox is checked, uncheck it
+                if (!isAllowed && roverCheckbox.checked) {
+                    roverCheckbox.checked = false;
+                }
+            }
+        }
+
+        // Add event listener for Allow Rover Position toggle changes
+        document.getElementById('allowRoverPositionToggle').addEventListener('change', function() {
+            updateRoverCheckboxState();
+        });
+
+        document.getElementById('saveGeneralDivisionSettingsBtn').addEventListener('click', async function() {
+            const btn = this;
+            const originalHTML = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+
+            // Clear previous messages
+            document.getElementById('generalDivisionSettingsError').classList.add('d-none');
+            document.getElementById('generalDivisionSettingsSuccess').classList.add('d-none');
+
+            try {
+                // Save allow benched players setting
+                const isAllowed = document.getElementById('allowBenchedPlayersToggle').checked;
+                const formData1 = new FormData();
+                formData1.append('key', 'allow_benched_players');
+                formData1.append('value', isAllowed.toString());
+
+                const response1 = await fetch('{% url "players:save_general_setting" %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: formData1
+                });
+
+                const result1 = await response1.json();
+                if (!result1.success) {
+                    throw new Error(result1.error || 'Failed to save bench setting');
+                }
+
+                // Save allow rover position setting
+                const allowRover = document.getElementById('allowRoverPositionToggle').checked;
+                const formData2 = new FormData();
+                formData2.append('key', 'allow_rover_position');
+                formData2.append('value', allowRover.toString());
+
+                const response2 = await fetch('{% url "players:save_general_setting" %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: formData2
+                });
+
+                const result2 = await response2.json();
+                if (!result2.success) {
+                    throw new Error(result2.error || 'Failed to save rover position setting');
+                }
+
+                // Save allow four outfielders setting
+                const allowFourOutfielders = document.getElementById('allowFourOutfieldersToggle').checked;
+                const formData3 = new FormData();
+                formData3.append('key', 'allow_four_outfielders');
+                formData3.append('value', allowFourOutfielders.toString());
+
+                const response3 = await fetch('{% url "players:save_general_setting" %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: formData3
+                });
+
+                const result3 = await response3.json();
+                if (!result3.success) {
+                    throw new Error(result3.error || 'Failed to save four outfielders setting');
+                }
+
+                // Save innings per game setting
+                const inningsPerGame = document.getElementById('inningsPerGameInput').value;
+                const formData4 = new FormData();
+                formData4.append('key', 'innings_per_game');
+                formData4.append('value', inningsPerGame);
+
+                const response4 = await fetch('{% url "players:save_general_setting" %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: formData4
+                });
+
+                const result4 = await response4.json();
+                if (!result4.success) {
+                    throw new Error(result4.error || 'Failed to save innings per game setting');
+                }
+
+                // Save infield positions
+                const selectedPositions = Array.from(document.querySelectorAll('.infield-position:checked'))
+                    .map(cb => cb.value);
+
+                const formData5 = new FormData();
+                formData5.append('key', 'infield_positions');
+                formData5.append('value', JSON.stringify(selectedPositions));
+
+                const response5 = await fetch('{% url "players:save_general_setting" %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: formData5
+                });
+
+                const result5 = await response5.json();
+                if (!result5.success) {
+                    throw new Error(result5.error || 'Failed to save infield positions');
+                }
+
+                // All saves successful
+                document.getElementById('generalDivisionSettingsSuccess').textContent = 'Settings saved successfully!';
+                document.getElementById('generalDivisionSettingsSuccess').classList.remove('d-none');
+
+                setTimeout(() => {
+                    bootstrap.Modal.getInstance(generalDivisionSettingsModal).hide();
+                }, 1500);
+            } catch (error) {
+                document.getElementById('generalDivisionSettingsError').textContent = error.message || 'An error occurred. Please try again.';
+                document.getElementById('generalDivisionSettingsError').classList.remove('d-none');
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = originalHTML;
