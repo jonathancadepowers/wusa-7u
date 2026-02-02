@@ -46,7 +46,7 @@
                 <span class="lineup-label">Lineup</span>
             </button>
         </li>
-        <li class="nav-item ms-auto" role="presentation">
+        <li class="nav-item" role="presentation">
             <button class="nav-link reuse-roster-tab" id="reuseRosterBtn" type="button" data-bs-toggle="modal" data-bs-target="#reuseRosterModal">
                 <i class="bi bi-arrow-repeat me-1"></i>Reuse Previous Roster
             </button>
@@ -532,6 +532,14 @@
 .nav-tabs {
     border-bottom: none;
     gap: 8px;
+    display: flex;
+    flex-wrap: nowrap;
+    width: 100%;
+}
+
+.nav-tabs .nav-item {
+    flex: 1 1 0;
+    min-width: 0;
 }
 
 .nav-tabs .nav-link {
@@ -539,10 +547,15 @@
     background-color: white;
     border: 1px solid #dee2e6;
     border-radius: 8px;
-    padding: 12px 24px;
+    padding: 12px 16px;
     font-weight: 500;
     transition: all 0.2s ease;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    text-align: center;
 }
 
 .nav-tabs .nav-link:hover {
@@ -752,11 +765,10 @@
     background-color: white;
     border: 1px solid #6c757d !important;
     border-radius: 8px;
-    padding: 12px 24px;
+    padding: 12px 16px;
     font-weight: 500;
     transition: all 0.2s ease;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    margin-right: 8px;
 }
 
 .reuse-roster-tab:hover {
@@ -776,7 +788,7 @@
     background-color: white;
     border: 1px solid #198754 !important;
     border-radius: 8px;
-    padding: 12px 24px;
+    padding: 12px 16px;
     font-weight: 500;
     transition: all 0.2s ease;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
