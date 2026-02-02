@@ -58,6 +58,11 @@
                                 {{ player.first_name }} {{ player.last_name }}
                             </div>
                             {% endfor %}
+                            <div class="all-assigned-message" id="allAssignedMessage{{ inning }}" style="display: none;">
+                                <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                <span>All players have been assigned a position.</span>
+                                <span class="inning-valid-text text-success fw-bold"> Inning is now valid.</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -67,20 +72,25 @@
                     <div class="roster-section">
                         <div class="d-flex justify-content-between align-items-center section-header">
                             <span>Field Positions</span>
-                            {% if inning > 1 %}
-                            <div class="dropdown">
-                                <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    Reuse Inning
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-danger btn-sm reset-inning-btn" data-inning="{{ inning }}">
+                                    Reset Inning
                                 </button>
-                                <ul class="dropdown-menu dropdown-menu-end">
-                                    {% for prev_inning in innings_range %}
-                                    {% if prev_inning < inning %}
-                                    <li><a class="dropdown-item clone-inning-btn" href="#" data-source-inning="{{ prev_inning }}" data-target-inning="{{ inning }}">Inning {{ prev_inning }}</a></li>
-                                    {% endif %}
-                                    {% endfor %}
-                                </ul>
+                                {% if inning > 1 %}
+                                <div class="dropdown">
+                                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Reuse Previous Inning
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        {% for prev_inning in innings_range %}
+                                        {% if prev_inning < inning %}
+                                        <li><a class="dropdown-item clone-inning-btn" href="#" data-source-inning="{{ prev_inning }}" data-target-inning="{{ inning }}">Inning {{ prev_inning }}</a></li>
+                                        {% endif %}
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                {% endif %}
                             </div>
-                            {% endif %}
                         </div>
                         <div class="baseball-field" data-inning="{{ inning }}">
         <svg viewBox="0 0 600 625" class="field-svg">
@@ -302,6 +312,24 @@
     transition: background-color 0.2s ease;
 }
 
+.all-assigned-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+    color: #6c757d;
+    font-style: italic;
+    font-size: 14px;
+}
+
+.all-assigned-message .inning-valid-text {
+    display: block;
+    margin-top: 8px;
+    font-style: normal;
+}
+
 .player-card {
     padding: 12px 16px;
     background-color: white;
@@ -378,6 +406,12 @@
 .position-marker.drag-over .position-circle {
     fill: #cfe2ff;
     stroke: #0d6efd;
+    stroke-width: 4;
+}
+
+.position-marker.drag-over-occupied .position-circle {
+    fill: #f8d7da;
+    stroke: #dc3545;
     stroke-width: 4;
     stroke-dasharray: 5, 5;
     animation: pulse 0.5s ease-in-out infinite;
@@ -525,6 +559,45 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // Initialize reset inning buttons
+    document.querySelectorAll('.reset-inning-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const inning = parseInt(this.dataset.inning);
+            if (confirm(`Are you sure you want to reset Inning ${inning}? This will clear all position assignments for this inning.`)) {
+                resetInning(inning);
+            }
+        });
+    });
+
+    async function resetInning(inning) {
+        const field = document.querySelector(`.baseball-field[data-inning="${inning}"]`);
+        const playerList = document.querySelector(`#playerList${inning}`);
+
+        // Clear all positions
+        const markers = field.querySelectorAll('.position-marker');
+        for (const marker of markers) {
+            const position = marker.dataset.position;
+            const nameDisplay = marker.querySelector('.player-name-display');
+            const removeBtn = marker.querySelector('.remove-player-btn');
+
+            nameDisplay.textContent = '';
+            marker.classList.remove('has-player');
+            if (removeBtn) removeBtn.style.display = 'none';
+
+            await savePosition(inning, position, '', '');
+        }
+
+        // Reset all player cards to unassigned
+        playerList.querySelectorAll('.player-card').forEach(card => {
+            card.classList.remove('assigned');
+        });
+
+        // Update validation and message
+        updateInningValidation(inning);
+        updateAllAssignedMessage(inning);
+    }
+
     async function cloneInning(sourceInning, targetInning) {
         console.log('cloneInning called:', sourceInning, '->', targetInning);
 
@@ -596,8 +669,9 @@ document.addEventListener('DOMContentLoaded', function() {
             await savePosition(targetInning, position, playerId, playerName);
         }
 
-        // Update validation for target inning
+        // Update validation and message for target inning
         updateInningValidation(targetInning);
+        updateAllAssignedMessage(targetInning);
 
         // Show success feedback
         const targetTab = document.querySelector(`#inning${targetInning}-tab`);
@@ -610,7 +684,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function initializeDragAndDrop(inning) {
         const playerCards = document.querySelectorAll(`#playerList${inning} .player-card`);
-        const positionMarkers = document.querySelectorAll(`[data-inning="${inning}"] .position-marker`);
+        const positionMarkers = document.querySelectorAll(`.baseball-field[data-inning="${inning}"] .position-marker`);
         const playerList = document.querySelector(`#playerList${inning}`);
 
         // Make player cards draggable
@@ -671,8 +745,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Save the unassignment
                     savePosition(inning, position, '', '');
 
-                    // Update inning validation
+                    // Update inning validation and message
                     updateInningValidation(inning);
+                    updateAllAssignedMessage(inning);
                 });
             }
 
@@ -712,26 +787,41 @@ document.addEventListener('DOMContentLoaded', function() {
             // Position marker as drop zone
             marker.addEventListener('dragover', function(e) {
                 e.preventDefault();
-                this.classList.add('drag-over');
+                // Show red feedback if position is already occupied
+                if (this.classList.contains('has-player')) {
+                    this.classList.add('drag-over-occupied');
+                    this.classList.remove('drag-over');
+                } else {
+                    this.classList.add('drag-over');
+                    this.classList.remove('drag-over-occupied');
+                }
             });
 
             marker.addEventListener('dragleave', function(e) {
                 this.classList.remove('drag-over');
+                this.classList.remove('drag-over-occupied');
             });
 
             marker.addEventListener('drop', function(e) {
                 e.preventDefault();
                 this.classList.remove('drag-over');
+                this.classList.remove('drag-over-occupied');
 
                 const playerId = e.dataTransfer.getData('playerId');
                 const playerName = e.dataTransfer.getData('playerName');
                 const position = this.dataset.position;
                 const source = e.dataTransfer.getData('source');
 
+                // If position is already occupied and we're dropping from player list, reject
+                if (this.classList.contains('has-player') && source === 'playerList') {
+                    // Position already has a player - do nothing
+                    return;
+                }
+
                 // If dragging from another position, clear that position first
                 if (source === 'position') {
                     const oldPosition = e.dataTransfer.getData('position');
-                    const oldMarker = document.querySelector(`[data-inning="${inning}"] .position-marker[data-position="${oldPosition}"]`);
+                    const oldMarker = document.querySelector(`.baseball-field[data-inning="${inning}"] .position-marker[data-position="${oldPosition}"]`);
                     if (oldMarker && oldMarker !== this) {
                         const oldNameDisplay = oldMarker.querySelector('.player-name-display');
                         oldNameDisplay.textContent = '';
@@ -764,8 +854,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Save to database
                 savePosition(inning, position, playerId, playerName);
 
-                // Update inning validation
+                // Update inning validation and message
                 updateInningValidation(inning);
+                updateAllAssignedMessage(inning);
             });
         });
 
@@ -798,7 +889,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const position = e.dataTransfer.getData('position');
 
             // Clear the position marker
-            const marker = document.querySelector(`[data-inning="${inning}"] .position-marker[data-position="${position}"]`);
+            const marker = document.querySelector(`.baseball-field[data-inning="${inning}"] .position-marker[data-position="${position}"]`);
             if (marker) {
                 const nameDisplay = marker.querySelector('.player-name-display');
                 nameDisplay.textContent = '';
@@ -818,8 +909,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // Save the unassignment to database
             savePosition(inning, position, '', '');
 
-            // Update inning validation
+            // Update inning validation and message
             updateInningValidation(inning);
+            updateAllAssignedMessage(inning);
         });
     }
 
@@ -827,7 +919,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const playerList = document.querySelector(`#playerList${inning}`);
         const inningTab = document.querySelector(`#inning${inning}-tab`);
         const allowBenchedPlayers = {{ allow_benched_players|lower }};
-        const fieldContainer = document.querySelector(`[data-inning="${inning}"]`);
+        const fieldContainer = document.querySelector(`.baseball-field[data-inning="${inning}"]`);
 
         const totalPositions = fieldContainer.querySelectorAll('.position-marker').length;
         const filledPositions = fieldContainer.querySelectorAll('.position-marker.has-player').length;
@@ -855,6 +947,29 @@ document.addEventListener('DOMContentLoaded', function() {
             inningTab.classList.add('valid');
         } else {
             inningTab.classList.remove('valid');
+        }
+
+        return isValid;
+    }
+
+    function updateAllAssignedMessage(inning) {
+        const playerList = document.querySelector(`#playerList${inning}`);
+        const message = document.querySelector(`#allAssignedMessage${inning}`);
+        const inningTab = document.querySelector(`#inning${inning}-tab`);
+
+        const unassignedPlayers = playerList.querySelectorAll('.player-card:not(.assigned)');
+        const allAssigned = unassignedPlayers.length === 0;
+        const isValid = inningTab.classList.contains('valid');
+
+        if (allAssigned) {
+            message.style.display = 'flex';
+            // Show/hide the "Inning is now valid" text based on validation state
+            const validText = message.querySelector('.inning-valid-text');
+            if (validText) {
+                validText.style.display = isValid ? 'block' : 'none';
+            }
+        } else {
+            message.style.display = 'none';
         }
     }
 
@@ -904,7 +1019,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const rosterData = {{ roster_data_json|safe }};
         const inningData = rosterData[`inning_${inning}`];
 
-        if (!inningData || Object.keys(inningData).length === 0) return;
+        if (!inningData || Object.keys(inningData).length === 0) {
+            // Still update message even if no data
+            updateInningValidation(inning);
+            updateAllAssignedMessage(inning);
+            return;
+        }
 
         // Load each position
         Object.keys(inningData).forEach(position => {
@@ -917,7 +1037,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const playerName = playerCard.dataset.playerName;
 
             // Find the position marker
-            const marker = document.querySelector(`[data-inning="${inning}"] .position-marker[data-position="${position}"]`);
+            const marker = document.querySelector(`.baseball-field[data-inning="${inning}"] .position-marker[data-position="${position}"]`);
             if (!marker) return;
 
             // Update display
@@ -935,8 +1055,9 @@ document.addEventListener('DOMContentLoaded', function() {
             playerCard.classList.add('assigned');
         });
 
-        // Update inning validation after loading positions
+        // Update inning validation and message after loading positions
         updateInningValidation(inning);
+        updateAllAssignedMessage(inning);
     }
 });
 </script>
