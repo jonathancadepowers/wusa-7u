@@ -2724,6 +2724,98 @@ def save_roster_lineup(request, team_secret, roster_id):
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
+def get_previous_games(request, team_secret, roster_id):
+    """Get list of previous games with rosters for this team"""
+    from django.shortcuts import get_object_or_404
+    from django.http import JsonResponse
+    from .models import Roster, Team, GeneralSetting
+    import pytz
+
+    # Get the team by manager_secret
+    team = get_object_or_404(Team, manager_secret=team_secret)
+
+    # Get the current roster to find its event timestamp
+    current_roster = get_object_or_404(Roster, id=roster_id, team=team)
+    current_event = current_roster.event
+
+    # Get display timezone
+    display_tz_setting = GeneralSetting.objects.filter(key='display_timezone').first()
+    display_tz = pytz.timezone(display_tz_setting.value) if display_tz_setting else pytz.UTC
+
+    # Find all rosters for this team where the event timestamp is before the current event
+    previous_rosters = Roster.objects.filter(
+        team=team,
+        event__timestamp__lt=current_event.timestamp
+    ).select_related('event').order_by('-event__timestamp')
+
+    games = []
+    for roster in previous_rosters:
+        # Only include rosters that have some data (at least one inning or lineup)
+        has_data = any([
+            roster.inning_1, roster.inning_2, roster.inning_3,
+            roster.inning_4, roster.inning_5, roster.inning_6,
+            roster.lineup
+        ])
+
+        if has_data:
+            event = roster.event
+            event_time = event.timestamp.astimezone(display_tz)
+
+            # Determine opponent
+            if event.home_team == team:
+                opponent = event.away_team.name if event.away_team else 'TBD'
+            else:
+                opponent = event.home_team.name if event.home_team else 'TBD'
+
+            games.append({
+                'roster_id': roster.id,
+                'date': event_time.strftime('%m/%d/%y'),
+                'opponent': opponent
+            })
+
+    return JsonResponse({'success': True, 'games': games})
+
+
+def copy_roster(request, team_secret, roster_id):
+    """Copy roster data from a previous game to the current game"""
+    from django.shortcuts import get_object_or_404
+    from django.http import JsonResponse
+    from .models import Roster, Team
+
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=405)
+
+    # Get the team by manager_secret
+    team = get_object_or_404(Team, manager_secret=team_secret)
+
+    # Get the target (current) roster
+    target_roster = get_object_or_404(Roster, id=roster_id, team=team)
+
+    try:
+        source_roster_id = request.POST.get('source_roster_id')
+        if not source_roster_id:
+            return JsonResponse({'success': False, 'error': 'Source roster ID required'}, status=400)
+
+        # Get the source roster (must also belong to this team)
+        source_roster = get_object_or_404(Roster, id=source_roster_id, team=team)
+
+        # Copy all inning data and lineup
+        target_roster.inning_1 = source_roster.inning_1 or {}
+        target_roster.inning_2 = source_roster.inning_2 or {}
+        target_roster.inning_3 = source_roster.inning_3 or {}
+        target_roster.inning_4 = source_roster.inning_4 or {}
+        target_roster.inning_5 = source_roster.inning_5 or {}
+        target_roster.inning_6 = source_roster.inning_6 or {}
+        target_roster.lineup = source_roster.lineup or []
+
+        target_roster.save()
+
+        return JsonResponse({'success': True})
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
 def export_team_roster_csv(request, team_secret):
     """Export team roster to CSV with same structure as the Team Roster table"""
     import csv

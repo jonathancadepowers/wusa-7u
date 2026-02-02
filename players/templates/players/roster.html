@@ -47,6 +47,11 @@
             </button>
         </li>
         <li class="nav-item ms-auto" role="presentation">
+            <button class="nav-link reuse-roster-tab" id="reuseRosterBtn" type="button" data-bs-toggle="modal" data-bs-target="#reuseRosterModal">
+                <i class="bi bi-arrow-repeat me-1"></i>Reuse Previous Roster
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
             <button class="nav-link save-tab" id="manualSaveBtn" type="button">
                 <i class="bi bi-check2-circle me-1"></i>Save
             </button>
@@ -56,6 +61,40 @@
     <!-- Toast Message -->
     <div class="save-toast" id="saveToast">
         <i class="bi bi-check-circle-fill me-2"></i>Changes saved
+    </div>
+
+    <!-- Reuse Previous Roster Modal -->
+    <div class="modal fade" id="reuseRosterModal" tabindex="-1" aria-labelledby="reuseRosterModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="reuseRosterModalLabel">Reuse Previous Roster</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning mb-4">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <strong>Warning:</strong> Loading a previous game's roster will replace all of your current field assignments and batting lineup for this game.
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="previousGameSelect" class="form-label fw-bold">Select a previous game:</label>
+                        <select class="form-select" id="previousGameSelect">
+                            <option value="">-- Select a game --</option>
+                        </select>
+                        <div class="form-text" id="noGamesMessage" style="display: none;">
+                            No previous games with roster data found.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="loadPreviousRosterBtn" disabled>
+                        <i class="bi bi-arrow-repeat me-1"></i>Load Roster
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Tab Content -->
@@ -707,6 +746,30 @@
     transform: translateY(0);
 }
 
+/* Reuse Roster Tab Button Styles */
+.reuse-roster-tab {
+    color: #6c757d !important;
+    background-color: white;
+    border: 1px solid #6c757d !important;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    margin-right: 8px;
+}
+
+.reuse-roster-tab:hover {
+    background-color: #6c757d !important;
+    color: white !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(108,117,125,0.3);
+}
+
+.reuse-roster-tab:active {
+    transform: translateY(0);
+}
+
 /* Save Tab Button Styles */
 .save-tab {
     color: #198754 !important;
@@ -751,6 +814,84 @@ document.addEventListener('DOMContentLoaded', function() {
             saveToast.classList.remove('show');
         }, 2000);
     }
+
+    // Initialize reuse roster modal
+    const reuseRosterModal = document.getElementById('reuseRosterModal');
+    const previousGameSelect = document.getElementById('previousGameSelect');
+    const loadPreviousRosterBtn = document.getElementById('loadPreviousRosterBtn');
+    const noGamesMessage = document.getElementById('noGamesMessage');
+
+    // Load previous games when modal opens
+    reuseRosterModal.addEventListener('show.bs.modal', async function() {
+        previousGameSelect.innerHTML = '<option value="">-- Loading... --</option>';
+        loadPreviousRosterBtn.disabled = true;
+        noGamesMessage.style.display = 'none';
+
+        try {
+            const response = await fetch(`/teams/${teamSecret}/roster/${rosterId}/previous-games/`);
+            const data = await response.json();
+
+            if (data.success && data.games.length > 0) {
+                previousGameSelect.innerHTML = '<option value="">-- Select a game --</option>';
+                data.games.forEach(game => {
+                    const option = document.createElement('option');
+                    option.value = game.roster_id;
+                    option.textContent = `${game.date} - vs ${game.opponent}`;
+                    previousGameSelect.appendChild(option);
+                });
+            } else {
+                previousGameSelect.innerHTML = '<option value="">-- No previous games --</option>';
+                noGamesMessage.style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Error loading previous games:', error);
+            previousGameSelect.innerHTML = '<option value="">-- Error loading games --</option>';
+        }
+    });
+
+    // Enable/disable load button based on selection
+    previousGameSelect.addEventListener('change', function() {
+        loadPreviousRosterBtn.disabled = !this.value;
+    });
+
+    // Handle load roster button click
+    loadPreviousRosterBtn.addEventListener('click', async function() {
+        const sourceRosterId = previousGameSelect.value;
+        if (!sourceRosterId) return;
+
+        this.disabled = true;
+        this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Loading...';
+
+        try {
+            const formData = new FormData();
+            formData.append('source_roster_id', sourceRosterId);
+
+            const response = await fetch(`/teams/${teamSecret}/roster/${rosterId}/copy-roster/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Close modal and reload page to show new data
+                bootstrap.Modal.getInstance(reuseRosterModal).hide();
+                location.reload();
+            } else {
+                alert('Error loading roster: ' + (data.error || 'Unknown error'));
+                this.disabled = false;
+                this.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i>Load Roster';
+            }
+        } catch (error) {
+            console.error('Error copying roster:', error);
+            alert('Error loading roster. Please try again.');
+            this.disabled = false;
+            this.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i>Load Roster';
+        }
+    });
 
     // Initialize drag and drop for each inning
     for (let inning = 1; inning <= inningsPerGame; inning++) {
