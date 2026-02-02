@@ -1619,11 +1619,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             // Update validation display
-            // Dispose existing tooltip if any
-            let tooltipInstance = bootstrap.Tooltip.getInstance(validationCell);
-            if (tooltipInstance) {
-                tooltipInstance.dispose();
-            }
+            // Dispose existing tooltips from both icons
+            let validTooltip = bootstrap.Tooltip.getInstance(validIcon);
+            let invalidTooltip = bootstrap.Tooltip.getInstance(invalidIcon);
+            if (validTooltip) validTooltip.dispose();
+            if (invalidTooltip) invalidTooltip.dispose();
 
             let tooltipContent = '';
 
@@ -1641,9 +1641,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
 
-            // Create new tooltip with updated content
-            validationCell.setAttribute('title', tooltipContent);
-            new bootstrap.Tooltip(validationCell, {
+            // Create new tooltip with updated content - attach to the visible icon for better positioning
+            const visibleIcon = errors.length === 0 ? validIcon : invalidIcon;
+            visibleIcon.setAttribute('title', tooltipContent);
+            new bootstrap.Tooltip(visibleIcon, {
                 html: true,
                 placement: 'left',
                 trigger: 'hover'
