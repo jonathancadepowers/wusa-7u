@@ -832,11 +832,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const allowBenchedPlayers = {{ allow_benched_players|lower }};
     const infieldPositions = {{ infield_positions_json|safe }};
 
-    // Initialize Bootstrap tooltips
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl, { html: true });
-    });
+    // Bootstrap tooltips will be initialized dynamically in validateLineupPlayers
 
     // Initialize manual save button
     const saveBtn = document.getElementById('manualSaveBtn');
@@ -1615,27 +1611,35 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             // Update validation display
-            const tooltipInstance = bootstrap.Tooltip.getInstance(validationCell);
+            // Dispose existing tooltip if any
+            let tooltipInstance = bootstrap.Tooltip.getInstance(validationCell);
+            if (tooltipInstance) {
+                tooltipInstance.dispose();
+            }
+
+            let tooltipContent = '';
 
             if (errors.length === 0) {
                 validIcon.style.display = 'inline';
                 invalidIcon.style.display = 'none';
-                if (tooltipInstance) {
-                    tooltipInstance.setContent({ '.tooltip-inner': "Player's roster and positions are valid for this game." });
-                }
+                tooltipContent = "Player's roster and positions are valid for this game.";
             } else {
                 validIcon.style.display = 'none';
                 invalidIcon.style.display = 'inline';
-                let errorHtml = '';
                 if (errors.length === 1) {
-                    errorHtml = errors[0];
+                    tooltipContent = errors[0];
                 } else {
-                    errorHtml = errors.map((e, i) => `${i + 1}. ${e}`).join('<br>');
-                }
-                if (tooltipInstance) {
-                    tooltipInstance.setContent({ '.tooltip-inner': errorHtml });
+                    tooltipContent = errors.map((e, i) => `${i + 1}. ${e}`).join('<br>');
                 }
             }
+
+            // Create new tooltip with updated content
+            validationCell.setAttribute('title', tooltipContent);
+            new bootstrap.Tooltip(validationCell, {
+                html: true,
+                placement: 'left',
+                trigger: 'hover'
+            });
         });
     }
 
