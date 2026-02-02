@@ -35,7 +35,7 @@
         {% for inning in innings_range %}
         <li class="nav-item" role="presentation">
             <button class="nav-link {% if inning == 1 %}active{% endif %} inning-tab" id="inning{{ inning }}-tab" data-bs-toggle="tab" data-bs-target="#inning{{ inning }}" type="button" role="tab" data-inning="{{ inning }}">
-                <span class="inning-label">Inning {{ inning }}</span>
+                <i class="bi bi-diamond-fill me-1"></i><span class="inning-label">Inning {{ inning }}</span>
                 <i class="bi bi-check-circle-fill validation-icon valid-icon"></i>
                 <i class="bi bi-x-circle-fill validation-icon invalid-icon"></i>
             </button>
@@ -43,7 +43,7 @@
         {% endfor %}
         <li class="nav-item" role="presentation">
             <button class="nav-link lineup-tab" id="lineup-tab" data-bs-toggle="tab" data-bs-target="#lineup" type="button" role="tab">
-                <span class="lineup-label">Lineup</span>
+                <i class="bi bi-list-ol me-1"></i><span class="lineup-label">Lineup</span>
             </button>
         </li>
         <li class="nav-item" role="presentation">
@@ -555,7 +555,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     width: 100%;
-    text-align: center;
+    text-align: left;
 }
 
 .nav-tabs .nav-link:hover {
