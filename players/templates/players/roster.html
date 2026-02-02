@@ -44,6 +44,8 @@
         <li class="nav-item" role="presentation">
             <button class="nav-link lineup-tab" id="lineup-tab" data-bs-toggle="tab" data-bs-target="#lineup" type="button" role="tab">
                 <i class="bi bi-list-ol me-1"></i><span class="lineup-label">Lineup</span>
+                <i class="bi bi-check-circle-fill validation-icon lineup-valid-icon"></i>
+                <i class="bi bi-x-circle-fill validation-icon lineup-invalid-icon"></i>
             </button>
         </li>
         <li class="nav-item" role="presentation">
@@ -644,6 +646,44 @@
     display: flex;
     align-items: center;
     gap: 8px;
+}
+
+/* Lineup Tab Validation Icons */
+.lineup-tab .lineup-valid-icon {
+    display: none;
+    color: #198754;
+}
+
+.lineup-tab .lineup-invalid-icon {
+    color: #dc3545;
+}
+
+.lineup-tab.valid .lineup-valid-icon {
+    display: inline;
+}
+
+.lineup-tab.valid .lineup-invalid-icon {
+    display: none;
+}
+
+.lineup-tab.valid {
+    border-color: #198754;
+    background: linear-gradient(135deg, #d1e7dd 0%, #ffffff 100%);
+}
+
+.lineup-tab.valid:hover {
+    border-color: #198754;
+    background: linear-gradient(135deg, #c3e6cb 0%, #f8f9fa 100%);
+}
+
+.lineup-tab.valid.active {
+    background: linear-gradient(135deg, #198754 0%, #157347 100%);
+    border-color: #198754;
+    color: white;
+}
+
+.lineup-tab.valid.active .lineup-valid-icon {
+    color: white;
 }
 
 .lineup-section {
@@ -1641,6 +1681,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 trigger: 'hover'
             });
         });
+
+        // Update Lineup tab validation state
+        updateLineupTabValidation();
+    }
+
+    function updateLineupTabValidation() {
+        const lineupTab = document.getElementById('lineup-tab');
+        const invalidPlayers = document.querySelectorAll('#lineupBody .validation-icon-invalid[style*="inline"]');
+
+        if (invalidPlayers.length === 0) {
+            lineupTab.classList.add('valid');
+        } else {
+            lineupTab.classList.remove('valid');
+        }
     }
 
     function updateLineupPositionsFromField() {
