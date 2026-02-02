@@ -48,6 +48,16 @@
         </li>
     </ul>
 
+    <!-- Save Button and Toast Message -->
+    <div class="d-flex justify-content-end mb-2">
+        <button class="btn btn-outline-primary btn-sm" id="manualSaveBtn">
+            <i class="bi bi-check2-circle me-1"></i>Save
+        </button>
+    </div>
+    <div class="save-toast" id="saveToast">
+        <i class="bi bi-check-circle-fill me-2"></i>Changes saved
+    </div>
+
     <!-- Tab Content -->
     <div class="tab-content mt-4" id="inningTabContent">
         {% for inning in innings_range %}
@@ -285,11 +295,8 @@
             <div class="row g-3">
                 <div class="col-12">
                     <div class="roster-section lineup-section">
-                        <div class="d-flex justify-content-between align-items-center section-header">
+                        <div class="section-header">
                             <span>Batting Lineup</span>
-                            <button class="btn btn-outline-secondary btn-sm" id="resetLineupBtn">
-                                Reset to Alphabetical
-                            </button>
                         </div>
                         <div class="lineup-table-container">
                             <table class="table lineup-table" id="lineupTable">
@@ -298,7 +305,7 @@
                                         <th class="order-col">#</th>
                                         <th class="name-col">Player Name</th>
                                         {% for inning in innings_range %}
-                                        <th class="position-col">Inn {{ inning }}</th>
+                                        <th class="position-col">{{ inning }}</th>
                                         {% endfor %}
                                     </tr>
                                 </thead>
@@ -679,6 +686,38 @@
     color: #198754;
     font-weight: 500;
 }
+
+/* Save Toast Styles */
+.save-toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #198754;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    z-index: 9999;
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: all 0.3s ease;
+    pointer-events: none;
+}
+
+.save-toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+#manualSaveBtn {
+    transition: all 0.2s ease;
+}
+
+#manualSaveBtn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(13,110,253,0.3);
+}
 </style>
 
 <script>
@@ -686,6 +725,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const rosterId = {{ roster.id }};
     const teamSecret = '{{ team.manager_secret }}';
     const inningsPerGame = {{ innings_per_game }};
+
+    // Initialize manual save button
+    const saveBtn = document.getElementById('manualSaveBtn');
+    const saveToast = document.getElementById('saveToast');
+
+    saveBtn.addEventListener('click', function() {
+        showSaveToast();
+    });
+
+    function showSaveToast() {
+        saveToast.classList.add('show');
+        setTimeout(() => {
+            saveToast.classList.remove('show');
+        }, 2000);
+    }
 
     // Initialize drag and drop for each inning
     for (let inning = 1; inning <= inningsPerGame; inning++) {
@@ -1215,7 +1269,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function initializeLineup() {
         const lineupBody = document.getElementById('lineupBody');
-        const resetBtn = document.getElementById('resetLineupBtn');
         const savedLineup = {{ lineup_data_json|safe }};
         const rosterData = {{ roster_data_json|safe }};
 
@@ -1241,14 +1294,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Initialize drag-and-drop for lineup rows
         initializeLineupDragDrop();
-
-        // Reset button handler
-        resetBtn.addEventListener('click', function() {
-            sortRowsAlphabetically(rows);
-            rows.forEach(row => lineupBody.appendChild(row));
-            updateBattingOrderNumbers();
-            saveLineup();
-        });
 
         // Listen for tab switches to update positions
         document.getElementById('lineup-tab').addEventListener('shown.bs.tab', function() {
