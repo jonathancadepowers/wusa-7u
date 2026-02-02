@@ -46,14 +46,14 @@
                 <span class="lineup-label">Lineup</span>
             </button>
         </li>
+        <li class="nav-item ms-auto" role="presentation">
+            <button class="nav-link save-tab" id="manualSaveBtn" type="button">
+                <i class="bi bi-check2-circle me-1"></i>Save
+            </button>
+        </li>
     </ul>
 
-    <!-- Save Button and Toast Message -->
-    <div class="d-flex justify-content-end mb-2">
-        <button class="btn btn-outline-primary btn-sm" id="manualSaveBtn">
-            <i class="bi bi-check2-circle me-1"></i>Save
-        </button>
-    </div>
+    <!-- Toast Message -->
     <div class="save-toast" id="saveToast">
         <i class="bi bi-check-circle-fill me-2"></i>Changes saved
     </div>
@@ -707,13 +707,27 @@
     transform: translateY(0);
 }
 
-#manualSaveBtn {
+/* Save Tab Button Styles */
+.save-tab {
+    color: #198754 !important;
+    background-color: white;
+    border: 1px solid #198754 !important;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-weight: 500;
     transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-#manualSaveBtn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(13,110,253,0.3);
+.save-tab:hover {
+    background-color: #198754 !important;
+    color: white !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(25,135,84,0.3);
+}
+
+.save-tab:active {
+    transform: translateY(0);
 }
 </style>
 
