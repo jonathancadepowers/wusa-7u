@@ -1528,6 +1528,7 @@ def public_portal_view(request):
 
 
 @require_http_methods(["POST"])
+@csrf_exempt
 def validate_team_secret_view(request):
     """Validate team secret and return team URL if valid"""
     team_secret = request.POST.get('team_secret', '').strip()
