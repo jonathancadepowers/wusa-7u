@@ -340,6 +340,7 @@
                             <table class="table lineup-table" id="lineupTable">
                                 <thead>
                                     <tr>
+                                        <th class="drag-col"></th>
                                         <th class="order-col">#</th>
                                         <th class="name-col">Player Name</th>
                                         {% for inning in innings_range %}
@@ -351,6 +352,7 @@
                                 <tbody id="lineupBody">
                                     {% for player in team.players.all %}
                                     <tr class="lineup-row" draggable="true" data-player-id="{{ player.id }}" data-player-name="{{ player.first_name }} {{ player.last_name }}">
+                                        <td class="drag-col"><i class="bi bi-grip-vertical drag-handle"></i></td>
                                         <td class="order-col"><span class="batting-order"></span></td>
                                         <td class="name-col">{{ player.first_name }} {{ player.last_name }}</td>
                                         {% for inning in innings_range %}
@@ -724,6 +726,26 @@
     color: #495057;
     white-space: nowrap;
     padding: 12px 8px;
+}
+
+.lineup-table .drag-col {
+    width: 30px;
+    text-align: center;
+    padding: 12px 4px;
+}
+
+.drag-handle {
+    color: #adb5bd;
+    font-size: 18px;
+    cursor: grab;
+}
+
+.drag-handle:hover {
+    color: #6c757d;
+}
+
+.lineup-row:active .drag-handle {
+    cursor: grabbing;
 }
 
 .lineup-table .order-col {
