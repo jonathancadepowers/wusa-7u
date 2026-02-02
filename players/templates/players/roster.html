@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mt-4 mb-5">
+<div class="roster-container mt-4 mb-5">
     <!-- Game Info Header -->
     <div class="card mb-4">
         <div class="card-body py-3">
@@ -35,7 +35,7 @@
         {% for inning in innings_range %}
         <li class="nav-item" role="presentation">
             <button class="nav-link {% if inning == 1 %}active{% endif %} inning-tab" id="inning{{ inning }}-tab" data-bs-toggle="tab" data-bs-target="#inning{{ inning }}" type="button" role="tab" data-inning="{{ inning }}">
-                <i class="bi bi-diamond-fill me-1"></i><span class="inning-label">Inning {{ inning }}</span>
+                <i class="bi bi-diamond-fill"></i><span class="inning-label">Inning {{ inning }}</span>
                 <i class="bi bi-check-circle-fill validation-icon valid-icon"></i>
                 <i class="bi bi-x-circle-fill validation-icon invalid-icon"></i>
             </button>
@@ -43,19 +43,19 @@
         {% endfor %}
         <li class="nav-item" role="presentation">
             <button class="nav-link lineup-tab" id="lineup-tab" data-bs-toggle="tab" data-bs-target="#lineup" type="button" role="tab">
-                <i class="bi bi-list-ol me-1"></i><span class="lineup-label">Lineup</span>
+                <i class="bi bi-list-ol"></i><span class="lineup-label">Lineup</span>
                 <i class="bi bi-check-circle-fill validation-icon lineup-valid-icon"></i>
                 <i class="bi bi-x-circle-fill validation-icon lineup-invalid-icon"></i>
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link reuse-roster-tab" id="reuseRosterBtn" type="button" data-bs-toggle="modal" data-bs-target="#reuseRosterModal">
-                <i class="bi bi-arrow-repeat me-1"></i>Reuse
+            <button class="nav-link" id="reuseRosterBtn" type="button" data-bs-toggle="modal" data-bs-target="#reuseRosterModal">
+                <i class="bi bi-arrow-repeat"></i><span>Reuse</span>
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link save-tab" id="manualSaveBtn" type="button">
-                <i class="bi bi-check2-circle me-1"></i>Save
+            <button class="nav-link" id="manualSaveBtn" type="button">
+                <i class="bi bi-check2-circle"></i><span>Save</span>
             </button>
         </li>
     </ul>
@@ -373,6 +373,16 @@
 </div>
 
 <style>
+/* Wide Container for Roster Page - supports up to 9 innings + lineup + reuse + save */
+.roster-container {
+    max-width: 1600px;
+    width: 95%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
 /* Section Container Styles */
 .roster-section {
     background-color: white;
@@ -563,6 +573,15 @@
     text-overflow: ellipsis;
     width: 100%;
     text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Consistent icon styling for all tab buttons */
+.nav-tabs .nav-link i.bi {
+    margin-right: 0;  /* Use gap instead of margin */
+    flex-shrink: 0;
 }
 
 .nav-tabs .nav-link:hover {
@@ -584,9 +603,6 @@
 /* Inning Tab Validation Styles */
 .inning-tab {
     position: relative;
-    display: flex;
-    align-items: center;
-    gap: 8px;
 }
 
 .inning-tab .validation-icon {
@@ -643,9 +659,6 @@
 /* Lineup Tab Styles */
 .lineup-tab {
     position: relative;
-    display: flex;
-    align-items: center;
-    gap: 8px;
 }
 
 /* Lineup Tab Validation Icons */
@@ -817,51 +830,8 @@
     transform: translateY(0);
 }
 
-/* Reuse Roster Tab Button Styles */
-.reuse-roster-tab {
-    color: #6c757d !important;
-    background-color: white;
-    border: 1px solid #6c757d !important;
-    border-radius: 8px;
-    padding: 12px 16px;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-
-.reuse-roster-tab:hover {
-    background-color: #6c757d !important;
-    color: white !important;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(108,117,125,0.3);
-}
-
-.reuse-roster-tab:active {
-    transform: translateY(0);
-}
-
-/* Save Tab Button Styles */
-.save-tab {
-    color: #198754 !important;
-    background-color: white;
-    border: 1px solid #198754 !important;
-    border-radius: 8px;
-    padding: 12px 16px;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-
-.save-tab:hover {
-    background-color: #198754 !important;
-    color: white !important;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(25,135,84,0.3);
-}
-
-.save-tab:active {
-    transform: translateY(0);
-}
+/* Reuse and Save buttons use the same base styling as other nav-tabs */
+/* No special styling needed - they inherit from .nav-tabs .nav-link */
 </style>
 
 <script>
