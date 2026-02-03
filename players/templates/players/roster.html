@@ -48,18 +48,19 @@
                 <i class="bi bi-x-circle-fill validation-icon lineup-invalid-icon"></i>
             </button>
         </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="shareRosterBtn" type="button" data-bs-toggle="modal" data-bs-target="#shareRosterModal">
+        <li class="nav-item nav-divider" aria-hidden="true"></li>
+        <li class="nav-item action-item" role="presentation">
+            <button class="nav-link action-btn" id="shareRosterBtn" type="button" data-bs-toggle="modal" data-bs-target="#shareRosterModal">
                 <i class="bi bi-share"></i><span>Share</span>
             </button>
         </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="reuseRosterBtn" type="button" data-bs-toggle="modal" data-bs-target="#reuseRosterModal">
+        <li class="nav-item action-item" role="presentation">
+            <button class="nav-link action-btn" id="reuseRosterBtn" type="button" data-bs-toggle="modal" data-bs-target="#reuseRosterModal">
                 <i class="bi bi-arrow-repeat"></i><span>Reuse</span>
             </button>
         </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="manualSaveBtn" type="button">
+        <li class="nav-item action-item" role="presentation">
+            <button class="nav-link action-btn" id="manualSaveBtn" type="button">
                 <i class="bi bi-check2-circle"></i><span>Save</span>
             </button>
         </li>
@@ -636,6 +637,33 @@
 .nav-tabs .nav-item {
     flex: 1 1 0;
     min-width: 0;
+}
+
+/* Divider between content tabs and action buttons */
+.nav-tabs .nav-divider {
+    flex: 0 0 auto;
+    width: 1px;
+    background: linear-gradient(to bottom, transparent 20%, #dee2e6 50%, transparent 80%);
+    margin: 0 4px;
+    min-width: 1px;
+}
+
+/* Action buttons group styling */
+.nav-tabs .action-item {
+    flex: 0 0 auto;
+    min-width: auto;
+}
+
+.nav-tabs .action-btn {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+    color: #6c757d;
+}
+
+.nav-tabs .action-btn:hover {
+    background-color: #e9ecef;
+    border-color: #adb5bd;
+    color: #495057;
 }
 
 .nav-tabs .nav-link {
