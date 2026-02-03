@@ -7756,3 +7756,53 @@ def send_share_roster_email(request, roster_id):
             'success': False,
             'error': f'Failed to send email: {str(e)}'
         }, status=500)
+
+
+def get_email_settings(request):
+    """Get the email settings for the settings modal"""
+    from .models import EmailSettings
+
+    settings = EmailSettings.get_settings()
+
+    return JsonResponse({
+        'success': True,
+        'settings': {
+            'smtp_host': settings.smtp_host,
+            'smtp_port': settings.smtp_port,
+            'smtp_username': settings.smtp_username,
+            'smtp_password': settings.smtp_password,
+            'smtp_use_tls': settings.smtp_use_tls,
+            'from_email': settings.from_email,
+            'reply_to_email': settings.reply_to_email,
+            'sandbox_mode': settings.sandbox_mode,
+            'sandbox_email': settings.sandbox_email,
+        }
+    })
+
+
+def save_email_settings(request):
+    """Save email settings from the settings modal"""
+    from .models import EmailSettings
+
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=405)
+
+    try:
+        settings = EmailSettings.get_settings()
+
+        settings.smtp_host = request.POST.get('smtp_host', 'smtp.gmail.com')
+        settings.smtp_port = int(request.POST.get('smtp_port', 587))
+        settings.smtp_username = request.POST.get('smtp_username', '')
+        settings.smtp_password = request.POST.get('smtp_password', '')
+        settings.smtp_use_tls = request.POST.get('smtp_use_tls', 'true').lower() == 'true'
+        settings.from_email = request.POST.get('from_email', '')
+        settings.reply_to_email = request.POST.get('reply_to_email', '')
+        settings.sandbox_mode = request.POST.get('sandbox_mode', 'false').lower() == 'true'
+        settings.sandbox_email = request.POST.get('sandbox_email', '')
+
+        settings.save()
+
+        return JsonResponse({'success': True, 'message': 'Email settings saved successfully'})
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)

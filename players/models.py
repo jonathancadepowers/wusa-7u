@@ -385,3 +385,42 @@ class Roster(models.Model):
 
     def __str__(self):
         return f"Roster for {self.team.name} - {self.event.name}"
+
+
+class EmailSettings(models.Model):
+    """Singleton model to store email/SMTP configuration and sandbox settings"""
+    # SMTP Configuration
+    smtp_host = models.CharField(max_length=255, default='smtp.gmail.com')
+    smtp_port = models.IntegerField(default=587)
+    smtp_username = models.CharField(max_length=255, blank=True, null=True)
+    smtp_password = models.CharField(max_length=255, blank=True, null=True, help_text='Stored in plain text')
+    smtp_use_tls = models.BooleanField(default=True)
+    from_email = models.EmailField(blank=True, null=True)
+    reply_to_email = models.EmailField(blank=True, null=True)
+
+    # Sandbox Mode
+    sandbox_mode = models.BooleanField(default=False, help_text='When enabled, all emails are sent to the sandbox email address')
+    sandbox_email = models.EmailField(blank=True, null=True, help_text='Email address to receive all emails when sandbox mode is enabled')
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'email_settings'
+        verbose_name = 'Email Settings'
+        verbose_name_plural = 'Email Settings'
+
+    def __str__(self):
+        return f"Email Settings (Sandbox: {'ON' if self.sandbox_mode else 'OFF'})"
+
+    @classmethod
+    def get_settings(cls):
+        """Get or create the singleton email settings instance"""
+        settings, created = cls.objects.get_or_create(pk=1)
+        return settings
+
+    def get_recipient(self, original_email):
+        """Return the appropriate recipient email based on sandbox mode"""
+        if self.sandbox_mode and self.sandbox_email:
+            return self.sandbox_email
+        return original_email

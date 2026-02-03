@@ -263,8 +263,112 @@
                                     <i class="bi bi-clock me-2"></i>Set Time Zone
                                 </button>
                             </div>
+                            <div class="col-auto">
+                                <button id="emailSettingsBtn" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#emailSettingsModal">
+                                    <i class="bi bi-envelope-gear me-2"></i>Email
+                                </button>
+                            </div>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Email Settings Modal -->
+    <div class="modal fade" id="emailSettingsModal" tabindex="-1" aria-labelledby="emailSettingsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="emailSettingsModalLabel">Email Configuration</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Email Settings Section -->
+                    <h6 class="fw-bold mb-3"><i class="bi bi-gear me-2"></i>SMTP Settings</h6>
+
+                    <div class="alert alert-warning mb-3">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <strong>Security Notice:</strong> Your Gmail app password will be stored in the database in plain text. This is necessary for the application to send emails on your behalf. Please ensure your database is properly secured.
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-8">
+                            <label for="smtpHost" class="form-label">SMTP Host</label>
+                            <input type="text" class="form-control" id="smtpHost" value="smtp.gmail.com">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="smtpPort" class="form-label">SMTP Port</label>
+                            <input type="number" class="form-control" id="smtpPort" value="587">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="smtpUsername" class="form-label">Username (Email)</label>
+                            <input type="email" class="form-control" id="smtpUsername" placeholder="your-email@gmail.com">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="smtpPassword" class="form-label">App Password</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="smtpPassword" placeholder="Enter app password">
+                                <button class="btn btn-outline-secondary" type="button" id="toggleSmtpPasswordBtn">
+                                    <i class="bi bi-eye" id="toggleSmtpPasswordIcon"></i>
+                                </button>
+                            </div>
+                            <div class="form-text">
+                                <a href="https://support.google.com/accounts/answer/185833" target="_blank">How to create a Gmail App Password</a>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="fromEmail" class="form-label">From Email</label>
+                            <input type="email" class="form-control" id="fromEmail" placeholder="noreply@yourdomain.com">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="replyToEmail" class="form-label">Reply-To Email</label>
+                            <input type="email" class="form-control" id="replyToEmail" placeholder="replies@yourdomain.com">
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="smtpUseTls" checked>
+                                <label class="form-check-label" for="smtpUseTls">
+                                    Use TLS (recommended)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- Sandbox Mode Section -->
+                    <h6 class="fw-bold mb-3"><i class="bi bi-box me-2"></i>Sandbox Mode</h6>
+
+                    <div class="alert alert-info mb-3">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        When sandbox mode is enabled, <strong>all emails</strong> sent by the application will be redirected to the specified sandbox email address instead of their intended recipients. This is useful for testing.
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="sandboxMode">
+                                <label class="form-check-label" for="sandboxMode">
+                                    Enable Sandbox Mode
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6" id="sandboxEmailContainer" style="display: none;">
+                            <label for="sandboxEmail" class="form-label">Sandbox Email Address</label>
+                            <input type="email" class="form-control" id="sandboxEmail" placeholder="test@example.com">
+                            <div class="form-text">All emails will be sent to this address when sandbox mode is enabled.</div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-success d-none mt-3" id="emailSettingsSuccess"></div>
+                    <div class="alert alert-danger d-none mt-3" id="emailSettingsError"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveEmailSettingsBtn">
+                        <i class="bi bi-save me-2"></i>Save Settings
+                    </button>
                 </div>
             </div>
         </div>
@@ -2596,6 +2700,128 @@
             } catch (error) {
                 document.getElementById('generalDivisionSettingsError').textContent = error.message || 'An error occurred. Please try again.';
                 document.getElementById('generalDivisionSettingsError').classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+            }
+        });
+
+        // ========== EMAIL SETTINGS ==========
+
+        // Toggle password visibility for SMTP password
+        document.getElementById('toggleSmtpPasswordBtn').addEventListener('click', function() {
+            const passwordInput = document.getElementById('smtpPassword');
+            const icon = document.getElementById('toggleSmtpPasswordIcon');
+
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+            }
+        });
+
+        // Toggle sandbox email field visibility
+        document.getElementById('sandboxMode').addEventListener('change', function() {
+            const container = document.getElementById('sandboxEmailContainer');
+            container.style.display = this.checked ? 'block' : 'none';
+        });
+
+        // Load email settings when modal opens
+        const emailSettingsModal = document.getElementById('emailSettingsModal');
+        emailSettingsModal.addEventListener('show.bs.modal', async function() {
+            const successDiv = document.getElementById('emailSettingsSuccess');
+            const errorDiv = document.getElementById('emailSettingsError');
+            successDiv.classList.add('d-none');
+            errorDiv.classList.add('d-none');
+
+            try {
+                const response = await fetch('{% url "players:get_email_settings" %}');
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('smtpHost').value = data.settings.smtp_host || 'smtp.gmail.com';
+                    document.getElementById('smtpPort').value = data.settings.smtp_port || 587;
+                    document.getElementById('smtpUsername').value = data.settings.smtp_username || '';
+                    document.getElementById('smtpPassword').value = data.settings.smtp_password || '';
+                    document.getElementById('smtpUseTls').checked = data.settings.smtp_use_tls !== false;
+                    document.getElementById('fromEmail').value = data.settings.from_email || '';
+                    document.getElementById('replyToEmail').value = data.settings.reply_to_email || '';
+                    document.getElementById('sandboxMode').checked = data.settings.sandbox_mode || false;
+                    document.getElementById('sandboxEmail').value = data.settings.sandbox_email || '';
+
+                    // Show/hide sandbox email container based on mode
+                    document.getElementById('sandboxEmailContainer').style.display =
+                        data.settings.sandbox_mode ? 'block' : 'none';
+                }
+            } catch (error) {
+                console.error('Error loading email settings:', error);
+                errorDiv.textContent = 'Error loading email settings. Please try again.';
+                errorDiv.classList.remove('d-none');
+            }
+        });
+
+        // Save email settings
+        document.getElementById('saveEmailSettingsBtn').addEventListener('click', async function() {
+            const btn = this;
+            const originalHTML = btn.innerHTML;
+            const successDiv = document.getElementById('emailSettingsSuccess');
+            const errorDiv = document.getElementById('emailSettingsError');
+
+            successDiv.classList.add('d-none');
+            errorDiv.classList.add('d-none');
+
+            // Validate sandbox email if sandbox mode is enabled
+            const sandboxMode = document.getElementById('sandboxMode').checked;
+            const sandboxEmail = document.getElementById('sandboxEmail').value.trim();
+            if (sandboxMode && !sandboxEmail) {
+                errorDiv.textContent = 'Please provide a sandbox email address when sandbox mode is enabled.';
+                errorDiv.classList.remove('d-none');
+                return;
+            }
+
+            // Show loading state
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+
+            try {
+                const formData = new FormData();
+                formData.append('smtp_host', document.getElementById('smtpHost').value);
+                formData.append('smtp_port', document.getElementById('smtpPort').value);
+                formData.append('smtp_username', document.getElementById('smtpUsername').value);
+                formData.append('smtp_password', document.getElementById('smtpPassword').value);
+                formData.append('smtp_use_tls', document.getElementById('smtpUseTls').checked);
+                formData.append('from_email', document.getElementById('fromEmail').value);
+                formData.append('reply_to_email', document.getElementById('replyToEmail').value);
+                formData.append('sandbox_mode', sandboxMode);
+                formData.append('sandbox_email', sandboxEmail);
+
+                const response = await fetch('{% url "players:save_email_settings" %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    successDiv.textContent = 'Email settings saved successfully!';
+                    successDiv.classList.remove('d-none');
+
+                    setTimeout(() => {
+                        bootstrap.Modal.getInstance(emailSettingsModal).hide();
+                    }, 1500);
+                } else {
+                    throw new Error(result.error || 'Failed to save email settings');
+                }
+            } catch (error) {
+                errorDiv.textContent = error.message || 'An error occurred. Please try again.';
+                errorDiv.classList.remove('d-none');
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = originalHTML;

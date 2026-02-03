@@ -138,4 +138,7 @@ urlpatterns = [
     # Shared Roster (public read-only view)
     path('shared_roster/<int:roster_id>/', views.shared_roster_view, name='shared_roster'),
     path('shared_roster/<int:roster_id>/send-email/', views.send_share_roster_email, name='send_share_roster_email'),
+    # Email Settings
+    path('api/get-email-settings/', views.get_email_settings, name='get_email_settings'),
+    path('api/save-email-settings/', views.save_email_settings, name='save_email_settings'),
 ]
