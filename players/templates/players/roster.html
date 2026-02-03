@@ -1129,7 +1129,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </head>
             <body>
                 <div class="header">
-                    <h1>{{ team.name }} - Batting Lineup</h1>
+                    <h1>{{ team.name }} - Roster</h1>
                     <div class="game-info">
                         vs {{ opposing_team.name|default:"TBD" }} | {{ event_time_display }}{% if roster.event.location %} | {{ roster.event.location }}{% endif %}
                     </div>
@@ -2207,9 +2207,20 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        // Track which players have already been assigned to prevent duplicates
+        const assignedPlayerIds = new Set();
+
         // Load each position
         Object.keys(inningData).forEach(position => {
             const playerId = inningData[position];
+
+            // Skip if this player was already assigned to another position (duplicate detection)
+            if (assignedPlayerIds.has(playerId)) {
+                console.warn(`Player ${playerId} already assigned in inning ${inning}, skipping duplicate at position ${position}`);
+                // Clear this duplicate from the database
+                savePosition(inning, position, '', '');
+                return;
+            }
 
             // Find the player card to get the player name
             const playerCard = document.querySelector(`#playerList${inning} .player-card[data-player-id="${playerId}"]`);
@@ -2220,6 +2231,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // Find the position marker
             const marker = document.querySelector(`.baseball-field[data-inning="${inning}"] .position-marker[data-position="${position}"]`);
             if (!marker) return;
+
+            // Mark this player as assigned
+            assignedPlayerIds.add(playerId);
 
             // Update display
             const nameDisplay = marker.querySelector('.player-name-display');

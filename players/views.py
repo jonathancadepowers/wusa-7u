@@ -2689,6 +2689,17 @@ def save_roster_position(request, team_secret, roster_id):
 
         # Update or remove the position
         if player_id:
+            # IMPORTANT: First, check if this player is already assigned to another position
+            # in this inning and remove them from there to prevent duplicates
+            positions_to_remove = []
+            for existing_position, existing_player_id in current_data.items():
+                if existing_player_id == player_id and existing_position != position:
+                    positions_to_remove.append(existing_position)
+
+            for pos in positions_to_remove:
+                del current_data[pos]
+
+            # Now assign the player to the new position
             current_data[position] = player_id
         else:
             # Remove the position if player_id is empty (unassigning)
