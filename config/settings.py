@@ -154,6 +154,15 @@ MESSAGE_TAGS = {
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Email configuration using SendGrid SMTP
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.sendgrid.net'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'apikey'  # This is literally the string 'apikey'
+EMAIL_HOST_PASSWORD = os.environ.get('SENDGRID_API_KEY', '')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@example.com')
+
 # Channels configuration
 # For Heroku Redis with self-signed SSL certificates, we need to disable verification
 from urllib.parse import urlparse
