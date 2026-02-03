@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ team.name }} Roster - WUSA 7U</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .shared-roster-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 15px;
+        }
+        .header-card {
+            background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .header-card h1 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+        .header-card .team-name {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+        .game-info-badge {
+            background: rgba(255,255,255,0.2);
+            border-radius: 5px;
+            padding: 8px 12px;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+        .nav-tabs {
+            border-bottom: none;
+            gap: 6px;
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        .nav-tabs .nav-item {
+            flex: 1 1 auto;
+            min-width: 80px;
+        }
+        .nav-tabs .nav-link {
+            color: #495057;
+            background-color: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 10px 8px;
+            text-align: center;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+        .nav-tabs .nav-link:hover {
+            background-color: #f8f9fa;
+            border-color: #0d6efd;
+        }
+        .nav-tabs .nav-link.active {
+            color: white;
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+        .content-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .lineup-table {
+            width: 100%;
+            font-size: 0.9rem;
+        }
+        .lineup-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            padding: 10px 8px;
+            text-align: center;
+            border-bottom: 2px solid #dee2e6;
+        }
+        .lineup-table td {
+            padding: 10px 8px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+            vertical-align: middle;
+        }
+        .lineup-table .name-col {
+            text-align: left;
+            font-weight: 500;
+        }
+        .lineup-table .order-num {
+            background-color: #0d6efd;
+            color: white;
+            border-radius: 50%;
+            width: 26px;
+            height: 26px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+        .position-badge {
+            background-color: #e9ecef;
+            color: #495057;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        .field-container {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .field-svg {
+            width: 100%;
+            height: auto;
+        }
+        .position-marker {
+            pointer-events: none;
+        }
+        .position-marker .position-circle {
+            fill: rgba(255,255,255,0.95);
+            stroke: #198754;
+            stroke-width: 2;
+        }
+        .position-marker.empty .position-circle {
+            stroke: #dee2e6;
+        }
+        .position-marker .position-label {
+            fill: #198754;
+            font-weight: bold;
+        }
+        .position-marker.empty .position-label {
+            fill: #adb5bd;
+        }
+        .position-marker .player-name-display {
+            fill: #333;
+            font-size: 10px;
+        }
+        .footer-note {
+            text-align: center;
+            color: #6c757d;
+            font-size: 0.8rem;
+            margin-top: 30px;
+            padding: 15px;
+        }
+        @media (max-width: 576px) {
+            .header-card .team-name {
+                font-size: 1.4rem;
+            }
+            .lineup-table {
+                font-size: 0.8rem;
+            }
+            .lineup-table td, .lineup-table th {
+                padding: 8px 4px;
+            }
+            .position-badge {
+                padding: 2px 5px;
+                font-size: 0.7rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="shared-roster-container">
+        <!-- Header -->
+        <div class="header-card">
+            <h1><i class="bi bi-shield-fill me-2"></i>Shared Roster</h1>
+            <div class="team-name">{{ team.name }}</div>
+            <div class="game-info-badge">
+                <i class="bi bi-calendar-event me-1"></i>
+                {{ event_time_display|date:"l, F j, Y" }} at {{ event_time_display|date:"g:i A" }}
+                {% if roster.event.location %}
+                <span class="ms-3"><i class="bi bi-geo-alt me-1"></i>{{ roster.event.location }}</span>
+                {% endif %}
+            </div>
+            <div class="mt-2">
+                <strong>vs {{ opponent_team.name }}</strong>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <ul class="nav nav-tabs" id="rosterTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="lineup-tab" data-bs-toggle="tab" data-bs-target="#lineupPane" type="button" role="tab">
+                    <i class="bi bi-list-ol me-1"></i>Lineup
+                </button>
+            </li>
+            {% for inning in innings_range %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link inning-tab" id="inning{{ inning }}-tab" data-bs-toggle="tab" data-bs-target="#inning{{ inning }}Pane" type="button" role="tab" data-inning="{{ inning }}">
+                    <i class="bi bi-diamond-fill me-1"></i>{{ inning }}
+                </button>
+            </li>
+            {% endfor %}
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content">
+            <!-- Lineup Tab -->
+            <div class="tab-pane fade show active" id="lineupPane" role="tabpanel">
+                <div class="content-card">
+                    <h5 class="mb-3"><i class="bi bi-list-ol me-2"></i>Batting Order</h5>
+                    <div class="table-responsive">
+                        <table class="lineup-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;">#</th>
+                                    <th class="name-col">Player</th>
+                                    {% for inning in innings_range %}
+                                    <th style="width: 60px;">Inn {{ inning }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody id="lineupBody">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inning Tabs (Field Positions) -->
+            {% for inning in innings_range %}
+            <div class="tab-pane fade" id="inning{{ inning }}Pane" role="tabpanel">
+                <div class="content-card">
+                    <h5 class="mb-3"><i class="bi bi-diamond-fill me-2"></i>Inning {{ inning }} - Field Positions</h5>
+                    <div class="field-container">
+                        <svg viewBox="0 -15 600 655" class="field-svg">
+                            <!-- Infield dirt -->
+                            <path d="M 300 510.625 L 70 352.5 L 300 194.375 L 530 352.5 Z" fill="#d4a574" stroke="none"/>
+                            <ellipse cx="300" cy="510.625" rx="86.25" ry="57.5" fill="#d4a574" stroke="none"/>
+                            <circle cx="300" cy="352.5" r="43.125" fill="#d4a574" stroke="none"/>
+
+                            <!-- Basepaths -->
+                            <line x1="300" y1="510.625" x2="70" y2="352.5" stroke="#c19a6b" stroke-width="5"/>
+                            <line x1="300" y1="510.625" x2="530" y2="352.5" stroke="#c19a6b" stroke-width="5"/>
+                            <line x1="70" y1="352.5" x2="300" y2="194.375" stroke="#c19a6b" stroke-width="5"/>
+                            <line x1="530" y1="352.5" x2="300" y2="194.375" stroke="#c19a6b" stroke-width="5"/>
+
+                            <!-- Pitcher's mound -->
+                            <circle cx="300" cy="352.5" r="31.625" fill="#b8885c" stroke="#a67c52" stroke-width="2"/>
+
+                            <!-- Bases -->
+                            <rect x="295" y="189.375" width="10" height="10" fill="white" stroke="#999" stroke-width="1" transform="rotate(45 300 194.375)"/>
+                            <rect x="525" y="347.5" width="10" height="10" fill="white" stroke="#999" stroke-width="1" transform="rotate(45 530 352.5)"/>
+                            <rect x="65" y="347.5" width="10" height="10" fill="white" stroke="#999" stroke-width="1" transform="rotate(45 70 352.5)"/>
+                            <polygon points="300,521.875 294.25,515 294.25,510.625 305.75,510.625 305.75,515" fill="white" stroke="#999" stroke-width="1"/>
+
+                            <!-- Position markers -->
+                            {% if allow_four_outfielders %}
+                            <g class="position-marker" data-position="LF" data-inning="{{ inning }}">
+                                <circle cx="70" cy="73.125" r="40" class="position-circle"/>
+                                <text x="70" y="79.125" text-anchor="middle" font-size="14" font-weight="bold" class="position-label">LF</text>
+                                <text x="70" y="128.125" text-anchor="middle" font-size="11" class="player-name-display"></text>
+                            </g>
+                            <g class="position-marker" data-position="CF-L" data-inning="{{ inning }}">
+                                <circle cx="220" cy="39.375" r="40" class="position-circle"/>
+                                <text x="220" y="45.375" text-anchor="middle" font-size="14" font-weight="bold" class="position-label">CF-L</text>
+                                <text x="220" y="94.375" text-anchor="middle" font-size="11" class="player-name-display"></text>
+                            </g>
+                            <g class="position-marker" data-position="CF-R" data-inning="{{ inning }}">
+                                <circle cx="380" cy="39.375" r="40" class="position-circle"/>
+                                <text x="380" y="45.375" text-anchor="middle" font-size="14" font-weight="bold" class="position-label">CF-R</text>
+                                <text x="380" y="94.375" text-anchor="middle" font-size="11" class="player-name-display"></text>
+                            </g>
+                            <g class="position-marker" data-position="RF" data-inning="{{ inning }}">
+                                <circle cx="530" cy="73.125" r="40" class="position-circle"/>
+                                <text x="530" y="79.125" text-anchor="middle" font-size="14" font-weight="bold" class="position-label">RF</text>
+                                <text x="530" y="128.125" text-anchor="middle" font-size="11" class="player-name-display"></text>
+                            </g>
+                            {% else %}
+                            <g class="position-marker" data-position="LF" data-inning="{{ inning }}">
+                                <circle cx="70" cy="73.125" r="40" class="position-circle"/>
+                                <text x="70" y="79.125" text-anchor="middle" font-size="14" font-weight="bold" class="position-label">LF</text>
+                                <text x="70" y="128.125" text-anchor="middle" font-size="11" class="player-name-display"></text>
+                            </g>
+                            <g class="position-marker" data-position="CF" data-inning="{{ inning }}">
+                                <circle cx="300" cy="39.375" r="40" class="position-circle"/>
+                                <text x="300" y="45.375" text-anchor="middle" font-size="14" font-weight="bold" class="position-label">CF</text>
+                                <text x="300" y="94.375" text-anchor="middle" font-size="11" class="player-name-display"></text>
+                            </g>
+                            <g class="position-marker" data-position="RF" data-inning="{{ inning }}">
+                                <circle cx="530" cy="73.125" r="40" class="position-circle"/>
+                                <text x="530" y="79.125" text-anchor="middle" font-size="14" font-weight="bold" class="position-label">RF</text>
+                                <text x="530" y="128.125" text-anchor="middle" font-size="11" class="player-name-display"></text>
+                            </g>
+                            {% endif %}
+
+                            <!-- Infielders -->
+                            <g class="position-marker" data-position="3B" data-inning="{{ inning }}">
+                                <circle cx="70" cy="352.5" r="40" class="position-circle"/>
+                                <text x="70" y="358.5" text-anchor="middle" font-size="14" font-weight="bold" class="position-label">3B</text>
+                                <text x="70" y="407.5" text-anchor="middle" font-size="11" class="player-name-display"></text>
+                            </g>
+                            <g class="position-marker" data-position="SS" data-inning="{{ inning }}">
+                                <circle cx="156.25" cy="244.6875" r="40" class="position-circle"/>
+                                <text x="156.25" y="250.6875" text-anchor="middle" font-size="14" font-weight="bold" class="position-label">SS</text>
+                                <text x="156.25" y="299.6875" text-anchor="middle" font-size="11" class="player-name-display"></text>
+                            </g>
+                            <g class="position-marker" data-position="2B" data-inning="{{ inning }}">
+                                <circle cx="443.75" cy="244.6875" r="40" class="position-circle"/>
+                                <text x="443.75" y="250.6875" text-anchor="middle" font-size="14" font-weight="bold" class="position-label">2B</text>
+                                <text x="443.75" y="299.6875" text-anchor="middle" font-size="11" class="player-name-display"></text>
+                            </g>
+                            <g class="position-marker" data-position="1B" data-inning="{{ inning }}">
+                                <circle cx="530" cy="352.5" r="40" class="position-circle"/>
+                                <text x="530" y="358.5" text-anchor="middle" font-size="14" font-weight="bold" class="position-label">1B</text>
+                                <text x="530" y="407.5" text-anchor="middle" font-size="11" class="player-name-display"></text>
+                            </g>
+                            <g class="position-marker" data-position="P" data-inning="{{ inning }}">
+                                <circle cx="300" cy="352.5" r="40" class="position-circle"/>
+                                <text x="300" y="358.5" text-anchor="middle" font-size="14" font-weight="bold" class="position-label">P</text>
+                                <text x="300" y="407.5" text-anchor="middle" font-size="11" class="player-name-display"></text>
+                            </g>
+                            {% if allow_rover_position %}
+                            <g class="position-marker" data-position="R" data-inning="{{ inning }}">
+                                <circle cx="300" cy="194.375" r="40" class="position-circle"/>
+                                <text x="300" y="200.375" text-anchor="middle" font-size="14" font-weight="bold" class="position-label">R</text>
+                                <text x="300" y="249.375" text-anchor="middle" font-size="11" class="player-name-display"></text>
+                            </g>
+                            {% endif %}
+                            <g class="position-marker" data-position="C" data-inning="{{ inning }}">
+                                <circle cx="300" cy="557.125" r="40" class="position-circle"/>
+                                <text x="300" y="563.125" text-anchor="middle" font-size="14" font-weight="bold" class="position-label">C</text>
+                                <text x="300" y="612.125" text-anchor="middle" font-size="11" class="player-name-display"></text>
+                            </g>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="footer-note">
+            <i class="bi bi-shield-check me-1"></i>
+            This roster was shared by {{ team.name }} via WUSA 7U
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Roster data from server
+        const rosterData = {{ roster_data_json|safe }};
+        const lineupData = {{ lineup_data_json|safe }};
+        const inningsPerGame = {{ innings_per_game }};
+
+        // Build player name map from lineup data
+        const playerNameMap = {};
+        lineupData.forEach(player => {
+            playerNameMap[player.id] = player.name;
+        });
+
+        // Populate field positions
+        function populateFieldPositions() {
+            for (let inning = 1; inning <= inningsPerGame; inning++) {
+                const inningKey = `inning_${inning}`;
+                const inningData = rosterData[inningKey] || {};
+
+                document.querySelectorAll(`.position-marker[data-inning="${inning}"]`).forEach(marker => {
+                    const position = marker.dataset.position;
+                    const playerName = inningData[position] || '';
+                    const nameDisplay = marker.querySelector('.player-name-display');
+
+                    if (playerName) {
+                        nameDisplay.textContent = playerName;
+                        marker.classList.remove('empty');
+                    } else {
+                        nameDisplay.textContent = '';
+                        marker.classList.add('empty');
+                    }
+                });
+            }
+        }
+
+        // Build position map for each inning
+        function buildPositionMap() {
+            const positionMap = {};
+            for (let inning = 1; inning <= inningsPerGame; inning++) {
+                positionMap[inning] = {};
+                const inningKey = `inning_${inning}`;
+                const inningData = rosterData[inningKey] || {};
+
+                // Invert: player name -> position
+                for (const [position, playerName] of Object.entries(inningData)) {
+                    if (playerName) {
+                        positionMap[inning][playerName] = position;
+                    }
+                }
+            }
+            return positionMap;
+        }
+
+        // Populate lineup table
+        function populateLineupTable() {
+            const tbody = document.getElementById('lineupBody');
+            tbody.innerHTML = '';
+
+            const positionMap = buildPositionMap();
+
+            lineupData.forEach((player, index) => {
+                const row = document.createElement('tr');
+
+                // Order number
+                const orderCell = document.createElement('td');
+                orderCell.innerHTML = `<span class="order-num">${index + 1}</span>`;
+                row.appendChild(orderCell);
+
+                // Player name
+                const nameCell = document.createElement('td');
+                nameCell.className = 'name-col';
+                nameCell.textContent = player.name;
+                row.appendChild(nameCell);
+
+                // Positions for each inning
+                for (let inning = 1; inning <= inningsPerGame; inning++) {
+                    const posCell = document.createElement('td');
+                    const position = positionMap[inning][player.name] || '-';
+                    if (position !== '-') {
+                        posCell.innerHTML = `<span class="position-badge">${position}</span>`;
+                    } else {
+                        posCell.textContent = '-';
+                        posCell.style.color = '#adb5bd';
+                    }
+                    row.appendChild(posCell);
+                }
+
+                tbody.appendChild(row);
+            });
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', function() {
+            populateFieldPositions();
+            populateLineupTable();
+        });
+    </script>
+</body>
+</html>

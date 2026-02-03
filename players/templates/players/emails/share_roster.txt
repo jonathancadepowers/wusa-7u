@@ -1,0 +1,22 @@
+Roster Shared
+=============
+
+Hi {{ opposing_manager.first_name }},
+
+{{ our_manager_name }} ({{ team.name }}) has shared their roster with you for the upcoming game:
+
+{{ team.name }} vs {{ opposing_team.name }}
+Date: {{ event_date_display }}
+{% if event.location %}Location: {{ event.location }}{% endif %}
+
+To view the batting lineup and field positions, visit:
+{{ shared_roster_url }}
+
+See you at the game!
+
+Best regards,
+WUSA 7U
+
+---
+This email was sent to {{ opposing_manager.email }}
+(c) 2026 WUSA 7U. All rights reserved.

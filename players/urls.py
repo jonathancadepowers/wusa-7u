@@ -135,4 +135,7 @@ urlpatterns = [
     path('background-checks/create/', views.create_background_check_view, name='create_background_check'),
     path('background-checks/<int:background_check_id>/update/', views.update_background_check_view, name='update_background_check'),
     path('background-checks/<int:background_check_id>/delete/', views.delete_background_check_view, name='delete_background_check'),
+    # Shared Roster (public read-only view)
+    path('shared_roster/<int:roster_id>/', views.shared_roster_view, name='shared_roster'),
+    path('shared_roster/<int:roster_id>/send-email/', views.send_share_roster_email, name='send_share_roster_email'),
 ]

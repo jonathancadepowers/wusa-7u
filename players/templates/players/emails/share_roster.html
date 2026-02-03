@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #198754;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            background-color: #f9f9f9;
+            padding: 30px;
+            border: 1px solid #ddd;
+        }
+        .game-info {
+            background-color: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #198754;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #198754;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .footer {
+            background-color: #333;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            border-radius: 0 0 5px 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Roster Shared</h1>
+        </div>
+
+        <div class="content">
+            <p>Hi {{ opposing_manager.first_name }},</p>
+
+            <p>{{ our_manager_name }} ({{ team.name }}) has shared their roster with you for the upcoming game:</p>
+
+            <div class="game-info">
+                <h2 style="margin-top: 0; color: #198754;">{{ team.name }} vs {{ opposing_team.name }}</h2>
+                <p><strong>Date:</strong> {{ event_date_display }}</p>
+                {% if event.location %}
+                <p><strong>Location:</strong> {{ event.location }}</p>
+                {% endif %}
+            </div>
+
+            <p>Click the button below to view the batting lineup and field positions:</p>
+
+            <div style="text-align: center;">
+                <a href="{{ shared_roster_url }}" class="button">View Roster</a>
+            </div>
+
+            <p style="font-size: 14px; color: #666;">
+                Or copy and paste this link:<br>
+                <code style="background: #f0f0f0; padding: 5px; display: inline-block; margin-top: 5px;">{{ shared_roster_url }}</code>
+            </p>
+
+            <p>See you at the game!</p>
+
+            <p>Best regards,<br>
+            WUSA 7U</p>
+        </div>
+
+        <div class="footer">
+            <p>This email was sent to {{ opposing_manager.email }}</p>
+            <p>&copy; 2026 WUSA 7U. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

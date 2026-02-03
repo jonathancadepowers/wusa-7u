@@ -2628,6 +2628,17 @@ def roster_view(request, team_secret, roster_id):
     # Prepare lineup data for JavaScript
     lineup_data = roster.lineup or []
 
+    # Get opposing team and manager info
+    event = roster.event
+    if event.home_team == team:
+        opposing_team = event.away_team
+    else:
+        opposing_team = event.home_team
+
+    # Get opposing team's manager(s)
+    opposing_managers = list(opposing_team.managers.all()) if opposing_team else []
+    opposing_manager = opposing_managers[0] if opposing_managers else None
+
     return render(request, 'players/roster.html', {
         'team': team,
         'roster': roster,
@@ -2640,7 +2651,9 @@ def roster_view(request, team_secret, roster_id):
         'allow_benched_players': allow_benched_players,
         'innings_per_game': innings_per_game,
         'innings_range': range(1, innings_per_game + 1),
-        'infield_positions_json': json.dumps(infield_positions)
+        'infield_positions_json': json.dumps(infield_positions),
+        'opposing_team': opposing_team,
+        'opposing_manager': opposing_manager,
     })
 
 
@@ -7564,4 +7577,175 @@ def save_general_setting(request):
         return JsonResponse({
             'success': False,
             'error': f'An error occurred: {str(e)}'
+        }, status=500)
+
+
+def shared_roster_view(request, roster_id):
+    """Public read-only view of a roster for sharing with opposing team managers"""
+    from django.shortcuts import render, get_object_or_404
+    from .models import Roster, GeneralSetting
+    import pytz
+    import json
+
+    # Get the roster (no team_secret needed - this is a public read-only view)
+    roster = get_object_or_404(Roster, id=roster_id)
+    team = roster.team
+    event = roster.event
+
+    # Get display timezone
+    display_tz_setting = GeneralSetting.objects.filter(key='display_timezone').first()
+    display_tz = pytz.timezone(display_tz_setting.value) if display_tz_setting else pytz.UTC
+
+    # Convert event timestamp to display timezone
+    event_time_display = event.timestamp.astimezone(display_tz) if event else None
+
+    # Prepare roster data for JavaScript
+    roster_data = {
+        'inning_1': roster.inning_1 or {},
+        'inning_2': roster.inning_2 or {},
+        'inning_3': roster.inning_3 or {},
+        'inning_4': roster.inning_4 or {},
+        'inning_5': roster.inning_5 or {},
+        'inning_6': roster.inning_6 or {},
+    }
+
+    # Get division settings
+    allow_four_outfielders_setting = GeneralSetting.objects.filter(key='allow_four_outfielders').first()
+    allow_four_outfielders = allow_four_outfielders_setting.value.lower() == 'true' if allow_four_outfielders_setting else False
+
+    allow_rover_position_setting = GeneralSetting.objects.filter(key='allow_rover_position').first()
+    allow_rover_position = allow_rover_position_setting.value.lower() == 'true' if allow_rover_position_setting else False
+
+    innings_per_game_setting = GeneralSetting.objects.filter(key='innings_per_game').first()
+    innings_per_game = int(innings_per_game_setting.value) if innings_per_game_setting else 6
+
+    allow_benched_players_setting = GeneralSetting.objects.filter(key='allow_benched_players').first()
+    allow_benched_players = allow_benched_players_setting.value.lower() == 'true' if allow_benched_players_setting else False
+
+    # Get infield positions setting
+    infield_positions_setting = GeneralSetting.objects.filter(key='infield_positions').first()
+    infield_positions = json.loads(infield_positions_setting.value) if infield_positions_setting and infield_positions_setting.value else ['C', '1B', '2B', '3B', 'SS', 'P']
+
+    # Calculate if team has enough players to show 4 outfielders
+    base_positions = 9
+    if allow_rover_position:
+        base_positions += 1
+
+    show_four_outfielders = False
+    if allow_four_outfielders:
+        positions_with_four_outfielders = base_positions + 1
+        player_count = team.players.count()
+        if player_count >= positions_with_four_outfielders:
+            show_four_outfielders = True
+
+    # Prepare lineup data for JavaScript
+    lineup_data = roster.lineup or []
+
+    # Determine opponent name for display
+    if event.home_team == team:
+        opponent_team = event.away_team
+    else:
+        opponent_team = event.home_team
+
+    return render(request, 'players/shared_roster.html', {
+        'team': team,
+        'roster': roster,
+        'roster_data_json': json.dumps(roster_data),
+        'lineup_data_json': json.dumps(lineup_data),
+        'event_time_display': event_time_display,
+        'display_tz': display_tz,
+        'allow_four_outfielders': show_four_outfielders,
+        'allow_rover_position': allow_rover_position,
+        'allow_benched_players': allow_benched_players,
+        'innings_per_game': innings_per_game,
+        'innings_range': range(1, innings_per_game + 1),
+        'infield_positions_json': json.dumps(infield_positions),
+        'opponent_team': opponent_team,
+    })
+
+
+@csrf_exempt
+def send_share_roster_email(request, roster_id):
+    """Send an email sharing the roster with the opposing team's manager"""
+    from django.core.mail import EmailMultiAlternatives
+    from django.conf import settings as django_settings
+    from django.template.loader import render_to_string
+    from .models import Roster
+
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=405)
+
+    try:
+        roster = Roster.objects.get(id=roster_id)
+    except Roster.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Roster not found'}, status=404)
+
+    team = roster.team
+    event = roster.event
+
+    # Get the opposing team and manager
+    if event.home_team == team:
+        opposing_team = event.away_team
+    else:
+        opposing_team = event.home_team
+
+    if not opposing_team:
+        return JsonResponse({'success': False, 'error': 'No opposing team found for this game'}, status=400)
+
+    opposing_managers = list(opposing_team.managers.all())
+    if not opposing_managers:
+        return JsonResponse({'success': False, 'error': 'No manager found for the opposing team'}, status=400)
+
+    opposing_manager = opposing_managers[0]
+
+    # Get our team's manager for the "from" display
+    our_managers = list(team.managers.all())
+    our_manager = our_managers[0] if our_managers else None
+    our_manager_name = f"{our_manager.first_name} {our_manager.last_name}" if our_manager else team.name
+
+    # Construct the shared roster URL
+    shared_roster_url = request.build_absolute_uri(f'/shared_roster/{roster.id}/')
+
+    # Get display timezone for event date formatting
+    from .models import GeneralSetting
+    import pytz
+    display_tz_setting = GeneralSetting.objects.filter(key='display_timezone').first()
+    display_tz = pytz.timezone(display_tz_setting.value) if display_tz_setting else pytz.UTC
+    event_date_display = event.timestamp.astimezone(display_tz).strftime('%B %d, %Y at %I:%M %p') if event.timestamp else 'TBD'
+
+    # Prepare context for email templates
+    context = {
+        'team': team,
+        'opposing_team': opposing_team,
+        'opposing_manager': opposing_manager,
+        'our_manager_name': our_manager_name,
+        'event': event,
+        'event_date_display': event_date_display,
+        'shared_roster_url': shared_roster_url,
+    }
+
+    # Render email templates
+    subject = f'Roster Shared: {team.name} vs {opposing_team.name}'
+    text_content = render_to_string('players/emails/share_roster.txt', context)
+    html_content = render_to_string('players/emails/share_roster.html', context)
+
+    try:
+        email = EmailMultiAlternatives(
+            subject=subject,
+            body=text_content,
+            from_email=django_settings.DEFAULT_FROM_EMAIL,
+            to=[opposing_manager.email],
+            reply_to=[django_settings.DEFAULT_REPLY_TO_EMAIL],
+        )
+        email.attach_alternative(html_content, "text/html")
+        email.send()
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Roster shared with {opposing_manager.first_name} {opposing_manager.last_name} ({opposing_manager.email})'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'Failed to send email: {str(e)}'
         }, status=500)
