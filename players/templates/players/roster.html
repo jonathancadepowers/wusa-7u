@@ -177,6 +177,31 @@
         </div>
     </div>
 
+    <!-- Reset Inning Confirmation Modal -->
+    <div class="modal fade" id="resetInningModal" tabindex="-1" aria-labelledby="resetInningModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="resetInningModalLabel">Reset Inning</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning mb-3">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <strong>Warning:</strong> This action cannot be undone.
+                    </div>
+                    <p>Are you sure you want to reset <strong id="resetInningNumber">Inning 1</strong>? This will clear all position assignments for this inning.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmResetInningBtn">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i>Reset Inning
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Tab Content -->
     <div class="tab-content mt-4" id="inningTabContent">
         {% for inning in innings_range %}
@@ -1397,15 +1422,26 @@ document.addEventListener('DOMContentLoaded', function() {
         updateAllAssignedMessage(inning);
     }
 
-    // Initialize reset inning buttons
+    // Initialize reset inning modal
+    const resetInningModal = new bootstrap.Modal(document.getElementById('resetInningModal'));
+    let pendingResetInning = null;
+
     document.querySelectorAll('.reset-inning-btn').forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.preventDefault();
             const inning = parseInt(this.dataset.inning);
-            if (confirm(`Are you sure you want to reset Inning ${inning}? This will clear all position assignments for this inning.`)) {
-                resetInning(inning);
-            }
+            pendingResetInning = inning;
+            document.getElementById('resetInningNumber').textContent = `Inning ${inning}`;
+            resetInningModal.show();
         });
+    });
+
+    document.getElementById('confirmResetInningBtn').addEventListener('click', function() {
+        if (pendingResetInning !== null) {
+            resetInning(pendingResetInning);
+            resetInningModal.hide();
+            pendingResetInning = null;
+        }
     });
 
     async function resetInning(inning) {
