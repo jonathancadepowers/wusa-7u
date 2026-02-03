@@ -594,12 +594,11 @@
     stroke-width: 4;
 }
 
-.position-marker.drag-over-occupied .position-circle {
-    fill: #f8d7da;
-    stroke: #dc3545;
+/* Swap indicator - shows when dragging to swap two players */
+.position-marker.drag-over-swap .position-circle {
+    fill: #fff3cd;
+    stroke: #fd7e14;
     stroke-width: 4;
-    stroke-dasharray: 5, 5;
-    animation: pulse 0.5s ease-in-out infinite;
 }
 
 @keyframes pulse {
@@ -1397,25 +1396,29 @@ document.addEventListener('DOMContentLoaded', function() {
             // Position marker as drop zone
             marker.addEventListener('dragover', function(e) {
                 e.preventDefault();
-                // Show red feedback if position is already occupied
+                // Check if we're dragging from another position (swap allowed) or player list
+                const isFromPosition = e.dataTransfer.types.includes('text/plain');
+
                 if (this.classList.contains('has-player')) {
-                    this.classList.add('drag-over-occupied');
+                    // Position is occupied - show swap indicator (blue) if from position, red if from player list
+                    // We can't reliably check source during dragover, so we'll use a swap-style indicator
+                    this.classList.add('drag-over-swap');
                     this.classList.remove('drag-over');
                 } else {
                     this.classList.add('drag-over');
-                    this.classList.remove('drag-over-occupied');
+                    this.classList.remove('drag-over-swap');
                 }
             });
 
             marker.addEventListener('dragleave', function(e) {
                 this.classList.remove('drag-over');
-                this.classList.remove('drag-over-occupied');
+                this.classList.remove('drag-over-swap');
             });
 
             marker.addEventListener('drop', function(e) {
                 e.preventDefault();
                 this.classList.remove('drag-over');
-                this.classList.remove('drag-over-occupied');
+                this.classList.remove('drag-over-swap');
 
                 const playerId = e.dataTransfer.getData('playerId');
                 const playerName = e.dataTransfer.getData('playerName');
@@ -1428,23 +1431,49 @@ document.addEventListener('DOMContentLoaded', function() {
                     return;
                 }
 
-                // If dragging from another position, clear that position first
+                // If dragging from another position
                 if (source === 'position') {
                     const oldPosition = e.dataTransfer.getData('position');
                     const oldMarker = document.querySelector(`.baseball-field[data-inning="${inning}"] .position-marker[data-position="${oldPosition}"]`);
+
                     if (oldMarker && oldMarker !== this) {
-                        const oldNameDisplay = oldMarker.querySelector('.player-name-display');
-                        oldNameDisplay.textContent = '';
-                        oldMarker.classList.remove('has-player');
-                        const oldRemoveBtn = oldMarker.querySelector('.remove-player-btn');
-                        if (oldRemoveBtn) {
-                            oldRemoveBtn.style.display = 'none';
+                        // Check if target position has a player (swap scenario)
+                        if (this.classList.contains('has-player')) {
+                            // SWAP: Get current player info from target position
+                            const targetNameDisplay = this.querySelector('.player-name-display');
+                            const targetPlayerName = targetNameDisplay.textContent;
+
+                            // Find target player's ID
+                            const targetPlayerCard = Array.from(document.querySelectorAll(`#playerList${inning} .player-card`))
+                                .find(card => card.dataset.playerName === targetPlayerName);
+                            const targetPlayerId = targetPlayerCard ? targetPlayerCard.dataset.playerId : '';
+
+                            // Move target player to old position
+                            const oldNameDisplay = oldMarker.querySelector('.player-name-display');
+                            oldNameDisplay.textContent = targetPlayerName;
+                            oldMarker.classList.add('has-player');
+                            const oldRemoveBtn = oldMarker.querySelector('.remove-player-btn');
+                            if (oldRemoveBtn) {
+                                oldRemoveBtn.style.display = 'block';
+                            }
+
+                            // Save target player to old position
+                            savePosition(inning, oldPosition, targetPlayerId, targetPlayerName);
+                        } else {
+                            // Not a swap - just clear old position
+                            const oldNameDisplay = oldMarker.querySelector('.player-name-display');
+                            oldNameDisplay.textContent = '';
+                            oldMarker.classList.remove('has-player');
+                            const oldRemoveBtn = oldMarker.querySelector('.remove-player-btn');
+                            if (oldRemoveBtn) {
+                                oldRemoveBtn.style.display = 'none';
+                            }
+                            savePosition(inning, oldPosition, '', '');
                         }
-                        savePosition(inning, oldPosition, '', '');
                     }
                 }
 
-                // Update display
+                // Update display for the drop target
                 const nameDisplay = this.querySelector('.player-name-display');
                 nameDisplay.textContent = playerName;
                 this.classList.add('has-player');
