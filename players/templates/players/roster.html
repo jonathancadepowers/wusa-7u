@@ -1425,18 +1425,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 const position = this.dataset.position;
                 const source = e.dataTransfer.getData('source');
 
-                // If position is already occupied and we're dropping from player list, swap with available
+                // If position is already occupied and we're dropping from player list, reject
                 if (this.classList.contains('has-player') && source === 'playerList') {
-                    // Get the currently assigned player's info
-                    const currentNameDisplay = this.querySelector('.player-name-display');
-                    const currentPlayerName = currentNameDisplay.textContent;
-
-                    // Find current player's card and mark as unassigned
-                    const currentPlayerCard = Array.from(document.querySelectorAll(`#playerList${inning} .player-card`))
-                        .find(card => card.dataset.playerName === currentPlayerName);
-                    if (currentPlayerCard) {
-                        currentPlayerCard.classList.remove('assigned');
-                    }
+                    // Position already has a player - do nothing
+                    return;
                 }
 
                 // If dragging from another position
