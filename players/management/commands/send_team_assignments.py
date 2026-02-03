@@ -75,6 +75,7 @@ class Command(BaseCommand):
                     body=text_content,
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     to=[manager.email],
+                    reply_to=[settings.DEFAULT_REPLY_TO_EMAIL],
                 )
                 email.attach_alternative(html_content, "text/html")
 

@@ -5533,6 +5533,7 @@ def send_team_preferences_email_view(request):
                         from_email=django_settings.DEFAULT_FROM_EMAIL,
                         to=[manager.email],
                         cc=cc_list if cc_list else None,
+                        reply_to=[django_settings.DEFAULT_REPLY_TO_EMAIL],
                     )
                     msg.attach_alternative(html_body, "text/html")
                     msg.send(fail_silently=False)

@@ -162,6 +162,7 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')  # Gmail App Password
 DEFAULT_FROM_EMAIL = os.environ.get('EMAIL_HOST_USER', '')
+DEFAULT_REPLY_TO_EMAIL = os.environ.get('DEFAULT_REPLY_TO_EMAIL', 'no-reply@wusaapp.org')
 
 # Channels configuration
 # For Heroku Redis with self-signed SSL certificates, we need to disable verification
