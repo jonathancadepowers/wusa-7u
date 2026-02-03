@@ -570,6 +570,13 @@
     transition: all 0.2s;
     user-select: none;
     -webkit-user-select: none;
+    pointer-events: all;
+}
+
+.position-marker .position-circle,
+.position-marker .position-label,
+.position-marker .player-name-display {
+    pointer-events: all;
 }
 
 /* Removed hover effect - only show drop zone during drag */
@@ -1148,10 +1155,220 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Global SVG drag state (shared across all innings)
+    let svgDragState = {
+        isDragging: false,
+        draggedMarker: null,
+        playerId: null,
+        playerName: null,
+        position: null,
+        inning: null,
+        dragElement: null,
+        startX: 0,
+        startY: 0
+    };
+
     // Initialize drag and drop for each inning
     for (let inning = 1; inning <= inningsPerGame; inning++) {
         initializeDragAndDrop(inning);
         loadPositions(inning);
+    }
+
+    // Global document-level handlers for custom SVG drag (added once)
+    document.addEventListener('mousemove', function(e) {
+        if (!svgDragState.isDragging) return;
+
+        const inning = svgDragState.inning;
+        const playerList = document.querySelector(`#playerList${inning}`);
+        const positionMarkers = document.querySelectorAll(`.baseball-field[data-inning="${inning}"] .position-marker`);
+
+        // Update drag element position
+        svgDragState.dragElement.style.left = e.clientX + 'px';
+        svgDragState.dragElement.style.top = e.clientY + 'px';
+
+        // Check what we're hovering over and update visual indicators
+        const elementUnder = document.elementFromPoint(e.clientX, e.clientY);
+
+        // Clear all hover states first
+        positionMarkers.forEach(m => {
+            m.classList.remove('drag-over');
+            m.classList.remove('drag-over-swap');
+        });
+        playerList.style.backgroundColor = '#f8f9fa';
+
+        if (elementUnder) {
+            // Check if hovering over a position marker
+            const targetMarker = elementUnder.closest('.position-marker');
+            if (targetMarker && targetMarker !== svgDragState.draggedMarker) {
+                if (targetMarker.classList.contains('has-player')) {
+                    targetMarker.classList.add('drag-over-swap');
+                } else {
+                    targetMarker.classList.add('drag-over');
+                }
+            }
+
+            // Check if hovering over player list
+            const targetPlayerList = elementUnder.closest('.player-list');
+            if (targetPlayerList && targetPlayerList.id === `playerList${inning}`) {
+                playerList.style.backgroundColor = '#e7f1ff';
+            }
+        }
+    });
+
+    document.addEventListener('mouseup', function(e) {
+        if (!svgDragState.isDragging) return;
+
+        const inning = svgDragState.inning;
+        const playerList = document.querySelector(`#playerList${inning}`);
+        const positionMarkers = document.querySelectorAll(`.baseball-field[data-inning="${inning}"] .position-marker`);
+
+        // Clean up drag visual
+        if (svgDragState.dragElement) {
+            svgDragState.dragElement.remove();
+        }
+
+        // Clear all hover states
+        positionMarkers.forEach(m => {
+            m.classList.remove('drag-over');
+            m.classList.remove('drag-over-swap');
+            m.style.opacity = '1';
+        });
+        playerList.style.backgroundColor = '#f8f9fa';
+
+        // Restore source marker opacity
+        if (svgDragState.draggedMarker) {
+            svgDragState.draggedMarker.style.opacity = '1';
+        }
+
+        // Check what we're dropping on
+        const elementUnder = document.elementFromPoint(e.clientX, e.clientY);
+
+        if (elementUnder) {
+            // Check if dropping on a position marker
+            const targetMarker = elementUnder.closest('.position-marker');
+            if (targetMarker && targetMarker !== svgDragState.draggedMarker) {
+                // Perform the drop on position marker
+                handleSvgPositionDrop(targetMarker, svgDragState);
+            }
+
+            // Check if dropping on player list (unassign)
+            const targetPlayerList = elementUnder.closest('.player-list');
+            if (targetPlayerList && targetPlayerList.id === `playerList${inning}`) {
+                // Unassign the player
+                handleSvgPlayerListDrop(svgDragState);
+            }
+        }
+
+        // Reset drag state
+        svgDragState = {
+            isDragging: false,
+            draggedMarker: null,
+            playerId: null,
+            playerName: null,
+            position: null,
+            inning: null,
+            dragElement: null,
+            startX: 0,
+            startY: 0
+        };
+    });
+
+    function handleSvgPositionDrop(targetMarker, dragState) {
+        const inning = dragState.inning;
+        const oldMarker = dragState.draggedMarker;
+        const oldPosition = dragState.position;
+        const playerId = dragState.playerId;
+        const playerName = dragState.playerName;
+        const newPosition = targetMarker.dataset.position;
+
+        // Check if target has a player (swap scenario)
+        if (targetMarker.classList.contains('has-player')) {
+            // SWAP: Get current player info from target position
+            const targetNameDisplay = targetMarker.querySelector('.player-name-display');
+            const targetPlayerName = targetNameDisplay.textContent;
+
+            // Find target player's ID
+            const targetPlayerCard = Array.from(document.querySelectorAll(`#playerList${inning} .player-card`))
+                .find(card => card.dataset.playerName === targetPlayerName);
+            const targetPlayerId = targetPlayerCard ? targetPlayerCard.dataset.playerId : '';
+
+            // Move target player to old position
+            const oldNameDisplay = oldMarker.querySelector('.player-name-display');
+            oldNameDisplay.textContent = targetPlayerName;
+            oldMarker.classList.add('has-player');
+            const oldRemoveBtn = oldMarker.querySelector('.remove-player-btn');
+            if (oldRemoveBtn) {
+                oldRemoveBtn.style.display = 'block';
+            }
+
+            // Save target player to old position
+            savePosition(inning, oldPosition, targetPlayerId, targetPlayerName);
+
+            // Update target position with dragged player
+            targetNameDisplay.textContent = playerName;
+            targetMarker.classList.add('has-player');
+            const targetRemoveBtn = targetMarker.querySelector('.remove-player-btn');
+            if (targetRemoveBtn) {
+                targetRemoveBtn.style.display = 'block';
+            }
+
+            // Save dragged player to new position
+            savePosition(inning, newPosition, playerId, playerName);
+        } else {
+            // No swap - just move to empty position
+            // Clear old position
+            const oldNameDisplay = oldMarker.querySelector('.player-name-display');
+            oldNameDisplay.textContent = '';
+            oldMarker.classList.remove('has-player');
+            const oldRemoveBtn = oldMarker.querySelector('.remove-player-btn');
+            if (oldRemoveBtn) {
+                oldRemoveBtn.style.display = 'none';
+            }
+            savePosition(inning, oldPosition, '', '');
+
+            // Set new position
+            const targetNameDisplay = targetMarker.querySelector('.player-name-display');
+            targetNameDisplay.textContent = playerName;
+            targetMarker.classList.add('has-player');
+            const targetRemoveBtn = targetMarker.querySelector('.remove-player-btn');
+            if (targetRemoveBtn) {
+                targetRemoveBtn.style.display = 'block';
+            }
+            savePosition(inning, newPosition, playerId, playerName);
+        }
+
+        // Update validation
+        updateInningValidation(inning);
+        updateAllAssignedMessage(inning);
+    }
+
+    function handleSvgPlayerListDrop(dragState) {
+        const inning = dragState.inning;
+        const oldMarker = dragState.draggedMarker;
+        const oldPosition = dragState.position;
+        const playerId = dragState.playerId;
+
+        // Clear the old position
+        const oldNameDisplay = oldMarker.querySelector('.player-name-display');
+        oldNameDisplay.textContent = '';
+        oldMarker.classList.remove('has-player');
+        const oldRemoveBtn = oldMarker.querySelector('.remove-player-btn');
+        if (oldRemoveBtn) {
+            oldRemoveBtn.style.display = 'none';
+        }
+
+        // Show the player card in Available Players list
+        const playerCard = document.querySelector(`#playerList${inning} .player-card[data-player-id="${playerId}"]`);
+        if (playerCard) {
+            playerCard.classList.remove('assigned');
+        }
+
+        // Save the unassignment
+        savePosition(inning, oldPosition, '', '');
+
+        // Update validation
+        updateInningValidation(inning);
+        updateAllAssignedMessage(inning);
     }
 
     // Initialize clone buttons
@@ -1360,7 +1577,73 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             }
 
-            // Make position marker draggable when it has a player
+            // Custom mouse-based drag for SVG position markers
+            // Attach to the circle element which receives clicks
+            const positionCircle = marker.querySelector('.position-circle');
+            if (positionCircle) {
+                positionCircle.addEventListener('mousedown', handleMarkerMouseDown);
+            }
+            // Also attach to the text elements
+            const positionLabel = marker.querySelector('.position-label');
+            const playerNameDisplay = marker.querySelector('.player-name-display');
+            if (positionLabel) {
+                positionLabel.addEventListener('mousedown', handleMarkerMouseDown);
+            }
+            if (playerNameDisplay) {
+                playerNameDisplay.addEventListener('mousedown', handleMarkerMouseDown);
+            }
+
+            function handleMarkerMouseDown(e) {
+                // Don't start drag if clicking the remove button
+                if (e.target.closest('.remove-player-btn')) return;
+
+                // Only allow drag if position has a player
+                if (!marker.classList.contains('has-player')) return;
+
+                const nameDisplay = marker.querySelector('.player-name-display');
+                const playerName = nameDisplay.textContent;
+                const position = marker.dataset.position;
+
+                // Find the player ID by matching the player name
+                const playerCard = Array.from(document.querySelectorAll(`#playerList${inning} .player-card`))
+                    .find(card => card.dataset.playerName === playerName);
+
+                if (!playerCard) return;
+
+                e.preventDefault();
+
+                // Create drag element (visual feedback)
+                const dragElement = document.createElement('div');
+                dragElement.className = 'player-card';
+                dragElement.style.position = 'fixed';
+                dragElement.style.zIndex = '10000';
+                dragElement.style.opacity = '0.8';
+                dragElement.style.pointerEvents = 'none';
+                dragElement.style.transform = 'translate(-50%, -50%)';
+                dragElement.style.width = '150px';
+                dragElement.style.left = e.clientX + 'px';
+                dragElement.style.top = e.clientY + 'px';
+                dragElement.textContent = playerName;
+                document.body.appendChild(dragElement);
+
+                // Set drag state (using global svgDragState)
+                svgDragState = {
+                    isDragging: true,
+                    draggedMarker: marker,
+                    playerId: playerCard.dataset.playerId,
+                    playerName: playerName,
+                    position: position,
+                    inning: inning,
+                    dragElement: dragElement,
+                    startX: e.clientX,
+                    startY: e.clientY
+                };
+
+                // Visual feedback on source marker
+                marker.style.opacity = '0.5';
+            }
+
+            // Keep the standard HTML5 drag handlers for compatibility
             marker.addEventListener('dragstart', function(e) {
                 if (!this.classList.contains('has-player')) {
                     e.preventDefault();
