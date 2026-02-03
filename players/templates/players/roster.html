@@ -210,34 +210,14 @@
                                 <button class="btn btn-outline-danger btn-sm reset-inning-btn" data-inning="{{ inning }}">
                                     Reset Inning
                                 </button>
-                                {% if inning == 1 %}
-                                <div class="dropdown reuse-future-dropdown" id="reuseFutureDropdown{{ inning }}" style="display: none;">
+                                <div class="dropdown reuse-inning-dropdown" id="reuseInningDropdown{{ inning }}">
                                     <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        Reuse Future Inning
+                                        Reuse Inning
                                     </button>
-                                    <ul class="dropdown-menu dropdown-menu-end">
-                                        {% for future_inning in innings_range %}
-                                        {% if future_inning > inning %}
-                                        <li><a class="dropdown-item clone-inning-btn" href="#" data-source-inning="{{ future_inning }}" data-target-inning="{{ inning }}">Inning {{ future_inning }}</a></li>
-                                        {% endif %}
-                                        {% endfor %}
+                                    <ul class="dropdown-menu dropdown-menu-end" id="reuseInningMenu{{ inning }}">
+                                        <!-- Dynamically populated by JavaScript -->
                                     </ul>
                                 </div>
-                                {% endif %}
-                                {% if inning > 1 %}
-                                <div class="dropdown">
-                                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        Reuse Previous Inning
-                                    </button>
-                                    <ul class="dropdown-menu dropdown-menu-end">
-                                        {% for prev_inning in innings_range %}
-                                        {% if prev_inning < inning %}
-                                        <li><a class="dropdown-item clone-inning-btn" href="#" data-source-inning="{{ prev_inning }}" data-target-inning="{{ inning }}">Inning {{ prev_inning }}</a></li>
-                                        {% endif %}
-                                        {% endfor %}
-                                    </ul>
-                                </div>
-                                {% endif %}
                             </div>
                         </div>
                         <div class="baseball-field" data-inning="{{ inning }}">
@@ -1210,8 +1190,15 @@ document.addEventListener('DOMContentLoaded', function() {
         loadPositions(inning);
     }
 
-    // Check if "Reuse Future Inning" dropdown should be visible for inning 1
-    updateReuseFutureDropdownVisibility();
+    // Initialize reuse inning dropdown event listeners
+    for (let inning = 1; inning <= inningsPerGame; inning++) {
+        const dropdownEl = document.getElementById(`reuseInningDropdown${inning}`);
+        if (dropdownEl) {
+            dropdownEl.addEventListener('show.bs.dropdown', function() {
+                populateReuseInningDropdown(inning);
+            });
+        }
+    }
 
     // Global document-level handlers for custom SVG drag (added once)
     document.addEventListener('mousemove', function(e) {
@@ -1409,20 +1396,6 @@ document.addEventListener('DOMContentLoaded', function() {
         updateInningValidation(inning);
         updateAllAssignedMessage(inning);
     }
-
-    // Initialize clone buttons
-    const cloneButtons = document.querySelectorAll('.clone-inning-btn');
-    console.log('Found clone buttons:', cloneButtons.length);
-    cloneButtons.forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            const sourceInning = parseInt(this.dataset.sourceInning);
-            const targetInning = parseInt(this.dataset.targetInning);
-            console.log('Cloning from inning', sourceInning, 'to inning', targetInning);
-            cloneInning(sourceInning, targetInning);
-        });
-    });
 
     // Initialize reset inning buttons
     document.querySelectorAll('.reset-inning-btn').forEach(btn => {
@@ -1962,31 +1935,65 @@ document.addEventListener('DOMContentLoaded', function() {
             message.style.display = 'none';
         }
 
-        // Update visibility of "Reuse Future Inning" dropdown for inning 1
-        updateReuseFutureDropdownVisibility();
-
         // Update lineup positions and validation immediately
         updateLineupPositionsFromField();
     }
 
-    function updateReuseFutureDropdownVisibility() {
-        const dropdown = document.getElementById('reuseFutureDropdown1');
-        if (!dropdown) return;
+    // Populate reuse inning dropdown when it's about to be shown
+    function populateReuseInningDropdown(targetInning) {
+        const menu = document.getElementById(`reuseInningMenu${targetInning}`);
+        if (!menu) return;
 
-        // Check if any future inning (2+) has at least one position assigned
-        let hasFutureInningData = false;
-        for (let futureInning = 2; futureInning <= inningsPerGame; futureInning++) {
-            const field = document.querySelector(`.baseball-field[data-inning="${futureInning}"]`);
+        // Clear existing items
+        menu.innerHTML = '';
+
+        // Find all other innings that have at least one position assigned
+        const configuredInnings = [];
+        for (let otherInning = 1; otherInning <= inningsPerGame; otherInning++) {
+            if (otherInning === targetInning) continue;
+
+            const field = document.querySelector(`.baseball-field[data-inning="${otherInning}"]`);
             if (field) {
                 const filledPositions = field.querySelectorAll('.position-marker.has-player').length;
                 if (filledPositions > 0) {
-                    hasFutureInningData = true;
-                    break;
+                    configuredInnings.push(otherInning);
                 }
             }
         }
 
-        dropdown.style.display = hasFutureInningData ? 'block' : 'none';
+        if (configuredInnings.length === 0) {
+            // No other innings configured
+            const li = document.createElement('li');
+            li.innerHTML = '<span class="dropdown-item text-muted">No other innings configured</span>';
+            menu.appendChild(li);
+        } else {
+            // Add items for each configured inning
+            configuredInnings.forEach(sourceInning => {
+                const li = document.createElement('li');
+                const a = document.createElement('a');
+                a.className = 'dropdown-item';
+                a.href = '#';
+                a.textContent = `Inning ${sourceInning}`;
+                a.dataset.sourceInning = sourceInning;
+                a.dataset.targetInning = targetInning;
+                a.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const src = parseInt(this.dataset.sourceInning);
+                    const tgt = parseInt(this.dataset.targetInning);
+                    cloneInning(src, tgt);
+
+                    // Collapse the dropdown
+                    const dropdownEl = document.getElementById(`reuseInningDropdown${tgt}`);
+                    const bsDropdown = bootstrap.Dropdown.getInstance(dropdownEl.querySelector('.dropdown-toggle'));
+                    if (bsDropdown) {
+                        bsDropdown.hide();
+                    }
+                });
+                li.appendChild(a);
+                menu.appendChild(li);
+            });
+        }
     }
 
     function getCookie(name) {
