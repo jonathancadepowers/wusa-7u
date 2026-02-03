@@ -14,6 +14,7 @@ python manage.py migrate players 0061 --fake --noinput 2>/dev/null || true
 python manage.py migrate players 0062 --fake --noinput 2>/dev/null || true
 python manage.py migrate players 0063 --fake --noinput 2>/dev/null || true
 python manage.py migrate players 0064 --fake --noinput 2>/dev/null || true
+python manage.py migrate players 0065 --fake --noinput 2>/dev/null || true
 
 # Run normal migrations
 python manage.py migrate --noinput
