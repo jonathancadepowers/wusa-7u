@@ -1730,6 +1730,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 const position = this.dataset.position;
                 const source = e.dataTransfer.getData('source');
 
+                // If dropping from player list, check if this player is already assigned to another position
+                if (source === 'playerList') {
+                    const existingMarker = Array.from(document.querySelectorAll(`.baseball-field[data-inning="${inning}"] .position-marker.has-player`))
+                        .find(m => m.querySelector('.player-name-display').textContent === playerName);
+
+                    if (existingMarker && existingMarker !== this) {
+                        // Player is already assigned elsewhere - unassign from old position first
+                        const oldPosition = existingMarker.dataset.position;
+                        const oldNameDisplay = existingMarker.querySelector('.player-name-display');
+                        oldNameDisplay.textContent = '';
+                        existingMarker.classList.remove('has-player');
+                        const oldRemoveBtn = existingMarker.querySelector('.remove-player-btn');
+                        if (oldRemoveBtn) {
+                            oldRemoveBtn.style.display = 'none';
+                        }
+                        // Save the unassignment
+                        savePosition(inning, oldPosition, '', '');
+                    }
+                }
+
                 // If position is already occupied and we're dropping from player list
                 if (this.classList.contains('has-player') && source === 'playerList') {
                     // Swap: unassign current player and assign the new one
