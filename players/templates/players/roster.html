@@ -210,6 +210,20 @@
                                 <button class="btn btn-outline-danger btn-sm reset-inning-btn" data-inning="{{ inning }}">
                                     Reset Inning
                                 </button>
+                                {% if inning == 1 %}
+                                <div class="dropdown reuse-future-dropdown" id="reuseFutureDropdown{{ inning }}" style="display: none;">
+                                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Reuse Future Inning
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        {% for future_inning in innings_range %}
+                                        {% if future_inning > inning %}
+                                        <li><a class="dropdown-item clone-inning-btn" href="#" data-source-inning="{{ future_inning }}" data-target-inning="{{ inning }}">Inning {{ future_inning }}</a></li>
+                                        {% endif %}
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                {% endif %}
                                 {% if inning > 1 %}
                                 <div class="dropdown">
                                     <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -1196,6 +1210,9 @@ document.addEventListener('DOMContentLoaded', function() {
         loadPositions(inning);
     }
 
+    // Check if "Reuse Future Inning" dropdown should be visible for inning 1
+    updateReuseFutureDropdownVisibility();
+
     // Global document-level handlers for custom SVG drag (added once)
     document.addEventListener('mousemove', function(e) {
         if (!svgDragState.isDragging) return;
@@ -1944,6 +1961,29 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             message.style.display = 'none';
         }
+
+        // Update visibility of "Reuse Future Inning" dropdown for inning 1
+        updateReuseFutureDropdownVisibility();
+    }
+
+    function updateReuseFutureDropdownVisibility() {
+        const dropdown = document.getElementById('reuseFutureDropdown1');
+        if (!dropdown) return;
+
+        // Check if any future inning (2+) has at least one position assigned
+        let hasFutureInningData = false;
+        for (let futureInning = 2; futureInning <= inningsPerGame; futureInning++) {
+            const field = document.querySelector(`.baseball-field[data-inning="${futureInning}"]`);
+            if (field) {
+                const filledPositions = field.querySelectorAll('.position-marker.has-player').length;
+                if (filledPositions > 0) {
+                    hasFutureInningData = true;
+                    break;
+                }
+            }
+        }
+
+        dropdown.style.display = hasFutureInningData ? 'block' : 'none';
     }
 
     function getCookie(name) {
