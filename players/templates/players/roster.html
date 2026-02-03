@@ -1964,6 +1964,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Update visibility of "Reuse Future Inning" dropdown for inning 1
         updateReuseFutureDropdownVisibility();
+
+        // Update lineup positions and validation immediately
+        updateLineupPositionsFromField();
     }
 
     function updateReuseFutureDropdownVisibility() {
