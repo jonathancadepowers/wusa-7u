@@ -424,7 +424,7 @@
                                         {% for inning in innings_range %}
                                         <th class="position-col">{{ inning }}</th>
                                         {% endfor %}
-                                        <th class="infield-count-col" title="Infield positions played in first 3 innings">IF (1-3)</th>
+                                        <th class="infield-count-col">Infield Positions - First 3 Innings</th>
                                         <th class="validation-col">Validation</th>
                                     </tr>
                                 </thead>
@@ -934,9 +934,10 @@
 }
 
 .lineup-table .infield-count-col {
-    width: 70px;
+    width: 180px;
     text-align: center;
     font-weight: 600;
+    white-space: nowrap;
 }
 
 .lineup-table .validation-col {
