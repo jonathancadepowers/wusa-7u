@@ -1425,10 +1425,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 const position = this.dataset.position;
                 const source = e.dataTransfer.getData('source');
 
-                // If position is already occupied and we're dropping from player list, reject
+                // If position is already occupied and we're dropping from player list
                 if (this.classList.contains('has-player') && source === 'playerList') {
-                    // Position already has a player - do nothing
-                    return;
+                    // Swap: unassign current player and assign the new one
+                    const currentNameDisplay = this.querySelector('.player-name-display');
+                    const currentPlayerName = currentNameDisplay.textContent;
+
+                    // Find current player's card and mark as unassigned (return to Available Players)
+                    const currentPlayerCard = Array.from(document.querySelectorAll(`#playerList${inning} .player-card`))
+                        .find(card => card.dataset.playerName === currentPlayerName);
+                    if (currentPlayerCard) {
+                        currentPlayerCard.classList.remove('assigned');
+                    }
+                    // Continue to assign the new player below...
                 }
 
                 // If dragging from another position
