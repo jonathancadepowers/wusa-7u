@@ -2635,9 +2635,8 @@ def roster_view(request, team_secret, roster_id):
     else:
         opposing_team = event.home_team
 
-    # Get opposing team's manager(s)
-    opposing_managers = list(opposing_team.managers.all()) if opposing_team else []
-    opposing_manager = opposing_managers[0] if opposing_managers else None
+    # Get opposing team's manager
+    opposing_manager = opposing_team.manager if opposing_team else None
 
     return render(request, 'players/roster.html', {
         'team': team,
@@ -7692,15 +7691,12 @@ def send_share_roster_email(request, roster_id):
     if not opposing_team:
         return JsonResponse({'success': False, 'error': 'No opposing team found for this game'}, status=400)
 
-    opposing_managers = list(opposing_team.managers.all())
-    if not opposing_managers:
+    opposing_manager = opposing_team.manager
+    if not opposing_manager:
         return JsonResponse({'success': False, 'error': 'No manager found for the opposing team'}, status=400)
 
-    opposing_manager = opposing_managers[0]
-
     # Get our team's manager for the "from" display
-    our_managers = list(team.managers.all())
-    our_manager = our_managers[0] if our_managers else None
+    our_manager = team.manager
     our_manager_name = f"{our_manager.first_name} {our_manager.last_name}" if our_manager else team.name
 
     # Construct the shared roster URL
